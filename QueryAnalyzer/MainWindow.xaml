@@ -1,0 +1,164 @@
+<Window x:Class="QueryAnalyzer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Query Analyzer (ODBC)" Height="700" Width="1100"
+        MinHeight="500" MinWidth="800"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Conexión -->
+            <RowDefinition Height="*"/>
+            <!-- Centro -->
+            <RowDefinition Height="100"/>
+            <!-- Mensajes -->
+        </Grid.RowDefinitions>
+
+        <!-- ░░░░░ FILA 0: Conexión ░░░░░ -->
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,6">
+            <TextBlock Text="Driver/Proveedor:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <ComboBox x:Name="cbDriver" Width="400" IsEditable="True" VerticalAlignment="Center" SelectionChanged="cbDriver_SelectionChanged"/>
+            <Button x:Name="btnTest" Content="Probar conexión" Padding="2,2" Margin="8,0,0,0" Click="BtnTest_Click"/>
+            <Button x:Name="btnSaveConn" Content="Guardar" Padding="2,2" Margin="8,0,0,0" Click="BtnSaveConn_Click"/>
+            <Button x:Name="btnNewConn" Content="Nueva" Padding="2,2" Margin="8,0,0,0" Click="BtnNewConn_Click"/>
+            <Button x:Name="btnDeleteConn_Copy" Content="Eliminar" Padding="2,2" Margin="8,0,0,0" Click="btnDeleteConn_Click"/>
+        </StackPanel>
+
+        <!-- ░░░░░ FILA 1: Centro ░░░░░ -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*"/>
+                <!-- SQL y resultados -->
+                <ColumnDefinition Width="5"/>
+                <!-- splitter -->
+                <ColumnDefinition Width="1.5*"/>
+                <!-- Parámetros e historial -->
+            </Grid.ColumnDefinitions>
+
+            <!-- ░ PANEL IZQUIERDO ░ -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="2*"/>
+                    <!-- SQL -->
+                    <RowDefinition Height="5"/>
+                    <!-- splitter -->
+                    <RowDefinition Height="*"/>
+                    <!-- Resultados -->
+                </Grid.RowDefinitions>
+
+                <!-- Consulta -->
+                <DockPanel Grid.Row="0">
+                    <TextBlock Text="Consulta:" Margin="0,0,0,4"/>
+                    <TextBox x:Name="txtQuery" Margin="4,0,0,0"
+                             AcceptsReturn="True"
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Auto"
+                             FontFamily="Consolas"
+                             FontSize="12"
+                             TextWrapping="NoWrap"/>
+                </DockPanel>
+
+                <!-- Splitter entre SQL y resultados -->
+                <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch"
+                              ResizeDirection="Rows" Background="#DDD" ShowsPreview="True" />
+
+                <!-- Resultados -->
+                <Grid Grid.Row="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <Button x:Name="btnExecute" Padding="2,2" Content="Ejecutar (F5)" Width="120" Click="BtnExecute_Click"/>
+                        <Button x:Name="btnExecuteScalar" Padding="2,2" Content="Ejecutar Ecalar" Margin="8,0,0,0" Click="BtnExecuteScalar_Click" Height="20" VerticalAlignment="Bottom"/>
+                        <Button x:Name="btnClear" Padding="2,2" Content="Limpiar Resultados" Margin="8,0,0,0" Click="BtnClear_Click"/>
+                        <TextBlock Text="Filas:" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                        <TextBlock x:Name="txtRowCount" Text="0" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                    </StackPanel>
+
+                    <DataGrid x:Name="dgResults"
+                              Grid.Row="1"
+                              IsReadOnly="True"
+                              AutoGenerateColumns="True"
+                              VerticalScrollBarVisibility="Auto"/>
+                </Grid>
+            </Grid>
+
+            <!-- Splitter columnas -->
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"
+                          ResizeDirection="Columns" Background="#DDD" ShowsPreview="True"/>
+
+            <!-- ░ PANEL DERECHO ░ -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="2*"/>
+                    <!-- Parámetros -->
+                    <RowDefinition Height="5"/>
+                    <!-- splitter -->
+                    <RowDefinition Height="*"/>
+                    <!-- Historial -->
+                </Grid.RowDefinitions>
+
+                <!-- Parámetros -->
+                <StackPanel Grid.Row="0">
+                    <TextBlock Text="Parámetros" Margin="2,0,-2,4"/>
+                    <DataGrid x:Name="gridParams"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="True"
+                              CanUserDeleteRows="True"
+                              HeadersVisibility="Column"
+                              Margin="2,2,2,2" >
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="NOMBRE"
+                                                Binding="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}"
+                                                Width="*"/>
+                            <DataGridComboBoxColumn Header="TIPO"
+                                                    SelectedValueBinding="{Binding Tipo, UpdateSourceTrigger=PropertyChanged}"
+                                                    DisplayMemberPath="Key"
+                                                    SelectedValuePath="Value"
+                                                    Width="120">
+                                <DataGridComboBoxColumn.ElementStyle>
+                                    <Style TargetType="ComboBox">
+                                        <Setter Property="ItemsSource"
+                                                Value="{Binding DataContext.OdbcTypes,
+                                                                RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                    </Style>
+                                </DataGridComboBoxColumn.ElementStyle>
+                                <DataGridComboBoxColumn.EditingElementStyle>
+                                    <Style TargetType="ComboBox">
+                                        <Setter Property="ItemsSource"
+                                                Value="{Binding DataContext.OdbcTypes,
+                                                                RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                    </Style>
+                                </DataGridComboBoxColumn.EditingElementStyle>
+                            </DataGridComboBoxColumn>
+                            <DataGridTextColumn Header="VALOR"
+                                                Binding="{Binding Valor, UpdateSourceTrigger=PropertyChanged}"
+                                                Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+
+                <!-- Splitter interno -->
+                <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch"
+                              ResizeDirection="Rows" Background="#DDD" ShowsPreview="True"/>
+
+                <!-- Historial -->
+                <StackPanel Grid.Row="2">
+                    <TextBlock Text="Historial" Margin="0,0,0,4"/>
+                    <ListBox x:Name="lstHistory" SelectionChanged="LstHistory_SelectionChanged"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <!-- ░░░░░ FILA 2: Mensajes ░░░░░ -->
+        <Grid Grid.Row="2" Margin="0,6,0,0">
+            <TextBox x:Name="txtMessages"
+                     IsReadOnly="True"
+                     VerticalScrollBarVisibility="Auto"
+                     TextWrapping="Wrap"/>
+        </Grid>
+    </Grid>
+</Window>
