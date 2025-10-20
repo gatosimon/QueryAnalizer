@@ -146,10 +146,22 @@
                               ResizeDirection="Rows" Background="#DDD" ShowsPreview="True"/>
 
                 <!-- Historial -->
-                <StackPanel Grid.Row="2">
-                    <TextBlock Text="Historial" Margin="0,0,0,4"/>
-                    <ListBox x:Name="lstHistory" SelectionChanged="LstHistory_SelectionChanged"/>
-                </StackPanel>
+                <Grid Grid.Row="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <!-- Para el título -->
+                        <RowDefinition Height="*"/>
+                        <!-- Para la lista -->
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Historial" Margin="0,0,0,4" Grid.Row="0"/>
+
+                    <ListBox x:Name="lstHistory"
+                        Grid.Row="1"
+                        SelectionChanged="LstHistory_SelectionChanged"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                        ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+                </Grid>
             </Grid>
         </Grid>
 

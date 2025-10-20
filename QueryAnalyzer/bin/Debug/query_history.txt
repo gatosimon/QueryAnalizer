@@ -43,3 +43,7 @@ SELECT * FROM M00tabma FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2
 ---
 SELECT * FROM tributos.apremios.allanamientocabecera
 ---
+SELECT * FROM apremios.allanamientocabecera
+---
+SELECT * FROM employees
+---

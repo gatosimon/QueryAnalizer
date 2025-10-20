@@ -30,23 +30,46 @@
 
         <!-- SERVIDOR -->
         <TextBlock Grid.Row="2" Grid.Column="0" Text="Servidor:" Margin="5" VerticalAlignment="Center"/>
-        <TextBox x:Name="txtServidor" Grid.Row="2" Grid.Column="1" Margin="5"/>
+
+        <Grid Grid.Row="2" Grid.Column="1" Margin="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="30"/>
+                <!-- Espacio reservado para el botón -->
+            </Grid.ColumnDefinitions>
+
+            <!-- TextBox alineado siempre igual -->
+            <TextBox x:Name="txtServidor"
+             Grid.Column="0"
+             VerticalAlignment="Center"
+             Margin="0,0,5,0"/>
+
+            <!-- Botón que aparece solo en SQLite -->
+            <Button x:Name="btnBuscarBase"
+            Grid.Column="1"
+            Content="..."
+            Width="25"
+            HorizontalAlignment="Right"
+            IsEnabled="False"
+            Click="btnBuscarBase_Click"/>
+        </Grid>
+
 
         <!-- USUARIO -->
-        <TextBlock Grid.Row="3" Grid.Column="0" Text="Usuario:" Margin="5" VerticalAlignment="Center"/>
+        <TextBlock x:Name="lblUsuario" Grid.Row="3" Grid.Column="0" Text="Usuario:" Margin="5" VerticalAlignment="Center"/>
         <TextBox x:Name="txtUsuario" Grid.Row="3" Grid.Column="1" Margin="5"/>
 
         <!-- CONTRASEÑA -->
-        <TextBlock Grid.Row="4" Grid.Column="0" Text="Contraseña:" Margin="5" VerticalAlignment="Center"/>
+        <TextBlock x:Name="lblContrasena" Grid.Row="4" Grid.Column="0" Text="Contraseña:" Margin="5" VerticalAlignment="Center"/>
         <PasswordBox x:Name="txtContrasena" Grid.Row="4" Grid.Column="1" Margin="5" LostFocus="txtContrasena_LostFocus"/>
 
         <!-- BASE DE DATOS -->
-        <TextBlock Grid.Row="5" Grid.Column="0" Text="Base de datos:" Margin="5" VerticalAlignment="Center"/>
+        <TextBlock x:Name="lblBaseDatos" Grid.Row="5" Grid.Column="0" Text="Base de datos:" Margin="5" VerticalAlignment="Center"/>
         <TextBox x:Name="txtBaseDatos" Grid.Row="5" Grid.Column="1" Margin="5"/>
         <ComboBox x:Name="cmbBaseDatos" Visibility="Hidden" Grid.Row="5" Grid.Column="1" Margin="5"/>
 
         <!-- BOTÓN GUARDAR -->
-        <Button x:Name="btnGuardar" Grid.Row="6" Grid.Column="1" Margin="0,10,5,0" 
+        <Button x:Name="btnGuardar" Grid.Row="6" Grid.Column="1" Margin="0,6,5,2" 
                 Content="Guardar Conexión" Width="150" HorizontalAlignment="Right"
                 Click="btnGuardar_Click"/>
     </Grid>

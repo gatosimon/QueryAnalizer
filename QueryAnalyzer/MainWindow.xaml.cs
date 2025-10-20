@@ -202,7 +202,7 @@ namespace QueryAnalyzer
                         stringConnection = $"Host={conexionActual.Servidor};Port=5432;Database={conexionActual.BaseDatos};Username={conexionActual.Usuario};Password={conexionActual.Contrasena};";
                         break;
                     case TipoMotor.SQLite:
-                        stringConnection = $"Data Source={conexionActual.Servidor};Version=3;"; ;
+                        stringConnection = $"Driver={{SQLite3 ODBC Driver}};Database={conexionActual.Servidor};"; //"Data Source={conexionActual.Servidor};Version=3;";
                         break;
                     default:
                         break;

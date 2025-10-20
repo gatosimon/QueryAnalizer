@@ -4,6 +4,7 @@ using System.Data.Odbc;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
+using Microsoft.Win32;
 using System.Windows;
 
 namespace QueryAnalyzer
@@ -11,7 +12,7 @@ namespace QueryAnalyzer
     public partial class DatosConexion : Window
     {
         private Dictionary<TipoMotor, string> motores;
-
+        double anchoServidor = 244;
         public DatosConexion()
         {
             InitializeComponent();
@@ -49,13 +50,21 @@ namespace QueryAnalyzer
             Close();
         }
 
+        private double anchoOriginalServidor = -1;
+
         private void cmbMotor_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            if (cmbMotor.SelectedValue.ToString() == TipoMotor.DB2.ToString())
+            var seleccionado = cmbMotor.SelectedValue != null
+                ? cmbMotor.SelectedValue.ToString()
+                : string.Empty;
+
+            // 🔹 DB2: usa combo de bases
+            if (seleccionado == TipoMotor.DB2.ToString())
             {
                 cmbBaseDatos.Visibility = Visibility.Visible;
                 cmbBaseDatos.ItemsSource = ConexionesManager.TablasDB2;
                 cmbBaseDatos.SelectedIndex = 0;
+
                 txtBaseDatos.Visibility = Visibility.Hidden;
                 txtBaseDatos.IsEnabled = false;
                 cmbBaseDatos.IsEnabled = true;
@@ -66,6 +75,29 @@ namespace QueryAnalyzer
                 txtBaseDatos.Visibility = Visibility.Visible;
                 txtBaseDatos.IsEnabled = true;
                 cmbBaseDatos.IsEnabled = false;
+            }
+
+            // 🔹 SQLite: muestra el botón de búsqueda
+            if (seleccionado == TipoMotor.SQLite.ToString())
+            {
+                btnBuscarBase.IsEnabled = true;
+                lblUsuario.Visibility = Visibility.Hidden;
+                txtUsuario.Visibility = Visibility.Hidden;
+                lblContrasena.Visibility = Visibility.Hidden;
+                txtContrasena.Visibility = Visibility.Hidden;
+                lblBaseDatos.Visibility = Visibility.Hidden;
+                cmbBaseDatos.Visibility = Visibility.Hidden;
+                txtBaseDatos.Visibility = Visibility.Hidden;
+            }
+            else
+            {
+                btnBuscarBase.IsEnabled = false;
+                lblUsuario.Visibility = Visibility.Visible;
+                txtUsuario.Visibility = Visibility.Visible;
+                lblContrasena.Visibility = Visibility.Visible;
+                txtContrasena.Visibility = Visibility.Visible;
+                lblBaseDatos.Visibility = Visibility.Visible;
+                cmbBaseDatos.Visibility = Visibility.Visible;
             }
         }
 
@@ -98,8 +130,26 @@ namespace QueryAnalyzer
                 }
                 catch (Exception ex)
                 {
-                    throw ex;
+                    MessageBox.Show("Ocurrió un error al intentar obtener las bases de datos desde el servidor. Verifique el usuario y la contraseña.", "ATENCIÓN!!!");
                 }
+            }
+        }
+
+        private void btnBuscarBase_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new OpenFileDialog
+            {
+                Title = "Seleccionar archivo",
+                Filter = "Todos los archivos (*.*)|*.db"
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                // Ruta completa del archivo seleccionado
+                string ruta = dlg.FileName;
+
+                // Ejemplo: mostrar en un TextBox
+                txtServidor.Text = ruta;
             }
         }
     }

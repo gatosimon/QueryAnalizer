@@ -24,4 +24,20 @@
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
   </Conexion>
+  <Conexion>
+    <Nombre>NUEVA</Nombre>
+    <Motor>MS_SQL</Motor>
+    <Servidor>DESARROLLO</Servidor>
+    <BaseDatos>TRIBUTOS</BaseDatos>
+    <Usuario>usuario</Usuario>
+    <Contrasena>ci?r0ba</Contrasena>
+  </Conexion>
+  <Conexion>
+    <Nombre>SQLite de prueba</Nombre>
+    <Motor>SQLite</Motor>
+    <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+    <BaseDatos />
+    <Usuario />
+    <Contrasena />
+  </Conexion>
 </ArrayOfConexion>
