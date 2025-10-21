@@ -190,12 +190,13 @@ namespace QueryAnalyzer
                             return cmd.ExecuteScalar();
                     }
                 });
-
-                AppendMessage("Resultado del escalar: " + (result?.ToString() ?? "(null)"));
+                await Dispatcher.InvokeAsync(() =>
+                    AppendMessage("Resultado del escalar: " + (result?.ToString() ?? "(null)")));
             }
             catch (Exception ex)
             {
-                AppendMessage("Error: " + ex.Message);
+                await Dispatcher.InvokeAsync(() =>
+                    AppendMessage("Error: " + ex.Message));
             }
         }
 
