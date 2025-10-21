@@ -185,3 +185,11 @@ SELECT [idSubdOficinas]
   FROM [tributos].[dbo].[RV_SubdiarioOficinas]
   WHERE idCliente = ?
 ---
+SELECT * FROM employees
+---
+SELECT * FROM albums
+---
+SELECT * FROM albums WHERE artistid = ?
+---
+SELECT * FROM apremios.apbck067
+---

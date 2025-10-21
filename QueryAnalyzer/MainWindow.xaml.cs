@@ -71,6 +71,7 @@ namespace QueryAnalyzer
                 conexionActual = conexion;
                 BloquearUI(false);
                 AppendMessage($"Conexión seleccionada: {conexion.Motor}");
+                CargarEsquema(); // 🔹 NUEVO
             }
         }
 
@@ -261,11 +262,11 @@ namespace QueryAnalyzer
                         break;
                     default:
                         break;
-                } 
+                }
             }
             return stringConnection;
         }
-                private void AppendMessage(string text)
+        private void AppendMessage(string text)
         {
             if (!Dispatcher.CheckAccess())
             {
@@ -378,7 +379,7 @@ namespace QueryAnalyzer
                 }
                 catch (Exception err)
                 {
-                    
+
                 }
             }
         }
@@ -393,6 +394,123 @@ namespace QueryAnalyzer
                 ConexionesManager.Guardar(conexiones);
                 cbDriver.ItemsSource = conexiones.Values.ToList();
                 cbDriver.DisplayMemberPath = "Nombre";
+            }
+        }
+
+        // 🔹 NUEVOS MÉTODOS: Explorador de tablas
+        private async void CargarEsquema()
+        {
+            if (conexionActual == null)
+            {
+                AppendMessage("No hay conexión seleccionada.");
+                return;
+            }
+
+            string connStr = GetConnectionString();
+
+            await Task.Run(() =>
+            {
+                try
+                {
+                    using (var conn = new OdbcConnection(connStr))
+                    {
+                        conn.Open();
+
+                        // Obtiene las tablas
+                        DataTable tablas = conn.GetSchema("Tables");
+
+                        Dispatcher.Invoke(() => tvSchema.Items.Clear());
+
+                        foreach (DataRow tabla in tablas.Rows)
+                        {
+                            string schema = tabla["TABLE_SCHEM"].ToString();
+                            string nombreTabla = tabla["TABLE_NAME"].ToString();
+                            string tipo = tabla["TABLE_TYPE"].ToString();
+
+                            if (tipo != "TABLE") continue;
+
+                            // 🔹 Creamos datos simples (strings) en el hilo de fondo
+                            string headerText = string.IsNullOrEmpty(schema) ? nombreTabla : $"{schema}.{nombreTabla}";
+                            var columnas = conn.GetSchema("Columns", new string[] { null, schema, nombreTabla });
+
+                            // 🔹 Ahora toda manipulación de la UI dentro del Dispatcher
+                            Dispatcher.Invoke(() =>
+                            {
+                                var tablaNode = new TreeViewItem
+                                {
+                                    Header = headerText,
+                                    Tag = nombreTabla
+                                };
+
+                                tvSchema.Items.Add(tablaNode);
+
+                                // Agregamos las columnas dentro del hilo de UI
+                                foreach (DataRow col in columnas.Rows)
+                                {
+                                    string colName = col["COLUMN_NAME"].ToString();
+                                    string tipoCol = col["TYPE_NAME"].ToString();
+                                    string longitud = col["COLUMN_SIZE"].ToString();
+
+                                    var colNode = new TreeViewItem
+                                    {
+                                        Header = $"{colName} ({tipoCol}{(string.IsNullOrEmpty(longitud) ? "" : $"[{longitud}]")})"
+                                    };
+
+                                    tablaNode.Items.Add(colNode);
+                                }
+                            });
+
+                            // 🔹 Carga de índices (solo lectura, sin UI)
+                            try
+                            {
+                                using (var cmd = conn.CreateCommand())
+                                {
+                                    cmd.CommandText = $"SELECT * FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_NAME = '{nombreTabla}'";
+                                    using (var adapter = new OdbcDataAdapter(cmd))
+                                    {
+                                        var dtIdx = new DataTable();
+                                        adapter.Fill(dtIdx);
+
+                                        if (dtIdx.Rows.Count > 0)
+                                        {
+                                            // Creamos la estructura para los índices
+                                            Dispatcher.Invoke(() =>
+                                            {
+                                                var tablaNode = tvSchema.Items.OfType<TreeViewItem>()
+                                                    .FirstOrDefault(t => (string)t.Tag == nombreTabla);
+                                                if (tablaNode == null) return;
+
+                                                var idxRoot = new TreeViewItem { Header = "Índices" };
+                                                foreach (DataRow idx in dtIdx.Rows)
+                                                {
+                                                    string idxName = idx["INDEX_NAME"].ToString();
+                                                    var idxNode = new TreeViewItem { Header = idxName };
+                                                    idxRoot.Items.Add(idxNode);
+                                                }
+                                                tablaNode.Items.Add(idxRoot);
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                            catch { /* Algunos motores no exponen esa vista */ }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Dispatcher.Invoke(() => AppendMessage("Error al cargar esquema: " + ex.Message));
+                }
+            });
+        }
+
+
+        private void tvSchema_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (tvSchema.SelectedItem is TreeViewItem item && item.Tag != null)
+            {
+                string tableName = item.Header.ToString();
+                txtQuery.Text = $"SELECT * FROM {tableName} FETCH FIRST 100 ROWS ONLY;";
             }
         }
     }

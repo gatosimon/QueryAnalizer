@@ -50,17 +50,36 @@
                     <!-- Resultados -->
                 </Grid.RowDefinitions>
 
-                <!-- Consulta -->
-                <DockPanel Grid.Row="0">
-                    <TextBlock Text="Consulta:" Margin="0,0,0,4"/>
-                    <TextBox x:Name="txtQuery" Margin="4,0,0,0"
-                             AcceptsReturn="True"
-                             VerticalScrollBarVisibility="Auto"
-                             HorizontalScrollBarVisibility="Auto"
-                             FontFamily="Consolas"
-                             FontSize="12"
-                             TextWrapping="NoWrap"/>
-                </DockPanel>
+                <!-- 🔹 NUEVO: Subgrid con TreeView y área de SQL -->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="5" />
+                        <ColumnDefinition Width="6*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- TreeView lateral -->
+                    <DockPanel Grid.Column="0">
+                        <TextBlock Text="Explorador" Margin="0,0,4,4"/>
+                        <TreeView x:Name="tvSchema" Margin="0,4,4,0" MouseDoubleClick="tvSchema_MouseDoubleClick"/>
+                    </DockPanel>
+
+                    <!-- Splitter entre TreeView y SQL -->
+                    <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"
+                                  ResizeDirection="Columns" Background="#DDD" ShowsPreview="True" />
+
+                    <!-- Consulta SQL -->
+                    <DockPanel Grid.Column="2">
+                        <TextBlock Text="Consulta:" Margin="0,0,0,4"/>
+                        <TextBox x:Name="txtQuery" Margin="4,0,0,0"
+                                 AcceptsReturn="True"
+                                 VerticalScrollBarVisibility="Auto"
+                                 HorizontalScrollBarVisibility="Auto"
+                                 FontFamily="Consolas"
+                                 FontSize="12"
+                                 TextWrapping="NoWrap"/>
+                    </DockPanel>
+                </Grid>
 
                 <!-- Splitter entre SQL y resultados -->
                 <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch"
