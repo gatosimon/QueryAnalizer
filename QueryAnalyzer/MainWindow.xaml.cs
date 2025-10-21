@@ -121,6 +121,39 @@ namespace QueryAnalyzer
                 var dt = await ExecuteQueryAsync(connStr, sql, parametros);
 
                 dgResults.ItemsSource = dt.DefaultView;
+                // Asigno formato a las columnas numéricas
+                foreach (var column in dgResults.Columns)
+                {
+                    // Obtiene el tipo de datos real de la columna desde el DataTable
+                    var colName = column.Header.ToString();
+                    var dataType = dt.Columns[colName].DataType;
+
+                    if (dataType == typeof(int) ||
+                        dataType == typeof(long) ||
+                        dataType == typeof(decimal) ||
+                        dataType == typeof(double) ||
+                        dataType == typeof(float))
+                    {
+                        column.CellStyle = new Style(typeof(DataGridCell))
+                        {
+                            Setters =
+                            {
+                                new Setter(TextBlock.TextAlignmentProperty, TextAlignment.Right)
+                            }
+                        };
+                    }
+                    else
+                    {
+                        column.CellStyle = new Style(typeof(DataGridCell))
+                        {
+                            Setters =
+                            {
+                                new Setter(TextBlock.TextAlignmentProperty, TextAlignment.Left)
+                            }
+                        };
+                    }
+                }
+
                 txtRowCount.Text = dt.Rows.Count.ToString();
 
                 await Dispatcher.InvokeAsync(() =>
