@@ -11,6 +11,9 @@
             <!-- Conexión -->
             <RowDefinition Height="*"/>
             <!-- Centro -->
+            <!-- NUEVO: fila del splitter -->
+            <RowDefinition Height="5"/>
+            <!-- Splitter entre centro y mensajes -->
             <RowDefinition Height="100"/>
             <!-- Mensajes -->
         </Grid.RowDefinitions>
@@ -72,7 +75,7 @@
 
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                         <Button x:Name="btnExecute" Padding="2,2" Content="Ejecutar (F5)" Width="120" Click="BtnExecute_Click"/>
-                        <Button x:Name="btnExecuteScalar" Padding="2,2" Content="Ejecutar Ecalar" Margin="8,0,0,0" Click="BtnExecuteScalar_Click" Height="20" VerticalAlignment="Bottom"/>
+                        <Button x:Name="btnExecuteScalar" Padding="2,2" Content="Ejecutar Escalar" Margin="8,0,0,0" Click="BtnExecuteScalar_Click" Height="22" VerticalAlignment="Bottom"/>
                         <Button x:Name="btnClear" Padding="2,2" Content="Limpiar Resultados" Margin="8,0,0,0" Click="BtnClear_Click"/>
                         <TextBlock Text="Filas:" VerticalAlignment="Center" Margin="12,0,0,0"/>
                         <TextBlock x:Name="txtRowCount" Text="0" VerticalAlignment="Center" Margin="6,0,0,0"/>
@@ -165,8 +168,16 @@
             </Grid>
         </Grid>
 
-        <!-- ░░░░░ FILA 2: Mensajes ░░░░░ -->
-        <Grid Grid.Row="2" Margin="0,6,0,0">
+        <!-- ░░░░░ NUEVO SPLITTER ENTRE CENTRO Y MENSAJES ░░░░░ -->
+        <GridSplitter Grid.Row="2"
+                      Height="5"
+                      HorizontalAlignment="Stretch"
+                      ResizeDirection="Rows"
+                      Background="#DDD"
+                      ShowsPreview="True"/>
+
+        <!-- ░░░░░ FILA 3: Mensajes ░░░░░ -->
+        <Grid Grid.Row="3" Margin="0,6,0,0">
             <TextBox x:Name="txtMessages"
                      IsReadOnly="True"
                      VerticalScrollBarVisibility="Auto"

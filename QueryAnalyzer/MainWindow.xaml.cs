@@ -39,6 +39,16 @@ namespace QueryAnalyzer
             InicializarConexiones();
             BloquearUI(true);
         }
+        protected override void OnPreviewKeyDown(KeyEventArgs e)
+        {
+            base.OnPreviewKeyDown(e);
+
+            if (e.Key == Key.F5)
+            {
+                TxtQuery_KeyDown(this, e);
+                e.Handled = true;
+            }
+        }
 
         private void CargarTipos()
         {
