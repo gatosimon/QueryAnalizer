@@ -70,7 +70,9 @@
 
         <!-- BOTÓN GUARDAR -->
         <Button x:Name="btnGuardar" Grid.Row="6" Grid.Column="1" Margin="0,6,5,2" 
-                Content="Guardar Conexión" Width="150" HorizontalAlignment="Right"
+                Content="Guardar Conexión" Width="113" HorizontalAlignment="Right"
                 Click="btnGuardar_Click"/>
+        <Button x:Name="btnProbar" Grid.Row="6" Grid.Column="1" Margin="5,6,5,2" 
+            Content="Probar Conexión" Width="113" HorizontalAlignment="left" Click="btnProbar_Click"/>
     </Grid>
 </Window>

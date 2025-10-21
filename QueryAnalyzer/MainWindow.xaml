@@ -20,9 +20,9 @@
             <TextBlock Text="Driver/Proveedor:" VerticalAlignment="Center" Margin="0,0,6,0"/>
             <ComboBox x:Name="cbDriver" Width="400" IsEditable="True" VerticalAlignment="Center" SelectionChanged="cbDriver_SelectionChanged"/>
             <Button x:Name="btnTest" Content="Probar conexión" Padding="2,2" Margin="8,0,0,0" Click="BtnTest_Click"/>
-            <Button x:Name="btnSaveConn" Content="Guardar" Padding="2,2" Margin="8,0,0,0" Click="BtnSaveConn_Click"/>
             <Button x:Name="btnNewConn" Content="Nueva" Padding="2,2" Margin="8,0,0,0" Click="BtnNewConn_Click"/>
             <Button x:Name="btnDeleteConn_Copy" Content="Eliminar" Padding="2,2" Margin="8,0,0,0" Click="btnDeleteConn_Click"/>
+            <Button x:Name="btnEditConn" Content="Editar" Padding="2,2" Margin="8,0,0,0" Click="BtnEditConn_Click"/>
         </StackPanel>
 
         <!-- ░░░░░ FILA 1: Centro ░░░░░ -->

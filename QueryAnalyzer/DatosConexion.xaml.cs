@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using Microsoft.Win32;
 using System.Windows;
+using System.Threading.Tasks;
 
 namespace QueryAnalyzer
 {
@@ -97,7 +98,8 @@ namespace QueryAnalyzer
                 lblContrasena.Visibility = Visibility.Visible;
                 txtContrasena.Visibility = Visibility.Visible;
                 lblBaseDatos.Visibility = Visibility.Visible;
-                cmbBaseDatos.Visibility = Visibility.Visible;
+                cmbBaseDatos.Visibility = (seleccionado == TipoMotor.POSTGRES.ToString()) ? Visibility.Hidden : Visibility.Visible;
+                txtBaseDatos.Visibility = Visibility.Visible;
             }
         }
 
@@ -151,6 +153,52 @@ namespace QueryAnalyzer
                 // Ejemplo: mostrar en un TextBox
                 txtServidor.Text = ruta;
             }
+        }
+
+        private void btnProbar_Click(object sender, RoutedEventArgs e)
+        {
+            string stringConnection = string.Empty;
+            TipoMotor motor = (TipoMotor)cmbMotor.SelectedValue;
+
+            switch (motor)
+            {
+                case TipoMotor.MS_SQL:
+                    stringConnection = $@"Driver={{ODBC Driver 17 for SQL Server}};Server=SQL{txtServidor.Text}\{txtServidor.Text};Database={txtBaseDatos.Text};Uid={txtUsuario.Text};Pwd={txtContrasena.Password};TrustServerCertificate=yes;";
+                    break;
+                case TipoMotor.DB2:
+                    stringConnection = $"Driver={{IBM DB2 ODBC DRIVER}};Database={txtBaseDatos.Text};Hostname={txtServidor.Text};Port=50000; Protocol=TCPIP;Uid={txtUsuario.Text};Pwd={txtContrasena.Password};";
+                    break;
+                case TipoMotor.POSTGRES:
+                    stringConnection = $"Driver={{PostgreSQL Unicode}};Server={txtServidor.Text};Port=5432;Database={txtBaseDatos.Text};Uid={txtUsuario.Text};Pwd={txtContrasena.Password};";
+                    break;
+                case TipoMotor.SQLite:
+                    stringConnection = $"Driver={{SQLite3 ODBC Driver}};Database={txtServidor.Text};"; //"Data Source={conexionActual.Servidor};Version=3;";
+                    break;
+                default:
+                    break;
+            }
+
+            if (string.IsNullOrWhiteSpace(stringConnection))
+            {
+                MessageBox.Show("El string de conexión está vacío", "Atención!!!");
+                return;
+            }
+
+            Task.Run(() =>
+            {
+                try
+                {
+                    using (var c = new OdbcConnection(stringConnection))
+                    {
+                        c.Open();
+                        MessageBox.Show("Conexión exitosa.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Conexión fallida: " + ex.Message);
+                }
+            });
         }
     }
 }

@@ -40,4 +40,12 @@
     <Usuario />
     <Contrasena />
   </Conexion>
+  <Conexion>
+    <Nombre>PG prueba</Nombre>
+    <Motor>POSTGRES</Motor>
+    <Servidor>localhost</Servidor>
+    <BaseDatos>Postgresim10</BaseDatos>
+    <Usuario>postgres</Usuario>
+    <Contrasena>postgres</Contrasena>
+  </Conexion>
 </ArrayOfConexion>

@@ -47,3 +47,17 @@ SELECT * FROM apremios.allanamientocabecera
 ---
 SELECT * FROM employees
 ---
+SELECT * FROM public."Contactos"
+---
+SELECT * FROM "Contactos"
+---
+SELECT * FROM "Contactos"
+---
+SELECT * FROM "Contactos"
+---
+SELECT * FROM "Contactos"
+---
+SELECT * FROM "Contactos"
+---
+SELECT * FROM SYSIBM.SYSCOLUMNS FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2
+---

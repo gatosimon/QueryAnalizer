@@ -199,7 +199,7 @@ namespace QueryAnalyzer
                         stringConnection = $"Driver={{IBM DB2 ODBC DRIVER}};Database={conexionActual.BaseDatos};Hostname={conexionActual.Servidor};Port=50000; Protocol=TCPIP;Uid={conexionActual.Usuario};Pwd={conexionActual.Contrasena};";
                         break;
                     case TipoMotor.POSTGRES:
-                        stringConnection = $"Host={conexionActual.Servidor};Port=5432;Database={conexionActual.BaseDatos};Username={conexionActual.Usuario};Password={conexionActual.Contrasena};";
+                        stringConnection = $"Driver={{PostgreSQL Unicode}};Server={conexionActual.Servidor};Port=5432;Database={conexionActual.BaseDatos};Uid={conexionActual.Usuario};Pwd={conexionActual.Contrasena};";
                         break;
                     case TipoMotor.SQLite:
                         stringConnection = $"Driver={{SQLite3 ODBC Driver}};Database={conexionActual.Servidor};"; //"Data Source={conexionActual.Servidor};Version=3;";
@@ -258,7 +258,7 @@ namespace QueryAnalyzer
             string conn = GetConnectionString();
             if (string.IsNullOrWhiteSpace(conn))
             {
-                AppendMessage("Connection string empty.");
+                AppendMessage("El string de conexión está vacío.");
                 return;
             }
 
@@ -269,26 +269,35 @@ namespace QueryAnalyzer
                     using (var c = new OdbcConnection(conn))
                     {
                         c.Open();
-                        Dispatcher.Invoke(() => AppendMessage("Connection successful."));
+                        Dispatcher.Invoke(() => AppendMessage("Conexión exitosa."));
                     }
                 }
                 catch (Exception ex)
                 {
-                    Dispatcher.Invoke(() => AppendMessage("Connection failed: " + ex.Message));
+                    Dispatcher.Invoke(() => AppendMessage("Conexión fallida: " + ex.Message));
                 }
             });
         }
 
-        private void BtnSaveConn_Click(object sender, RoutedEventArgs e)
+        private void BtnEditConn_Click(object sender, RoutedEventArgs e)
         {
-            try
+            DatosConexion datosConexion = new DatosConexion();
+            datosConexion.ShowDialog();
+            InicializarConexiones();
+            foreach (var item in cbDriver.Items)
             {
-                File.WriteAllText("last_connection.txt", cbDriver.Text ?? string.Empty);
-                AppendMessage("Connection string saved.");
-            }
-            catch (Exception ex)
-            {
-                AppendMessage("Error saving connection: " + ex.Message);
+                try
+                {
+                    if (conexionActual != null && ((Conexion)item).Nombre == conexionActual.Nombre)
+                    {
+                        cbDriver.SelectedItem = item;
+                        break;
+                    }
+                }
+                catch (Exception err)
+                {
+
+                }
             }
         }
 
