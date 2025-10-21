@@ -96,16 +96,16 @@ namespace QueryAnalyzer
 
             if (string.IsNullOrWhiteSpace(connStr))
             {
-                AppendMessage("Connection string is empty.");
+                AppendMessage("El string de conexión está vacío.");
                 return;
             }
             if (string.IsNullOrWhiteSpace(sql))
             {
-                AppendMessage("Query is empty.");
+                AppendMessage("La consulta está vacía.");
                 return;
             }
 
-            AppendMessage($"Executing... ({DateTime.Now})");
+            AppendMessage($"Ejecutando... ({DateTime.Now})");
 
             try
             {
@@ -122,12 +122,16 @@ namespace QueryAnalyzer
 
                 dgResults.ItemsSource = dt.DefaultView;
                 txtRowCount.Text = dt.Rows.Count.ToString();
-                AppendMessage($"Execution successful. {dt.Rows.Count} rows returned.");
+
+                await Dispatcher.InvokeAsync(() =>
+                    AppendMessage($"Ejecución exitosa!. {dt.Rows.Count} filas devueltas."));
+
                 AddToHistory(sql);
             }
             catch (Exception ex)
             {
-                AppendMessage("Error: " + ex.Message);
+                await Dispatcher.InvokeAsync(() =>
+                    AppendMessage("Error: " + ex.Message));
             }
         }
 
@@ -137,24 +141,31 @@ namespace QueryAnalyzer
             {
                 var dt = new DataTable();
 
-                using (var conn = new OdbcConnection(connStr))
+                try
                 {
-                    conn.Open();
-                    using (var cmd = new OdbcCommand(sql, conn))
+                    using (var conn = new OdbcConnection(connStr))
                     {
-                        foreach (var p in parametros)
+                        conn.Open();
+                        using (var cmd = new OdbcCommand(sql, conn))
                         {
-                            var name = p.Nombre.StartsWith("@") ? p.Nombre : "@" + p.Nombre;
-                            var param = new OdbcParameter(name, p.Tipo);
-                            param.Value = string.IsNullOrEmpty(p.Valor) ? DBNull.Value : (object)p.Valor;
-                            cmd.Parameters.Add(param);
-                        }
+                            foreach (var p in parametros)
+                            {
+                                var name = p.Nombre.StartsWith("@") ? p.Nombre : "@" + p.Nombre;
+                                var param = new OdbcParameter(name, p.Tipo);
+                                param.Value = string.IsNullOrEmpty(p.Valor) ? DBNull.Value : (object)p.Valor;
+                                cmd.Parameters.Add(param);
+                            }
 
-                        using (var adapter = new OdbcDataAdapter(cmd))
-                        {
-                            adapter.Fill(dt);
+                            using (var adapter = new OdbcDataAdapter(cmd))
+                            {
+                                adapter.Fill(dt);
+                            }
                         }
                     }
+                }
+                catch (Exception err)
+                {
+                    AppendMessage($"Ocurrió un error al ejecutar la consulta: {err.Message}");
                 }
 
                 return dt;
@@ -166,7 +177,7 @@ namespace QueryAnalyzer
             string connStr = GetConnectionString();
             string sql = txtQuery.Text;
 
-            AppendMessage("Executing scalar...");
+            AppendMessage("Ejecutando escalar...");
 
             try
             {
@@ -180,7 +191,7 @@ namespace QueryAnalyzer
                     }
                 });
 
-                AppendMessage("Scalar result: " + (result?.ToString() ?? "(null)"));
+                AppendMessage("Resultado del escalar: " + (result?.ToString() ?? "(null)"));
             }
             catch (Exception ex)
             {
@@ -192,7 +203,7 @@ namespace QueryAnalyzer
         {
             dgResults.ItemsSource = null;
             txtRowCount.Text = "0";
-            AppendMessage("Results cleared.");
+            AppendMessage("Resultados borrados.");
         }
 
         private string GetConnectionString()
@@ -220,9 +231,14 @@ namespace QueryAnalyzer
             }
             return stringConnection;
         }
-
-        private void AppendMessage(string text)
+                private void AppendMessage(string text)
         {
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.Invoke(() => AppendMessage(text));
+                return;
+            }
+
             txtMessages.AppendText($"[{DateTime.Now:HH:mm:ss}] {text}\n");
             txtMessages.ScrollToEnd();
         }

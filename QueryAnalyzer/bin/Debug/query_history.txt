@@ -69,3 +69,103 @@ SELECT * FROM M00TABMA WHERE CODPRIN = ?
 ---
 SELECT * FROM M00TABMA WHERE CODPRIN = ?
 ---
+SELECT * FROM dbo.RV_SubdiarioOficinas
+---
+SELECT * FROM dbo.RV_SubdiarioOficinas
+---
+SELECT [idSubdOficinas]
+      ,[idOficina]
+      ,[idCliente]
+      ,[Periodo]
+      ,[idConcepto]
+      ,[Cantidad]
+      ,[ImporteUnit]
+      ,[ImporteTotal]
+      ,[FAlta]
+      ,[UAlta]
+      ,[FProceso]
+      ,[UProceso]
+      ,[IdServicioALiquidar]
+  FROM [tributos].[dbo].[RV_SubdiarioOficinas]
+  WHERE idCliente = 8037
+---
+SELECT [idSubdOficinas]
+      ,[idOficina]
+      ,[idCliente]
+      ,[Periodo]
+      ,[idConcepto]
+      ,[Cantidad]
+      ,[ImporteUnit]
+      ,[ImporteTotal]
+      ,[FAlta]
+      ,[UAlta]
+      ,[FProceso]
+      ,[UProceso]
+      ,[IdServicioALiquidar]
+  FROM [tributos].[dbo].[RV_SubdiarioOficinas]
+  WHERE idCliente = @idCliente
+---
+SELECT [idSubdOficinas]
+      ,[idOficina]
+      ,[idCliente]
+      ,[Periodo]
+      ,[idConcepto]
+      ,[Cantidad]
+      ,[ImporteUnit]
+      ,[ImporteTotal]
+      ,[FAlta]
+      ,[UAlta]
+      ,[FProceso]
+      ,[UProceso]
+      ,[IdServicioALiquidar]
+  FROM [tributos].[dbo].[RV_SubdiarioOficinas]
+  WHERE idCliente = @idCliente
+---
+SELECT [idSubdOficinas]
+      ,[idOficina]
+      ,[idCliente]
+      ,[Periodo]
+      ,[idConcepto]
+      ,[Cantidad]
+      ,[ImporteUnit]
+      ,[ImporteTotal]
+      ,[FAlta]
+      ,[UAlta]
+      ,[FProceso]
+      ,[UProceso]
+      ,[IdServicioALiquidar]
+  FROM [tributos].[dbo].[RV_SubdiarioOficinas]
+  WHERE idCliente = @idCliente
+---
+SELECT [idSubdOficinas]
+      ,[idOficina]
+      ,[idCliente]
+      ,[Periodo]
+      ,[idConcepto]
+      ,[Cantidad]
+      ,[ImporteUnit]
+      ,[ImporteTotal]
+      ,[FAlta]
+      ,[UAlta]
+      ,[FProceso]
+      ,[UProceso]
+      ,[IdServicioALiquidar]
+  FROM [tributos].[dbo].[RV_SubdiarioOficinas]
+  WHERE idCliente = @idCliente
+---
+SELECT [idSubdOficinas]
+      ,[idOficina]
+      ,[idCliente]
+      ,[Periodo]
+      ,[idConcepto]
+      ,[Cantidad]
+      ,[ImporteUnit]
+      ,[ImporteTotal]
+      ,[FAlta]
+      ,[UAlta]
+      ,[FProceso]
+      ,[UProceso]
+      ,[IdServicioALiquidar]
+  FROM [tributos].[dbo].[RV_SubdiarioOficinas]
+  WHERE idCliente = ?
+---
