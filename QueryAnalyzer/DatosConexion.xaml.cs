@@ -37,7 +37,7 @@ namespace QueryAnalyzer
                 Nombre = txtNombre.Text.Trim(),
                 Motor = (TipoMotor)cmbMotor.SelectedValue,
                 Servidor = txtServidor.Text.Trim(),
-                BaseDatos = txtBaseDatos.Visibility == Visibility.Visible ? txtBaseDatos.Text.Trim() : cmbBaseDatos.Text,
+                BaseDatos = cmbBaseDatos.Visibility == Visibility.Visible ? cmbBaseDatos.Text.Trim() : txtBaseDatos.Text.Trim(),
                 Usuario = txtUsuario.Text.Trim(),
                 Contrasena = txtContrasena.Password
             };
@@ -163,10 +163,10 @@ namespace QueryAnalyzer
             switch (motor)
             {
                 case TipoMotor.MS_SQL:
-                    stringConnection = $@"Driver={{ODBC Driver 17 for SQL Server}};Server=SQL{txtServidor.Text}\{txtServidor.Text};Database={txtBaseDatos.Text};Uid={txtUsuario.Text};Pwd={txtContrasena.Password};TrustServerCertificate=yes;";
+                    stringConnection = $@"Driver={{ODBC Driver 17 for SQL Server}};Server=SQL{txtServidor.Text}\{txtServidor.Text};Database={cmbBaseDatos.Text};Uid={txtUsuario.Text};Pwd={txtContrasena.Password};TrustServerCertificate=yes;";
                     break;
                 case TipoMotor.DB2:
-                    stringConnection = $"Driver={{IBM DB2 ODBC DRIVER}};Database={txtBaseDatos.Text};Hostname={txtServidor.Text};Port=50000; Protocol=TCPIP;Uid={txtUsuario.Text};Pwd={txtContrasena.Password};";
+                    stringConnection = $"Driver={{IBM DB2 ODBC DRIVER}};Database={cmbBaseDatos.Text};Hostname={txtServidor.Text};Port=50000; Protocol=TCPIP;Uid={txtUsuario.Text};Pwd={txtContrasena.Password};";
                     break;
                 case TipoMotor.POSTGRES:
                     stringConnection = $"Driver={{PostgreSQL Unicode}};Server={txtServidor.Text};Port=5432;Database={txtBaseDatos.Text};Uid={txtUsuario.Text};Pwd={txtContrasena.Password};";

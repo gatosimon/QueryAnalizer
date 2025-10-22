@@ -33,19 +33,27 @@
     <Contrasena>ci?r0ba</Contrasena>
   </Conexion>
   <Conexion>
-    <Nombre>SQLite de prueba</Nombre>
-    <Motor>SQLite</Motor>
-    <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
-    <BaseDatos />
-    <Usuario />
-    <Contrasena />
-  </Conexion>
-  <Conexion>
     <Nombre>PG prueba</Nombre>
     <Motor>POSTGRES</Motor>
     <Servidor>localhost</Servidor>
     <BaseDatos>Postgresim10</BaseDatos>
     <Usuario>postgres</Usuario>
     <Contrasena>postgres</Contrasena>
+  </Conexion>
+  <Conexion>
+    <Nombre>Base Chica DB2</Nombre>
+    <Motor>DB2</Motor>
+    <Servidor>133.123.120.120</Servidor>
+    <BaseDatos>CONTCBEL</BaseDatos>
+    <Usuario>db2admin</Usuario>
+    <Contrasena>db2admin</Contrasena>
+  </Conexion>
+  <Conexion>
+    <Nombre>SQLite prueba</Nombre>
+    <Motor>SQLite</Motor>
+    <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+    <BaseDatos />
+    <Usuario />
+    <Contrasena />
   </Conexion>
 </ArrayOfConexion>

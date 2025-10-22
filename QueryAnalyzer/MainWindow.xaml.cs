@@ -418,6 +418,18 @@ namespace QueryAnalyzer
 
                         // Obtiene las tablas
                         DataTable tablas = conn.GetSchema("Tables");
+                        //List<string> tablasBaseDatos = new List<string>();
+                        //if (conexionActual.Motor == TipoMotor.DB2)
+                        //{
+                        //    OdbcCommand consultaTablas = conn.CreateCommand();
+                        //    consultaTablas.CommandText = "SELECT LTRIM(RTRIM(TBNAME)) AS Nombre, COUNT(NAME) FROM SYSIBM.SYSCOLUMNS WHERE TBCREATOR = 'DB2ADMIN' GROUP BY LTRIM(RTRIM(TBNAME)) ORDER BY Nombre";
+                        //    IDataReader lector = consultaTablas.ExecuteReader();
+                        //    while (lector.Read())
+                        //    {
+                        //        tablasBaseDatos.Add(lector.GetString(0));
+                        //    }
+                        //    lector.Close();
+                        //}
 
                         Dispatcher.Invoke(() => tvSchema.Items.Clear());
 
@@ -428,6 +440,7 @@ namespace QueryAnalyzer
                             string tipo = tabla["TABLE_TYPE"].ToString();
 
                             if (tipo != "TABLE") continue;
+                            //if (!tablasBaseDatos.Contains(nombreTabla)) continue;
 
                             // 🔹 Creamos datos simples (strings) en el hilo de fondo
                             string headerText = string.IsNullOrEmpty(schema) ? nombreTabla : $"{schema}.{nombreTabla}";
@@ -465,13 +478,70 @@ namespace QueryAnalyzer
                             {
                                 using (var cmd = conn.CreateCommand())
                                 {
-                                    cmd.CommandText = $"SELECT * FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_NAME = '{nombreTabla}'";
+                                    switch (conexionActual.Motor)
+                                    {
+                                        case TipoMotor.MS_SQL:
+                                            cmd.CommandText = $@"SELECT 
+                                                                    s.name AS SchemaName, 
+                                                                    t.name AS TableName, 
+                                                                    i.name AS IndexName, 
+                                                                    i.type_desc AS IndexType, 
+                                                                    c.name AS ColumnName, 
+                                                                    ic.key_ordinal AS ColumnOrder,
+                                                                    i.is_primary_key AS IsPrimaryKey,
+                                                                    i.is_unique AS IsUnique
+                                                                FROM sys.indexes i
+                                                                INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+                                                                INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+                                                                INNER JOIN sys.tables t ON i.object_id = t.object_id
+                                                                INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
+                                                                WHERE t.name = '{nombreTabla}'
+                                                                ORDER BY i.name, ic.key_ordinal;";
+                                            break;
+                                        case TipoMotor.DB2:
+                                            cmd.CommandText = $@"SELECT
+                                                                    i.TABSCHEMA AS SchemaName,
+                                                                    i.TABNAME AS TableName,
+                                                                    i.INDNAME AS IndexName,
+                                                                    i.UNIQUERULE AS UniqueRule,
+                                                                    c.COLNAME AS ColumnName,
+                                                                    c.COLSEQ AS ColumnOrder,
+                                                                    i.INDEXTYPE AS IndexType
+                                                                FROM SYSCAT.INDEXES i
+                                                                JOIN SYSCAT.INDEXCOLUSE c
+                                                                    ON i.INDNAME = c.INDNAME AND i.INDSCHEMA = c.INDSCHEMA
+                                                                WHERE i.TABNAME = UPPER('{nombreTabla}')
+                                                                ORDER BY i.INDNAME, c.COLSEQ;";
+                                            break;
+                                        case TipoMotor.POSTGRES:
+                                            cmd.CommandText = $@"SELECT
+                                                                    n.nspname AS SchemaName,
+                                                                    t.relname AS TableName,
+                                                                    i.relname AS IndexName,
+                                                                    a.attname AS ColumnName,
+                                                                    ix.indisunique AS IsUnique,
+                                                                    ix.indisprimary AS IsPrimary
+                                                                FROM pg_class t
+                                                                JOIN pg_index ix ON t.oid = ix.indrelid
+                                                                JOIN pg_class i ON i.oid = ix.indexrelid
+                                                                JOIN pg_namespace n ON n.oid = t.relnamespace
+                                                                JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
+                                                                WHERE t.relname = '{nombreTabla}'
+                                                                ORDER BY i.relname, a.attnum;";
+                                            break;
+                                        case TipoMotor.SQLite:
+                                            cmd.CommandText = $"PRAGMA index_list('{nombreTabla}');";
+                                            break;
+                                        default:
+                                            break;
+                                    }
+
                                     using (var adapter = new OdbcDataAdapter(cmd))
                                     {
-                                        var dtIdx = new DataTable();
-                                        adapter.Fill(dtIdx);
+                                        var dtIndices = new DataTable();
+                                        adapter.Fill(dtIndices);
 
-                                        if (dtIdx.Rows.Count > 0)
+                                        if (dtIndices.Rows.Count > 0)
                                         {
                                             // Creamos la estructura para los índices
                                             Dispatcher.Invoke(() =>
@@ -480,14 +550,20 @@ namespace QueryAnalyzer
                                                     .FirstOrDefault(t => (string)t.Tag == nombreTabla);
                                                 if (tablaNode == null) return;
 
-                                                var idxRoot = new TreeViewItem { Header = "Índices" };
-                                                foreach (DataRow idx in dtIdx.Rows)
+                                                var indiceRaiz = new TreeViewItem { Header = "Índices" };
+                                                foreach (DataRow indice in dtIndices.Rows)
                                                 {
-                                                    string idxName = idx["INDEX_NAME"].ToString();
-                                                    var idxNode = new TreeViewItem { Header = idxName };
-                                                    idxRoot.Items.Add(idxNode);
+                                                    try
+                                                    {
+                                                        string nombreIndice = indice[conexionActual.Motor == TipoMotor.SQLite ? "NAME" : "INDEXNAME"].ToString();
+                                                        var nodoIndice = new TreeViewItem { Header = nombreIndice };
+                                                        indiceRaiz.Items.Add(nodoIndice);
+                                                    }
+                                                    catch (Exception)
+                                                    {
+                                                    }
                                                 }
-                                                tablaNode.Items.Add(idxRoot);
+                                                tablaNode.Items.Add(indiceRaiz);
                                             });
                                         }
                                     }
