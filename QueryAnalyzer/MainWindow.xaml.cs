@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Odbc;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -91,6 +92,8 @@ namespace QueryAnalyzer
 
         private async void BtnExecute_Click(object sender, RoutedEventArgs e)
         {
+            Stopwatch sw = Stopwatch.StartNew();
+
             string connStr = GetConnectionString();
             string sql = txtQuery.Text;
 
@@ -155,9 +158,13 @@ namespace QueryAnalyzer
                 }
 
                 txtRowCount.Text = dt.Rows.Count.ToString();
+                sw.Stop();
+                double elapsedMicroseconds = sw.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
+
+                txtTiempoDeEjecucion.Text = $"{elapsedMicroseconds} ms";
 
                 await Dispatcher.InvokeAsync(() =>
-                    AppendMessage($"Ejecución exitosa!. {dt.Rows.Count} filas devueltas."));
+                    AppendMessage($"Ejecución exitosa!. {dt.Rows.Count} filas devueltas en {elapsedMicroseconds} ms"));
 
                 AddToHistory(sql);
             }
@@ -207,6 +214,8 @@ namespace QueryAnalyzer
 
         private async void BtnExecuteScalar_Click(object sender, RoutedEventArgs e)
         {
+            Stopwatch sw = Stopwatch.StartNew();
+
             string connStr = GetConnectionString();
             string sql = txtQuery.Text;
 
@@ -223,8 +232,14 @@ namespace QueryAnalyzer
                             return cmd.ExecuteScalar();
                     }
                 });
+
+                sw.Stop();
+                double elapsedMicroseconds = sw.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
+
+                txtTiempoDeEjecucion.Text = $"{elapsedMicroseconds} ms";
+
                 await Dispatcher.InvokeAsync(() =>
-                    AppendMessage("Resultado del escalar: " + (result?.ToString() ?? "(null)")));
+                    AppendMessage($"Resultado del escalar: {(result?.ToString() ?? "(null) en {}")} en {elapsedMicroseconds} ms"));
             }
             catch (Exception ex)
             {
