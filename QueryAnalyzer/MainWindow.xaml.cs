@@ -71,7 +71,6 @@ namespace QueryAnalyzer
                 conexionActual = conexion;
                 BloquearUI(false);
                 AppendMessage($"Conexión seleccionada: {conexion.Motor}");
-                CargarEsquema(); // 🔹 NUEVO
             }
         }
 
@@ -588,6 +587,11 @@ namespace QueryAnalyzer
                 string tableName = item.Header.ToString();
                 txtQuery.Text = $"SELECT * FROM {tableName} FETCH FIRST 100 ROWS ONLY;";
             }
+        }
+
+        private void btnExplorar_Click(object sender, RoutedEventArgs e)
+        {
+            CargarEsquema(); // 🔹 NUEVO
         }
     }
 }

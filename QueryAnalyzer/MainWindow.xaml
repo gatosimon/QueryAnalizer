@@ -59,10 +59,29 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- TreeView lateral -->
-                    <DockPanel Grid.Column="0">
-                        <TextBlock Text="Explorador" Margin="0,0,4,4"/>
-                        <TreeView x:Name="tvSchema" Margin="0,4,4,0" MouseDoubleClick="tvSchema_MouseDoubleClick"/>
-                    </DockPanel>
+                    <Grid Grid.Column="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <!-- Botón -->
+                            <ColumnDefinition Width="*"/>
+                            <!-- TreeView -->
+                        </Grid.ColumnDefinitions>
+
+                        <Button x:Name="btnExplorar"
+                                    Grid.Column="0"
+                                    Content="Explorar"
+                                    Width="60"
+                                    Height="25"
+                                    Margin="2,2,2,0"
+                                    Padding="2"
+                                    VerticalAlignment="Top" Click="btnExplorar_Click"/>
+                        <TreeView x:Name="tvSchema"
+                                      Grid.Column="1"
+                                      Margin="4,0,0,0"
+                                      MouseDoubleClick="tvSchema_MouseDoubleClick"
+                                      VerticalAlignment="Top"/>
+                    </Grid>
+
 
                     <!-- Splitter entre TreeView y SQL -->
                     <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"
