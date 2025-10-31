@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<ArrayOfHistorial xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00TABMA WHERE CODPRIN = 863 </Consulta>
+    <Parametros />
+    <Fecha>2025-10-31T11:53:47.9729992-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00TABMA WHERE CODPRIN = ? </Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>CODPRIN</string>
+        <string>Int</string>
+        <string>864</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2025-10-31T11:54:09.7993009-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00TABMA WHERE CODPRIN = ? </Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>CODPRIN</string>
+        <string>Int</string>
+        <string>864</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2025-10-31T11:55:15.5636002-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00TABMA WHERE CODPRIN = ? </Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>CODPRIN</string>
+        <string>Int</string>
+        <string>863</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2025-10-31T11:55:22.0778688-03:00</Fecha>
+  </Historial>
+</ArrayOfHistorial>
