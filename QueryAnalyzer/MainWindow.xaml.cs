@@ -100,6 +100,7 @@ namespace QueryAnalyzer
         private async void BtnExecute_Click(object sender, RoutedEventArgs e)
         {
             Stopwatch sw = Stopwatch.StartNew();
+            BtnClear_Click(sender, e);
 
             string connStr = GetConnectionString();
             string sql = txtQuery.Text;
