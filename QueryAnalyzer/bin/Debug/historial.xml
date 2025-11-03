@@ -740,4 +740,87 @@ FECHA_DEMANDA BETWEEN '2025-10-01' AND '2025-11-01'
     <Parametros />
     <Fecha>2025-11-03T10:22:01.5202427-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Apremios Desarrollo SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM apremios.W10ESTLIS
+WHERE COMUNA = 1 AND 
+INSTANCIA BETWEEN 1 AND 9 AND
+FECHA_DEMANDA BETWEEN '2025-10-01' AND '2025-11-01'
+</Consulta>
+    <Parametros />
+    <Fecha>2025-11-03T10:39:00.7059718-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Apremios Desarrollo SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.allanamientoCabecera</Consulta>
+    <Parametros />
+    <Fecha>2025-11-03T11:13:43.7394304-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Apremios Desarrollo SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.allanamientoCabecera</Consulta>
+    <Parametros />
+    <Fecha>2025-11-03T11:13:57.2406764-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Apremios Desarrollo SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.allanamientoCatastro</Consulta>
+    <Parametros />
+    <Fecha>2025-11-03T11:13:57.3596809-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Apremios Desarrollo SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.allanamientoCabecera</Consulta>
+    <Parametros />
+    <Fecha>2025-11-03T11:14:22.066543-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Apremios Desarrollo SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.allanamientoCatastro</Consulta>
+    <Parametros />
+    <Fecha>2025-11-03T11:14:22.1586101-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>

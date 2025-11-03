@@ -3118,3 +3118,20 @@ INSTANCIA BETWEEN 1 AND 9 AND
 FECHA_DEMANDA BETWEEN '2025-10-01' AND '2025-11-01'
 
 ---
+SELECT *
+FROM apremios.W10ESTLIS
+WHERE COMUNA = 1 AND 
+INSTANCIA BETWEEN 1 AND 9 AND
+FECHA_DEMANDA BETWEEN '2025-10-01' AND '2025-11-01'
+
+---
+SELECT * FROM apremios.allanamientoCabecera
+---
+SELECT * FROM apremios.allanamientoCabecera
+---
+SELECT * FROM apremios.allanamientoCatastro
+---
+SELECT * FROM apremios.allanamientoCabecera
+---
+SELECT * FROM apremios.allanamientoCatastro
+---

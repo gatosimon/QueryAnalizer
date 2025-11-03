@@ -5,20 +5,33 @@
         MinHeight="500" MinWidth="800"
         WindowStartupLocation="CenterScreen" Background="White" WindowState="Maximized">
 
+    <Window.Resources>
+        <Style x:Key="ResultGridRowStyle" TargetType="DataGridRow">
+            <Setter Property="Background" Value="White"/>
+            <Style.Triggers>
+                <Trigger Property="AlternationIndex" Value="1">
+                    <Setter Property="Background" Value="#5A23AAF2"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#DCEBFF"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#A7C7FF"/>
+                    <Setter Property="Foreground" Value="Black"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
     <Grid Margin="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <!-- Conexión -->
             <RowDefinition Height="*"/>
-            <!-- Centro -->
-            <!-- NUEVO: fila del splitter -->
             <RowDefinition Height="5"/>
-            <!-- Splitter entre centro y mensajes -->
             <RowDefinition Height="100"/>
-            <!-- Mensajes -->
         </Grid.RowDefinitions>
 
-        <!-- ░░░░░ FILA 0: Conexión ░░░░░ -->
+
         <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,6">
             <TextBlock Text="Driver/Proveedor:" VerticalAlignment="Center" Margin="0,0,6,0"/>
             <ComboBox x:Name="cbDriver" Width="400" IsEditable="True" VerticalAlignment="Center" SelectionChanged="cbDriver_SelectionChanged"/>
@@ -28,29 +41,21 @@
             <Button x:Name="btnEditConn" Content="Editar" Padding="2,2" Margin="8,0,0,0" Click="BtnEditConn_Click"/>
         </StackPanel>
 
-        <!-- ░░░░░ FILA 1: Centro ░░░░░ -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="3*"/>
-                <!-- SQL y resultados -->
                 <ColumnDefinition Width="5"/>
-                <!-- splitter -->
                 <ColumnDefinition Width="1.5*"/>
-                <!-- Parámetros e historial -->
             </Grid.ColumnDefinitions>
 
-            <!-- ░ PANEL IZQUIERDO ░ -->
+
             <Grid Grid.Column="0" x:Name="grdPrincipal">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="2*"/>
-                    <!-- SQL -->
                     <RowDefinition Height="5"/>
-                    <!-- splitter -->
                     <RowDefinition Height="*"/>
-                    <!-- Resultados -->
                 </Grid.RowDefinitions>
 
-                <!-- 🔹 NUEVO: Subgrid con TreeView y área de SQL -->
                 <Grid Grid.Row="0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="2*" />
@@ -59,15 +64,11 @@
                         <ColumnDefinition Width="6*" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- TreeView lateral -->
                     <Grid x:Name="grdExplorador" Grid.Column="0" >
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
-                            <!-- Botón -->
                             <ColumnDefinition Width="*"/>
-                            <!-- TreeView -->
                             <ColumnDefinition Width="Auto"/>
-                            <!-- Botón -->
                         </Grid.ColumnDefinitions>
 
                         <Button x:Name="btnExplorar"
@@ -85,15 +86,13 @@
                                       VerticalAlignment="Stretch"/>
 
                     </Grid>
-                        <Button x:Name="btnExpandirColapsar" Grid.Column="1" Content="&lt;&lt;" 
+                    <Button x:Name="btnExpandirColapsar" Grid.Column="1" Content="&lt;&lt;"
                                 VerticalAlignment="Stretch" Margin="0,2,0,2"
                                 Click="btnExpandirColapsar_Click"/>
 
-                    <!-- Splitter entre TreeView y SQL -->
                     <GridSplitter Grid.Column="2" Width="5" HorizontalAlignment="Stretch"
                                   ResizeDirection="Columns" Background="#DDD" ShowsPreview="True"/>
 
-                    <!-- Consulta SQL -->
                     <DockPanel Grid.Column="3">
                         <TextBlock Text="Consulta:" Margin="4,0,0,4"/>
                         <TextBox x:Name="txtQuery" Margin="4,0,0,0"
@@ -106,71 +105,43 @@
                     </DockPanel>
                 </Grid>
 
-                <!-- Splitter entre SQL y resultados -->
                 <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch"
                               ResizeDirection="Rows" Background="#DDD" ShowsPreview="True" />
 
-                <!-- Resultados -->
                 <Grid Grid.Row="2">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
                         <Button x:Name="btnExecute" Padding="2,2" Content="Ejecutar (F5)" Width="120" Click="BtnExecute_Click"/>
                         <Button x:Name="btnExecuteScalar" Padding="2,2" Content="Ejecutar Escalar" Margin="8,0,0,0" Click="BtnExecuteScalar_Click" Height="22" VerticalAlignment="Bottom"/>
                         <Button x:Name="btnClear" Padding="2,2" Content="Limpiar Resultados" Margin="8,0,0,0" Click="BtnClear_Click"/>
-                        <TextBlock Text="Filas:" VerticalAlignment="Center" Margin="12,0,0,0"/>
+
+                        <TextBlock Text="Filas (Total):" VerticalAlignment="Center" Margin="12,0,0,0"/>
                         <TextBlock x:Name="txtRowCount" Text="0" VerticalAlignment="Center" Margin="6,0,0,0"/>
-                        <TextBlock Text="Tiempo de ejecución:" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                        <TextBlock Text="Tiempo (Total):" VerticalAlignment="Center" Margin="12,0,0,0"/>
                         <TextBlock x:Name="txtTiempoDeEjecucion" Text="0" VerticalAlignment="Center" Margin="6,0,0,0"/>
                     </StackPanel>
 
-                    <DataGrid x:Name="dgResults"
-                              Grid.Row="1"
-                              IsReadOnly="True"
-                              AutoGenerateColumns="True"
-                              VerticalScrollBarVisibility="Auto"
-                              AlternationCount="2">
-                        <DataGrid.RowStyle>
-                            <Style TargetType="DataGridRow">
-                                <Setter Property="Background" Value="White"/>
-                                <Style.Triggers>
-                                    <Trigger Property="AlternationIndex" Value="1">
-                                        <Setter Property="Background" Value="#5A23AAF2"/>
-                                    </Trigger>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#DCEBFF"/>
-                                    </Trigger>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="#A7C7FF"/>
-                                        <Setter Property="Foreground" Value="Black"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGrid.RowStyle>
-                    </DataGrid>
+                    <TabControl x:Name="tcResults"
+                                Grid.Row="1"
+                                Margin="0,4,0,0"/>
 
                 </Grid>
             </Grid>
 
-            <!-- Splitter columnas -->
             <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"
                           ResizeDirection="Columns" Background="#DDD" ShowsPreview="True"/>
 
-            <!-- ░ PANEL DERECHO ░ -->
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="2*"/>
-                    <!-- Parámetros -->
                     <RowDefinition Height="5"/>
-                    <!-- splitter -->
                     <RowDefinition Height="*"/>
-                    <!-- Historial -->
                 </Grid.RowDefinitions>
 
-                <!-- Parámetros -->
                 <StackPanel Grid.Row="0">
                     <TextBlock Text="Parámetros" Margin="2,0,-2,4"/>
                     <DataGrid x:Name="gridParams"
@@ -210,17 +181,13 @@
                     </DataGrid>
                 </StackPanel>
 
-                <!-- Splitter interno -->
                 <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch"
                               ResizeDirection="Rows" Background="#DDD" ShowsPreview="True"/>
 
-                <!-- Historial -->
                 <Grid Grid.Row="2">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <!-- Para el título -->
                         <RowDefinition Height="*"/>
-                        <!-- Para la lista -->
                     </Grid.RowDefinitions>
 
                     <TextBlock Text="Historial" Margin="0,0,0,4" Grid.Row="0"/>
@@ -234,7 +201,6 @@
             </Grid>
         </Grid>
 
-        <!-- ░░░░░ NUEVO SPLITTER ENTRE CENTRO Y MENSAJES ░░░░░ -->
         <GridSplitter Grid.Row="2"
                       Height="5"
                       HorizontalAlignment="Stretch"
@@ -242,7 +208,6 @@
                       Background="#DDD"
                       ShowsPreview="True"/>
 
-        <!-- ░░░░░ FILA 3: Mensajes ░░░░░ -->
         <Grid Grid.Row="3" Margin="0,6,0,0">
             <TextBox x:Name="txtMessages"
                      IsReadOnly="True"
