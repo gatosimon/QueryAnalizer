@@ -11,6 +11,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Xml.Serialization;
+using System;
+using System.Windows.Media.Animation;
 
 namespace QueryAnalyzer
 {
@@ -804,9 +806,79 @@ namespace QueryAnalyzer
         {
             CargarEsquema(); // 🔹 NUEVO
         }
+
+        private bool isCollapsed = false;
+        private double expandedWidth = 0;
+        private double collapsedWidth = 0;
+
+        private void btnExpandirColapsar_Click(object sender, RoutedEventArgs e)
+        {
+            if (!isCollapsed)
+            {
+                expandedWidth = grdExplorador.ActualWidth;
+            }
+            var colDef = ((Grid)grdExplorador.Parent).ColumnDefinitions[0]; // solo la columna del TreeView
+
+            double from = colDef.ActualWidth;
+            double to = isCollapsed ? expandedWidth : collapsedWidth;
+
+            var anim = new GridLengthAnimation
+            {
+                From = new GridLength(from, GridUnitType.Pixel),
+                To = new GridLength(to, GridUnitType.Pixel),
+                Duration = new Duration(TimeSpan.FromMilliseconds(250)),
+                FillBehavior = FillBehavior.Stop
+            };
+
+            anim.Completed += (s, _) =>
+            {
+                colDef.Width = new GridLength(to, GridUnitType.Pixel);
+                isCollapsed = !isCollapsed;
+                btnExpandirColapsar.Content = isCollapsed ? ">>" : "<<";
+            };
+
+            colDef.BeginAnimation(ColumnDefinition.WidthProperty, anim);
+        }
     }
 }
+public class GridLengthAnimation : AnimationTimeline
+{
+    public override Type TargetPropertyType => typeof(GridLength);
 
+    public static readonly DependencyProperty FromProperty =
+        DependencyProperty.Register("From", typeof(GridLength), typeof(GridLengthAnimation));
+
+    public static readonly DependencyProperty ToProperty =
+        DependencyProperty.Register("To", typeof(GridLength), typeof(GridLengthAnimation));
+
+    public GridLength From
+    {
+        get => (GridLength)GetValue(FromProperty);
+        set => SetValue(FromProperty, value);
+    }
+
+    public GridLength To
+    {
+        get => (GridLength)GetValue(ToProperty);
+        set => SetValue(ToProperty, value);
+    }
+
+    public override object GetCurrentValue(object defaultOriginValue, object defaultDestinationValue, AnimationClock animationClock)
+    {
+        double fromVal = ((GridLength)GetValue(FromProperty)).Value;
+        double toVal = ((GridLength)GetValue(ToProperty)).Value;
+
+        if (fromVal > toVal)
+            return new GridLength((1 - animationClock.CurrentProgress.Value) * (fromVal - toVal) + toVal, GridUnitType.Pixel);
+        else
+            return new GridLength(animationClock.CurrentProgress.Value * (toVal - fromVal) + fromVal, GridUnitType.Pixel);
+    }
+
+    protected override Freezable CreateInstanceCore()
+    {
+        return new GridLengthAnimation();
+    }
+}
 
 
 

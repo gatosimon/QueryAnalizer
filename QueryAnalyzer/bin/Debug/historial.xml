@@ -70,4 +70,42 @@
     </Parametros>
     <Fecha>2025-10-31T11:55:22.0778688-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00TABMA WHERE CODPRIN = ? </Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>CODPRIN</string>
+        <string>Int</string>
+        <string>863</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2025-10-31T13:15:43.8415244-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00TABMA WHERE CODPRIN = ? </Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>CODPRIN</string>
+        <string>Int</string>
+        <string>2</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2025-10-31T13:15:48.2431255-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>
