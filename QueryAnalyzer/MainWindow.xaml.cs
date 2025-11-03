@@ -255,14 +255,16 @@ namespace QueryAnalyzer
                         conn.Open();
                         using (var cmd = new OdbcCommand(sql, conn))
                         {
-                            foreach (var p in parametros)
+                            if (parametros != null)
                             {
-                                var name = p.Nombre.StartsWith("@") ? p.Nombre : "@" + p.Nombre;
-                                var param = new OdbcParameter(name, p.Tipo);
-                                param.Value = string.IsNullOrEmpty(p.Valor) ? DBNull.Value : (object)p.Valor;
-                                cmd.Parameters.Add(param);
+                                foreach (var p in parametros)
+                                {
+                                    var name = p.Nombre.StartsWith("@") ? p.Nombre : "@" + p.Nombre;
+                                    var param = new OdbcParameter(name, p.Tipo);
+                                    param.Value = string.IsNullOrEmpty(p.Valor) ? DBNull.Value : (object)p.Valor;
+                                    cmd.Parameters.Add(param);
+                                }
                             }
-
                             using (var adapter = new OdbcDataAdapter(cmd))
                             {
                                 adapter.Fill(dt);

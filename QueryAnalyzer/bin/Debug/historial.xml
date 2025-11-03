@@ -823,4 +823,83 @@ FECHA_DEMANDA BETWEEN '2025-10-01' AND '2025-11-01'
     <Parametros />
     <Fecha>2025-11-03T11:14:22.1586101-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M10NAPLEG FETCH FIRST 10 ROWS ONLY</Consulta>
+    <Parametros />
+    <Fecha>2025-11-03T11:15:59.0734413-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>-- ejemplo para DB2
+SELECT * FROM M00TABMA FETCH FIRST 10 ROWS ONLY</Consulta>
+    <Parametros />
+    <Fecha>2025-11-03T11:15:59.3518075-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M10NAPLEG FETCH FIRST 10 ROWS ONLY</Consulta>
+    <Parametros />
+    <Fecha>2025-11-03T11:16:06.3118244-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00TABMA FETCH FIRST 10 ROWS ONLY</Consulta>
+    <Parametros />
+    <Fecha>2025-11-03T11:16:06.5428325-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00TABMA FETCH FIRST 10 ROWS ONLY</Consulta>
+    <Parametros />
+    <Fecha>2025-11-03T11:21:16.1597985-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M10NAPLEG FETCH FIRST 10 ROWS ONLY</Consulta>
+    <Parametros />
+    <Fecha>2025-11-03T11:21:16.3348048-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>
