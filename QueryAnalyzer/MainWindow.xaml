@@ -13,7 +13,7 @@
                     <Setter Property="Background" Value="#5A23AAF2"/>
                 </Trigger>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#DCEBFF"/>
+                    <Setter Property="Background" Value="#FFD800"/>
                 </Trigger>
                 <Trigger Property="IsSelected" Value="True">
                     <Setter Property="Background" Value="#A7C7FF"/>

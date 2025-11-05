@@ -97,6 +97,152 @@ namespace QueryAnalyzer
                 BtnExecute_Click(this, new RoutedEventArgs());
         }
 
+        //private async void BtnExecute_Click(object sender, RoutedEventArgs e)
+        //{
+        //    Stopwatch swTotal = Stopwatch.StartNew();
+
+        //    string connStr = GetConnectionString();
+        //    string sqlCompleto = txtQuery.Text;
+
+        //    if (string.IsNullOrWhiteSpace(connStr))
+        //    {
+        //        AppendMessage("El string de conexión está vacío.");
+        //        return;
+        //    }
+        //    if (string.IsNullOrWhiteSpace(sqlCompleto))
+        //    {
+        //        AppendMessage("La consulta está vacía.");
+        //        return;
+        //    }
+
+        //    // 🔹 NUEVO: Limpiar pestañas anteriores
+        //    tcResults.Items.Clear();
+        //    AppendMessage($"Ejecutando... ({DateTime.Now})");
+
+        //    // 🔹 NUEVO: Dividir las consultas por ;
+        //    string[] queries = sqlCompleto.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+        //    var validQueries = queries.Select(q => q.Trim()).Where(q => !string.IsNullOrWhiteSpace(q)).ToList();
+
+        //    if (validQueries.Count == 0)
+        //    {
+        //        AppendMessage("No se encontraron consultas válidas (separadas por ';').");
+        //        return;
+        //    }
+
+        //    long totalRows = 0;
+
+        //    try
+        //    {
+        //        // Captura los parámetros de UI (se usarán los mismos para todas las consultas)
+        //        List<QueryParameter> parametros = null;
+        //        await Dispatcher.InvokeAsync(() =>
+        //        {
+        //            parametros = gridParams.Items.OfType<QueryParameter>()
+        //                .Where(p => !string.IsNullOrWhiteSpace(p.Nombre))
+        //                .ToList();
+        //        });
+
+        //        // 🔹 NUEVO: Iterar sobre cada consulta
+        //        for (int i = 0; i < validQueries.Count; i++)
+        //        {
+        //            string sqlIndividual = validQueries[i];
+        //            Stopwatch swQuery = Stopwatch.StartNew();
+        //            AppendMessage($"Ejecutando consulta {i + 1}/{validQueries.Count}...");
+
+        //            // ExecuteQueryAsync ya maneja sus errores internamente y devuelve un DT (potencialmente vacío)
+        //            var dt = await ExecuteQueryAsync(connStr, sqlIndividual, parametros);
+
+        //            swQuery.Stop();
+        //            double elapsedMicroseconds = swQuery.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
+        //            totalRows += dt.Rows.Count;
+
+        //            // 🔹 NUEVO: Crear la UI para esta pestaña (en el hilo de UI)
+        //            await Dispatcher.InvokeAsync(() =>
+        //            {
+        //                // 1. Crear el DataGrid
+        //                var dataGrid = new DataGrid
+        //                {
+        //                    IsReadOnly = true,
+        //                    AutoGenerateColumns = true,
+        //                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+        //                    AlternationCount = 2,
+        //                    // Aplicar el estilo desde los recursos
+        //                    RowStyle = (Style)this.FindResource("ResultGridRowStyle")
+        //                };
+
+        //                // 2. Asignar datos
+        //                dataGrid.ItemsSource = dt.DefaultView;
+
+        //                // 3. Aplicar estilo de alineación de columnas (copiado de tu lógica original)
+        //                foreach (var column in dataGrid.Columns)
+        //                {
+        //                    var colName = column.Header.ToString();
+        //                    var dataType = dt.Columns[colName].DataType;
+
+        //                    if (dataType == typeof(int) ||
+        //                        dataType == typeof(long) ||
+        //                        dataType == typeof(decimal) ||
+        //                        dataType == typeof(double) ||
+        //                        dataType == typeof(float))
+        //                    {
+        //                        column.CellStyle = new Style(typeof(DataGridCell))
+        //                        {
+        //                            Setters = { new Setter(TextBlock.TextAlignmentProperty, TextAlignment.Right) }
+        //                        };
+        //                    }
+        //                    else
+        //                    {
+        //                        column.CellStyle = new Style(typeof(DataGridCell))
+        //                        {
+        //                            Setters = { new Setter(TextBlock.TextAlignmentProperty, TextAlignment.Left) }
+        //                        };
+        //                    }
+        //                }
+
+        //                // 4. Crear la Pestaña (TabItem)
+        //                var tabItem = new TabItem
+        //                {
+        //                    // Header con estadísticas de la consulta individual
+        //                    Header = $"Resultado {i + 1} ({dt.Rows.Count} filas, {elapsedMicroseconds:F0} ms)",
+        //                    Content = dataGrid // El contenido es la grilla
+        //                };
+
+        //                // 5. Añadir la pestaña al control
+        //                tcResults.Items.Add(tabItem);
+
+        //                AppendMessage($"Consulta {i + 1} exitosa. {dt.Rows.Count} filas devueltas en {elapsedMicroseconds:F0} ms");
+        //            });
+
+        //            // NUEVO: guardo la consulta y sus parámetros asociados a la conexión actual
+        //            // (Tu lógica de historial original, movida dentro del bucle)
+        //            AddToHistoryWithParams(sqlIndividual, parametros);
+        //        }
+
+        //        // 🔹 NUEVO: Actualizar estadísticas totales
+        //        swTotal.Stop();
+        //        double totalElapsedMicroseconds = swTotal.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
+
+        //        txtRowCount.Text = totalRows.ToString();
+        //        txtTiempoDeEjecucion.Text = $"{totalElapsedMicroseconds:F0} ms";
+
+        //        await Dispatcher.InvokeAsync(() =>
+        //        {
+        //            AppendMessage($"Ejecución total finalizada!. {validQueries.Count} consultas ejecutadas en {totalElapsedMicroseconds:F0} ms");
+        //            if (tcResults.Items.Count > 0)
+        //                tcResults.SelectedIndex = 0; // Seleccionar la primera pestaña
+        //        });
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // Este catch ahora manejará errores en la lógica de bucle/UI,
+        //        // ya que ExecuteQueryAsync maneja sus propios errores de SQL.
+        //        await Dispatcher.InvokeAsync(() =>
+        //            AppendMessage("Error: " + ex.Message));
+        //    }
+        //}
+
+
         private async void BtnExecute_Click(object sender, RoutedEventArgs e)
         {
             Stopwatch swTotal = Stopwatch.StartNew();
@@ -115,11 +261,9 @@ namespace QueryAnalyzer
                 return;
             }
 
-            // 🔹 NUEVO: Limpiar pestañas anteriores
             tcResults.Items.Clear();
             AppendMessage($"Ejecutando... ({DateTime.Now})");
 
-            // 🔹 NUEVO: Dividir las consultas por ;
             string[] queries = sqlCompleto.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
             var validQueries = queries.Select(q => q.Trim()).Where(q => !string.IsNullOrWhiteSpace(q)).ToList();
 
@@ -133,7 +277,6 @@ namespace QueryAnalyzer
 
             try
             {
-                // Captura los parámetros de UI (se usarán los mismos para todas las consultas)
                 List<QueryParameter> parametros = null;
                 await Dispatcher.InvokeAsync(() =>
                 {
@@ -142,83 +285,101 @@ namespace QueryAnalyzer
                         .ToList();
                 });
 
-                // 🔹 NUEVO: Iterar sobre cada consulta
                 for (int i = 0; i < validQueries.Count; i++)
                 {
                     string sqlIndividual = validQueries[i];
                     Stopwatch swQuery = Stopwatch.StartNew();
                     AppendMessage($"Ejecutando consulta {i + 1}/{validQueries.Count}...");
 
-                    // ExecuteQueryAsync ya maneja sus errores internamente y devuelve un DT (potencialmente vacío)
                     var dt = await ExecuteQueryAsync(connStr, sqlIndividual, parametros);
 
                     swQuery.Stop();
                     double elapsedMicroseconds = swQuery.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
                     totalRows += dt.Rows.Count;
 
-                    // 🔹 NUEVO: Crear la UI para esta pestaña (en el hilo de UI)
                     await Dispatcher.InvokeAsync(() =>
                     {
-                        // 1. Crear el DataGrid
                         var dataGrid = new DataGrid
                         {
                             IsReadOnly = true,
                             AutoGenerateColumns = true,
                             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                             AlternationCount = 2,
-                            // Aplicar el estilo desde los recursos
-                            RowStyle = (Style)this.FindResource("ResultGridRowStyle")
+                            RowStyle = (Style)this.FindResource("ResultGridRowStyle"),
+                            ItemsSource = dt.DefaultView
                         };
 
-                        // 2. Asignar datos
-                        dataGrid.ItemsSource = dt.DefaultView;
-
-                        // 3. Aplicar estilo de alineación de columnas (copiado de tu lógica original)
-                        foreach (var column in dataGrid.Columns)
+                        // 🔹 Aplicar alineación según tipo de dato cuando las columnas ya existen
+                        dataGrid.AutoGeneratedColumns += (s, ev) =>
                         {
-                            var colName = column.Header.ToString();
-                            var dataType = dt.Columns[colName].DataType;
-
-                            if (dataType == typeof(int) ||
-                                dataType == typeof(long) ||
-                                dataType == typeof(decimal) ||
-                                dataType == typeof(double) ||
-                                dataType == typeof(float))
+                            foreach (var column in dataGrid.Columns)
                             {
-                                column.CellStyle = new Style(typeof(DataGridCell))
-                                {
-                                    Setters = { new Setter(TextBlock.TextAlignmentProperty, TextAlignment.Right) }
-                                };
-                            }
-                            else
-                            {
-                                column.CellStyle = new Style(typeof(DataGridCell))
-                                {
-                                    Setters = { new Setter(TextBlock.TextAlignmentProperty, TextAlignment.Left) }
-                                };
-                            }
-                        }
+                                string colName = column.Header.ToString();
+                                if (!dt.Columns.Contains(colName))
+                                    continue;
 
-                        // 4. Crear la Pestaña (TabItem)
+                                Type tipo = dt.Columns[colName].DataType;
+
+                                bool esNumerico =
+                                    tipo == typeof(int) ||
+                                    tipo == typeof(long) ||
+                                    tipo == typeof(decimal) ||
+                                    tipo == typeof(double) ||
+                                    tipo == typeof(float) ||
+                                    tipo == typeof(short) ||
+                                    tipo == typeof(byte);
+
+                                var alineacion = esNumerico ? TextAlignment.Right : TextAlignment.Left;
+
+                                // Crear o reemplazar estilo
+                                var estilo = new Style(typeof(DataGridCell));
+                                estilo.Setters.Add(new Setter(TextBlock.TextAlignmentProperty, alineacion));
+                                column.CellStyle = estilo;
+                            }
+                        };
+
+                        // 🔹 Forzar actualización visual para asegurar columnas generadas
+                        dataGrid.Loaded += (s, ev) =>
+                        {
+                            foreach (var column in dataGrid.Columns)
+                            {
+                                string colName = column.Header.ToString();
+                                if (!dt.Columns.Contains(colName))
+                                    continue;
+
+                                Type tipo = dt.Columns[colName].DataType;
+
+                                bool esNumerico =
+                                    tipo == typeof(int) ||
+                                    tipo == typeof(long) ||
+                                    tipo == typeof(decimal) ||
+                                    tipo == typeof(double) ||
+                                    tipo == typeof(float) ||
+                                    tipo == typeof(short) ||
+                                    tipo == typeof(byte);
+
+                                var alineacion = esNumerico ? TextAlignment.Right : TextAlignment.Left;
+
+                                var estilo = new Style(typeof(DataGridCell));
+                                estilo.Setters.Add(new Setter(TextBlock.TextAlignmentProperty, alineacion));
+                                column.CellStyle = estilo;
+                            }
+                        };
+
                         var tabItem = new TabItem
                         {
-                            // Header con estadísticas de la consulta individual
                             Header = $"Resultado {i + 1} ({dt.Rows.Count} filas, {elapsedMicroseconds:F0} ms)",
-                            Content = dataGrid // El contenido es la grilla
+                            Content = dataGrid
                         };
 
-                        // 5. Añadir la pestaña al control
                         tcResults.Items.Add(tabItem);
 
                         AppendMessage($"Consulta {i + 1} exitosa. {dt.Rows.Count} filas devueltas en {elapsedMicroseconds:F0} ms");
                     });
 
-                    // NUEVO: guardo la consulta y sus parámetros asociados a la conexión actual
-                    // (Tu lógica de historial original, movida dentro del bucle)
                     AddToHistoryWithParams(sqlIndividual, parametros);
                 }
 
-                // 🔹 NUEVO: Actualizar estadísticas totales
                 swTotal.Stop();
                 double totalElapsedMicroseconds = swTotal.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
 
@@ -227,20 +388,19 @@ namespace QueryAnalyzer
 
                 await Dispatcher.InvokeAsync(() =>
                 {
-                    AppendMessage($"Ejecución total finalizada!. {validQueries.Count} consultas ejecutadas en {totalElapsedMicroseconds:F0} ms");
+                    AppendMessage($"Ejecución total finalizada. {validQueries.Count} consultas ejecutadas en {totalElapsedMicroseconds:F0} ms");
                     if (tcResults.Items.Count > 0)
-                        tcResults.SelectedIndex = 0; // Seleccionar la primera pestaña
+                        tcResults.SelectedIndex = 0;
                 });
-
             }
             catch (Exception ex)
             {
-                // Este catch ahora manejará errores en la lógica de bucle/UI,
-                // ya que ExecuteQueryAsync maneja sus propios errores de SQL.
                 await Dispatcher.InvokeAsync(() =>
                     AppendMessage("Error: " + ex.Message));
             }
         }
+
+
 
         private async Task<DataTable> ExecuteQueryAsync(string connStr, string sql, List<QueryParameter> parametros)
         {
