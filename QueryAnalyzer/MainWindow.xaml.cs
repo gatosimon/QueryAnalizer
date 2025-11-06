@@ -401,13 +401,18 @@ namespace QueryAnalyzer
                 txtRowCount.Text = totalRows.ToString();
                 txtTiempoDeEjecucion.Text = $"{totalElapsedMicroseconds:F0} ms";
 
+                if (tcResults.Items.Count > 0)
+                {
+                    tcResults.SelectedIndex = 0; // Selecciona la primera pestaña
+                    tcResults.Focus();           // Da foco al control para habilitar Ctrl+Tab
+                }
+
                 await Dispatcher.InvokeAsync(() =>
                 {
                     AppendMessage($"Ejecución total finalizada. {validQueries.Count} consultas ejecutadas en {totalElapsedMicroseconds:F0} ms");
                     if (tcResults.Items.Count > 0)
                         tcResults.SelectedIndex = 0;
                 });
-
             }
             catch (Exception ex)
             {

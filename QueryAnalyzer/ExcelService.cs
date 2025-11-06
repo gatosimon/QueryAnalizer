@@ -464,7 +464,7 @@ namespace QueryAnalyzer
                     {
                         Horizontal = HorizontalAlignmentValues.Center,
                         Vertical = VerticalAlignmentValues.Center,
-                        WrapText = true,
+                        WrapText = false,
                         Indent = 0,
                         RelativeIndent = 1
                     }
