@@ -20,6 +20,7 @@ namespace QueryAnalyzer
     {
         private const string HISTORY_FILE = "query_history.txt";
         private const string HISTORIAL_XML = "historial.xml";
+        private bool iniciarColapasado = true;
         public Dictionary<string, OdbcType> OdbcTypes { get; set; }
         public List<QueryParameter> Parametros { get; set; }
 
@@ -52,6 +53,16 @@ namespace QueryAnalyzer
             {
                 TxtQuery_KeyDown(this, e);
                 e.Handled = true;
+            }
+        }
+
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            if (iniciarColapasado)
+            {
+                btnExpandirColapsar_Click(this, e as RoutedEventArgs);
+                iniciarColapasado = false;
             }
         }
 
@@ -89,6 +100,7 @@ namespace QueryAnalyzer
             btnExecuteScalar.IsEnabled = !bloquear;
             btnTest.IsEnabled = !bloquear;
             btnClear.IsEnabled = !bloquear;
+            btnExcel.IsEnabled = !bloquear;
         }
 
         private void TxtQuery_KeyDown(object sender, KeyEventArgs e)
@@ -242,7 +254,6 @@ namespace QueryAnalyzer
         //    }
         //}
 
-
         private async void BtnExecute_Click(object sender, RoutedEventArgs e)
         {
             Stopwatch swTotal = Stopwatch.StartNew();
@@ -274,6 +285,8 @@ namespace QueryAnalyzer
             }
 
             long totalRows = 0;
+            long totalColumns = 0;
+
 
             try
             {
@@ -296,6 +309,7 @@ namespace QueryAnalyzer
                     swQuery.Stop();
                     double elapsedMicroseconds = swQuery.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
                     totalRows += dt.Rows.Count;
+                    totalColumns += dt.Columns.Count;
 
                     await Dispatcher.InvokeAsync(() =>
                     {
@@ -320,7 +334,7 @@ namespace QueryAnalyzer
 
                                 Type tipo = dt.Columns[colName].DataType;
 
-                                bool esNumerico =
+                                bool aDerecha =
                                     tipo == typeof(int) ||
                                     tipo == typeof(long) ||
                                     tipo == typeof(decimal) ||
@@ -329,7 +343,7 @@ namespace QueryAnalyzer
                                     tipo == typeof(short) ||
                                     tipo == typeof(byte);
 
-                                var alineacion = esNumerico ? TextAlignment.Right : TextAlignment.Left;
+                                var alineacion = aDerecha ? TextAlignment.Right : TextAlignment.Left;
 
                                 // Crear o reemplazar estilo
                                 var estilo = new Style(typeof(DataGridCell));
@@ -368,7 +382,7 @@ namespace QueryAnalyzer
 
                         var tabItem = new TabItem
                         {
-                            Header = $"Resultado {i + 1} ({dt.Rows.Count} filas, {elapsedMicroseconds:F0} ms)",
+                            Header = $"Resultado {i + 1} ({dt.Columns.Count} columnas, {dt.Rows.Count} filas, {elapsedMicroseconds:F0} ms)",
                             Content = dataGrid
                         };
 
@@ -383,6 +397,7 @@ namespace QueryAnalyzer
                 swTotal.Stop();
                 double totalElapsedMicroseconds = swTotal.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
 
+                txtColumnCount.Text = totalColumns.ToString();
                 txtRowCount.Text = totalRows.ToString();
                 txtTiempoDeEjecucion.Text = $"{totalElapsedMicroseconds:F0} ms";
 
@@ -392,6 +407,7 @@ namespace QueryAnalyzer
                     if (tcResults.Items.Count > 0)
                         tcResults.SelectedIndex = 0;
                 });
+
             }
             catch (Exception ex)
             {
@@ -400,7 +416,113 @@ namespace QueryAnalyzer
             }
         }
 
+        //private async void BtnExcel_Click(object sender, RoutedEventArgs e)
+        //{
+        //    try
+        //    {
+        //        // 🚀 Paso 1: Reunir los datos de las distintas pestañas
+        //        var hojas = new Dictionary<string, IEnumerable<object>>();
 
+        //        // Ejemplo: suponiendo que tenés 3 pestañas con DataGrid
+        //        // (ajustá los nombres a los de tu proyecto real)
+        //        foreach (TabItem tab in tcResults.Items)
+        //        {
+        //            var grid = tab.Content as DataGrid;
+        //            if (grid?.ItemsSource != null)
+        //            {
+        //                var tabla = ((System.Data.DataView)grid.ItemsSource).ToTable();
+        //                hojas.Add(tab.Header.ToString(), ConvertirDataTable(tabla));
+
+        //                //hojas.Add(tab.Header.ToString(), grid.ItemsSource.Cast<object>().ToList());
+        //            }
+        //        }
+
+        //        if (hojas.Count == 0)
+        //        {
+        //            AppendMessage("No hay datos para exportar.");
+        //            return;
+        //        }
+
+        //        // 🚀 Paso 2: Crear el Excel
+        //        var excelService = new ExcelService();
+        //        byte[] archivoExcel = excelService.CrearExcelMultiplesHojas(hojas);
+
+        //        // 🚀 Paso 3: Guardar el archivo
+        //        string ruta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "ResultadosConsultas.xlsx");
+        //        excelService.GuardarArchivo(archivoExcel, ruta);
+
+        //        AppendMessage($"Excel generado correctamente en: {ruta}");
+        //        System.Diagnostics.Process.Start(ruta); // abre el archivo
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        AppendMessage("Error al generar Excel: " + ex.Message);
+        //    }
+        //}
+
+        private async void BtnExcel_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var hojas = new Dictionary<string, System.Data.DataTable>();
+
+                // 🔹 Recorre automáticamente todas las pestañas del TabControl
+                foreach (TabItem tab in tcResults.Items)
+                {
+                    var grid = tab.Content as DataGrid;
+                    if (grid?.ItemsSource == null)
+                        continue;
+
+                    // Convertir el DataGrid en DataTable
+                    var dt = ((System.Data.DataView)grid.ItemsSource).ToTable();
+
+                    // Nombre de la hoja = título del tab (sin caracteres inválidos)
+                    string nombreHoja = tab.Header.ToString();
+                    hojas[nombreHoja] = dt;
+                }
+
+                if (hojas.Count == 0)
+                {
+                    AppendMessage("No hay datos para exportar.");
+                    return;
+                }
+
+                // 🔹 Crear el Excel
+                var excelService = new ExcelService();
+                byte[] archivoExcel = excelService.CrearExcelMultiplesHojas(hojas);
+
+                // 🔹 Guardar en escritorio
+                string ruta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "ResultadosConsultas.xlsx");
+                excelService.GuardarArchivo(archivoExcel, ruta);
+
+                AppendMessage($"Excel generado correctamente en: {ruta}");
+                System.Diagnostics.Process.Start(ruta);
+            }
+            catch (Exception ex)
+            {
+                AppendMessage("Error al generar Excel: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Convierte un DataTable en una lista de diccionarios (nombreColumna -> valor)
+        /// </summary>
+        private List<Dictionary<string, object>> ConvertirDataTable(System.Data.DataTable dt)
+        {
+            var lista = new List<Dictionary<string, object>>();
+
+            foreach (System.Data.DataRow row in dt.Rows)
+            {
+                var dict = new Dictionary<string, object>();
+                foreach (System.Data.DataColumn col in dt.Columns)
+                {
+                    dict[col.ColumnName] = row[col] != DBNull.Value ? row[col] : "";
+                }
+                lista.Add(dict);
+            }
+
+            return lista;
+        }
 
         private async Task<DataTable> ExecuteQueryAsync(string connStr, string sql, List<QueryParameter> parametros)
         {
@@ -1015,7 +1137,6 @@ namespace QueryAnalyzer
             });
         }
 
-
         private void tvSchema_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (tvSchema.SelectedItem is TreeViewItem item && item.Tag != null)
@@ -1035,6 +1156,11 @@ namespace QueryAnalyzer
         private double collapsedWidth = 0;
 
         private void btnExpandirColapsar_Click(object sender, RoutedEventArgs e)
+        {
+            ExpandirColapasar();
+        }
+
+        private void ExpandirColapasar()
         {
             if (!isCollapsed)
             {
