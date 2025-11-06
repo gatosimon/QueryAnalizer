@@ -79,6 +79,19 @@
                                     Margin="2,2,2,0"
                                     Padding="2"
                                     VerticalAlignment="Top" Click="btnExplorar_Click"/>
+                        <Button x:Name="btnExplorarConsultas" Click="btnExplorarConsultas_Click"
+                                    Grid.Column="0"
+                                    Width="60"
+                                    Height="50"
+                                    Margin="2,32,2,0"
+                                    Padding="2"
+                                    VerticalAlignment="Top">
+                                    <TextBlock Text="Explorar&#10;consultas"
+                                    TextAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Center"/>
+                        </Button>
+
                         <TreeView x:Name="tvSchema"
                                       Grid.Column="1"
                                       Margin="4,2,4,2"
