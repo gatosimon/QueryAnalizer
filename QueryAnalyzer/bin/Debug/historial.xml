@@ -1526,4 +1526,121 @@ SELECT * FROM M00TABMA FETCH FIRST 10 ROWS ONLY</Consulta>
     <Parametros />
     <Fecha>2025-11-06T08:34:03.1566075-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Apremios Desarrollo SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00SISTE</Consulta>
+    <Parametros />
+    <Fecha>2025-11-06T08:43:49.6091331-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Apremios Desarrollo SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00SISTE</Consulta>
+    <Parametros />
+    <Fecha>2025-11-06T08:45:11.3437753-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Apremios Desarrollo SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00SISTE</Consulta>
+    <Parametros />
+    <Fecha>2025-11-06T08:52:18.4072411-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Apremios Desarrollo SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00SISTE</Consulta>
+    <Parametros />
+    <Fecha>2025-11-06T08:56:09.7053517-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Apremios Desarrollo SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00SISTE</Consulta>
+    <Parametros />
+    <Fecha>2025-11-06T08:58:15.2360546-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Apremios Desarrollo SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00SISTE</Consulta>
+    <Parametros />
+    <Fecha>2025-11-06T09:04:04.9395989-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Apremios Desarrollo SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00SISTE</Consulta>
+    <Parametros />
+    <Fecha>2025-11-06T09:06:55.9736046-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Apremios Desarrollo SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00SISTE</Consulta>
+    <Parametros />
+    <Fecha>2025-11-06T09:07:27.182592-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Apremios Desarrollo SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00SISTE</Consulta>
+    <Parametros />
+    <Fecha>2025-11-06T09:10:13.055778-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>

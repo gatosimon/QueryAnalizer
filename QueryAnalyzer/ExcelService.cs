@@ -23,7 +23,6 @@ namespace QueryAnalyzer
                     WorkbookPart workbookPart = document.AddWorkbookPart();
                     workbookPart.Workbook = new Workbook();
 
-                    // Estilos comunes
                     WorkbookStylesPart stylesPart = workbookPart.AddNewPart<WorkbookStylesPart>();
                     stylesPart.Stylesheet = CrearEstilos();
                     stylesPart.Stylesheet.Save();
@@ -38,8 +37,23 @@ namespace QueryAnalyzer
 
                         WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
                         SheetData sheetData = new SheetData();
-
                         worksheetPart.Worksheet = new Worksheet(sheetData);
+
+                        // 🔹 Fijar encabezado (Freeze Pane)
+                        SheetViews views = new SheetViews();
+                        SheetView view = new SheetView() { WorkbookViewId = 0 };
+                        Pane pane = new Pane()
+                        {
+                            VerticalSplit = 1,
+                            TopLeftCell = "A2",
+                            ActivePane = PaneValues.BottomLeft,
+                            State = PaneStateValues.Frozen
+                        };
+                        view.Append(pane);
+                        views.Append(view);
+                        worksheetPart.Worksheet.InsertAt(views, 0);
+
+                        // 🔹 Crear hoja
                         Sheet sheet = new Sheet()
                         {
                             Id = workbookPart.GetIdOfPart(worksheetPart),
@@ -48,20 +62,13 @@ namespace QueryAnalyzer
                         };
                         sheets.Append(sheet);
 
-                        // Si no hay filas, igual agregamos encabezado vacío
-                        if (dt.Columns.Count == 0)
-                        {
-                            sheetData.Append(new Row());
-                            continue;
-                        }
-
-                        // Encabezados
-                        Row headerRow = new Row();
+                        // 🔹 Encabezado
+                        Row headerRow = new Row() { Height = 20, CustomHeight = true };
                         foreach (System.Data.DataColumn col in dt.Columns)
                             headerRow.Append(CreateCell(col.ColumnName, 1));
                         sheetData.Append(headerRow);
 
-                        // Filas de datos
+                        // 🔹 Filas de datos
                         uint rowIndex = 0;
                         foreach (System.Data.DataRow row in dt.Rows)
                         {
@@ -69,18 +76,43 @@ namespace QueryAnalyzer
                             foreach (System.Data.DataColumn col in dt.Columns)
                             {
                                 string value = row[col] != DBNull.Value ? Convert.ToString(row[col]) : "";
+                                uint styleIndex = 2; // por defecto texto
 
-                                // estilo 3 = fila par, estilo 2 = fila impar
-                                uint style = (rowIndex % 2 == 0) ? 2U : 3U;
-                                newRow.Append(CreateCell(value, style));
+                                // Detectar tipo de dato
+                                bool esNumero = col.DataType == typeof(int) ||
+                                                col.DataType == typeof(Int16) ||
+                                                col.DataType == typeof(Int32) ||
+                                                col.DataType == typeof(Int64) ||
+                                                col.DataType == typeof(uint) ||
+                                                col.DataType == typeof(UInt16) ||
+                                                col.DataType == typeof(UInt32) ||
+                                                col.DataType == typeof(UInt64) ||
+                                                col.DataType == typeof(decimal) ||
+                                                col.DataType == typeof(double) ||
+                                                col.DataType == typeof(float) ||
+                                                col.DataType == typeof(long);
+
+                                bool esFecha = col.DataType == typeof(DateTime);
+
+                                // Alternar fondo por fila
+                                bool esPar = rowIndex % 2 == 0;
+
+                                if (esFecha)
+                                    styleIndex = esPar ? 6U : 7U;
+                                else if (esNumero)
+                                    styleIndex = esPar ? 4U : 5U;
+                                else
+                                    styleIndex = esPar ? 2U : 3U;
+
+                                newRow.Append(CreateCell(value, styleIndex, esNumero, esFecha));
                             }
                             sheetData.Append(newRow);
                             rowIndex++;
                         }
 
-                        // Ajuste de anchos
+                        // 🔹 Ajuste de columnas
                         Columns cols = AutoSizeColumns(dt);
-                        worksheetPart.Worksheet.InsertAt(cols, 0);
+                        worksheetPart.Worksheet.InsertAt(cols, 1);
                     }
 
                     workbookPart.Workbook.Save();
@@ -88,6 +120,83 @@ namespace QueryAnalyzer
                 return stream.ToArray();
             }
         }
+
+
+
+        //public byte[] CrearExcelMultiplesHojas(Dictionary<string, System.Data.DataTable> hojas)
+        //{
+        //    using (MemoryStream stream = new MemoryStream())
+        //    {
+        //        using (SpreadsheetDocument document = SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook))
+        //        {
+        //            WorkbookPart workbookPart = document.AddWorkbookPart();
+        //            workbookPart.Workbook = new Workbook();
+
+        //            // Estilos comunes
+        //            WorkbookStylesPart stylesPart = workbookPart.AddNewPart<WorkbookStylesPart>();
+        //            stylesPart.Stylesheet = CrearEstilos();
+        //            stylesPart.Stylesheet.Save();
+
+        //            Sheets sheets = workbookPart.Workbook.AppendChild(new Sheets());
+        //            uint sheetId = 1;
+
+        //            foreach (var hoja in hojas)
+        //            {
+        //                string nombreHoja = hoja.Key;
+        //                var dt = hoja.Value;
+
+        //                WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
+        //                SheetData sheetData = new SheetData();
+
+        //                worksheetPart.Worksheet = new Worksheet(sheetData);
+        //                Sheet sheet = new Sheet()
+        //                {
+        //                    Id = workbookPart.GetIdOfPart(worksheetPart),
+        //                    SheetId = sheetId++,
+        //                    Name = SanearNombreHoja(nombreHoja)
+        //                };
+        //                sheets.Append(sheet);
+
+        //                // Si no hay filas, igual agregamos encabezado vacío
+        //                if (dt.Columns.Count == 0)
+        //                {
+        //                    sheetData.Append(new Row());
+        //                    continue;
+        //                }
+
+        //                // Encabezados
+        //                Row headerRow = new Row();
+        //                foreach (System.Data.DataColumn col in dt.Columns)
+        //                    headerRow.Append(CreateCell(col.ColumnName, 1));
+        //                sheetData.Append(headerRow);
+
+        //                // Filas de datos
+        //                uint rowIndex = 0;
+        //                foreach (System.Data.DataRow row in dt.Rows)
+        //                {
+        //                    Row newRow = new Row();
+        //                    foreach (System.Data.DataColumn col in dt.Columns)
+        //                    {
+        //                        string value = row[col] != DBNull.Value ? Convert.ToString(row[col]) : "";
+
+        //                        // estilo 3 = fila par, estilo 2 = fila impar
+        //                        uint style = (rowIndex % 2 == 0) ? 2U : 3U;
+        //                        newRow.Append(CreateCell(value, style));
+        //                    }
+        //                    sheetData.Append(newRow);
+        //                    rowIndex++;
+        //                }
+
+        //                // Ajuste de anchos
+        //                Columns cols = AutoSizeColumns(dt);
+        //                worksheetPart.Worksheet.InsertAt(cols, 0);
+        //            }
+
+        //            workbookPart.Workbook.Save();
+        //        }
+        //        return stream.ToArray();
+        //    }
+        //}
 
         // --------------------------------------------------------------------
         // 🔹 FUNCIONES AUXILIARES
@@ -100,21 +209,73 @@ namespace QueryAnalyzer
             return limpio.Length > 31 ? limpio.Substring(0, 31) : limpio;
         }
 
-        private Cell CreateCell(string text, uint styleIndex)
+        private Cell CreateCell(string text, uint styleIndex, bool esNumero = false, bool esFecha = false)
         {
-            return new Cell()
+            var cell = new Cell() { StyleIndex = styleIndex };
+
+            if (esNumero && double.TryParse(text, out double num))
             {
-                DataType = CellValues.String,
-                CellValue = new CellValue(text ?? ""),
-                StyleIndex = styleIndex
-            };
+                cell.CellValue = new CellValue(num.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                cell.DataType = CellValues.Number;
+            }
+            else if (esFecha && DateTime.TryParse(text, out DateTime fecha))
+            {
+                cell.CellValue = new CellValue(fecha.ToOADate().ToString(System.Globalization.CultureInfo.InvariantCulture));
+                cell.DataType = CellValues.Number; // Excel guarda fechas como número
+            }
+            else
+            {
+                cell.CellValue = new CellValue(text ?? "");
+                cell.DataType = CellValues.String;
+            }
+
+            return cell;
         }
+
+        //private Cell CreateCell(string text, uint styleIndex)
+        //{
+        //    return new Cell()
+        //    {
+        //        DataType = CellValues.String,
+        //        CellValue = new CellValue(text ?? ""),
+        //        StyleIndex = styleIndex
+        //    };
+        //}
+
+        //private Columns AutoSizeColumns(System.Data.DataTable dt)
+        //{
+        //    Columns cols = new Columns();
+        //    for (int i = 0; i < dt.Columns.Count; i++)
+        //    {
+        //        double maxLength = dt.Columns[i].ColumnName.Length;
+
+        //        foreach (System.Data.DataRow row in dt.Rows)
+        //        {
+        //            if (row[i] != DBNull.Value)
+        //            {
+        //                double len = Convert.ToString(row[i]).Length;
+        //                if (len > maxLength) maxLength = len;
+        //            }
+        //        }
+
+        //        cols.Append(new Column()
+        //        {
+        //            Min = (UInt32)(i + 1),
+        //            Max = (UInt32)(i + 1),
+        //            Width = Math.Max(10, maxLength + 2),
+        //            CustomWidth = true
+        //        });
+        //    }
+        //    return cols;
+        //}
 
         private Columns AutoSizeColumns(System.Data.DataTable dt)
         {
             Columns cols = new Columns();
+
             for (int i = 0; i < dt.Columns.Count; i++)
             {
+                // longitud máxima del texto más largo (encabezado o valor)
                 double maxLength = dt.Columns[i].ColumnName.Length;
 
                 foreach (System.Data.DataRow row in dt.Rows)
@@ -122,50 +283,139 @@ namespace QueryAnalyzer
                     if (row[i] != DBNull.Value)
                     {
                         double len = Convert.ToString(row[i]).Length;
-                        if (len > maxLength) maxLength = len;
+                        if (len > maxLength)
+                            maxLength = len;
                     }
                 }
+
+                // Ajuste más realista: Excel suele calcular el ancho aproximando caracteres a ~1.2 unidades
+                double ancho = Math.Min(100, (maxLength + 2) * 1.2);
 
                 cols.Append(new Column()
                 {
                     Min = (UInt32)(i + 1),
                     Max = (UInt32)(i + 1),
-                    Width = Math.Max(10, maxLength + 2),
+                    Width = ancho,
                     CustomWidth = true
                 });
             }
+
             return cols;
         }
 
+
+        //private Stylesheet CrearEstilos()
+        //{
+        //    Fonts fonts = new Fonts(
+        //        new Font( // 0 - default Roboto
+        //            new FontName() { Val = "Calibri,Roboto,Arial" },
+        //            new FontSize() { Val = 10 },
+        //            new Color() { Rgb = "000000" }
+        //        ),
+        //        new Font( // 1 - encabezado Roboto Bold
+        //            new FontName() { Val = "Calibri,Roboto,Arial" },
+        //            new FontSize() { Val = 10 },
+        //            new Bold(),
+        //            new Color() { Rgb = "000000" }
+        //        ),
+        //        new Font( // 2 - texto normal Roboto
+        //            new FontName() { Val = "Calibri,Roboto,Arial" },
+        //            new FontSize() { Val = 10 },
+        //            new Color() { Rgb = "000000" }
+        //        )
+        //);
+
+
+        //    Fills fills = new Fills(
+        //        new Fill(new PatternFill() { PatternType = PatternValues.None }), // 0
+        //        new Fill(new PatternFill() { PatternType = PatternValues.Gray125 }), // 1
+        //        new Fill(new PatternFill(new ForegroundColor { Rgb = "FFA7C7FF" }) { PatternType = PatternValues.Solid }), // 2 encabezado azul
+        //        new Fill(new PatternFill(new ForegroundColor { Rgb = "FFA7D7F0" }) { PatternType = PatternValues.Solid }) // 3 filas alternas
+        //    );
+
+        //    Borders borders = new Borders(
+        //        new Border(),
+        //        new Border(
+        //            new LeftBorder() { Style = BorderStyleValues.Thin },
+        //            new RightBorder() { Style = BorderStyleValues.Thin },
+        //            new TopBorder() { Style = BorderStyleValues.Thin },
+        //            new BottomBorder() { Style = BorderStyleValues.Thin },
+        //            new DiagonalBorder())
+        //    );
+
+        //    CellFormats cellFormats = new CellFormats(
+        //        new CellFormat(), // 0 - default
+        //        new CellFormat() // 1 - encabezado
+        //        {
+        //            FontId = 1,
+        //            FillId = 2,
+        //            BorderId = 1,
+        //            ApplyFont = true,
+        //            ApplyFill = true,
+        //            ApplyBorder = true,
+        //            Alignment = new Alignment()
+        //            {
+        //                Horizontal = HorizontalAlignmentValues.Center,
+        //                Vertical = VerticalAlignmentValues.Center,
+        //                WrapText = true
+        //            }
+        //        },
+        //        new CellFormat() // 2 - fila impar
+        //        {
+        //            FontId = 2,
+        //            FillId = 0,
+        //            BorderId = 1,
+        //            ApplyFont = true,
+        //            ApplyBorder = true,
+        //            Alignment = new Alignment()
+        //            {
+        //                Horizontal = HorizontalAlignmentValues.Left,
+        //                Vertical = VerticalAlignmentValues.Center
+        //            }
+        //        },
+        //        new CellFormat() // 3 - fila par (color alterno)
+        //        {
+        //            FontId = 2,
+        //            FillId = 3,
+        //            BorderId = 1,
+        //            ApplyFont = true,
+        //            ApplyBorder = true,
+        //            Alignment = new Alignment()
+        //            {
+        //                Horizontal = HorizontalAlignmentValues.Left,
+        //                Vertical = VerticalAlignmentValues.Center
+        //            }
+        //        }
+        //    );
+
+
+        //    return new Stylesheet(fonts, fills, borders, cellFormats);
+        //}
+
         private Stylesheet CrearEstilos()
         {
+            // -------------------
+            // FUENTES
+            // -------------------
             Fonts fonts = new Fonts(
-                new Font( // 0 - default Roboto
-                    new FontName() { Val = "Calibri,Roboto,Arial" },
-                    new FontSize() { Val = 10 },
-                    new Color() { Rgb = "000000" }
-                ),
-                new Font( // 1 - encabezado Roboto Bold
-                    new FontName() { Val = "Calibri,Roboto,Arial" },
-                    new FontSize() { Val = 10 },
-                    new Bold(),
-                    new Color() { Rgb = "000000" }
-                ),
-                new Font( // 2 - texto normal Roboto
-                    new FontName() { Val = "Calibri,Roboto,Arial" },
-                    new FontSize() { Val = 10 },
-                    new Color() { Rgb = "000000" }
-                )
-        );
+                new Font(new FontName() { Val = "Roboto" }, new FontSize() { Val = 11 }, new Color() { Rgb = "000000" }), // 0 - base
+                new Font(new Bold(), new FontName() { Val = "Roboto" }, new FontSize() { Val = 11 }, new Color() { Rgb = "000000" }) // 1 - encabezado
+            );
 
-
+            // -------------------
+            // RELLENOS (fondos)
+            // -------------------
             Fills fills = new Fills(
                 new Fill(new PatternFill() { PatternType = PatternValues.None }), // 0
                 new Fill(new PatternFill() { PatternType = PatternValues.Gray125 }), // 1
                 new Fill(new PatternFill(new ForegroundColor { Rgb = "FFA7C7FF" }) { PatternType = PatternValues.Solid }), // 2 encabezado azul
-                new Fill(new PatternFill(new ForegroundColor { Rgb = "FFA7D7F0" }) { PatternType = PatternValues.Solid }) // 3 filas alternas
+                new Fill(new PatternFill(new ForegroundColor { Rgb = "FFF5F7FF" }) { PatternType = PatternValues.Solid }), // 3 fila alterna
+                new Fill(new PatternFill(new ForegroundColor { Rgb = "FFFFFFFF" }) { PatternType = PatternValues.Solid })  // 4 blanco
             );
 
+            // -------------------
+            // BORDES
+            // -------------------
             Borders borders = new Borders(
                 new Border(),
                 new Border(
@@ -176,9 +426,33 @@ namespace QueryAnalyzer
                     new DiagonalBorder())
             );
 
+            // -------------------
+            // FORMATOS NUMÉRICOS Y FECHAS
+            // -------------------
+            NumberingFormats nfs = new NumberingFormats();
+            uint idNumero = 165;
+            uint idFecha = 166;
+
+            nfs.Append(new NumberingFormat()
+            {
+                NumberFormatId = idNumero,
+                FormatCode = "#,##0.00"
+            });
+
+            nfs.Append(new NumberingFormat()
+            {
+                NumberFormatId = idFecha,
+                FormatCode = "dd/MM/yyyy"
+            });
+
+            // -------------------
+            // FORMATOS DE CELDA
+            // -------------------
             CellFormats cellFormats = new CellFormats(
-                new CellFormat(), // 0 - default
-                new CellFormat() // 1 - encabezado
+                new CellFormat(), // 0 default
+
+                // 1 - Encabezado
+                new CellFormat()
                 {
                     FontId = 1,
                     FillId = 2,
@@ -190,25 +464,34 @@ namespace QueryAnalyzer
                     {
                         Horizontal = HorizontalAlignmentValues.Center,
                         Vertical = VerticalAlignmentValues.Center,
-                        WrapText = true
+                        WrapText = true,
+                        Indent = 0,
+                        RelativeIndent = 1
                     }
                 },
-                new CellFormat() // 2 - fila impar
+
+                // 2 - Texto impar
+                new CellFormat()
                 {
-                    FontId = 2,
-                    FillId = 0,
+                    FontId = 0,
+                    FillId = 4,
                     BorderId = 1,
                     ApplyFont = true,
                     ApplyBorder = true,
                     Alignment = new Alignment()
                     {
                         Horizontal = HorizontalAlignmentValues.Left,
-                        Vertical = VerticalAlignmentValues.Center
+                        Vertical = VerticalAlignmentValues.Center,
+                        WrapText = false,
+                        Indent = 0,
+                        RelativeIndent = 1
                     }
                 },
-                new CellFormat() // 3 - fila par (color alterno)
+
+                // 3 - Texto par
+                new CellFormat()
                 {
-                    FontId = 2,
+                    FontId = 0,
                     FillId = 3,
                     BorderId = 1,
                     ApplyFont = true,
@@ -216,14 +499,98 @@ namespace QueryAnalyzer
                     Alignment = new Alignment()
                     {
                         Horizontal = HorizontalAlignmentValues.Left,
-                        Vertical = VerticalAlignmentValues.Center
+                        Vertical = VerticalAlignmentValues.Center,
+                        WrapText = false,
+                        Indent = 0,
+                        RelativeIndent = 1
+                    }
+                },
+
+                // 4 - Número impar
+                new CellFormat()
+                {
+                    FontId = 0,
+                    FillId = 4,
+                    BorderId = 1,
+                    NumberFormatId = idNumero,
+                    ApplyFont = true,
+                    ApplyBorder = true,
+                    ApplyNumberFormat = true,
+                    Alignment = new Alignment()
+                    {
+                        Horizontal = HorizontalAlignmentValues.Right,
+                        Vertical = VerticalAlignmentValues.Center,
+                        WrapText = false,
+                        Indent = 0,
+                        RelativeIndent = 1
+                    }
+                },
+
+                // 5 - Número par
+                new CellFormat()
+                {
+                    FontId = 0,
+                    FillId = 3,
+                    BorderId = 1,
+                    NumberFormatId = idNumero,
+                    ApplyFont = true,
+                    ApplyBorder = true,
+                    ApplyNumberFormat = true,
+                    Alignment = new Alignment()
+                    {
+                        Horizontal = HorizontalAlignmentValues.Right,
+                        Vertical = VerticalAlignmentValues.Center,
+                        WrapText = false,
+                        Indent = 0,
+                        RelativeIndent = 1
+                    }
+                },
+
+                // 6 - Fecha impar
+                new CellFormat()
+                {
+                    FontId = 0,
+                    FillId = 4,
+                    BorderId = 1,
+                    NumberFormatId = idFecha,
+                    ApplyFont = true,
+                    ApplyBorder = true,
+                    ApplyNumberFormat = true,
+                    Alignment = new Alignment()
+                    {
+                        Horizontal = HorizontalAlignmentValues.Right,
+                        Vertical = VerticalAlignmentValues.Center,
+                        WrapText = false,
+                        Indent = 0,
+                        RelativeIndent = 1
+                    }
+                },
+
+                // 7 - Fecha par
+                new CellFormat()
+                {
+                    FontId = 0,
+                    FillId = 3,
+                    BorderId = 1,
+                    NumberFormatId = idFecha,
+                    ApplyFont = true,
+                    ApplyBorder = true,
+                    ApplyNumberFormat = true,
+                    Alignment = new Alignment()
+                    {
+                        Horizontal = HorizontalAlignmentValues.Right,
+                        Vertical = VerticalAlignmentValues.Center,
+                        WrapText = false,
+                        Indent = 0,
+                        RelativeIndent = 1
                     }
                 }
             );
 
-
-            return new Stylesheet(fonts, fills, borders, cellFormats);
+            return new Stylesheet(nfs, fonts, fills, borders, cellFormats);
         }
+
+
 
         public void GuardarArchivo(byte[] bytes, string ruta)
         {
