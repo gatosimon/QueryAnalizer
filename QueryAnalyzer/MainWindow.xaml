@@ -86,11 +86,19 @@
                                     Margin="2,32,2,0"
                                     Padding="2"
                                     VerticalAlignment="Top">
-                                    <TextBlock Text="Explorar&#10;consultas"
+                            <TextBlock Text="Explorar&#10;consultas"
                                     TextAlignment="Center"
                                     VerticalAlignment="Center"
                                     HorizontalAlignment="Center"/>
                         </Button>
+                        <TextBlock x:Name="txtExplorar"
+                                    Grid.Column="0"
+                                    Text="Tablas exploradas"
+                                    Width="60"
+                                    TextWrapping="WrapWithOverflow"
+                                    TextAlignment="Justify"
+                                    Margin="2,88,2,159"
+                                    Padding="2"/>
 
                         <TreeView x:Name="tvSchema"
                                       Grid.Column="1"

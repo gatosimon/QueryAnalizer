@@ -5876,4 +5876,341 @@ NROJUICIO BETWEEN 1 AND 99</Consulta>
     </Parametros>
     <Fecha>2025-11-07T10:58:30.5989479-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA, COD_JURISDICCION, COD_INSTANCIA, AÑO_DEMANDA, NRO_JUICIO, COD_SISTEMA, FECHA_DEMANDA, MONTO_INICIAL, TIPOJUICIO, CUIJ_J 
+FROM M10NAPLEG
+WHERE COD_COMUNA = 1 AND 
+COD_INSTANCIA BETWEEN 1 AND 9 AND
+FECHA_DEMANDA BETWEEN '2025-10-01' AND '2025-11-01' AND
+NRO_JUICIO BETWEEN 1 AND ? AND
+TIPOJUICIO = '';
+
+SELECT * FROM M10TABCLA 
+WHERE COD_COMUNA = ? AND
+DESCRIPCION BETWEEN 1 AND 9 AND 
+NROJUICIO BETWEEN 1 AND 999999999999 AND
+ANODEMANDA BETWEEN 2025 AND 2025;
+
+SELECT * FROM M10ESTJU
+WHERE CODCOMUNA = 1 AND
+JURISDICCION BETWEEN 1 AND 9 AND 
+INSTANCIA BETWEEN 1 AND 9 AND 
+NROJUICIO BETWEEN 1 AND 99</Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>@NRO_JUICIO</string>
+        <string>Double</string>
+        <string>999999999999</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_COMUNA</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@JURISDICCION</string>
+        <string>SmallInt</string>
+        <string>2</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2025-11-07T11:13:08.3619406-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA, COD_JURISDICCION, COD_INSTANCIA, AÑO_DEMANDA, NRO_JUICIO, COD_SISTEMA, FECHA_DEMANDA, MONTO_INICIAL, TIPOJUICIO, CUIJ_J 
+FROM M10NAPLEG
+WHERE COD_COMUNA = 1 AND 
+COD_INSTANCIA BETWEEN 1 AND 9 AND
+FECHA_DEMANDA BETWEEN '2025-10-01' AND '2025-11-01' AND
+NRO_JUICIO BETWEEN 1 AND ? AND
+TIPOJUICIO = '';
+
+SELECT * FROM M10TABCLA 
+WHERE COD_COMUNA = ? AND
+DESCRIPCION BETWEEN 1 AND 9 AND 
+NROJUICIO BETWEEN 1 AND 999999999999 AND
+ANODEMANDA BETWEEN 2025 AND 2025;
+
+SELECT * FROM M10ESTJU
+WHERE CODCOMUNA = 1 AND
+JURISDICCION BETWEEN 1 AND 9 AND 
+INSTANCIA BETWEEN 1 AND 9 AND 
+NROJUICIO BETWEEN 1 AND 99</Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>@NRO_JUICIO</string>
+        <string>Double</string>
+        <string>999999999999</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_COMUNA</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@JURISDICCION</string>
+        <string>SmallInt</string>
+        <string>2</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2025-11-07T11:22:58.3156423-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+    </conexion>
+    <Consulta>SELECT * FROM artists</Consulta>
+    <Parametros />
+    <Fecha>2025-11-07T12:29:19.3497937-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA, COD_JURISDICCION, COD_INSTANCIA, AÑO_DEMANDA, NRO_JUICIO, COD_SISTEMA, FECHA_DEMANDA, MONTO_INICIAL, TIPOJUICIO, CUIJ_J 
+FROM M10NAPLEG
+WHERE COD_COMUNA = 1 AND 
+COD_INSTANCIA BETWEEN 1 AND 9 AND
+FECHA_DEMANDA BETWEEN '2025-10-01' AND '2025-11-01' AND
+NRO_JUICIO BETWEEN 1 AND ? AND
+TIPOJUICIO = '';
+
+SELECT * FROM M10TABCLA 
+WHERE COD_COMUNA = ? AND
+DESCRIPCION BETWEEN 1 AND 9 AND 
+NROJUICIO BETWEEN 1 AND 999999999999 AND
+ANODEMANDA BETWEEN 2025 AND 2025;
+
+SELECT * FROM M10ESTJU
+WHERE CODCOMUNA = 1 AND
+JURISDICCION BETWEEN 1 AND 9 AND 
+INSTANCIA BETWEEN 1 AND 9 AND 
+NROJUICIO BETWEEN 1 AND 99</Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>@NRO_JUICIO</string>
+        <string>Double</string>
+        <string>999999999999</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_COMUNA</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@JURISDICCION</string>
+        <string>SmallInt</string>
+        <string>2</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2025-11-07T12:39:06.5900679-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA, COD_JURISDICCION, COD_INSTANCIA, AÑO_DEMANDA, NRO_JUICIO, COD_SISTEMA, FECHA_DEMANDA, MONTO_INICIAL, TIPOJUICIO, CUIJ_J 
+FROM M10NAPLEG
+WHERE COD_COMUNA = 1 AND 
+COD_INSTANCIA BETWEEN 1 AND 9 AND
+FECHA_DEMANDA BETWEEN '2025-10-01' AND '2025-11-01' AND
+NRO_JUICIO BETWEEN 1 AND ? AND
+TIPOJUICIO = '';
+
+SELECT * FROM M10TABCLA 
+WHERE COD_COMUNA = ? AND
+DESCRIPCION BETWEEN 1 AND 9 AND 
+NROJUICIO BETWEEN 1 AND 999999999999 AND
+ANODEMANDA BETWEEN 2025 AND 2025;
+
+SELECT ANODEMANDA, NROJUICIO, * FROM M10ESTJU
+WHERE CODCOMUNA = 1 AND
+JURISDICCION BETWEEN 1 AND 9 AND 
+INSTANCIA BETWEEN 1 AND 9 AND 
+NROJUICIO BETWEEN 1 AND 99</Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>@NRO_JUICIO</string>
+        <string>Double</string>
+        <string>999999999999</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_COMUNA</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@JURISDICCION</string>
+        <string>SmallInt</string>
+        <string>2</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2025-11-07T12:42:37.9460208-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA, COD_JURISDICCION, COD_INSTANCIA, AÑO_DEMANDA, NRO_JUICIO, COD_SISTEMA, FECHA_DEMANDA, MONTO_INICIAL, TIPOJUICIO, CUIJ_J 
+FROM M10NAPLEG
+WHERE COD_COMUNA = 1 AND 
+COD_INSTANCIA BETWEEN 1 AND 9 AND
+FECHA_DEMANDA BETWEEN '2025-10-01' AND '2025-11-01' AND
+NRO_JUICIO BETWEEN 1 AND ? AND
+TIPOJUICIO = '';
+
+SELECT * FROM M10TABCLA 
+WHERE COD_COMUNA = ? AND
+DESCRIPCION BETWEEN 1 AND 9 AND 
+NROJUICIO BETWEEN 1 AND 999999999999 AND
+ANODEMANDA BETWEEN 2025 AND 2025;
+
+SELECT ANODEMANDA, NROJUICIO FROM M10ESTJU
+WHERE CODCOMUNA = 1 AND
+JURISDICCION BETWEEN 1 AND 9 AND 
+INSTANCIA BETWEEN 1 AND 9 AND 
+NROJUICIO BETWEEN 1 AND 99</Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>@NRO_JUICIO</string>
+        <string>Double</string>
+        <string>999999999999</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_COMUNA</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@JURISDICCION</string>
+        <string>SmallInt</string>
+        <string>2</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2025-11-07T12:42:52.4777076-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA, COD_JURISDICCION, COD_INSTANCIA, AÑO_DEMANDA, NRO_JUICIO, COD_SISTEMA, FECHA_DEMANDA, MONTO_INICIAL, TIPOJUICIO, CUIJ_J 
+FROM M10NAPLEG
+WHERE COD_COMUNA = 1 AND 
+COD_INSTANCIA BETWEEN 1 AND 9 AND
+FECHA_DEMANDA BETWEEN '2025-10-01' AND '2025-11-01' AND
+NRO_JUICIO BETWEEN 1 AND ? AND
+TIPOJUICIO = '';
+
+SELECT * FROM M10TABCLA 
+WHERE COD_COMUNA = ? AND
+DESCRIPCION BETWEEN 1 AND 9 AND 
+NROJUICIO BETWEEN 1 AND 999999999999 AND
+ANODEMANDA BETWEEN 2025 AND 2025;
+
+SELECT * FROM M10ESTJU
+WHERE CODCOMUNA = 1 AND
+JURISDICCION BETWEEN 1 AND 9 AND 
+INSTANCIA BETWEEN 1 AND 9 AND 
+NROJUICIO BETWEEN 1 AND 99</Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>@NRO_JUICIO</string>
+        <string>Double</string>
+        <string>999999999999</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_COMUNA</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@JURISDICCION</string>
+        <string>SmallInt</string>
+        <string>2</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2025-11-07T12:48:54.2278734-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA, COD_JURISDICCION, COD_INSTANCIA, AÑO_DEMANDA, NRO_JUICIO, COD_SISTEMA, FECHA_DEMANDA, MONTO_INICIAL, TIPOJUICIO, CUIJ_J 
+FROM M10NAPLEG
+WHERE COD_COMUNA = 1 AND 
+COD_INSTANCIA BETWEEN 1 AND 9 AND
+FECHA_DEMANDA BETWEEN '2025-10-01' AND '2025-11-01' AND
+NRO_JUICIO BETWEEN 1 AND ? AND
+TIPOJUICIO = '';
+
+SELECT * FROM M10TABCLA 
+WHERE COD_COMUNA = ? AND
+DESCRIPCION BETWEEN 1 AND 9 AND 
+NROJUICIO BETWEEN 1 AND 999999999999 AND
+ANODEMANDA BETWEEN 2025 AND 2025;
+
+SELECT NROJUICIO, INSTANCIA, FECHATRAMITEJUIC, '' MONTO, '' CUIJ FROM M10ESTJU
+WHERE CODCOMUNA = 1 AND
+JURISDICCION BETWEEN 1 AND 9 AND 
+INSTANCIA BETWEEN 1 AND 9 AND 
+NROJUICIO BETWEEN 1 AND 99</Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>@NRO_JUICIO</string>
+        <string>Double</string>
+        <string>999999999999</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_COMUNA</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2025-11-07T12:51:36.2590091-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>
