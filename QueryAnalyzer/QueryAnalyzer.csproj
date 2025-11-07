@@ -67,6 +67,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Assets\Logo.ico" />
     <Content Include="Logo.ico" />
     <Content Include="Logo.png" />
   </ItemGroup>
