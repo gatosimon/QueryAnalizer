@@ -6213,4 +6213,85 @@ NROJUICIO BETWEEN 1 AND 99</Consulta>
     </Parametros>
     <Fecha>2025-11-07T12:51:36.2590091-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA, COD_JURISDICCION, COD_INSTANCIA, AÑO_DEMANDA, NRO_JUICIO, COD_SISTEMA, FECHA_DEMANDA, MONTO_INICIAL, TIPOJUICIO, CUIJ_J 
+FROM M10NAPLEG
+WHERE COD_COMUNA = 1 AND 
+COD_INSTANCIA BETWEEN 1 AND 9 AND
+FECHA_DEMANDA BETWEEN '2025-10-01' AND '2025-11-01' AND
+NRO_JUICIO BETWEEN 1 AND ? AND
+TIPOJUICIO = '';
+
+SELECT * FROM M10TABCLA 
+WHERE COD_COMUNA = ? AND
+DESCRIPCION BETWEEN 1 AND 9 AND 
+NROJUICIO BETWEEN 1 AND 999999999999 AND
+ANODEMANDA BETWEEN 2025 AND 2025;
+
+SELECT NROJUICIO, INSTANCIA, FECHATRAMITEJUIC, '' MONTO, '' CUIJ FROM M10ESTJU
+WHERE CODCOMUNA = 1 AND
+JURISDICCION BETWEEN 1 AND 9 AND 
+INSTANCIA BETWEEN 1 AND 9 AND 
+NROJUICIO BETWEEN 1 AND 99</Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>@NRO_JUICIO</string>
+        <string>Double</string>
+        <string>999999999999</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_COMUNA</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2025-11-07T13:32:43.2707515-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>PG prueba</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>localhost</Servidor>
+      <BaseDatos>Postgresim10</BaseDatos>
+      <Usuario>postgres</Usuario>
+      <Contrasena>postgres</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM Contactos</Consulta>
+    <Parametros />
+    <Fecha>2025-11-07T13:34:57.6406719-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>PG prueba</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>localhost</Servidor>
+      <BaseDatos>Postgresim10</BaseDatos>
+      <Usuario>postgres</Usuario>
+      <Contrasena>postgres</Contrasena>
+    </conexion>
+    <Consulta>SELECT Nombre FROM Contactos</Consulta>
+    <Parametros />
+    <Fecha>2025-11-07T13:35:20.6747268-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>PG prueba</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>localhost</Servidor>
+      <BaseDatos>Postgresim10</BaseDatos>
+      <Usuario>postgres</Usuario>
+      <Contrasena>postgres</Contrasena>
+    </conexion>
+    <Consulta>SELECT Id, Nombre FROM Contactos</Consulta>
+    <Parametros />
+    <Fecha>2025-11-07T13:35:26.2925004-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>

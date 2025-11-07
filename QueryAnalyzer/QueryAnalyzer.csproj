@@ -68,6 +68,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Assets\Logo.ico" />
+    <Resource Include="Assets\columna.png" />
+    <Resource Include="Assets\tabla.png" />
+    <Resource Include="Assets\clave.png" />
     <Content Include="Logo.ico" />
     <Content Include="Logo.png" />
   </ItemGroup>
