@@ -114,7 +114,8 @@
                                  HorizontalScrollBarVisibility="Auto"
                                  FontFamily="Consolas"
                                  FontSize="12"
-                                 TextWrapping="NoWrap"/>
+                                 TextWrapping="NoWrap"
+                                 KeyUp="txtQuery_KeyUp"/>
                     </DockPanel>
                 </Grid>
 

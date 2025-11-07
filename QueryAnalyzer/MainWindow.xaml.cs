@@ -1191,6 +1191,163 @@ namespace QueryAnalyzer
 
             colDef.BeginAnimation(ColumnDefinition.WidthProperty, anim);
         }
+
+        private void txtQuery_KeyUp(object sender, KeyEventArgs e)
+        {
+            //// Detecta el signo de interrogación (Shift + /)
+            //if (e.Key == Key.Oem4 && Keyboard.Modifiers == ModifierKeys.Shift)
+            //{
+            //    try
+            //    {
+            //        // Posición actual del cursor
+            //        int caretIndex = txtQuery.CaretIndex;
+            //        if (caretIndex > 0)
+            //        {
+            //            caretIndex -= 1;
+            //        }
+            //        // Texto completo hasta el cursor
+            //        string textoHastaCursor = txtQuery.Text.Substring(0, caretIndex);
+
+            //        // Buscar el nombre del campo antes del signo de ?
+            //        // Ejemplos válidos: M.CAMPO = ?, CAMPO=?, T1.CAMPO > ?, CAMPO BETWEEN 1 AND ?
+            //        var match = Regex.Match(textoHastaCursor,
+            //            @"([A-Za-z0-9_]+)\s*(AND)\s*$",
+            //            RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
+
+            //        if (match.Success)
+            //        {
+            //            textoHastaCursor = textoHastaCursor.Substring(0, textoHastaCursor.Length - match.Length);
+            //            match = Regex.Match(textoHastaCursor,
+            //            @"([A-Za-z0-9_]+)\s*(?:=|>|<|BETWEEN|AND|IN|LIKE|IS|<=|>=)\s*$",
+            //            RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
+            //        }
+
+            //        if (!match.Success)
+            //        {
+            //            match = Regex.Match(textoHastaCursor,
+            //            @"([A-Za-z0-9_]+)\s*(?:=|>|<|BETWEEN|AND|IN|LIKE|IS|<=|>=)\s*$",
+            //            RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
+            //        }
+
+            //        if (!match.Success)
+            //        {
+            //            // Si no hay coincidencia directa, probamos buscar el último campo con alias (M.CAMPO)
+            //            match = Regex.Match(textoHastaCursor,
+            //                @"([A-Za-z0-9_]+\.[A-Za-z0-9_]+)\s*$",
+            //                RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
+            //        }
+
+            //        if (match.Success)
+            //        {
+            //            string campo = match.Groups[1].Value;
+
+            //            // Si viene con alias, nos quedamos solo con el nombre (después del punto)
+            //            if (campo.Contains("."))
+            //                campo = campo.Split('.').Last();
+
+            //            campo = campo.Trim();
+
+            //            if (!string.IsNullOrEmpty(campo))
+            //            {
+            //                string nombreParametro = "@" + campo.ToUpper();
+
+            //                // Evita duplicados
+            //                if (!Parametros.Any(p => p.Nombre.Equals(nombreParametro, StringComparison.OrdinalIgnoreCase)))
+            //                {
+            //                    Parametros.Add(new QueryParameter
+            //                    {
+            //                        Nombre = nombreParametro,
+            //                        Tipo = OdbcType.VarChar,
+            //                        Valor = ""
+            //                    });
+
+            //                    gridParams.Items.Refresh();
+
+            //                    AppendMessage($"Parámetro agregado automáticamente: {nombreParametro}");
+            //                }
+            //            }
+            //        }
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        AppendMessage("Error al analizar parámetros: " + ex.Message);
+            //    }
+            //}
+
+            // Detecta el signo de interrogación (Shift + /)
+            if (e.Key == Key.Oem4 && Keyboard.Modifiers == ModifierKeys.Shift)
+            {
+                try
+                {
+                    // Posición actual del cursor
+                    int caretIndex = txtQuery.CaretIndex;
+                    if (caretIndex > 0)
+                    {
+                        caretIndex -= 1;
+                    }
+                    // Texto completo hasta el cursor
+                    string textoHastaCursor = txtQuery.Text.Substring(0, caretIndex);
+                    bool encontrado = false;
+                    List<string> palabras = textoHastaCursor.Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                    int i = palabras.Count - 1;
+                    bool esBetween = false;
+                    bool esAndDelBetween = false;
+                    while (!encontrado && i > 0)
+                    {
+                        if (palabras[i].ToUpper() == "BETWEEN")
+                        {
+                            esBetween = true;
+                        }
+                        if (palabras[i].ToUpper() == "AND")
+                        {
+                            i -= 2;
+                            esAndDelBetween = true;
+                        }
+                        encontrado = true;
+                        i--;
+                    }
+
+                    if (encontrado)
+                    {
+                        string campo = palabras[i];
+                        if (campo.Contains("\n"))
+                        {
+                            campo = campo.Split('\n')[1];
+                        }
+
+                        // Si viene con alias, nos quedamos solo con el nombre (después del punto)
+                        if (campo.Contains("."))
+                            campo = campo.Split('.').Last();
+
+                        campo = campo.Trim();
+
+                        if (!string.IsNullOrEmpty(campo))
+                        {
+                            string nombreParametro = $"@{campo.ToUpper()}" + (esBetween ? "_DESDE" : esAndDelBetween ? "_HASTA" : string.Empty);
+
+                            // Evita duplicados
+                            //if (!Parametros.Any(p => p.Nombre.Equals(nombreParametro, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                Parametros.Add(new QueryParameter
+                                {
+                                    Nombre = nombreParametro,
+                                    Tipo = OdbcType.VarChar,
+                                    Valor = ""
+                                });
+
+                                gridParams.Items.Refresh();
+
+                                AppendMessage($"Parámetro agregado automáticamente: {nombreParametro}");
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AppendMessage("Error al analizar parámetros: " + ex.Message);
+                }
+            }
+        }
     }
 }
 public class GridLengthAnimation : AnimationTimeline
