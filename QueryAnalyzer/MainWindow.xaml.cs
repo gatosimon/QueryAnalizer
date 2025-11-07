@@ -112,285 +112,6 @@ namespace QueryAnalyzer
                 BtnExecute_Click(this, new RoutedEventArgs());
         }
 
-        //private async void BtnExecute_Click(object sender, RoutedEventArgs e)
-        //{
-        //    Stopwatch swTotal = Stopwatch.StartNew();
-
-        //    string connStr = GetConnectionString();
-        //    string sqlCompleto = txtQuery.Text;
-
-        //    if (string.IsNullOrWhiteSpace(connStr))
-        //    {
-        //        AppendMessage("El string de conexión está vacío.");
-        //        return;
-        //    }
-        //    if (string.IsNullOrWhiteSpace(sqlCompleto))
-        //    {
-        //        AppendMessage("La consulta está vacía.");
-        //        return;
-        //    }
-
-        //    // 🔹 NUEVO: Limpiar pestañas anteriores
-        //    tcResults.Items.Clear();
-        //    AppendMessage($"Ejecutando... ({DateTime.Now})");
-
-        //    // 🔹 NUEVO: Dividir las consultas por ;
-        //    string[] queries = sqlCompleto.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-        //    var validQueries = queries.Select(q => q.Trim()).Where(q => !string.IsNullOrWhiteSpace(q)).ToList();
-
-        //    if (validQueries.Count == 0)
-        //    {
-        //        AppendMessage("No se encontraron consultas válidas (separadas por ';').");
-        //        return;
-        //    }
-
-        //    long totalRows = 0;
-
-        //    try
-        //    {
-        //        // Captura los parámetros de UI (se usarán los mismos para todas las consultas)
-        //        List<QueryParameter> parametros = null;
-        //        await Dispatcher.InvokeAsync(() =>
-        //        {
-        //            parametros = gridParams.Items.OfType<QueryParameter>()
-        //                .Where(p => !string.IsNullOrWhiteSpace(p.Nombre))
-        //                .ToList();
-        //        });
-
-        //        // 🔹 NUEVO: Iterar sobre cada consulta
-        //        for (int i = 0; i < validQueries.Count; i++)
-        //        {
-        //            string sqlIndividual = validQueries[i];
-        //            Stopwatch swQuery = Stopwatch.StartNew();
-        //            AppendMessage($"Ejecutando consulta {i + 1}/{validQueries.Count}...");
-
-        //            // ExecuteQueryAsync ya maneja sus errores internamente y devuelve un DT (potencialmente vacío)
-        //            var dt = await ExecuteQueryAsync(connStr, sqlIndividual, parametros);
-
-        //            swQuery.Stop();
-        //            double elapsedMicroseconds = swQuery.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
-        //            totalRows += dt.Rows.Count;
-
-        //            // 🔹 NUEVO: Crear la UI para esta pestaña (en el hilo de UI)
-        //            await Dispatcher.InvokeAsync(() =>
-        //            {
-        //                // 1. Crear el DataGrid
-        //                var dataGrid = new DataGrid
-        //                {
-        //                    IsReadOnly = true,
-        //                    AutoGenerateColumns = true,
-        //                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-        //                    AlternationCount = 2,
-        //                    // Aplicar el estilo desde los recursos
-        //                    RowStyle = (Style)this.FindResource("ResultGridRowStyle")
-        //                };
-
-        //                // 2. Asignar datos
-        //                dataGrid.ItemsSource = dt.DefaultView;
-
-        //                // 3. Aplicar estilo de alineación de columnas (copiado de tu lógica original)
-        //                foreach (var column in dataGrid.Columns)
-        //                {
-        //                    var colName = column.Header.ToString();
-        //                    var dataType = dt.Columns[colName].DataType;
-
-        //                    if (dataType == typeof(int) ||
-        //                        dataType == typeof(long) ||
-        //                        dataType == typeof(decimal) ||
-        //                        dataType == typeof(double) ||
-        //                        dataType == typeof(float))
-        //                    {
-        //                        column.CellStyle = new Style(typeof(DataGridCell))
-        //                        {
-        //                            Setters = { new Setter(TextBlock.TextAlignmentProperty, TextAlignment.Right) }
-        //                        };
-        //                    }
-        //                    else
-        //                    {
-        //                        column.CellStyle = new Style(typeof(DataGridCell))
-        //                        {
-        //                            Setters = { new Setter(TextBlock.TextAlignmentProperty, TextAlignment.Left) }
-        //                        };
-        //                    }
-        //                }
-
-        //                // 4. Crear la Pestaña (TabItem)
-        //                var tabItem = new TabItem
-        //                {
-        //                    // Header con estadísticas de la consulta individual
-        //                    Header = $"Resultado {i + 1} ({dt.Rows.Count} filas, {elapsedMicroseconds:F0} ms)",
-        //                    Content = dataGrid // El contenido es la grilla
-        //                };
-
-        //                // 5. Añadir la pestaña al control
-        //                tcResults.Items.Add(tabItem);
-
-        //                AppendMessage($"Consulta {i + 1} exitosa. {dt.Rows.Count} filas devueltas en {elapsedMicroseconds:F0} ms");
-        //            });
-
-        //            // NUEVO: guardo la consulta y sus parámetros asociados a la conexión actual
-        //            // (Tu lógica de historial original, movida dentro del bucle)
-        //            AddToHistoryWithParams(sqlIndividual, parametros);
-        //        }
-
-        //        // 🔹 NUEVO: Actualizar estadísticas totales
-        //        swTotal.Stop();
-        //        double totalElapsedMicroseconds = swTotal.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
-
-        //        txtRowCount.Text = totalRows.ToString();
-        //        txtTiempoDeEjecucion.Text = $"{totalElapsedMicroseconds:F0} ms";
-
-        //        await Dispatcher.InvokeAsync(() =>
-        //        {
-        //            AppendMessage($"Ejecución total finalizada!. {validQueries.Count} consultas ejecutadas en {totalElapsedMicroseconds:F0} ms");
-        //            if (tcResults.Items.Count > 0)
-        //                tcResults.SelectedIndex = 0; // Seleccionar la primera pestaña
-        //        });
-
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // Este catch ahora manejará errores en la lógica de bucle/UI,
-        //        // ya que ExecuteQueryAsync maneja sus propios errores de SQL.
-        //        await Dispatcher.InvokeAsync(() =>
-        //            AppendMessage("Error: " + ex.Message));
-        //    }
-        //}
-
-        //private async void BtnExecute_Click(object sender, RoutedEventArgs e)
-        //{
-        //    Stopwatch swTotal = Stopwatch.StartNew();
-
-        //    string connStr = GetConnectionString();
-        //    string sqlCompleto = txtQuery.Text;
-
-        //    if (string.IsNullOrWhiteSpace(connStr))
-        //    {
-        //        AppendMessage("El string de conexión está vacío.");
-        //        return;
-        //    }
-        //    if (string.IsNullOrWhiteSpace(sqlCompleto))
-        //    {
-        //        AppendMessage("La consulta está vacía.");
-        //        return;
-        //    }
-
-        //    tcResults.Items.Clear();
-        //    AppendMessage($"Ejecutando... ({DateTime.Now})");
-
-        //    string[] queries = sqlCompleto.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-        //    var validQueries = queries.Select(q => q.Trim()).Where(q => !string.IsNullOrWhiteSpace(q)).ToList();
-
-        //    if (validQueries.Count == 0)
-        //    {
-        //        AppendMessage("No se encontraron consultas válidas (separadas por ';').");
-        //        return;
-        //    }
-
-        //    long totalRows = 0;
-        //    long totalColumns = 0;
-
-        //    try
-        //    {
-        //        // 🔹 Capturamos los parámetros en una lista tipo pila
-        //        List<QueryParameter> parametrosTotales = null;
-        //        await Dispatcher.InvokeAsync(() =>
-        //        {
-        //            parametrosTotales = gridParams.Items.OfType<QueryParameter>()
-        //                .Where(p => !string.IsNullOrWhiteSpace(p.Nombre))
-        //                .ToList();
-        //        });
-
-        //        int posicionParametro = 0;
-
-        //        for (int i = 0; i < validQueries.Count; i++)
-        //        {
-        //            string sqlIndividual = validQueries[i];
-        //            Stopwatch swQuery = Stopwatch.StartNew();
-        //            AppendMessage($"Ejecutando consulta {i + 1}/{validQueries.Count}...");
-
-        //            // 🔹 Extraemos los parámetros de esta consulta según la pila
-        //            var parametrosConsulta = ExtraerParametrosParaConsulta(sqlIndividual,parametrosTotales, ref posicionParametro);
-
-        //            var dt = await ExecuteQueryAsync(connStr, sqlIndividual, parametrosConsulta);
-
-        //            swQuery.Stop();
-        //            double elapsedMicroseconds = swQuery.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
-        //            totalRows += dt.Rows.Count;
-        //            totalColumns += dt.Columns.Count;
-
-        //            await Dispatcher.InvokeAsync(() =>
-        //            {
-        //                var dataGrid = new DataGrid
-        //                {
-        //                    IsReadOnly = true,
-        //                    AutoGenerateColumns = true,
-        //                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-        //                    AlternationCount = 2,
-        //                    RowStyle = (Style)this.FindResource("ResultGridRowStyle"),
-        //                    ItemsSource = dt.DefaultView
-        //                };
-
-        //                dataGrid.AutoGeneratedColumns += (s, ev) =>
-        //                {
-        //                    foreach (var column in dataGrid.Columns)
-        //                    {
-        //                        string colName = column.Header.ToString();
-        //                        if (!dt.Columns.Contains(colName))
-        //                            continue;
-
-        //                        Type tipo = dt.Columns[colName].DataType;
-        //                        bool aDerecha =
-        //                            tipo == typeof(int) ||
-        //                            tipo == typeof(long) ||
-        //                            tipo == typeof(decimal) ||
-        //                            tipo == typeof(double) ||
-        //                            tipo == typeof(float) ||
-        //                            tipo == typeof(short) ||
-        //                            tipo == typeof(byte) ||
-        //                            tipo == typeof(DateTime) ||
-        //                            tipo == typeof(TimeSpan);
-
-        //                        var estilo = new Style(typeof(DataGridCell));
-        //                        estilo.Setters.Add(new Setter(TextBlock.TextAlignmentProperty, aDerecha ? TextAlignment.Right : TextAlignment.Left));
-        //                        column.CellStyle = estilo;
-        //                    }
-        //                };
-
-        //                var tabItem = new TabItem
-        //                {
-        //                    Header = $"Resultado {i + 1} ({dt.Columns.Count} cols, {dt.Rows.Count} filas, {elapsedMicroseconds:F0} ms)",
-        //                    Content = dataGrid
-        //                };
-
-        //                tcResults.Items.Add(tabItem);
-        //                AppendMessage($"Consulta {i + 1} exitosa. {dt.Rows.Count} filas devueltas en {elapsedMicroseconds:F0} ms");
-        //            });
-        //        }
-
-        //        // 🔹 Al terminar todas, guardamos el bloque completo en el historial con todos los parámetros
-        //        AddToHistoryWithParams(sqlCompleto, parametrosTotales);
-
-        //        swTotal.Stop();
-        //        double totalElapsedMicroseconds = swTotal.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
-
-        //        txtColumnCount.Text = totalColumns.ToString();
-        //        txtRowCount.Text = totalRows.ToString();
-        //        txtTiempoDeEjecucion.Text = $"{totalElapsedMicroseconds:F0} ms";
-
-        //        await Dispatcher.InvokeAsync(() =>
-        //        {
-        //            AppendMessage($"Ejecución total finalizada. {validQueries.Count} consultas ejecutadas en {totalElapsedMicroseconds:F0} ms");
-        //            if (tcResults.Items.Count > 0)
-        //                tcResults.SelectedIndex = 0;
-        //        });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        await Dispatcher.InvokeAsync(() => AppendMessage("Error: " + ex.Message));
-        //    }
-        //}
-
         private async void BtnExecute_Click(object sender, RoutedEventArgs e)
         {
             Stopwatch swTotal = Stopwatch.StartNew();
@@ -1056,6 +777,182 @@ namespace QueryAnalyzer
         }
 
         // 🔹 NUEVOS MÉTODOS: Explorador de tablas
+        //private async void CargarEsquema(List<string> tablasConsulta = null)
+        //{
+        //    if (conexionActual == null)
+        //    {
+        //        AppendMessage("No hay conexión seleccionada.");
+        //        return;
+        //    }
+
+        //    string connStr = GetConnectionString();
+
+        //    await Task.Run(() =>
+        //    {
+        //        try
+        //        {
+        //            using (var conn = new OdbcConnection(connStr))
+        //            {
+        //                conn.Open();
+
+        //                // Obtiene las tablas
+        //                DataTable tablas = conn.GetSchema("Tables");
+
+        //                Dispatcher.Invoke(() => tvSchema.Items.Clear());
+
+        //                bool cargarTabla = true; 
+        //                foreach (DataRow tabla in tablas.Rows)
+        //                {
+        //                    string schema = tabla["TABLE_SCHEM"].ToString();
+        //                    string nombreTabla = tabla["TABLE_NAME"].ToString();
+        //                    cargarTabla = tablasConsulta == null || (tablasConsulta != null && tablasConsulta.Contains(nombreTabla.ToUpper().Trim()));
+        //                    if (cargarTabla)
+        //                    {
+        //                        string tipo = tabla["TABLE_TYPE"].ToString();
+
+        //                        if (tipo != "TABLE") continue;
+        //                        //if (!tablasBaseDatos.Contains(nombreTabla)) continue;
+
+        //                        // 🔹 Creamos datos simples (strings) en el hilo de fondo
+        //                        string headerText = string.IsNullOrEmpty(schema) ? nombreTabla : $"{schema}.{nombreTabla}";
+        //                        var columnas = conn.GetSchema("Columns", new string[] { null, schema, nombreTabla });
+
+        //                        // 🔹 Ahora toda manipulación de la UI dentro del Dispatcher
+        //                        Dispatcher.Invoke(() =>
+        //                        {
+        //                            var tablaNode = new TreeViewItem
+        //                            {
+        //                                Header = headerText,
+        //                                Tag = nombreTabla
+        //                            };
+
+        //                            tvSchema.Items.Add(tablaNode);
+
+        //                        // Agregamos las columnas dentro del hilo de UI
+        //                        foreach (DataRow col in columnas.Rows)
+        //                            {
+        //                                string colName = col["COLUMN_NAME"].ToString();
+        //                                string tipoCol = col["TYPE_NAME"].ToString();
+        //                                string longitud = col["COLUMN_SIZE"].ToString();
+
+        //                                var colNode = new TreeViewItem
+        //                                {
+        //                                    Header = $"{colName} ({tipoCol}{(string.IsNullOrEmpty(longitud) ? "" : $" [{longitud}]")})"
+        //                                };
+
+        //                                tablaNode.Items.Add(colNode);
+        //                            }
+        //                        });
+
+        //                        // 🔹 Carga de índices (solo lectura, sin UI)
+        //                        try
+        //                        {
+        //                            using (var cmd = conn.CreateCommand())
+        //                            {
+        //                                switch (conexionActual.Motor)
+        //                                {
+        //                                    case TipoMotor.MS_SQL:
+        //                                        cmd.CommandText = $@"SELECT 
+        //                                                            s.name AS SchemaName, 
+        //                                                            t.name AS TableName, 
+        //                                                            i.name AS IndexName, 
+        //                                                            i.type_desc AS IndexType, 
+        //                                                            c.name AS ColumnName, 
+        //                                                            ic.key_ordinal AS ColumnOrder,
+        //                                                            i.is_primary_key AS IsPrimaryKey,
+        //                                                            i.is_unique AS IsUnique
+        //                                                        FROM sys.indexes i
+        //                                                        INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+        //                                                        INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+        //                                                        INNER JOIN sys.tables t ON i.object_id = t.object_id
+        //                                                        INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
+        //                                                        WHERE t.name = '{nombreTabla}'
+        //                                                        ORDER BY i.name, ic.key_ordinal;";
+        //                                        break;
+        //                                    case TipoMotor.DB2:
+        //                                        cmd.CommandText = $@"SELECT
+        //                                                            i.TABSCHEMA AS SchemaName,
+        //                                                            i.TABNAME AS TableName,
+        //                                                            i.INDNAME AS IndexName,
+        //                                                            i.UNIQUERULE AS UniqueRule,
+        //                                                            c.COLNAME AS ColumnName,
+        //                                                            c.COLSEQ AS ColumnOrder,
+        //                                                            i.INDEXTYPE AS IndexType
+        //                                                        FROM SYSCAT.INDEXES i
+        //                                                        JOIN SYSCAT.INDEXCOLUSE c
+        //                                                            ON i.INDNAME = c.INDNAME AND i.INDSCHEMA = c.INDSCHEMA
+        //                                                        WHERE i.TABNAME = UPPER('{nombreTabla}')
+        //                                                        ORDER BY i.INDNAME, c.COLSEQ;";
+        //                                        break;
+        //                                    case TipoMotor.POSTGRES:
+        //                                        cmd.CommandText = $@"SELECT
+        //                                                            n.nspname AS SchemaName,
+        //                                                            t.relname AS TableName,
+        //                                                            i.relname AS IndexName,
+        //                                                            a.attname AS ColumnName,
+        //                                                            ix.indisunique AS IsUnique,
+        //                                                            ix.indisprimary AS IsPrimary
+        //                                                        FROM pg_class t
+        //                                                        JOIN pg_index ix ON t.oid = ix.indrelid
+        //                                                        JOIN pg_class i ON i.oid = ix.indexrelid
+        //                                                        JOIN pg_namespace n ON n.oid = t.relnamespace
+        //                                                        JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
+        //                                                        WHERE t.relname = '{nombreTabla}'
+        //                                                        ORDER BY i.relname, a.attnum;";
+        //                                        break;
+        //                                    case TipoMotor.SQLite:
+        //                                        cmd.CommandText = $"PRAGMA index_list('{nombreTabla}');";
+        //                                        break;
+        //                                    default:
+        //                                        break;
+        //                                }
+
+        //                                using (var adapter = new OdbcDataAdapter(cmd))
+        //                                {
+        //                                    var dtIndices = new DataTable();
+        //                                    adapter.Fill(dtIndices);
+
+        //                                    if (dtIndices.Rows.Count > 0)
+        //                                    {
+        //                                        // Creamos la estructura para los índices
+        //                                        Dispatcher.Invoke(() =>
+        //                                        {
+        //                                            var tablaNode = tvSchema.Items.OfType<TreeViewItem>()
+        //                                                .FirstOrDefault(t => (string)t.Tag == nombreTabla);
+        //                                            if (tablaNode == null) return;
+
+        //                                            var indiceRaiz = new TreeViewItem { Header = "Índices" };
+        //                                            foreach (DataRow indice in dtIndices.Rows)
+        //                                            {
+        //                                                try
+        //                                                {
+        //                                                    string nombreIndice = indice[conexionActual.Motor == TipoMotor.SQLite ? "NAME" : "INDEXNAME"].ToString();
+        //                                                    var nodoIndice = new TreeViewItem { Header = nombreIndice };
+        //                                                    indiceRaiz.Items.Add(nodoIndice);
+        //                                                }
+        //                                                catch (Exception)
+        //                                                {
+        //                                                }
+        //                                            }
+        //                                            tablaNode.Items.Add(indiceRaiz);
+        //                                        });
+        //                                    }
+        //                                }
+        //                            }
+        //                        }
+        //                        catch { /* Algunos motores no exponen esa vista */ } 
+        //                    }
+        //                }
+        //            }
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            Dispatcher.Invoke(() => AppendMessage("Error al cargar esquema: " + ex.Message));
+        //        }
+        //    });
+        //}
+
+
         private async void CargarEsquema(List<string> tablasConsulta = null)
         {
             if (conexionActual == null)
@@ -1076,15 +973,19 @@ namespace QueryAnalyzer
 
                         // Obtiene las tablas
                         DataTable tablas = conn.GetSchema("Tables");
-                       
+
                         Dispatcher.Invoke(() => tvSchema.Items.Clear());
 
-                        bool cargarTabla = true; 
+                        bool cargarTabla = true;
                         foreach (DataRow tabla in tablas.Rows)
                         {
                             string schema = tabla["TABLE_SCHEM"].ToString();
                             string nombreTabla = tabla["TABLE_NAME"].ToString();
-                            cargarTabla = tablasConsulta == null || (tablasConsulta != null && tablasConsulta.Contains(nombreTabla.ToUpper().Trim()));
+
+
+                            // Usamos Any() y EndsWith()
+                            cargarTabla = tablasConsulta == null || (tablasConsulta != null &&
+                                tablasConsulta.Any(t => t.ToUpper().Trim().EndsWith(nombreTabla.ToUpper().Trim())));
                             if (cargarTabla)
                             {
                                 string tipo = tabla["TABLE_TYPE"].ToString();
@@ -1107,17 +1008,84 @@ namespace QueryAnalyzer
 
                                     tvSchema.Items.Add(tablaNode);
 
-                                // Agregamos las columnas dentro del hilo de UI
-                                foreach (DataRow col in columnas.Rows)
+                                    // Agregamos las columnas dentro del hilo de UI
+                                    foreach (DataRow col in columnas.Rows)
                                     {
                                         string colName = col["COLUMN_NAME"].ToString();
                                         string tipoCol = col["TYPE_NAME"].ToString();
+                                        // "COLUMN_SIZE" a veces es precisión (para numéricos) y a veces longitud (para strings)
                                         string longitud = col["COLUMN_SIZE"].ToString();
 
+                                        // --- INICIO MODIFICACIÓN ---
+
+                                        // 1. Obtener Escala (NUMERIC_SCALE)
+                                        string escala = string.Empty;
+                                        // Verificamos que la columna exista en el schema y no sea nula
+                                        if (col.Table.Columns.Contains("NUMERIC_SCALE") && col["NUMERIC_SCALE"] != DBNull.Value)
+                                        {
+                                            escala = col["NUMERIC_SCALE"].ToString();
+                                        }
+                                        else if (col.Table.Columns.Contains("COLUMN_SCALE") && col["COLUMN_SCALE"] != DBNull.Value)
+                                        {
+                                            // Nombre alternativo para algunos drivers ODBC
+                                            escala = col["COLUMN_SCALE"].ToString();
+                                        }
+                                        else if (col.Table.Columns.Contains("COLUMN_SIZE") && col["COLUMN_SIZE"] != DBNull.Value)
+                                        {
+                                            // Nombre alternativo para algunos drivers ODBC
+                                            escala = col["COLUMN_SIZE"].ToString();
+                                        }
+
+                                        // 2. Obtener Nulabilidad (IS_NULLABLE)
+                                        string aceptaNulos = string.Empty;
+                                        if (col.Table.Columns.Contains("IS_NULLABLE") && col["IS_NULLABLE"] != DBNull.Value)
+                                        {
+                                            // El valor suele ser "YES", "NO" o "" (desconocido)
+                                            string nuloStr = col["IS_NULLABLE"].ToString().ToUpper();
+                                            if (nuloStr == "YES")
+                                            {
+                                                aceptaNulos = "NULL";
+                                            }
+                                            else if (nuloStr == "NO")
+                                            {
+                                                aceptaNulos = "NOT NULL";
+                                            }
+                                            // Si es "" (unknown), no mostramos nada.
+                                        }
+
+                                        string defecto = string.Empty; 
+                                        if (col.Table.Columns.Contains("COLUMN_DEF") && col["COLUMN_DEF"] != DBNull.Value)
+                                        {
+                                            defecto = col["COLUMN_DEF"].ToString();
+                                        }
+
+                                        // 3. Formatear el string del tipo
+                                        string tipoCompleto = tipoCol;
+                                        string tipoNormalizado = tipoCol.ToUpper();
+                                        // Solo mostramos escala para tipos que la usan (DECIMAL, NUMERIC)
+                                        bool esNumericoDecimal = tipoNormalizado.Contains("DECIMAL") || tipoNormalizado.Contains("NUMERIC");
+
+                                        if (!string.IsNullOrEmpty(longitud))
+                                        {
+                                            // Si es DECIMAL/NUMERIC y tiene escala, mostramos [precision, escala]
+                                            if (esNumericoDecimal && !string.IsNullOrEmpty(escala))
+                                            {
+                                                tipoCompleto += $" [{longitud}, {escala}]";
+                                            }
+                                            else // Para el resto (VARCHAR, INT, etc.) solo mostramos [longitud]
+                                            {
+                                                tipoCompleto += $" [{longitud}]";
+                                            }
+                                        }
+
+                                        // 4. Formatear el Header final
                                         var colNode = new TreeViewItem
                                         {
-                                            Header = $"{colName} ({tipoCol}{(string.IsNullOrEmpty(longitud) ? "" : $"[{longitud}]")})"
+                                            // Formato: Nombre (Tipo [Long, Escala], NULL/NOT NULL)
+                                            Header = $"{colName} ({tipoCompleto}{(string.IsNullOrEmpty(aceptaNulos) ? string.Empty : $", {aceptaNulos}")}{(string.IsNullOrEmpty(defecto) ? string.Empty : $", DEFAULT {defecto}")})"
                                         };
+
+                                        // --- FIN MODIFICACIÓN ---
 
                                         tablaNode.Items.Add(colNode);
                                     }
@@ -1132,52 +1100,52 @@ namespace QueryAnalyzer
                                         {
                                             case TipoMotor.MS_SQL:
                                                 cmd.CommandText = $@"SELECT 
-                                                                    s.name AS SchemaName, 
-                                                                    t.name AS TableName, 
-                                                                    i.name AS IndexName, 
-                                                                    i.type_desc AS IndexType, 
-                                                                    c.name AS ColumnName, 
-                                                                    ic.key_ordinal AS ColumnOrder,
-                                                                    i.is_primary_key AS IsPrimaryKey,
-                                                                    i.is_unique AS IsUnique
-                                                                FROM sys.indexes i
-                                                                INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
-                                                                INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
-                                                                INNER JOIN sys.tables t ON i.object_id = t.object_id
-                                                                INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
-                                                                WHERE t.name = '{nombreTabla}'
-                                                                ORDER BY i.name, ic.key_ordinal;";
+                                                                s.name AS SchemaName, 
+                                                                t.name AS TableName, 
+                                                                i.name AS IndexName, 
+                                                                i.type_desc AS IndexType, 
+                                                                c.name AS ColumnName, 
+                                                                ic.key_ordinal AS ColumnOrder,
+                                                                i.is_primary_key AS IsPrimaryKey,
+                                                                i.is_unique AS IsUnique
+                                                            FROM sys.indexes i
+                                                            INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+                                                            INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+                                                            INNER JOIN sys.tables t ON i.object_id = t.object_id
+                                                            INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
+                                                            WHERE t.name = '{nombreTabla}'
+                                                            ORDER BY i.name, ic.key_ordinal;";
                                                 break;
                                             case TipoMotor.DB2:
                                                 cmd.CommandText = $@"SELECT
-                                                                    i.TABSCHEMA AS SchemaName,
-                                                                    i.TABNAME AS TableName,
-                                                                    i.INDNAME AS IndexName,
-                                                                    i.UNIQUERULE AS UniqueRule,
-                                                                    c.COLNAME AS ColumnName,
-                                                                    c.COLSEQ AS ColumnOrder,
-                                                                    i.INDEXTYPE AS IndexType
-                                                                FROM SYSCAT.INDEXES i
-                                                                JOIN SYSCAT.INDEXCOLUSE c
-                                                                    ON i.INDNAME = c.INDNAME AND i.INDSCHEMA = c.INDSCHEMA
-                                                                WHERE i.TABNAME = UPPER('{nombreTabla}')
-                                                                ORDER BY i.INDNAME, c.COLSEQ;";
+                                                                i.TABSCHEMA AS SchemaName,
+                                                                i.TABNAME AS TableName,
+                                                                i.INDNAME AS IndexName,
+                                                                i.UNIQUERULE AS UniqueRule,
+                                                                c.COLNAME AS ColumnName,
+                                                                c.COLSEQ AS ColumnOrder,
+                                                                i.INDEXTYPE AS IndexType
+                                                            FROM SYSCAT.INDEXES i
+                                                            JOIN SYSCAT.INDEXCOLUSE c
+                                                                ON i.INDNAME = c.INDNAME AND i.INDSCHEMA = c.INDSCHEMA
+                                                            WHERE i.TABNAME = UPPER('{nombreTabla}')
+                                                            ORDER BY i.INDNAME, c.COLSEQ;";
                                                 break;
                                             case TipoMotor.POSTGRES:
                                                 cmd.CommandText = $@"SELECT
-                                                                    n.nspname AS SchemaName,
-                                                                    t.relname AS TableName,
-                                                                    i.relname AS IndexName,
-                                                                    a.attname AS ColumnName,
-                                                                    ix.indisunique AS IsUnique,
-                                                                    ix.indisprimary AS IsPrimary
-                                                                FROM pg_class t
-                                                                JOIN pg_index ix ON t.oid = ix.indrelid
-                                                                JOIN pg_class i ON i.oid = ix.indexrelid
-                                                                JOIN pg_namespace n ON n.oid = t.relnamespace
-                                                                JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
-                                                                WHERE t.relname = '{nombreTabla}'
-                                                                ORDER BY i.relname, a.attnum;";
+                                                                n.nspname AS SchemaName,
+                                                                t.relname AS TableName,
+                                                                i.relname AS IndexName,
+                                                                a.attname AS ColumnName,
+                                                                ix.indisunique AS IsUnique,
+                                                                ix.indisprimary AS IsPrimary
+                                                            FROM pg_class t
+                                                            JOIN pg_index ix ON t.oid = ix.indrelid
+                                                            JOIN pg_class i ON i.oid = ix.indexrelid
+                                                            JOIN pg_namespace n ON n.oid = t.relnamespace
+                                                            JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
+                                                            WHERE t.relname = '{nombreTabla}'
+                                                            ORDER BY i.relname, a.attnum;";
                                                 break;
                                             case TipoMotor.SQLite:
                                                 cmd.CommandText = $"PRAGMA index_list('{nombreTabla}');";
@@ -1196,30 +1164,43 @@ namespace QueryAnalyzer
                                                 // Creamos la estructura para los índices
                                                 Dispatcher.Invoke(() =>
                                                 {
+                                                    // ... dentro de Dispatcher.Invoke()
                                                     var tablaNode = tvSchema.Items.OfType<TreeViewItem>()
                                                         .FirstOrDefault(t => (string)t.Tag == nombreTabla);
                                                     if (tablaNode == null) return;
 
                                                     var indiceRaiz = new TreeViewItem { Header = "Índices" };
-                                                    foreach (DataRow indice in dtIndices.Rows)
+
+                                                    // Obtenemos el nombre de la columna que contiene el nombre del índice, 
+                                                    // que varía según el motor.
+                                                    string indexNameColumn = conexionActual.Motor == TipoMotor.SQLite ? "NAME" : "INDEXNAME";
+
+                                                    // Agrupamos los DataRows por el nombre del índice
+                                                    var indicesAgrupados = dtIndices.AsEnumerable()
+                                                        .GroupBy(row => row.Field<string>(indexNameColumn))
+                                                        .OrderBy(g => g.Key); // Opcional: ordenar por nombre de índice
+
+                                                    foreach (var grupoIndice in indicesAgrupados)
                                                     {
-                                                        try
-                                                        {
-                                                            string nombreIndice = indice[conexionActual.Motor == TipoMotor.SQLite ? "NAME" : "INDEXNAME"].ToString();
-                                                            var nodoIndice = new TreeViewItem { Header = nombreIndice };
-                                                            indiceRaiz.Items.Add(nodoIndice);
-                                                        }
-                                                        catch (Exception)
-                                                        {
-                                                        }
+                                                        // El nombre del índice es la clave del grupo
+                                                        string nombreIndice = grupoIndice.Key;
+
+                                                        // Creamos un nodo por cada índice único
+                                                        var nodoIndice = new TreeViewItem { Header = nombreIndice };
+
+                                                        // Opcional: Podrías añadir las columnas que componen el índice como nodos hijos aquí si el DataRow contiene esa información
+                                                        // Esto requiere otra lógica de agrupación o iteración, pero por ahora solo creamos el nodo del índice.
+
+                                                        indiceRaiz.Items.Add(nodoIndice);
                                                     }
+
                                                     tablaNode.Items.Add(indiceRaiz);
                                                 });
                                             }
                                         }
                                     }
                                 }
-                                catch { /* Algunos motores no exponen esa vista */ } 
+                                catch { /* Algunos motores no exponen esa vista */ }
                             }
                         }
                     }
