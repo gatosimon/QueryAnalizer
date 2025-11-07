@@ -331,7 +331,9 @@ namespace QueryAnalyzer
                 byte[] archivoExcel = excelService.CrearExcelMultiplesHojas(hojas);
 
                 // 🔹 Guardar en escritorio
-                string ruta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "ResultadosConsultas.xlsx");
+                System.Windows.Forms.FolderBrowserDialog fbdExcel = new System.Windows.Forms.FolderBrowserDialog();
+                fbdExcel.ShowDialog();
+                string ruta = Path.Combine(fbdExcel.SelectedPath, "ResultadosConsultas.xlsx");
                 excelService.GuardarArchivo(archivoExcel, ruta);
 
                 AppendMessage($"Excel generado correctamente en: {ruta}");
