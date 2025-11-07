@@ -19,24 +19,3 @@ namespace QueryAnalyzer
         public DateTime Fecha { get; set; }
     }
 }
-
-
-
-
-//using System;
-//using System.Collections.Generic;
-//using System.IO;
-//using System.Xml.Serialization;
-
-//namespace QueryAnalyzer
-//{
-//    [Serializable]
-//    public class Historial
-//    {
-//        private static readonly string ArchivoXml = "historial.xml";
-
-//        public Conexion conexion { get; set; }
-//        public string Consulta { get; set; }
-//        public List<string[]> Parametros { get; set; }
-//    }
-//}
