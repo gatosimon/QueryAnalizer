@@ -174,7 +174,7 @@ namespace QueryAnalyzer
                 }
 
                 // Ajuste más realista: Excel suele calcular el ancho aproximando caracteres a ~1.2 unidades
-                double ancho = Math.Min(100, (maxLength + 2) * 1.2);
+                double ancho = Math.Min(100, (maxLength + 3) * 1.2);
 
                 cols.Append(new Column()
                 {
@@ -255,7 +255,7 @@ namespace QueryAnalyzer
                     BorderId = 1,
                     ApplyFont = true,
                     ApplyFill = true,
-                    ApplyBorder = true,
+                    ApplyBorder = true,                    
                     Alignment = new Alignment()
                     {
                         Horizontal = HorizontalAlignmentValues.Center,
