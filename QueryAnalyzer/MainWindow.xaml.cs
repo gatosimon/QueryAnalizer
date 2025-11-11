@@ -1076,9 +1076,9 @@ namespace QueryAnalyzer
             string connStr = GetConnectionString();
 
             // 🎨 INICIO DE MODIFICACIÓN: Definición de colores de fondo alternados
-            var evenRowBrush = System.Windows.Media.Brushes.Cornsilk;
-            var oddRowColor = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#A7D7F0");
-            var oddRowBrush = new System.Windows.Media.SolidColorBrush(oddRowColor);
+            //var evenRowBrush = System.Windows.Media.Brushes.Cornsilk;
+            //var oddRowColor = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#A7D7F0");
+            //var oddRowBrush = new System.Windows.Media.SolidColorBrush(oddRowColor);
             // 🎨 FIN DE MODIFICACIÓN
 
             // 🖼️ INICIO DE MODIFICACIÓN: Cargar íconos
@@ -1124,7 +1124,7 @@ namespace QueryAnalyzer
                                 var columnas = conn.GetSchema("Columns", new string[] { null, schema, nombreTabla });
 
                                 // 🎨 INICIO DE MODIFICACIÓN: Cálculo del fondo alternado
-                                System.Windows.Media.Brush currentTableBackground = (tablasLeidas % 2 == 0) ? evenRowBrush : oddRowBrush;
+                                //System.Windows.Media.Brush currentTableBackground = (tablasLeidas % 2 == 0) ? evenRowBrush : oddRowBrush;
                                 // 🎨 FIN DE MODIFICACIÓN
 
                                 Dispatcher.Invoke(() =>
@@ -1144,7 +1144,7 @@ namespace QueryAnalyzer
                                     {
                                         Header = tablaHeader,
                                         Tag = nombreTabla,
-                                        Background = currentTableBackground
+                                        //Background = currentTableBackground
                                     };
                                     // 🖼️ FIN DE MODIFICACIÓN
 
