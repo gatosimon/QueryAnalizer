@@ -13,11 +13,20 @@ namespace QueryAnalyzer
     public partial class DatosConexion : Window
     {
         private Dictionary<TipoMotor, string> motores;
-        double anchoServidor = 244;
+
+        public Conexion ConexionActual = null;
+
         public DatosConexion()
         {
             InitializeComponent();
             InicializarMotores();
+        }
+        public DatosConexion(Conexion conexion)
+        {
+            InitializeComponent();
+            InicializarMotores();
+            ConexionActual = conexion;
+            InicializarDatosConexion();
         }
 
         private void InicializarMotores()
@@ -30,28 +39,49 @@ namespace QueryAnalyzer
             cmbMotor.SelectedIndex = 0;
         }
 
+        private void InicializarDatosConexion()
+        {
+            if (ConexionActual != null)
+            {
+                txtNombre.Text = ConexionActual.Nombre;
+                cmbMotor.SelectedValue = ConexionActual.Motor;
+                txtServidor.Text = ConexionActual.Servidor;
+                try
+                {
+                    cmbBaseDatos.SelectedValue = ConexionActual.BaseDatos;
+                }
+                catch 
+                { 
+                }
+
+                txtBaseDatos.Text = ConexionActual.BaseDatos;
+                txtUsuario.Text = ConexionActual.Usuario;
+                txtContrasena.Password = ConexionActual.Contrasena;
+            }
+        }
+
         private void btnGuardar_Click(object sender, RoutedEventArgs e)
         {
-            var conexion = new Conexion
+            if (ConexionActual == null)
             {
-                Nombre = txtNombre.Text.Trim(),
-                Motor = (TipoMotor)cmbMotor.SelectedValue,
-                Servidor = txtServidor.Text.Trim(),
-                BaseDatos = cmbBaseDatos.Visibility == Visibility.Visible ? cmbBaseDatos.Text.Trim() : txtBaseDatos.Text.Trim(),
-                Usuario = txtUsuario.Text.Trim(),
-                Contrasena = txtContrasena.Password
-            };
+                ConexionActual = new Conexion();
+            }
+
+            ConexionActual.Nombre = txtNombre.Text.Trim();
+            ConexionActual.Motor = (TipoMotor)cmbMotor.SelectedValue;
+            ConexionActual.Servidor = txtServidor.Text.Trim();
+            ConexionActual.BaseDatos = cmbBaseDatos.Visibility == Visibility.Visible ? cmbBaseDatos.Text.Trim() : txtBaseDatos.Text.Trim();
+            ConexionActual.Usuario = txtUsuario.Text.Trim();
+            ConexionActual.Contrasena = txtContrasena.Password;
 
             var conexiones = ConexionesManager.Cargar();
-            conexiones[conexion.Nombre] = conexion;
+            conexiones[ConexionActual.Nombre] = ConexionActual;
             ConexionesManager.Guardar(conexiones);
 
-            MainWindow.conexionActual = conexion;
+            MainWindow.conexionActual = ConexionActual;
             MessageBox.Show("Conexión guardada correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
             Close();
         }
-
-        private double anchoOriginalServidor = -1;
 
         private void cmbMotor_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {

@@ -119,7 +119,7 @@ namespace QueryAnalyzer
             Stopwatch swTotal = Stopwatch.StartNew();
 
             string connStr = GetConnectionString();
-            string sqlCompleto = txtQuery.Text;
+            string sqlCompleto = txtQuery.SelectedText.Length > 0 ? txtQuery.SelectedText : txtQuery.Text;
 
             if (string.IsNullOrWhiteSpace(connStr))
             {
@@ -725,7 +725,7 @@ namespace QueryAnalyzer
 
         private void BtnEditConn_Click(object sender, RoutedEventArgs e)
         {
-            DatosConexion datosConexion = new DatosConexion();
+            DatosConexion datosConexion = new DatosConexion(conexionActual);
             datosConexion.ShowDialog();
             InicializarConexiones();
             foreach (var item in cbDriver.Items)
