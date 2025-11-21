@@ -93,7 +93,7 @@ namespace QueryAnalyzer
             if (seleccionado == TipoMotor.DB2.ToString())
             {
                 cmbBaseDatos.Visibility = Visibility.Visible;
-                cmbBaseDatos.ItemsSource = ConexionesManager.TablasDB2;
+                cmbBaseDatos.ItemsSource = ConexionesManager.BasesDB2;
                 cmbBaseDatos.SelectedIndex = 0;
 
                 txtBaseDatos.Visibility = Visibility.Hidden;
