@@ -17,6 +17,7 @@ using System.Text.RegularExpressions;
 using System.Windows.Data;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media.Imaging;
+using System.Threading;
 
 namespace QueryAnalyzer
 {
@@ -25,6 +26,8 @@ namespace QueryAnalyzer
         private const string HISTORY_FILE = "query_history.txt";
         private const string HISTORIAL_XML = "historial.xml";
         private bool iniciarColapasado = true;
+        private CancellationTokenSource _explorarCTS;
+
         public Dictionary<string, OdbcType> OdbcTypes { get; set; }
         public List<QueryParameter> Parametros { get; set; }
 
@@ -780,7 +783,7 @@ namespace QueryAnalyzer
             }
         }
 
-        private async void CargarEsquema(List<string> tablasConsulta = null)
+        private async void CargarEsquema(List<string> tablasConsulta = null, CancellationToken token = default(CancellationToken))
         {
             if (conexionActual == null)
             {
@@ -815,16 +818,34 @@ namespace QueryAnalyzer
                         conn.Open();
 
                         // Obtiene las tablas
+                        //DataTable tablas = conn.GetSchema("Tables");
+
+                        //Dispatcher.Invoke(() => tvSchema.Items.Clear());
+
+                        //bool cargarTabla = true;
+                        //int tablasLeidas = 0;
+                        //int cantidadDeTablas = tablasConsulta == null ? tablas.Rows.Count : tablasConsulta.Count;
+
+                        //foreach (DataRow tabla in tablas.Rows)
                         DataTable tablas = conn.GetSchema("Tables");
 
                         Dispatcher.Invoke(() => tvSchema.Items.Clear());
+                        
+                        // Filtrar SOLO las filas cuyo tipo sea "TABLE"
+                        DataRow[] tablasFiltradas = tablas.Select("TABLE_TYPE = 'TABLE'");
+
+                        // Si querés seguir usando un DataTable:
+                        DataTable tablasSolo = tablasFiltradas.Length > 0 ? tablasFiltradas.CopyToDataTable() : tablas.Clone();
 
                         bool cargarTabla = true;
                         int tablasLeidas = 0;
-                        int cantidadDeTablas = tablasConsulta == null ? tablas.Rows.Count : tablasConsulta.Count;
+                        int cantidadDeTablas = tablasConsulta == null ? tablasSolo.Rows.Count : tablasConsulta.Count;
 
-                        foreach (DataRow tabla in tablas.Rows)
+                        // Ahora usás tablasSolo.Rows en el foreach
+                        foreach (DataRow tabla in tablasSolo.Rows)
                         {
+                            token.ThrowIfCancellationRequested();
+
                             string schema = tabla["TABLE_SCHEM"].ToString();
                             string nombreTabla = tabla["TABLE_NAME"].ToString();
 
@@ -868,6 +889,8 @@ namespace QueryAnalyzer
                                     // Agregar columnas
                                     foreach (DataRow col in columnas.Rows)
                                     {
+                                        token.ThrowIfCancellationRequested();
+
                                         string colName = col["COLUMN_NAME"].ToString();
                                         string tipoCol = col["TYPE_NAME"].ToString();
                                         string longitud = col["COLUMN_SIZE"].ToString();
@@ -1048,37 +1071,114 @@ namespace QueryAnalyzer
                         }
                     }
                 }
+                catch (OperationCanceledException)
+                {
+                    Dispatcher.Invoke(() => AppendMessage("Exploración cancelada."));
+                    return;
+                }
                 catch (Exception ex)
                 {
-                    try
-                    {
-                        Dispatcher.Invoke(() => AppendMessage("Error al cargar esquema: " + ex.Message));
-                    }
-                    catch (Exception)
-                    {
-                    }
+                    Dispatcher.Invoke(() => AppendMessage("Error al cargar esquema: " + ex.Message));
                 }
+                //catch (Exception ex)
+                //{
+                //    try
+                //    {
+                //        Dispatcher.Invoke(() => AppendMessage("Error al cargar esquema: " + ex.Message));
+                //    }
+                //    catch (Exception)
+                //    {
+                //    }
+                //}
             });
         }
 
+        //private void tvSchema_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        //{
+        //    if (tvSchema.SelectedItem is TreeViewItem item && item.Tag != null)
+        //    {
+        //        string tableName = item.Header.ToString();
+        //        txtQuery.Text.Insert(txtQuery.SelectionStart, $"SELECT * FROM {tableName} FETCH FIRST 100 ROWS ONLY;");
+        //    }
+        //    else
+        //    {
+        //        txtQuery.Text.Insert(txtQuery.SelectionStart, tvSchema.SelectedItem.ToString());
+        //    }
+        //}
+
         private void tvSchema_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            if (tvSchema.SelectedItem is TreeViewItem item && item.Tag != null)
+            if (tvSchema.SelectedItem is TreeViewItem item)
             {
-                string tableName = item.Header.ToString();
-                txtQuery.Text = $"SELECT * FROM {tableName} FETCH FIRST 100 ROWS ONLY;";
+                string texto = ObtenerNombrePuro(item);
+
+                if (!string.IsNullOrEmpty(texto))
+                    InsertarEnQuery(texto);
             }
+        }
+
+        private string ObtenerNombrePuro(TreeViewItem item)
+        {
+            string texto = ExtraerTextoDesdeHeader(item);
+
+            if (string.IsNullOrEmpty(texto))
+                return null;
+
+            // Si es tabla, no tiene paréntesis → va completo
+            if (!texto.Contains("("))
+                return texto.Trim();
+
+            // Si es columna → tomar solo lo previo al '('
+            return texto.Split('(')[0].Trim();
+        }
+
+        private string ExtraerTextoDesdeHeader(TreeViewItem item)
+        {
+            if (item.Header is string s)
+                return s;
+
+            if (item.Header is StackPanel sp)
+            {
+                foreach (var child in sp.Children)
+                {
+                    if (child is TextBlock tb)
+                        return tb.Text;
+                }
+            }
+
+            return null;
+        }
+
+        private void InsertarEnQuery(string texto)
+        {
+            int pos = txtQuery.CaretIndex;
+
+            txtQuery.Text = txtQuery.Text.Remove(txtQuery.CaretIndex, txtQuery.SelectionLength);
+            txtQuery.Text = txtQuery.Text.Insert(pos, texto);
+            txtQuery.CaretIndex = pos + texto.Length;
+            txtQuery.Focus();
         }
 
         private void btnExplorar_Click(object sender, RoutedEventArgs e)
         {
-            CargarEsquema(); // 🔹 NUEVO
+            // Si había un proceso anterior, se cancela
+            _explorarCTS?.Cancel();
+
+            // Se crea uno nuevo
+            _explorarCTS = new CancellationTokenSource();
+
+            CargarEsquema(null, _explorarCTS.Token);
         }
 
         private void btnExplorarConsultas_Click(object sender, RoutedEventArgs e)
         {
+            // Cancelar si el otro sigue corriendo
+            _explorarCTS?.Cancel();
+
+            _explorarCTS = new CancellationTokenSource();
+
             List<string> tablasConsulta = ExtraerTablas(txtQuery.Text);
-            CargarEsquema(tablasConsulta);
+            CargarEsquema(tablasConsulta, _explorarCTS.Token);
         }
 
         /// <summary>

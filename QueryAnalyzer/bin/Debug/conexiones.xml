@@ -64,4 +64,28 @@
     <Usuario />
     <Contrasena />
   </Conexion>
+  <Conexion>
+    <Nombre>Desarrollo DB2 ConstCBEL</Nombre>
+    <Motor>DB2</Motor>
+    <Servidor>133.123.120.120</Servidor>
+    <BaseDatos>CONTCBEL</BaseDatos>
+    <Usuario>db2admin</Usuario>
+    <Contrasena>db2admin</Contrasena>
+  </Conexion>
+  <Conexion>
+    <Nombre>GIS</Nombre>
+    <Motor>POSTGRES</Motor>
+    <Servidor>200.58.108.122</Servidor>
+    <BaseDatos>gis</BaseDatos>
+    <Usuario>magic</Usuario>
+    <Contrasena>DEriu7Dp45</Contrasena>
+  </Conexion>
+  <Conexion>
+    <Nombre>DESARROLLO WEB</Nombre>
+    <Motor>MS_SQL</Motor>
+    <Servidor>DESARROLLOWEB</Servidor>
+    <BaseDatos />
+    <Usuario>usuario</Usuario>
+    <Contrasena>ci?r0ba</Contrasena>
+  </Conexion>
 </ArrayOfConexion>
