@@ -647,36 +647,38 @@ namespace QueryAnalyzer
                 {
                     txtQuery.Text = hist.Consulta ?? string.Empty;
 
-                    var nuevos = new List<QueryParameter>();
-                    if (hist.Parametros != null)
-                    {
-                        foreach (var p in hist.Parametros)
-                        {
-                            string nombre = p.Length > 0 ? p[0] : string.Empty;
-                            string tipoStr = p.Length > 1 ? p[1] : string.Empty;
-                            string valor = p.Length > 2 ? p[2] : string.Empty;
+                    SincronizarParametros();
 
-                            OdbcType tipoEnum = OdbcType.VarChar;
-                            if (!string.IsNullOrWhiteSpace(tipoStr))
-                            {
-                                if (!Enum.TryParse(tipoStr, out tipoEnum))
-                                {
-                                    try { tipoEnum = (OdbcType)Enum.Parse(typeof(OdbcType), tipoStr, true); }
-                                    catch { tipoEnum = OdbcType.VarChar; }
-                                }
-                            }
+                    //var nuevos = new List<QueryParameter>();
+                    //if (hist.Parametros != null)
+                    //{
+                    //    foreach (var p in hist.Parametros)
+                    //    {
+                    //        string nombre = p.Length > 0 ? p[0] : string.Empty;
+                    //        string tipoStr = p.Length > 1 ? p[1] : string.Empty;
+                    //        string valor = p.Length > 2 ? p[2] : string.Empty;
 
-                            nuevos.Add(new QueryParameter
-                            {
-                                Nombre = nombre,
-                                Tipo = tipoEnum,
-                                Valor = valor
-                            });
-                        }
-                    }
+                    //        OdbcType tipoEnum = OdbcType.VarChar;
+                    //        if (!string.IsNullOrWhiteSpace(tipoStr))
+                    //        {
+                    //            if (!Enum.TryParse(tipoStr, out tipoEnum))
+                    //            {
+                    //                try { tipoEnum = (OdbcType)Enum.Parse(typeof(OdbcType), tipoStr, true); }
+                    //                catch { tipoEnum = OdbcType.VarChar; }
+                    //            }
+                    //        }
 
-                    Parametros = nuevos;
-                    gridParams.ItemsSource = Parametros;
+                    //        nuevos.Add(new QueryParameter
+                    //        {
+                    //            Nombre = nombre,
+                    //            Tipo = tipoEnum,
+                    //            Valor = valor
+                    //        });
+                    //    }
+                    //}
+
+                    //Parametros = nuevos;
+                    //gridParams.ItemsSource = Parametros;
                 }
                 else
                 {
@@ -1270,17 +1272,138 @@ namespace QueryAnalyzer
             colDef.BeginAnimation(ColumnDefinition.WidthProperty, anim);
         }
 
+        //private void txtQuery_KeyUp(object sender, KeyEventArgs e)
+        //{
+        //    // Detecta el signo de interrogación (Shift + /)
+        //    if (e.Key == Key.Oem4 && Keyboard.Modifiers == ModifierKeys.Shift)
+        //    {
+        //        AgregarParametro();
+        //    }
+        //    if (e.Key == Key.Back || e.Key == Key.Delete)
+        //    {
+        //        EliminarParametro();
+        //    }
+        //}
+
         private void txtQuery_KeyUp(object sender, KeyEventArgs e)
         {
-            // Detecta el signo de interrogación (Shift + /)
-            if (e.Key == Key.Oem4 && Keyboard.Modifiers == ModifierKeys.Shift)
+            // Detecta: '?', Backspace, Delete o Pegar (Ctrl+V)
+            if (e.Key == Key.Oem4 || e.Key == Key.Back || e.Key == Key.Delete ||
+               (e.Key == Key.V && Keyboard.Modifiers == ModifierKeys.Control))
             {
-                AgregarParametro();
+                SincronizarParametros();
             }
-            if (e.Key == Key.Back)
+        }
+
+        private void SincronizarParametros()
+        {
+            string textoActual = txtQuery.Text;
+            var matches = Regex.Matches(textoActual, @"\?");
+            var nuevaLista = new List<QueryParameter>();
+
+            for (int i = 0; i < matches.Count; i++)
             {
-                EliminarParametro();
+                string valorExistente = (i < Parametros.Count) ? Parametros[i].Valor : "";
+
+                // Esta llamada ahora es mucho más potente porque consulta la DB
+                ContextoParametro info = ObtenerContextoDeParametro(textoActual, matches[i].Index);
+
+                nuevaLista.Add(new QueryParameter
+                {
+                    Nombre = info.Nombre,
+                    Tipo = info.Tipo,
+                    Valor = valorExistente
+                });
             }
+
+            Parametros.Clear();
+            foreach (var p in nuevaLista) Parametros.Add(p);
+            gridParams.Items.Refresh();
+        }
+
+        public class ContextoParametro
+        {
+            public string Nombre { get; set; }
+            public OdbcType Tipo { get; set; }
+        }
+
+        private OdbcType ObtenerTipoRealDesdeDB(string nombreColumna, string queryCompleta)
+        {
+            if (conexionActual == null) return OdbcType.VarChar;
+
+            try
+            {
+                // 1. Intentamos extraer el nombre de la tabla de la consulta (lógica simple)
+                string tabla = "TABLA_DESCONOCIDA";
+                var matchTabla = Regex.Match(queryCompleta, @"FROM\s+([^\s\s,;]+)", RegexOptions.IgnoreCase);
+                if (matchTabla.Success) tabla = matchTabla.Groups[1].Value;
+
+                using (OdbcConnection conn = new OdbcConnection(ConexionesManager.GetConnectionString(conexionActual)))
+                {
+                    conn.Open();
+                    // 2. Pedimos solo el esquema de la tabla para no traer datos
+                    string schemaQuery = string.Format("SELECT {0} FROM {1} WHERE 1=0", nombreColumna, tabla);
+                    using (OdbcCommand cmd = new OdbcCommand(schemaQuery, conn))
+                    {
+                        using (OdbcDataReader reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly))
+                        {
+                            DataTable schemaTable = reader.GetSchemaTable();
+                            if (schemaTable != null && schemaTable.Rows.Count > 0)
+                            {
+                                // 3. Mapeamos el tipo de .NET al OdbcType
+                                Type type = (Type)schemaTable.Rows[0]["DataType"];
+                                return MapearTipoADotNet(type);
+                            }
+                        }
+                    }
+                }
+            }
+            catch { /* Si falla la consulta de metadatos, cae al default */ }
+
+            return OdbcType.VarChar;
+        }
+
+        private OdbcType MapearTipoADotNet(Type t)
+        {
+            if (t == typeof(int) || t == typeof(Int16) || t == typeof(Int32) || t == typeof(long)) return OdbcType.Int;
+            if (t == typeof(DateTime)) return OdbcType.Date;
+            if (t == typeof(decimal) || t == typeof(double) || t == typeof(float)) return OdbcType.Double;
+            return OdbcType.VarChar;
+        }
+
+        private ContextoParametro ObtenerContextoDeParametro(string texto, int posicion)
+        {
+            int inicio = Math.Max(0, posicion - 60);
+            string contexto = texto.Substring(inicio, posicion - inicio).ToUpper();
+            var palabras = contexto.Split(new[] { ' ', '\r', '\n', '\t', '=', '>', '<' }, StringSplitOptions.RemoveEmptyEntries);
+
+            string campoReal = "param";
+            if (palabras.Length > 0)
+            {
+                string ultimaPalabra = palabras.Last();
+                campoReal = ultimaPalabra;
+                if (ultimaPalabra == "AND" || ultimaPalabra == "BETWEEN")
+                {
+                    int idx = Array.LastIndexOf(palabras, "BETWEEN");
+                    if (idx > 0) campoReal = palabras[idx - 1];
+                }
+                if (campoReal.Contains(".")) campoReal = campoReal.Split('.').Last();
+                campoReal = Regex.Replace(campoReal, @"[\[\]\""]", "");
+            }
+
+            // --- LLAMADA A LA DB PARA TIPO REAL ---
+            OdbcType tipoSugerido = ObtenerTipoRealDesdeDB(campoReal, texto);
+
+            // --- CONSTRUCCIÓN DEL NOMBRE ---
+            string sufijo = "";
+            if (contexto.TrimEnd().EndsWith("BETWEEN")) sufijo = "_DESDE";
+            else if (contexto.TrimEnd().EndsWith("AND") && contexto.Contains("BETWEEN")) sufijo = "_HASTA";
+
+            return new ContextoParametro
+            {
+                Nombre = "@" + campoReal + sufijo,
+                Tipo = tipoSugerido
+            };
         }
 
         private void AgregarParametro()

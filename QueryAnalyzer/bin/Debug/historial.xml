@@ -24772,4 +24772,60 @@ FROM M10NAPLEG
     <Parametros />
     <Fecha>2025-12-23T11:25:36.0433391-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, FECHATRAMITEJUIC, COD_ESTADO, DESCRIPCION 
+FROM M10ESTJU
+WHERE CODCOMUNA = ? AND
+JURISDICCION = ? AND
+INSTANCIA = ? AND
+ANODEMANDA = ? AND
+NROJUICIO = ? AND
+FECHATRAMITEJUIC BETWEEN ? AND ?</Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>@CODCOMUNA</string>
+        <string>VarChar</string>
+        <string />
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@JURISDICCION</string>
+        <string>VarChar</string>
+        <string />
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@INSTANCIA</string>
+        <string>VarChar</string>
+        <string />
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@ANODEMANDA</string>
+        <string>VarChar</string>
+        <string />
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@NROJUICIO</string>
+        <string>VarChar</string>
+        <string />
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@FECHATRAMITEJUIC_DESDE</string>
+        <string>Date</string>
+        <string />
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@FECHATRAMITEJUIC_HASTA</string>
+        <string>Date</string>
+        <string />
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2025-12-23T12:05:14.1349947-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>

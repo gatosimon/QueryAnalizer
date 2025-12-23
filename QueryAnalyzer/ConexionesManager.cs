@@ -51,6 +51,11 @@ namespace QueryAnalyzer
             }
         }
 
+        public static string GetConnectionString(Conexion conexion)
+        {
+            return GetConnectionString(conexion.Motor, conexion.Servidor, conexion.BaseDatos, conexion.Usuario, conexion.Contrasena);
+        }
+
         public static string GetConnectionString(TipoMotor motor, string servidor, string baseDatos, string usuario, string contraseña)
         {
             string stringConnection = string.Empty;
