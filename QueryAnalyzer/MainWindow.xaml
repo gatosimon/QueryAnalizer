@@ -141,6 +141,7 @@
                         <Button x:Name="btnExecute" Padding="2,2" Content="Ejecutar (F5)" Width="84" Click="BtnExecute_Click" Margin="0,4,0,-4"/>
                         <Button x:Name="btnExecuteScalar" Padding="2,2" Content="Ejecutar Escalar" Margin="8,0,0,-4" Click="BtnExecuteScalar_Click" Height="22" VerticalAlignment="Bottom"/>
                         <Button x:Name="btnClear" Padding="2,2" Content="Limpiar Resultados" Margin="8,4,0,-4" Click="BtnClear_Click"/>
+                        <Button x:Name="btnLimpiarLog" Padding="2,2" Content="Limpiar log" Margin="8,4,0,-4" Click="BtnLimpiarLog_Click"/>
                         <Button x:Name="btnExcel" Padding="2,2" Content="Generar Excel" Margin="8,4,0,-4" Click="BtnExcel_Click"/>
 
                         <TextBlock Text="Columnas (Total):" VerticalAlignment="Center" Margin="12,7,0,-1"/>
@@ -219,10 +220,31 @@
                     <TextBlock Text="Historial" Margin="0,2,0,0" Padding="2"  Grid.Row="0"/>
 
                     <ListBox x:Name="lstHistory"
-                        Grid.Row="1"
-                        SelectionChanged="LstHistory_SelectionChanged"
-                        ScrollViewer.VerticalScrollBarVisibility="Auto"
-                        ScrollViewer.HorizontalScrollBarVisibility="Auto" Margin="0,10,0,0"/>
+         Grid.Row="1"
+         SelectionChanged="LstHistory_SelectionChanged"
+         KeyDown="lstHistory_KeyDown"
+         AlternationCount="2" 
+         ScrollViewer.VerticalScrollBarVisibility="Auto"
+         ScrollViewer.HorizontalScrollBarVisibility="Auto" 
+         Margin="0,10,0,0">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Style.Triggers>
+                                    <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                        <Setter Property="Background" Value="#E0E0E0"/>
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#FFD800"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#A7C7FF"/>
+                                        <Setter Property="Foreground" Value="Black"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
                 </Grid>
             </Grid>
         </Grid>

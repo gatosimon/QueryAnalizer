@@ -24728,84 +24728,48 @@ FROM M10NAPLEG
     </conexion>
     <Consulta>SELECT * FROM M10ESTJU FETCH FIRST 10 ROW ONLY</Consulta>
     <Parametros />
-    <Fecha>2025-12-23T09:37:04.387982-03:00</Fecha>
-  </Historial>
-  <Historial>
-    <conexion>
-      <Nombre>Tributos Desarrollo DB2</Nombre>
-      <Motor>DB2</Motor>
-      <Servidor>133.123.120.120</Servidor>
-      <BaseDatos>TRIBUTOS</BaseDatos>
-      <Usuario>db2admin</Usuario>
-      <Contrasena>db2admin</Contrasena>
-    </conexion>
-    <Consulta>SELECT * FROM M10ESTJU FETCH FIRST 10 ROW ONLY</Consulta>
-    <Parametros />
-    <Fecha>2025-12-23T09:46:19.3911409-03:00</Fecha>
-  </Historial>
-  <Historial>
-    <conexion>
-      <Nombre>Tributos Desarrollo DB2</Nombre>
-      <Motor>DB2</Motor>
-      <Servidor>133.123.120.120</Servidor>
-      <BaseDatos>TRIBUTOS</BaseDatos>
-      <Usuario>db2admin</Usuario>
-      <Contrasena>db2admin</Contrasena>
-    </conexion>
-    <Consulta>SELECT * FROM M10ESTJU FETCH FIRST 10 ROW ONLY</Consulta>
-    <Parametros />
-    <Fecha>2025-12-23T09:56:35.8397577-03:00</Fecha>
-  </Historial>
-  <Historial>
-    <conexion>
-      <Nombre>Tributos Desarrollo DB2</Nombre>
-      <Motor>DB2</Motor>
-      <Servidor>133.123.120.120</Servidor>
-      <BaseDatos>TRIBUTOS</BaseDatos>
-      <Usuario>db2admin</Usuario>
-      <Contrasena>db2admin</Contrasena>
-    </conexion>
-    <Consulta>SELECT * FROM M10ESTJU FETCH FIRST 10 ROW ONLY</Consulta>
-    <Parametros />
-    <Fecha>2025-12-23T09:57:49.5415919-03:00</Fecha>
-  </Historial>
-  <Historial>
-    <conexion>
-      <Nombre>Tributos Desarrollo DB2</Nombre>
-      <Motor>DB2</Motor>
-      <Servidor>133.123.120.120</Servidor>
-      <BaseDatos>TRIBUTOS</BaseDatos>
-      <Usuario>db2admin</Usuario>
-      <Contrasena>db2admin</Contrasena>
-    </conexion>
-    <Consulta>SELECT * FROM M10ESTJU FETCH FIRST 10 ROW ONLY</Consulta>
-    <Parametros />
-    <Fecha>2025-12-23T10:01:40.7368403-03:00</Fecha>
-  </Historial>
-  <Historial>
-    <conexion>
-      <Nombre>Tributos Desarrollo DB2</Nombre>
-      <Motor>DB2</Motor>
-      <Servidor>133.123.120.120</Servidor>
-      <BaseDatos>TRIBUTOS</BaseDatos>
-      <Usuario>db2admin</Usuario>
-      <Contrasena>db2admin</Contrasena>
-    </conexion>
-    <Consulta>SELECT * FROM M10ESTJU FETCH FIRST 10 ROW ONLY</Consulta>
-    <Parametros />
-    <Fecha>2025-12-23T10:02:09.9687312-03:00</Fecha>
-  </Historial>
-  <Historial>
-    <conexion>
-      <Nombre>Tributos Desarrollo DB2</Nombre>
-      <Motor>DB2</Motor>
-      <Servidor>133.123.120.120</Servidor>
-      <BaseDatos>TRIBUTOS</BaseDatos>
-      <Usuario>db2admin</Usuario>
-      <Contrasena>db2admin</Contrasena>
-    </conexion>
-    <Consulta>SELECT * FROM M10ESTJU FETCH FIRST 10 ROW ONLY</Consulta>
-    <Parametros />
     <Fecha>2025-12-23T10:02:21.3162293-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M10ESTJU FETCH FIRST 10 ROW ONLY</Consulta>
+    <Parametros />
+    <Fecha>2025-12-23T11:23:44.3192325-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA, COD_JURISDICCION AS INSTANCIA, COD_INSTANCIA AS JUZGADONRO, AÑO_DEMANDA, NRO_JUICIO, TIPODOC, NRODOC, 
+COD_POSTAL, CODCALLE, NROPUERTA, PISO, DEPTO, COD_CANCELAC, FECHA_CANCEL, NRO_CONVENIO, NRO_OFIGTOS, NRO_RECGTOS
+FROM M10NAPLEG
+</Consulta>
+    <Parametros />
+    <Fecha>2025-12-23T11:25:28.5594906-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M10ESTJU FETCH FIRST 10 ROW ONLY</Consulta>
+    <Parametros />
+    <Fecha>2025-12-23T11:25:36.0433391-03:00</Fecha>
   </Historial>
 </ArrayOfHistorial>

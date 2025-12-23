@@ -108,6 +108,7 @@ namespace QueryAnalyzer
             btnExecuteScalar.IsEnabled = !bloquear;
             btnTest.IsEnabled = !bloquear;
             btnClear.IsEnabled = !bloquear;
+            btnLimpiarLog.IsEnabled = !bloquear;
             btnExcel.IsEnabled = !bloquear;
         }
 
@@ -347,6 +348,17 @@ namespace QueryAnalyzer
             catch (Exception ex)
             {
                 AppendMessage("Error al generar Excel: " + ex.Message);
+            }
+        }
+
+        private async void BtnLimpiarLog_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                txtMessages.Text = string.Empty;
+            }
+            catch (Exception ex)
+            {
             }
         }
 
@@ -1392,6 +1404,46 @@ namespace QueryAnalyzer
 
             // Contamos los signos de interrogación
             return anterior.Count(c => c == '?');
+        }
+
+        private void lstHistory_KeyDown(object sender, KeyEventArgs e)
+        {
+            // 1. Verificar si la tecla presionada es Delete (Suprimir)
+            if (e.Key == Key.Delete)
+            {
+                // 2. Obtener el elemento seleccionado
+                if (lstHistory.SelectedItem is ListBoxItem selectedItem && selectedItem.Tag is Historial histParaEliminar)
+                {
+                    try
+                    {
+                        // 3. Cargar todos los historiales del XML
+                        var todosLosHistoriales = LoadAllHistoriales();
+
+                        // 4. Buscar y remover el historial coincidente (por fecha o consulta)
+                        // Usamos la fecha como identificador único en este caso
+                        var itemEnLista = todosLosHistoriales.FirstOrDefault(h => h.Fecha == histParaEliminar.Fecha && h.Consulta == histParaEliminar.Consulta);
+
+                        if (itemEnLista != null)
+                        {
+                            todosLosHistoriales.Remove(itemEnLista);
+
+                            // 5. Guardar la lista actualizada en el XML
+                            SaveAllHistoriales(todosLosHistoriales);
+
+                            // 6. Refrescar la UI cargando solo el historial de la conexión actual
+                            if (conexionActual != null)
+                            {
+                                LoadHistoryForConnection(conexionActual);
+                                AppendMessage("Elemento eliminado del historial.");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        AppendMessage("Error al eliminar del historial: " + ex.Message);
+                    }
+                }
+            }
         }
     }
 }
