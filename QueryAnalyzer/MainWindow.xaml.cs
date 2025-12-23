@@ -459,23 +459,7 @@ namespace QueryAnalyzer
             string stringConnection = string.Empty;
             if (conexionActual != null)
             {
-                switch (conexionActual.Motor)
-                {
-                    case TipoMotor.MS_SQL:
-                        stringConnection = $@"Driver={{ODBC Driver 17 for SQL Server}};Server=SQL{conexionActual.Servidor}\{conexionActual.Servidor};Database={conexionActual.BaseDatos};Uid={conexionActual.Usuario};Pwd={conexionActual.Contrasena};TrustServerCertificate=yes;";
-                        break;
-                    case TipoMotor.DB2:
-                        stringConnection = $"Driver={{IBM DB2 ODBC DRIVER}};Database={conexionActual.BaseDatos};Hostname={conexionActual.Servidor};Port=50000; Protocol=TCPIP;Uid={conexionActual.Usuario};Pwd={conexionActual.Contrasena};";
-                        break;
-                    case TipoMotor.POSTGRES:
-                        stringConnection = $"Driver={{PostgreSQL Unicode}};Server={conexionActual.Servidor};Port=5432;Database={conexionActual.BaseDatos};Uid={conexionActual.Usuario};Pwd={conexionActual.Contrasena};";
-                        break;
-                    case TipoMotor.SQLite:
-                        stringConnection = $"Driver={{SQLite3 ODBC Driver}};Database={conexionActual.Servidor};"; //"Data Source={conexionActual.Servidor};Version=3;";
-                        break;
-                    default:
-                        break;
-                }
+                stringConnection = ConexionesManager.GetConnectionString(conexionActual.Motor, conexionActual.Servidor, conexionActual.BaseDatos, conexionActual.Usuario, conexionActual.Contrasena);
             }
             return stringConnection;
         }
@@ -1071,6 +1055,11 @@ namespace QueryAnalyzer
                         }
                     }
                 }
+                catch (TaskCanceledException)
+                {
+                    Dispatcher.Invoke(() => AppendMessage("Tarea de exploración cancelada."));
+                    return;
+                }
                 catch (OperationCanceledException)
                 {
                     Dispatcher.Invoke(() => AppendMessage("Exploración cancelada."));
@@ -1080,16 +1069,6 @@ namespace QueryAnalyzer
                 {
                     Dispatcher.Invoke(() => AppendMessage("Error al cargar esquema: " + ex.Message));
                 }
-                //catch (Exception ex)
-                //{
-                //    try
-                //    {
-                //        Dispatcher.Invoke(() => AppendMessage("Error al cargar esquema: " + ex.Message));
-                //    }
-                //    catch (Exception)
-                //    {
-                //    }
-                //}
             });
         }
 

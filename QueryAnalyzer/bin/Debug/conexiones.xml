@@ -88,4 +88,36 @@
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
   </Conexion>
+  <Conexion>
+    <Nombre>Historico tributos</Nombre>
+    <Motor>DB2</Motor>
+    <Servidor>SERVER01</Servidor>
+    <BaseDatos>HISTOTRIB</BaseDatos>
+    <Usuario>db2admin</Usuario>
+    <Contrasena>db2admin</Contrasena>
+  </Conexion>
+  <Conexion>
+    <Nombre>RRHH PROD DB2</Nombre>
+    <Motor>DB2</Motor>
+    <Servidor>SERVER01</Servidor>
+    <BaseDatos>RRHH</BaseDatos>
+    <Usuario>db2admin</Usuario>
+    <Contrasena>db2admin</Contrasena>
+  </Conexion>
+  <Conexion>
+    <Nombre>CONTABIL PROD DB2</Nombre>
+    <Motor>DB2</Motor>
+    <Servidor>SERVER01</Servidor>
+    <BaseDatos>CONTABIL</BaseDatos>
+    <Usuario>db2admin</Usuario>
+    <Contrasena>db2admin</Contrasena>
+  </Conexion>
+  <Conexion>
+    <Nombre>Desarrollo SQL</Nombre>
+    <Motor>MS_SQL</Motor>
+    <Servidor>DESARROLLO</Servidor>
+    <BaseDatos>TRIBUTOS</BaseDatos>
+    <Usuario>usuario</Usuario>
+    <Contrasena>ci?r0ba</Contrasena>
+  </Conexion>
 </ArrayOfConexion>

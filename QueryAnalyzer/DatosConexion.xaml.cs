@@ -187,26 +187,8 @@ namespace QueryAnalyzer
 
         private void btnProbar_Click(object sender, RoutedEventArgs e)
         {
-            string stringConnection = string.Empty;
             TipoMotor motor = (TipoMotor)cmbMotor.SelectedValue;
-
-            switch (motor)
-            {
-                case TipoMotor.MS_SQL:
-                    stringConnection = $@"Driver={{ODBC Driver 17 for SQL Server}};Server=SQL{txtServidor.Text}\{txtServidor.Text};Database={cmbBaseDatos.Text};Uid={txtUsuario.Text};Pwd={txtContrasena.Password};TrustServerCertificate=yes;";
-                    break;
-                case TipoMotor.DB2:
-                    stringConnection = $"Driver={{IBM DB2 ODBC DRIVER}};Database={cmbBaseDatos.Text};Hostname={txtServidor.Text};Port=50000; Protocol=TCPIP;Uid={txtUsuario.Text};Pwd={txtContrasena.Password};";
-                    break;
-                case TipoMotor.POSTGRES:
-                    stringConnection = $"Driver={{PostgreSQL Unicode}};Server={txtServidor.Text};Port=5432;Database={txtBaseDatos.Text};Uid={txtUsuario.Text};Pwd={txtContrasena.Password};";
-                    break;
-                case TipoMotor.SQLite:
-                    stringConnection = $"Driver={{SQLite3 ODBC Driver}};Database={txtServidor.Text};"; //"Data Source={conexionActual.Servidor};Version=3;";
-                    break;
-                default:
-                    break;
-            }
+            string stringConnection = ConexionesManager.GetConnectionString(motor, txtServidor.Text, cmbBaseDatos.Text, txtUsuario.Text, txtContrasena.Password);
 
             if (string.IsNullOrWhiteSpace(stringConnection))
             {

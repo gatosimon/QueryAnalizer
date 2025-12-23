@@ -50,5 +50,28 @@ namespace QueryAnalyzer
                 throw new Exception("Error guardando conexiones: " + ex.Message);
             }
         }
+
+        public static string GetConnectionString(TipoMotor motor, string servidor, string baseDatos, string usuario, string contraseña)
+        {
+            string stringConnection = string.Empty;
+            switch (motor)
+            {
+                case TipoMotor.MS_SQL:
+                    stringConnection = $@"Driver={{ODBC Driver 17 for SQL Server}};Server=SQL{servidor}\{servidor};Database={baseDatos};Uid={usuario};Pwd={contraseña};TrustServerCertificate=yes;";
+                    break;
+                case TipoMotor.DB2:
+                    stringConnection = $"Driver={{IBM DB2 ODBC DRIVER}};Database={baseDatos};Hostname={servidor};Port=50000; Protocol=TCPIP;Uid={usuario};Pwd={contraseña};";
+                    break;
+                case TipoMotor.POSTGRES:
+                    stringConnection = $"Driver={{PostgreSQL Unicode}};Server={servidor};Port=5432;Database={baseDatos};Uid={usuario};Pwd={contraseña};";
+                    break;
+                case TipoMotor.SQLite:
+                    stringConnection = $"Driver={{SQLite3 ODBC Driver}};Database={servidor};"; //"Data Source={conexionActual.Servidor};Version=3;";
+                    break;
+                default:
+                    break;
+            }
+            return stringConnection;
+        }
     }
 }
