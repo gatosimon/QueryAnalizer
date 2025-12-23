@@ -802,15 +802,6 @@ namespace QueryAnalyzer
                         conn.Open();
 
                         // Obtiene las tablas
-                        //DataTable tablas = conn.GetSchema("Tables");
-
-                        //Dispatcher.Invoke(() => tvSchema.Items.Clear());
-
-                        //bool cargarTabla = true;
-                        //int tablasLeidas = 0;
-                        //int cantidadDeTablas = tablasConsulta == null ? tablas.Rows.Count : tablasConsulta.Count;
-
-                        //foreach (DataRow tabla in tablas.Rows)
                         DataTable tablas = conn.GetSchema("Tables");
 
                         Dispatcher.Invoke(() => tvSchema.Items.Clear());
@@ -869,6 +860,7 @@ namespace QueryAnalyzer
                                     // 🖼️ FIN DE MODIFICACIÓN
 
                                     tvSchema.Items.Add(tablaNode);
+                                    tablaNode.MouseDoubleClick += TablaNode_MouseDoubleClick;
 
                                     // Agregar columnas
                                     foreach (DataRow col in columnas.Rows)
@@ -1070,6 +1062,12 @@ namespace QueryAnalyzer
                     Dispatcher.Invoke(() => AppendMessage("Error al cargar esquema: " + ex.Message));
                 }
             });
+        }
+
+        private void TablaNode_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            string tableName = (sender as TreeViewItem).Header.ToString();
+            txtQuery.Text.Insert(txtQuery.SelectionStart, tableName);
         }
 
         //private void tvSchema_MouseDoubleClick(object sender, MouseButtonEventArgs e)
