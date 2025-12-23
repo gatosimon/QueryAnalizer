@@ -1365,11 +1365,34 @@ namespace QueryAnalyzer
 
         private OdbcType MapearTipoADotNet(Type t)
         {
-            if (t == typeof(int) || t == typeof(Int16) || t == typeof(Int32) || t == typeof(long)) return OdbcType.Int;
-            if (t == typeof(DateTime)) return OdbcType.Date;
-            if (t == typeof(decimal) || t == typeof(double) || t == typeof(float)) return OdbcType.Double;
-            return OdbcType.VarChar;
+            return Mapeo[t.Name.ToUpper()];
         }
+
+        public Dictionary<string, OdbcType> Mapeo = new Dictionary<string, OdbcType>
+        {
+            { "BOOL",       OdbcType.Bit},            //"OdbcType.Smallint"}, 	// DB2 no tiene BOOLEAN real en versiones antiguas
+            { "BYTE",       OdbcType.TinyInt},        // SMALLINT usado como byte en DB2
+            { "BYTE[]",     OdbcType.VarBinary},	    // BLOB, VARBINARY, BYTEA
+            { "CHAR",       OdbcType.Char},           // CHAR(1)
+            { "CHAR[]",     OdbcType.VarBinary},	    // BLOB, VARBINARY, BYTEA
+            { "DATETIME",   OdbcType.DateTime},	    // TIMESTAMP (Date si sólo fecha)
+            { "DECIMAL",    OdbcType.Numeric },       // DECIMAL(p,s), NUMERIC
+            { "DOUBLE",     OdbcType.Double},	        // DOUBLE
+            { "FLOAT",      OdbcType.Real }, 	        // REAL
+            { "GUID",       OdbcType.Char},           // DB2 no tiene UNIQUEIDENTIFIER → usar CHAR(36)
+            { "INT",        OdbcType.Int},            // INTEGER
+            { "INT16",      OdbcType.SmallInt },      // SMALLINT	
+            { "INT64",      OdbcType.BigInt },	    // BIGINT
+            { "LONG",       OdbcType.BigInt },	    // BIGINT
+            { "SBYTE",      OdbcType.Double},	        // DOUBLE
+            { "SHORT",      OdbcType.SmallInt },      // SMALLINT	
+            { "SINGLE",     OdbcType.Double},	        // DOUBLE
+            { "STRING",     OdbcType.VarChar},	    // VARCHAR, usar NVarChar si es Unicode	
+            { "TIMESPAN",   OdbcType.Time},	        // TIME
+            { "UINT",       OdbcType.BigInt},          // BIGINT
+            { "ULONG",      OdbcType.BigInt},          // BIGINT
+            { "USHORT",     OdbcType.BigInt}          // BIGINT
+        };
 
         private ContextoParametro ObtenerContextoDeParametro(string texto, int posicion)
         {
