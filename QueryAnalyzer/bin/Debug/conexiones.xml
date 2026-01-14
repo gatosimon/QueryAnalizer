@@ -120,4 +120,12 @@
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
   </Conexion>
+  <Conexion>
+    <Nombre>TRIBUTOS SQL</Nombre>
+    <Motor>MS_SQL</Motor>
+    <Servidor>PRODUCCION</Servidor>
+    <BaseDatos>TRIBUTOS</BaseDatos>
+    <Usuario>usuario</Usuario>
+    <Contrasena>ci?r0ba</Contrasena>
+  </Conexion>
 </ArrayOfConexion>
