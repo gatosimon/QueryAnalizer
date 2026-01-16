@@ -241,12 +241,12 @@ namespace QueryAnalyzer
 
                         var tabItem = new TabItem
                         {
-                            Header = $"Resultado {i + 1} ({dt.Columns.Count} cols, {dt.Rows.Count} filas, {elapsedMicroseconds:F0} ms)",
+                            Header = $"Resultado {i + 1} ({dt.Columns.Count} cols, {dt.Rows.Count} filas, {FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds/1000000)}) s)",
                             Content = dataGrid
                         };
 
                         tcResults.Items.Add(tabItem);
-                        AppendMessage($"Consulta {i + 1} exitosa. {dt.Rows.Count} filas devueltas en {elapsedMicroseconds:F0} ms");
+                        AppendMessage($"Consulta {i + 1} exitosa. {dt.Rows.Count} filas devueltas en {FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds / 1000000)}) s");
                     });
                 }
 
@@ -258,11 +258,11 @@ namespace QueryAnalyzer
 
                 txtColumnCount.Text = totalColumns.ToString();
                 txtRowCount.Text = totalRows.ToString();
-                txtTiempoDeEjecucion.Text = $"{totalElapsedMicroseconds:F0} ms";
+                txtTiempoDeEjecucion.Text = $"{FormatoNumero(totalElapsedMicroseconds)} µs ({FormatoNumero(totalElapsedMicroseconds / 1000000)}) s";
 
                 await Dispatcher.InvokeAsync(() =>
                 {
-                    AppendMessage($"Ejecución total finalizada. {validQueries.Count} consultas ejecutadas en {totalElapsedMicroseconds:F0} ms");
+                    AppendMessage($"Ejecución total finalizada. {validQueries.Count} consultas ejecutadas en {FormatoNumero(totalElapsedMicroseconds)} µs ({FormatoNumero(totalElapsedMicroseconds / 1000000)}) s");
                     if (tcResults.Items.Count > 0)
                         tcResults.SelectedIndex = 0;
                 });
@@ -299,7 +299,7 @@ namespace QueryAnalyzer
                 }
 
                 // Avanzamos el puntero al final (simulando consumo total)
-                posicionActual += cantidadParametros; 
+                posicionActual += cantidadParametros;
             }
 
             return restantes;
@@ -445,10 +445,10 @@ namespace QueryAnalyzer
                 sw.Stop();
                 double elapsedMicroseconds = sw.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
 
-                txtTiempoDeEjecucion.Text = $"{elapsedMicroseconds} ms";
+                txtTiempoDeEjecucion.Text = $"{FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds / 1000000)}) s";
 
                 await Dispatcher.InvokeAsync(() =>
-                    AppendMessage($"Resultado del escalar: {(result?.ToString() ?? "(null) en {}")} en {elapsedMicroseconds} ms"));
+                    AppendMessage($"Resultado del escalar: {(result?.ToString() ?? "(null) en {}")} en {FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds / 1000000)}) s"));
             }
             catch (Exception ex)
             {
@@ -781,6 +781,12 @@ namespace QueryAnalyzer
             }
         }
 
+        private string FormatoNumero(double numero)
+        {
+            string formato = "N";
+            return numero.ToString(formato, System.Globalization.CultureInfo.InvariantCulture);
+        }
+
         private async void CargarEsquema(List<string> tablasConsulta = null, CancellationToken token = default(CancellationToken))
         {
             if (conexionActual == null)
@@ -819,7 +825,7 @@ namespace QueryAnalyzer
                         DataTable tablas = conn.GetSchema("Tables");
 
                         Dispatcher.Invoke(() => tvSchema.Items.Clear());
-                        
+
                         // Filtrar SOLO las filas cuyo tipo sea "TABLE"
                         DataRow[] tablasFiltradas = tablas.Select("TABLE_TYPE = 'TABLE'");
 

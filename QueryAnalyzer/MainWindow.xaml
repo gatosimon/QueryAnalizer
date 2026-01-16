@@ -1,4 +1,4 @@
-<Window x:Class="QueryAnalyzer.MainWindow"
+    <Window x:Class="QueryAnalyzer.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Query Analyzer (ODBC)" Height="700" Width="1100"
