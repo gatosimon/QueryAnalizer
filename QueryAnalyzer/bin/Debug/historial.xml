@@ -38184,4 +38184,580 @@ GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO HAVING COUNT(
     </Parametros>
     <Fecha>2026-01-16T14:15:17.8666357-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA AS COMUNA, COD_JURISDICCION AS JURISDICCION, COD_INSTANCIA AS INSTANCIA, AÑO_DEMANDA AS AÑO, NRO_JUICIO AS JUICIO, CODSISTEMA AS SISTEMA, 
+                                    FECHA_DEMANDA, MONTO_INICIAL AS MONTO, '01/01/1900' AS FECHA_ULT_MOV, NOMBRE AS DEMANDADO, CUIJ_J AS CUIJ, FECHA_CANCEL AS FECHA_CANCELACION, 0 AS MONTO_CANCELADO
+                                    FROM JUICIOSPORSISTEMA J , 
+(SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO FROM (SELECT CODCOMUNA, JURISDICCION, 
+INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+FROM M10ESTJU 
+WHERE COD_ESTADO IN (3) AND 
+NROJUICIO &gt; ? AND 
+COD_ESTADO &gt; ?  
+GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO) AS CE 
+GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO HAVING COUNT(*) = 1) AS T  
+
+                                    WHERE COD_COMUNA = ? AND COD_INSTANCIA BETWEEN ? AND ? AND NRO_JUICIO BETWEEN ? AND ? AND 
+                                    FECHA_DEMANDA BETWEEN '01/01/2025' AND '16/01/2026' AND 
+                                    MONTO_INICIAL BETWEEN ? AND ? 
+                                    
+                                    
+                                     AND TIPOJUICIO = '' AND 
+
+                                     T.CODCOMUNA = J.COD_COMUNA AND 
+                                     T.JURISDICCION = J.COD_JURISDICCION AND 
+                                     T.INSTANCIA = J.COD_INSTANCIA AND 
+                                     T.ANODEMANDA = J.AÑO_DEMANDA AND 
+                                     T.NROJUICIO = J.NRO_JUICIO
+                                     ORDER BY SISTEMA, FECHA_DEMANDA ASC</Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>@NROJUICIO</string>
+        <string>VarChar</string>
+        <string>0</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_ESTADO</string>
+        <string>VarChar</string>
+        <string>0</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_COMUNA</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_INSTANCIA_DESDE</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_INSTANCIA_HASTA</string>
+        <string>SmallInt</string>
+        <string>9</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@NRO_JUICIO_DESDE</string>
+        <string>Double</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@NRO_JUICIO_HASTA</string>
+        <string>Double</string>
+        <string>999999999999</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@MONTO_INICIAL_DESDE</string>
+        <string>Double</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@MONTO_INICIAL_HASTA</string>
+        <string>Double</string>
+        <string>999999999999.99</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2026-01-18T15:46:30.4810202-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA AS COMUNA, COD_JURISDICCION AS JURISDICCION, COD_INSTANCIA AS INSTANCIA, AÑO_DEMANDA AS AÑO, NRO_JUICIO AS JUICIO, CODSISTEMA AS SISTEMA, 
+                                    FECHA_DEMANDA, MONTO_INICIAL AS MONTO, '01/01/1900' AS FECHA_ULT_MOV, NOMBRE AS DEMANDADO, CUIJ_J AS CUIJ, FECHA_CANCEL AS FECHA_CANCELACION, 0 AS MONTO_CANCELADO
+                                    FROM JUICIOSPORSISTEMA J , 
+(SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO FROM (SELECT CODCOMUNA, JURISDICCION, 
+INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+FROM M10ESTJU 
+WHERE COD_ESTADO IN (1, 3) AND 
+NROJUICIO &gt; ? AND 
+COD_ESTADO &gt; ?  
+GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO) AS CE 
+GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO HAVING COUNT(*) = 2) AS T  
+
+                                    WHERE COD_COMUNA = ? AND COD_INSTANCIA BETWEEN ? AND ? AND NRO_JUICIO BETWEEN ? AND ? AND 
+                                    FECHA_DEMANDA BETWEEN '01/01/2025' AND '16/01/2026' AND 
+                                    MONTO_INICIAL BETWEEN ? AND ? 
+                                    
+                                    
+                                     AND TIPOJUICIO = '' AND 
+
+                                     T.CODCOMUNA = J.COD_COMUNA AND 
+                                     T.JURISDICCION = J.COD_JURISDICCION AND 
+                                     T.INSTANCIA = J.COD_INSTANCIA AND 
+                                     T.ANODEMANDA = J.AÑO_DEMANDA AND 
+                                     T.NROJUICIO = J.NRO_JUICIO
+                                     ORDER BY SISTEMA, FECHA_DEMANDA ASC</Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>@NROJUICIO</string>
+        <string>VarChar</string>
+        <string>0</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_ESTADO</string>
+        <string>VarChar</string>
+        <string>0</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_COMUNA</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_INSTANCIA_DESDE</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_INSTANCIA_HASTA</string>
+        <string>SmallInt</string>
+        <string>9</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@NRO_JUICIO_DESDE</string>
+        <string>Double</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@NRO_JUICIO_HASTA</string>
+        <string>Double</string>
+        <string>999999999999</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@MONTO_INICIAL_DESDE</string>
+        <string>Double</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@MONTO_INICIAL_HASTA</string>
+        <string>Double</string>
+        <string>999999999999.99</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2026-01-18T15:50:53.3989841-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA AS COMUNA, COD_JURISDICCION AS JURISDICCION, COD_INSTANCIA AS INSTANCIA, AÑO_DEMANDA AS AÑO, NRO_JUICIO AS JUICIO, CODSISTEMA AS SISTEMA, 
+                                    FECHA_DEMANDA, MONTO_INICIAL AS MONTO, '01/01/1900' AS FECHA_ULT_MOV, NOMBRE AS DEMANDADO, CUIJ_J AS CUIJ, FECHA_CANCEL AS FECHA_CANCELACION, 0 AS MONTO_CANCELADO
+                                    FROM JUICIOSPORSISTEMA J , 
+(SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO FROM (SELECT CODCOMUNA, JURISDICCION, 
+INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+FROM M10ESTJU 
+WHERE COD_ESTADO IN (2, 4) AND 
+NROJUICIO &gt; ? AND 
+COD_ESTADO &gt; ?  
+GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO) AS CE 
+GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO HAVING COUNT(*) = 2) AS T  
+
+                                    WHERE COD_COMUNA = ? AND COD_INSTANCIA BETWEEN ? AND ? AND NRO_JUICIO BETWEEN ? AND ? AND 
+                                    FECHA_DEMANDA BETWEEN '01/01/2025' AND '16/01/2026' AND 
+                                    MONTO_INICIAL BETWEEN ? AND ? 
+                                    
+                                    
+                                     AND TIPOJUICIO = '' AND 
+
+                                     T.CODCOMUNA = J.COD_COMUNA AND 
+                                     T.JURISDICCION = J.COD_JURISDICCION AND 
+                                     T.INSTANCIA = J.COD_INSTANCIA AND 
+                                     T.ANODEMANDA = J.AÑO_DEMANDA AND 
+                                     T.NROJUICIO = J.NRO_JUICIO
+                                     ORDER BY SISTEMA, FECHA_DEMANDA ASC</Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>@NROJUICIO</string>
+        <string>VarChar</string>
+        <string>0</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_ESTADO</string>
+        <string>VarChar</string>
+        <string>0</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_COMUNA</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_INSTANCIA_DESDE</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_INSTANCIA_HASTA</string>
+        <string>SmallInt</string>
+        <string>9</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@NRO_JUICIO_DESDE</string>
+        <string>Double</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@NRO_JUICIO_HASTA</string>
+        <string>Double</string>
+        <string>999999999999</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@MONTO_INICIAL_DESDE</string>
+        <string>Double</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@MONTO_INICIAL_HASTA</string>
+        <string>Double</string>
+        <string>999999999999.99</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2026-01-18T16:04:26.0893967-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA AS COMUNA, COD_JURISDICCION AS JURISDICCION, COD_INSTANCIA AS INSTANCIA, AÑO_DEMANDA AS AÑO, NRO_JUICIO AS JUICIO, CODSISTEMA AS SISTEMA, 
+                                    FECHA_DEMANDA, MONTO_INICIAL AS MONTO, '01/01/1900' AS FECHA_ULT_MOV, NOMBRE AS DEMANDADO, CUIJ_J AS CUIJ, FECHA_CANCEL AS FECHA_CANCELACION, 0 AS MONTO_CANCELADO
+                                    FROM JUICIOSPORSISTEMA J , 
+(SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO FROM (SELECT CODCOMUNA, JURISDICCION, 
+INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+FROM M10ESTJU 
+WHERE COD_ESTADO IN (1, 3) AND 
+NROJUICIO &gt; ? AND 
+COD_ESTADO &gt; ?  
+GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO) AS CE 
+GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO HAVING COUNT(*) = 2) AS T  
+
+                                    WHERE COD_COMUNA = ? AND COD_INSTANCIA BETWEEN ? AND ? AND NRO_JUICIO BETWEEN ? AND ? AND 
+                                    FECHA_DEMANDA BETWEEN '01/01/2025' AND '16/01/2026' AND 
+                                    MONTO_INICIAL BETWEEN ? AND ? 
+                                    
+                                    
+                                     AND TIPOJUICIO = '' AND 
+
+                                     T.CODCOMUNA = J.COD_COMUNA AND 
+                                     T.JURISDICCION = J.COD_JURISDICCION AND 
+                                     T.INSTANCIA = J.COD_INSTANCIA AND 
+                                     T.ANODEMANDA = J.AÑO_DEMANDA AND 
+                                     T.NROJUICIO = J.NRO_JUICIO
+                                     ORDER BY SISTEMA, FECHA_DEMANDA ASC</Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>@NROJUICIO</string>
+        <string>VarChar</string>
+        <string>0</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_ESTADO</string>
+        <string>VarChar</string>
+        <string>0</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_COMUNA</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_INSTANCIA_DESDE</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_INSTANCIA_HASTA</string>
+        <string>SmallInt</string>
+        <string>9</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@NRO_JUICIO_DESDE</string>
+        <string>Double</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@NRO_JUICIO_HASTA</string>
+        <string>Double</string>
+        <string>999999999999</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@MONTO_INICIAL_DESDE</string>
+        <string>Double</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@MONTO_INICIAL_HASTA</string>
+        <string>Double</string>
+        <string>999999999999.99</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2026-01-18T16:04:34.6400241-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA AS COMUNA, COD_JURISDICCION AS JURISDICCION, COD_INSTANCIA AS INSTANCIA, AÑO_DEMANDA AS AÑO, NRO_JUICIO AS JUICIO, CODSISTEMA AS SISTEMA, 
+                                    FECHA_DEMANDA, MONTO_INICIAL AS MONTO, '01/01/1900' AS FECHA_ULT_MOV, NOMBRE AS DEMANDADO, CUIJ_J AS CUIJ, FECHA_CANCEL AS FECHA_CANCELACION, 0 AS MONTO_CANCELADO
+                                    FROM JUICIOSPORSISTEMA J  
+                                    WHERE COD_COMUNA = ? AND COD_INSTANCIA BETWEEN ? AND ? AND NRO_JUICIO BETWEEN ? AND ? AND 
+                                    FECHA_DEMANDA BETWEEN '01/01/2025' AND '18/01/2026' AND 
+                                    MONTO_INICIAL BETWEEN ? AND ? 
+                                    
+                                     AND (COD_COMUNA, COD_JURISDICCION, COD_INSTANCIA, AÑO_DEMANDA, NRO_JUICIO) IN (SELECT MT.COD_COMUNA, MT.COD_JUZGADO, MT.DESCRIPCION, MT.ANODEMANDA, 
+                   MT.NROJUICIO FROM M10TABCLA MT WHERE COD_COMUNA = MT.COD_COMUNA AND COD_JURISDICCION = MT.COD_JUZGADO AND COD_INSTANCIA = MT.DESCRIPCION AND 
+                   AÑO_DEMANDA = MT.ANODEMANDA AND NRO_JUICIO = MT.NROJUICIO AND MT.CODSISTEMA = ?)
+                                    
+                                     AND TIPOJUICIO = ''
+                                     ORDER BY SISTEMA, FECHA_DEMANDA ASC</Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>@COD_COMUNA</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_INSTANCIA_DESDE</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_INSTANCIA_HASTA</string>
+        <string>SmallInt</string>
+        <string>9</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@NRO_JUICIO_DESDE</string>
+        <string>Double</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@NRO_JUICIO_HASTA</string>
+        <string>Double</string>
+        <string>999999999999</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@MONTO_INICIAL_DESDE</string>
+        <string>Double</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@MONTO_INICIAL_HASTA</string>
+        <string>Double</string>
+        <string>999999999999.99</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@CODSISTEMA</string>
+        <string>VarChar</string>
+        <string>3</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2026-01-18T18:00:38.5765634-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fecha
+WHERE FECHA_PARTE_77 &gt; '01/01/2026' AND
+RELOJ_77 = 31 AND
+PASO_HISTOR_77 = 001/01/1900'</Consulta>
+    <Parametros />
+    <Fecha>2026-01-19T09:59:55.4524361-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fecha
+WHERE FECHA_PARTE_77 &gt; '01/01/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-01-19T10:00:01.6096807-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fecha
+WHERE FECHA_PARTE_77 &gt; '01/01/2026' AND
+RELOJ_77 = 31 AND</Consulta>
+    <Parametros />
+    <Fecha>2026-01-19T10:00:18.9232191-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fecha
+WHERE FECHA_PARTE_77 &gt; '01/01/2026' AND
+RELOJ_77 = 31</Consulta>
+    <Parametros />
+    <Fecha>2026-01-19T10:00:21.9375048-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fecha
+WHERE FECHA_PARTE_77 &gt; '01/01/2026' AND
+RELOJ_77 = 31 AND
+PASO_HISTOR_77 = '01/01/1900'</Consulta>
+    <Parametros />
+    <Fecha>2026-01-19T10:00:28.1132754-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fecha
+WHERE FECHA_PARTE_77 &gt; '01/01/2025' AND
+RELOJ_77 = 31 AND
+PASO_HISTOR_77 = '01/01/1900'</Consulta>
+    <Parametros />
+    <Fecha>2026-01-19T10:04:02.7792204-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fecha
+WHERE 
+RELOJ_77 = 31</Consulta>
+    <Parametros />
+    <Fecha>2026-01-19T10:09:21.6776954-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fecha
+WHERE 
+RELOJ_77 = 31</Consulta>
+    <Parametros />
+    <Fecha>2026-01-19T10:27:41.8641844-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fecha
+</Consulta>
+    <Parametros />
+    <Fecha>2026-01-19T10:28:22.7306953-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fecha
+where 
+-- comentario
+RELOJ_77 = 31</Consulta>
+    <Parametros />
+    <Fecha>2026-01-19T10:34:36.8244462-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fecha where  RELOJ_77 = 31</Consulta>
+    <Parametros />
+    <Fecha>2026-01-19T10:37:52.9783502-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fecha where  RELOJ_77 = 31</Consulta>
+    <Parametros />
+    <Fecha>2026-01-19T10:38:07.4381018-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>

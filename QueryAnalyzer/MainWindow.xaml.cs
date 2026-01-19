@@ -11,12 +11,14 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Xml.Serialization;
-using System;
 using System.Windows.Media.Animation;
 using System.Text.RegularExpressions;
 using System.Windows.Data;
 using System.Windows.Controls.Primitives;
-using System.Windows.Media.Imaging;
+using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.AvalonEdit.Highlighting.Xshd;
+using System.Xml;
+using System.Reflection;
 using System.Threading;
 
 namespace QueryAnalyzer
@@ -40,8 +42,12 @@ namespace QueryAnalyzer
             // 🔹 AÑADIDO: esto asegura que los bindings de DataContext funcionen correctamente.
             DataContext = this;
 
+            // 🔹 NUEVO: Registrar definición de SQL si no existe nativamente
+            RegistrarResaltadoSQL();
+            txtQuery.SyntaxHighlighting = HighlightingManager.Instance.GetDefinition("SQL");
+
             LoadHistory(); // mantiene compatibilidad con el archivo de texto
-            txtQuery.KeyDown += TxtQuery_KeyDown;
+            //txtQuery.KeyDown += TxtQuery_KeyDown;
             txtQuery.Text = "SELECT * FROM SYSIBM.SYSCOLUMNS FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2";
 
             CargarTipos();
@@ -52,6 +58,40 @@ namespace QueryAnalyzer
             InicializarConexiones();
             BloquearUI(true);
         }
+        private void RegistrarResaltadoSQL()
+        {
+            // Definición XML manual para asegurar que funcione sin archivos externos
+            string sqlXshd = @"
+                            <SyntaxDefinition name='SQL' extensions='.sql' xmlns='http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008'>
+                                <Color name='String' foreground='Red' />
+                                <Color name='Comment' foreground='Green' />
+                                <Color name='Keyword' foreground='Blue' fontWeight='bold' />
+                                <RuleSet ignoreCase='true'>
+                                    <Span color='Comment' begin='--' />
+                                    <Span color='Comment' multiline='true' begin='/\*' end='\*/' />
+                                    <Span color='String'><Begin>'</Begin><End>'</End></Span>
+                                    <Keywords color='Keyword'>
+                                        <Word>SELECT</Word><Word>FROM</Word><Word>WHERE</Word><Word>GROUP</Word><Word>BY</Word>
+                                        <Word>ORDER</Word><Word>HAVING</Word><Word>LIMIT</Word><Word>OFFSET</Word><Word>FETCH</Word>
+                                        <Word>FIRST</Word><Word>ROWS</Word><Word>ONLY</Word><Word>INSERT</Word><Word>INTO</Word>
+                                        <Word>VALUES</Word><Word>UPDATE</Word><Word>SET</Word><Word>DELETE</Word><Word>JOIN</Word>
+                                        <Word>LEFT</Word><Word>RIGHT</Word><Word>INNER</Word><Word>OUTER</Word><Word>ON</Word>
+                                        <Word>AND</Word><Word>OR</Word><Word>NOT</Word><Word>NULL</Word><Word>IS</Word>
+                                        <Word>IN</Word><Word>BETWEEN</Word><Word>LIKE</Word><Word>EXISTS</Word><Word>CASE</Word>
+                                        <Word>WHEN</Word><Word>THEN</Word><Word>ELSE</Word><Word>END</Word><Word>AS</Word>
+                                        <Word>DISTINCT</Word><Word>UNION</Word><Word>ALL</Word><Word>CREATE</Word><Word>TABLE</Word>
+                                        <Word>DROP</Word><Word>ALTER</Word><Word>VIEW</Word><Word>PROCEDURE</Word><Word>TRIGGER</Word>
+                                    </Keywords>
+                                </RuleSet>
+                            </SyntaxDefinition>";
+
+            using (var reader = new XmlTextReader(new StringReader(sqlXshd)))
+            {
+                var customHighlighting = HighlightingLoader.Load(reader, HighlightingManager.Instance);
+                HighlightingManager.Instance.RegisterHighlighting("SQL", new[] { ".sql" }, customHighlighting);
+            }
+        }
+
         protected override void OnPreviewKeyDown(KeyEventArgs e)
         {
             base.OnPreviewKeyDown(e);
@@ -118,12 +158,25 @@ namespace QueryAnalyzer
                 BtnExecute_Click(this, new RoutedEventArgs());
         }
 
+        private string LimpiarConsulta(string sql)
+        {
+            // Divide la consulta por líneas
+            var lineas = sql.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+
+            // Filtra las líneas que NO empiezan con -- (ignorando espacios en blanco al inicio)
+            var lineasLimpias = lineas.Where(linea => !linea.TrimStart().StartsWith("--"));
+
+            // Une todo de nuevo con espacios para que el motor SQL lo reciba en una sola línea o limpia
+            return string.Join(" ", lineasLimpias);
+        }
+
         private async void BtnExecute_Click(object sender, RoutedEventArgs e)
         {
             Stopwatch swTotal = Stopwatch.StartNew();
 
             string connStr = GetConnectionString();
             string sqlCompleto = txtQuery.SelectedText.Length > 0 ? txtQuery.SelectedText : txtQuery.Text;
+            sqlCompleto = LimpiarConsulta(sqlCompleto);
 
             if (string.IsNullOrWhiteSpace(connStr))
             {
@@ -1148,11 +1201,24 @@ namespace QueryAnalyzer
 
         private void InsertarEnQuery(string texto)
         {
-            int pos = txtQuery.CaretIndex;
+            //int pos = txtQuery.CaretIndex;
 
-            txtQuery.Text = txtQuery.Text.Remove(txtQuery.CaretIndex, txtQuery.SelectionLength);
-            txtQuery.Text = txtQuery.Text.Insert(pos, texto);
-            txtQuery.CaretIndex = pos + texto.Length;
+            //txtQuery.Text = txtQuery.Text.Remove(txtQuery.CaretIndex, txtQuery.SelectionLength);
+            //txtQuery.Text = txtQuery.Text.Insert(pos, texto);
+            //txtQuery.CaretIndex = pos + texto.Length;
+            //txtQuery.Focus();
+
+            if (string.IsNullOrEmpty(texto)) return;
+
+            // AvalonEdit usa CaretOffset y SelectionLength
+            int offset = txtQuery.CaretOffset;
+            int length = txtQuery.SelectionLength;
+
+            // Reemplaza el texto seleccionado o inserta en la posición del cursor
+            txtQuery.Document.Replace(offset, length, texto);
+
+            // Reposicionar el cursor al final de lo insertado y dar foco
+            txtQuery.CaretOffset = offset + texto.Length;
             txtQuery.Focus();
         }
 
@@ -1440,7 +1506,7 @@ namespace QueryAnalyzer
             try
             {
                 // Posición actual del cursor
-                int caretIndex = txtQuery.CaretIndex;
+                int caretIndex = txtQuery.CaretOffset;
                 if (caretIndex > 0)
                 {
                     caretIndex -= 1;
@@ -1517,7 +1583,7 @@ namespace QueryAnalyzer
                 if ((gridParams.Items.Count - 1) >= parametrosEnQuery)
                 {
                     // Posición actual del cursor
-                    int caretIndex = txtQuery.CaretIndex;
+                    int caretIndex = txtQuery.CaretOffset;
                     if (caretIndex > 0)
                     {
                         caretIndex -= 1;
