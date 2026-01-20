@@ -81,6 +81,7 @@ namespace QueryAnalyzer
                                         <Word>WHEN</Word><Word>THEN</Word><Word>ELSE</Word><Word>END</Word><Word>AS</Word>
                                         <Word>DISTINCT</Word><Word>UNION</Word><Word>ALL</Word><Word>CREATE</Word><Word>TABLE</Word>
                                         <Word>DROP</Word><Word>ALTER</Word><Word>VIEW</Word><Word>PROCEDURE</Word><Word>TRIGGER</Word>
+                                        <Word>ASC</Word><Word>DESC</Word>
                                     </Keywords>
                                 </RuleSet>
                             </SyntaxDefinition>";
@@ -167,7 +168,7 @@ namespace QueryAnalyzer
             var lineasLimpias = lineas.Where(linea => !linea.TrimStart().StartsWith("--"));
 
             // Une todo de nuevo con espacios para que el motor SQL lo reciba en una sola línea o limpia
-            return string.Join(" ", lineasLimpias);
+            return string.Join("\r\n", lineasLimpias);
         }
 
         private async void BtnExecute_Click(object sender, RoutedEventArgs e)
@@ -176,6 +177,7 @@ namespace QueryAnalyzer
 
             string connStr = GetConnectionString();
             string sqlCompleto = txtQuery.SelectedText.Length > 0 ? txtQuery.SelectedText : txtQuery.Text;
+            string sqlHistorial = sqlCompleto;
             sqlCompleto = LimpiarConsulta(sqlCompleto);
 
             if (string.IsNullOrWhiteSpace(connStr))
@@ -304,7 +306,7 @@ namespace QueryAnalyzer
                 }
 
                 // 🔹 Al terminar todas, guardamos el bloque completo en el historial con todos los parámetros
-                AddToHistoryWithParams(sqlCompleto, parametrosTotales);
+                AddToHistoryWithParams(sqlHistorial, parametrosTotales);
 
                 swTotal.Stop();
                 double totalElapsedMicroseconds = swTotal.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
