@@ -66,22 +66,31 @@ namespace QueryAnalyzer
                                 <Color name='String' foreground='Red' />
                                 <Color name='Comment' foreground='Green' />
                                 <Color name='Keyword' foreground='Blue' fontWeight='bold' />
+                                <Color name='Function' foreground='Magenta' />
+                                <Color name='Connector' foreground='#0094FF'  />
                                 <RuleSet ignoreCase='true'>
                                     <Span color='Comment' begin='--' />
                                     <Span color='Comment' multiline='true' begin='/\*' end='\*/' />
                                     <Span color='String'><Begin>'</Begin><End>'</End></Span>
                                     <Keywords color='Keyword'>
                                         <Word>SELECT</Word><Word>FROM</Word><Word>WHERE</Word><Word>GROUP</Word><Word>BY</Word>
-                                        <Word>ORDER</Word><Word>HAVING</Word><Word>LIMIT</Word><Word>OFFSET</Word><Word>FETCH</Word>
-                                        <Word>FIRST</Word><Word>ROWS</Word><Word>ONLY</Word><Word>INSERT</Word><Word>INTO</Word>
-                                        <Word>VALUES</Word><Word>UPDATE</Word><Word>SET</Word><Word>DELETE</Word><Word>JOIN</Word>
-                                        <Word>LEFT</Word><Word>RIGHT</Word><Word>INNER</Word><Word>OUTER</Word><Word>ON</Word>
-                                        <Word>AND</Word><Word>OR</Word><Word>NOT</Word><Word>NULL</Word><Word>IS</Word>
-                                        <Word>IN</Word><Word>BETWEEN</Word><Word>LIKE</Word><Word>EXISTS</Word><Word>CASE</Word>
+                                        <Word>ORDER</Word><Word>HAVING</Word><Word>FETCH</Word>
+                                        <Word>FIRST</Word><Word>ROWS</Word><Word>INSERT</Word><Word>INTO</Word>
+                                        <Word>VALUES</Word><Word>SET</Word><Word>DELETE</Word>
+                                        <Word>ON</Word><Word>CASE</Word>
                                         <Word>WHEN</Word><Word>THEN</Word><Word>ELSE</Word><Word>END</Word><Word>AS</Word>
-                                        <Word>DISTINCT</Word><Word>UNION</Word><Word>ALL</Word><Word>CREATE</Word><Word>TABLE</Word>
+                                        <Word>DISTINCT</Word><Word>UNION</Word><Word>CREATE</Word><Word>TABLE</Word>
                                         <Word>DROP</Word><Word>ALTER</Word><Word>VIEW</Word><Word>PROCEDURE</Word><Word>TRIGGER</Word>
                                         <Word>ASC</Word><Word>DESC</Word>
+                                    </Keywords>
+                                    <Keywords color='Function'>
+                                        <Word>SUM</Word><Word>COUNT</Word><Word>UPDATE</Word>
+                                    </Keywords>
+                                    <Keywords color='Connector'>
+                                        <Word>JOIN</Word><Word>LIMIT</Word><Word>OFFSET</Word><Word>ONLY</Word>
+                                        <Word>LEFT</Word><Word>RIGHT</Word><Word>INNER</Word><Word>OUTER</Word>
+                                        <Word>AND</Word><Word>OR</Word><Word>NOT</Word><Word>NULL</Word><Word>IS</Word>
+                                        <Word>IN</Word><Word>BETWEEN</Word><Word>LIKE</Word><Word>EXISTS</Word><Word>ALL</Word>
                                     </Keywords>
                                 </RuleSet>
                             </SyntaxDefinition>";
