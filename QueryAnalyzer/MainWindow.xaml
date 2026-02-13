@@ -108,6 +108,7 @@
                                     TextAlignment="Justify"
                                     Margin="4,2,36,316"
                                     VerticalAlignment="Top"
+                                    KeyDown="txtBuscar_KeyDown" 
                                     Padding="4"/>
                         <Button x:Name="btnBuscar"
                                     Grid.Column="1"

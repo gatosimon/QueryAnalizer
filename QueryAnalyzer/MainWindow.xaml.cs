@@ -1163,7 +1163,7 @@ namespace QueryAnalyzer
 
         private void tvSchema_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            if (tvSchema.SelectedItem is TreeViewItem item)
+            if ((sender as TreeView).SelectedItem is TreeViewItem item)
             {
                 string texto = ObtenerNombrePuro(item);
 
@@ -1216,11 +1216,18 @@ namespace QueryAnalyzer
             if (string.IsNullOrEmpty(texto)) return;
 
             // AvalonEdit usa CaretOffset y SelectionLength
-            int offset = txtQuery.CaretOffset;
             int length = txtQuery.SelectionLength;
+            int offset = txtQuery.CaretOffset - length;
 
             // Reemplaza el texto seleccionado o inserta en la posición del cursor
-            txtQuery.Document.Replace(offset, length, texto);
+            try
+            {
+                txtQuery.Document.Replace(offset, length, texto);
+            }
+            catch (Exception err)
+            {
+                MessageBox.Show(err.Message);
+            }
 
             // Reposicionar el cursor al final de lo insertado y dar foco
             txtQuery.CaretOffset = offset + texto.Length;
@@ -1739,6 +1746,14 @@ namespace QueryAnalyzer
             }
 
             return header.ToString(); // Caso de respaldo
+        }
+
+        private void txtBuscar_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                btnBuscar_Click(sender, e);
+            }
         }
     }
 }
