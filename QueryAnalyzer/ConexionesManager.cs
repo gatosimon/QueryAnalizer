@@ -99,7 +99,7 @@ namespace QueryAnalyzer
                     palabraClave = "DB2";
                     break;
                 case TipoMotor.POSTGRES:
-                    palabraClave = "Postgre";
+                    palabraClave = "PostgreSQL";
                     break;
                 case TipoMotor.SQLite:
                     palabraClave = "SQLite";
@@ -113,21 +113,40 @@ namespace QueryAnalyzer
             // Los drivers de ODBC se encuentran en esta ruta del registro
             string registroPath = @"SOFTWARE\ODBC\ODBCINST.INI\ODBC Drivers";
 
-            // Abrimos la llave local (HKEY_LOCAL_MACHINE)
-            using (RegistryKey rk = Registry.LocalMachine.OpenSubKey(registroPath))
+            //// Abrimos la llave local (HKEY_LOCAL_MACHINE)
+            //using (RegistryKey rk = Registry.LocalMachine.OpenSubKey(registroPath))
+            //{
+            //    if (rk != null)
+            //    {
+            //        // Leemos todos los nombres de valores (que son los nombres de los drivers)
+            //        foreach (string nombreDriver in rk.GetValueNames())
+            //        {
+            //            drivers.Add(nombreDriver);
+            //        }
+            //    }
+            //}
+
+            // Forzamos la apertura de la vista de 32 bits (RegistryView.Registry32)
+            using (var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32))
             {
-                if (rk != null)
+                using (var rk = baseKey.OpenSubKey(@"SOFTWARE\ODBC\ODBCINST.INI\ODBC Drivers"))
                 {
-                    // Leemos todos los nombres de valores (que son los nombres de los drivers)
-                    foreach (string nombreDriver in rk.GetValueNames())
+                    if (rk != null)
                     {
-                        drivers.Add(nombreDriver);
+                        foreach (string name in rk.GetValueNames())
+                        {
+                            drivers.Add(name);
+                        }
                     }
                 }
             }
-
             // Buscamos el que coincida con tu base de datos (ej: "PostgreSQL" o "IBM DB2")
-            return drivers.FirstOrDefault(d => d.IndexOf(palabraClave, StringComparison.OrdinalIgnoreCase) >= 0);
+            string driver = drivers.FirstOrDefault(d => d.IndexOf(palabraClave, StringComparison.OrdinalIgnoreCase) >= 0).Trim();
+            if (driver.Length == 0)
+            {
+                System.Windows.MessageBox.Show($"No se encontró un driver ODBC x86 para {driver}");
+            }
+            return driver;
         }
     }
 }
