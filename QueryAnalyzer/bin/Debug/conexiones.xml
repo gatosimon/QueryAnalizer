@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ArrayOfConexion xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<ArrayOfConexion xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Conexion>
     <Nombre>Tributos PRODUCCION DB2</Nombre>
     <Motor>DB2</Motor>
@@ -127,5 +127,13 @@
     <BaseDatos>TRIBUTOS</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
+  </Conexion>
+  <Conexion>
+    <Nombre>GIS PRODUCCION</Nombre>
+    <Motor>POSTGRES</Motor>
+    <Servidor>200.58.108.122</Servidor>
+    <BaseDatos>gis</BaseDatos>
+    <Usuario>magic</Usuario>
+    <Contrasena>DEriu7Dp45</Contrasena>
   </Conexion>
 </ArrayOfConexion>

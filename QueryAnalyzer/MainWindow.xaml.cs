@@ -77,14 +77,16 @@ namespace QueryAnalyzer
                                         <Word>ORDER</Word><Word>HAVING</Word><Word>FETCH</Word>
                                         <Word>FIRST</Word><Word>ROWS</Word><Word>INSERT</Word><Word>INTO</Word>
                                         <Word>VALUES</Word><Word>SET</Word><Word>DELETE</Word>
-                                        <Word>ON</Word><Word>CASE</Word>
+                                        <Word>ON</Word><Word>CASE</Word><Word>ADD</Word>
                                         <Word>WHEN</Word><Word>THEN</Word><Word>ELSE</Word><Word>END</Word><Word>AS</Word>
                                         <Word>DISTINCT</Word><Word>UNION</Word><Word>CREATE</Word><Word>TABLE</Word>
                                         <Word>DROP</Word><Word>ALTER</Word><Word>VIEW</Word><Word>PROCEDURE</Word><Word>TRIGGER</Word>
-                                        <Word>ASC</Word><Word>DESC</Word>
+                                        <Word>ASC</Word><Word>DESC</Word><Word>SCHEMA</Word>
                                     </Keywords>
                                     <Keywords color='Function'>
-                                        <Word>SUM</Word><Word>COUNT</Word><Word>UPDATE</Word>
+                                        <Word>SUM</Word><Word>COUNT</Word><Word>UPDATE</Word><Word>CAST</Word><Word>CONVERT</Word>
+                                        <Word>COALESCE</Word><Word>NULLIF</Word><Word>ISNULL</Word><Word>ROW_NUMBER</Word>
+                                        <Word>RANK</Word><Word>DENSE_RANK</Word><Word>LAG</Word><Word>LEAD</Word><Word>MAX</Word><Word>MIN</Word>
                                     </Keywords>
                                     <Keywords color='Connector'>
                                         <Word>JOIN</Word><Word>LIMIT</Word><Word>OFFSET</Word><Word>ONLY</Word>
@@ -94,6 +96,7 @@ namespace QueryAnalyzer
                                     </Keywords>
                                 </RuleSet>
                             </SyntaxDefinition>";
+
 
             using (var reader = new XmlTextReader(new StringReader(sqlXshd)))
             {
@@ -1673,6 +1676,11 @@ namespace QueryAnalyzer
                     }
                 }
             }
+        }
+
+        private void btnBuscar_Click(object sender, RoutedEventArgs e)
+        {
+            tvSchema.Items.Filter(txtBuscar.Text);
         }
     }
 }

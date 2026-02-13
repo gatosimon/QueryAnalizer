@@ -188,7 +188,9 @@ namespace QueryAnalyzer
         private void btnProbar_Click(object sender, RoutedEventArgs e)
         {
             TipoMotor motor = (TipoMotor)cmbMotor.SelectedValue;
-            string stringConnection = ConexionesManager.GetConnectionString(motor, txtServidor.Text, cmbBaseDatos.Text, txtUsuario.Text, txtContrasena.Password);
+
+            string baseDatos = cmbBaseDatos.Text.Trim().Length > 0 ? cmbBaseDatos.Text.Trim() : txtBaseDatos.Text.Trim();
+            string stringConnection = ConexionesManager.GetConnectionString(motor, txtServidor.Text, baseDatos, txtUsuario.Text, txtContrasena.Password);
 
             if (string.IsNullOrWhiteSpace(stringConnection))
             {

@@ -30,6 +30,13 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer1\QueryAnalyzer\obj\Debug\QueryAnalyz
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\QueryAnalyzer.exe
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\QueryAnalyzer.pdb
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\DocumentFormat.OpenXml.dll
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\ICSharpCode.AvalonEdit.dll
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\Npgsql.dll
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\System.Threading.Tasks.Extensions.dll
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\System.ValueTuple.dll
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\ICSharpCode.AvalonEdit.xml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\Npgsql.xml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\System.Threading.Tasks.Extensions.xml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\DatosConexion.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\MainWindow.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\DatosConexion.g.cs
@@ -43,6 +50,3 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\QueryAnalyze
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\QueryAnalyzer.exe
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\QueryAnalyzer.pdb
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\QueryAnalyzer.csproj.AssemblyReference.cache
-C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\System.ValueTuple.dll
-C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\ICSharpCode.AvalonEdit.dll
-C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\ICSharpCode.AvalonEdit.xml

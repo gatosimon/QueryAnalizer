@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
+using Microsoft.Win32;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace QueryAnalyzer
 {
@@ -59,24 +63,71 @@ namespace QueryAnalyzer
         public static string GetConnectionString(TipoMotor motor, string servidor, string baseDatos, string usuario, string contraseña)
         {
             string stringConnection = string.Empty;
+            string driver = ObtenerNombreDriver(motor);
             switch (motor)
             {
                 case TipoMotor.MS_SQL:
-                    stringConnection = $@"Driver={{ODBC Driver 17 for SQL Server}};Server=SQL{servidor}\{servidor};Database={baseDatos};Uid={usuario};Pwd={contraseña};TrustServerCertificate=yes;";
+                    //stringConnection = $@"Driver={{ODBC Driver 17 for SQL Server}};Server=SQL{servidor}\{servidor};Database={baseDatos};Uid={usuario};Pwd={contraseña};TrustServerCertificate=yes;";
+                    stringConnection = $@"Driver={{{driver}}};Server=SQL{servidor}\{servidor};Database={baseDatos};Uid={usuario};Pwd={contraseña};TrustServerCertificate=yes;";
                     break;
                 case TipoMotor.DB2:
-                    stringConnection = $"Driver={{IBM DB2 ODBC DRIVER}};Database={baseDatos};Hostname={servidor};Port=50000; Protocol=TCPIP;Uid={usuario};Pwd={contraseña};";
+                    //stringConnection = $"Driver={{IBM DB2 ODBC DRIVER}};Database={baseDatos};Hostname={servidor};Port=50000; Protocol=TCPIP;Uid={usuario};Pwd={contraseña};";
+                    stringConnection = $"Driver={{{driver}}};Database={baseDatos};Hostname={servidor};Port=50000; Protocol=TCPIP;Uid={usuario};Pwd={contraseña};";
                     break;
                 case TipoMotor.POSTGRES:
-                    stringConnection = $"Driver={{PostgreSQL Unicode}};Server={servidor};Port=5432;Database={baseDatos};Uid={usuario};Pwd={contraseña};";
+                    //stringConnection = $"Driver={{PostgreSQL Unicode(x86)}};Server={servidor};Port=5432;Database={baseDatos};Uid={usuario};Pwd={contraseña};";
+                    stringConnection = $"Driver={{{driver}}};Server={servidor};Port=5432;Database={baseDatos};Uid={usuario};Pwd={contraseña};";
                     break;
                 case TipoMotor.SQLite:
-                    stringConnection = $"Driver={{SQLite3 ODBC Driver}};Database={servidor};"; //"Data Source={conexionActual.Servidor};Version=3;";
+                    //stringConnection = $"Driver={{SQLite3 ODBC Driver}};Database={servidor};"; //"Data Source={conexionActual.Servidor};Version=3;";
+                    stringConnection = $"Driver={{{driver}}};Database={servidor};"; //"Data Source={conexionActual.Servidor};Version=3;";
                     break;
                 default:
                     break;
             }
             return stringConnection;
+        }
+        public static string ObtenerNombreDriver(TipoMotor motor)
+        {
+            string palabraClave = string.Empty;
+            switch (motor)
+            {
+                case TipoMotor.MS_SQL:
+                    palabraClave = "SQL Server";
+                    break;
+                case TipoMotor.DB2:
+                    palabraClave = "DB2";
+                    break;
+                case TipoMotor.POSTGRES:
+                    palabraClave = "Postgre";
+                    break;
+                case TipoMotor.SQLite:
+                    palabraClave = "SQLite";
+                    break;
+                default:
+                    palabraClave = string.Empty;
+                    break;
+            }
+            List<string> drivers = new List<string>();
+
+            // Los drivers de ODBC se encuentran en esta ruta del registro
+            string registroPath = @"SOFTWARE\ODBC\ODBCINST.INI\ODBC Drivers";
+
+            // Abrimos la llave local (HKEY_LOCAL_MACHINE)
+            using (RegistryKey rk = Registry.LocalMachine.OpenSubKey(registroPath))
+            {
+                if (rk != null)
+                {
+                    // Leemos todos los nombres de valores (que son los nombres de los drivers)
+                    foreach (string nombreDriver in rk.GetValueNames())
+                    {
+                        drivers.Add(nombreDriver);
+                    }
+                }
+            }
+
+            // Buscamos el que coincida con tu base de datos (ej: "PostgreSQL" o "IBM DB2")
+            return drivers.FirstOrDefault(d => d.IndexOf(palabraClave, StringComparison.OrdinalIgnoreCase) >= 0);
         }
     }
 }
