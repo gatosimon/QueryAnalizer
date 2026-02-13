@@ -20,6 +20,8 @@ using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using System.Xml;
 using System.Reflection;
 using System.Threading;
+using System.Windows.Media;
+using System.Windows.Documents;
 
 namespace QueryAnalyzer
 {
@@ -57,7 +59,57 @@ namespace QueryAnalyzer
             gridParams.ItemsSource = Parametros;
             InicializarConexiones();
             BloquearUI(true);
+            ConfigurarMenuContextualAvalonEdit();
         }
+        private void ConfigurarMenuContextualAvalonEdit()
+        {
+            // Crear el menú contextual
+            var contextMenu = new ContextMenu();
+
+            // Opción Copiar
+            var menuCopiar = new MenuItem { Header = "Copiar" };
+            menuCopiar.Click += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(txtQuery.SelectedText))
+                    Clipboard.SetText(txtQuery.SelectedText);
+            };
+            contextMenu.Items.Add(menuCopiar);
+
+            // Opción Cortar
+            var menuCortar = new MenuItem { Header = "Cortar" };
+            menuCortar.Click += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(txtQuery.SelectedText))
+                {
+                    Clipboard.SetText(txtQuery.SelectedText);
+                    txtQuery.SelectedText = "";
+                }
+            };
+            contextMenu.Items.Add(menuCortar);
+
+            // Opción Pegar
+            var menuPegar = new MenuItem { Header = "Pegar" };
+            menuPegar.Click += (s, e) =>
+            {
+                if (Clipboard.ContainsText())
+                {
+                    txtQuery.SelectedText = Clipboard.GetText();
+                }
+            };
+            contextMenu.Items.Add(menuPegar);
+
+            // Separador
+            contextMenu.Items.Add(new Separator());
+
+            // Opción Seleccionar todo
+            var menuSeleccionarTodo = new MenuItem { Header = "Seleccionar todo" };
+            menuSeleccionarTodo.Click += (s, e) => txtQuery.SelectAll();
+            contextMenu.Items.Add(menuSeleccionarTodo);
+
+            // Asignar el menú contextual al TextEditor
+            txtQuery.ContextMenu = contextMenu;
+        }
+
         private void RegistrarResaltadoSQL()
         {
             // Definición XML manual para asegurar que funcione sin archivos externos
@@ -261,8 +313,141 @@ namespace QueryAnalyzer
                             AlternationCount = 2,
                             RowStyle = (Style)this.FindResource("ResultGridRowStyle"),
                             ItemsSource = dt.DefaultView,
-                            ColumnHeaderStyle = headerStyle // --- APLICAMOS EL ESTILO ---
+                            ColumnHeaderStyle = headerStyle,// --- APLICAMOS EL ESTILO ---
+                            SelectionMode = DataGridSelectionMode.Single,     // NUEVO
+                            SelectionUnit = DataGridSelectionUnit.FullRow     // NUEVO
                         };
+
+                        // Click simple: selecciona la fila completa
+                        dataGrid.PreviewMouseLeftButtonDown += (s, mouseEvent) =>
+                        {
+                            var clickedElement = mouseEvent.OriginalSource as DependencyObject;
+
+                            var cell = FindVisualParent<DataGridCell>(clickedElement);
+                            if (cell != null && mouseEvent.ClickCount == 1)
+                            {
+                                var row = FindVisualParent<DataGridRow>(cell);
+                                if (row != null)
+                                {
+                                    dataGrid.SelectedItem = row.Item;
+                                    dataGrid.CurrentCell = new DataGridCellInfo(cell);
+                                }
+                            }
+                        };
+
+                        // Doble click: selecciona el contenido de la celda para copiado
+                        dataGrid.MouseDoubleClick += (s, mouseEvent) =>
+                        {
+                            var clickedElement = mouseEvent.OriginalSource as DependencyObject;
+
+                            var cell = FindVisualParent<DataGridCell>(clickedElement);
+                            if (cell != null && cell.Content is TextBlock textBlock)
+                            {
+                                // Entrar en modo de edición (aunque sea ReadOnly, podemos seleccionar el texto)
+                                dataGrid.CurrentCell = new DataGridCellInfo(cell);
+                                dataGrid.BeginEdit();
+
+                                // Si tiene contenido, seleccionarlo
+                                if (!string.IsNullOrEmpty(textBlock.Text))
+                                {
+                                    // Seleccionar todo el texto del TextBlock
+                                    var range = new TextRange(textBlock.ContentStart, textBlock.ContentEnd);
+
+                                    // Copiar al portapapeles automáticamente
+                                    Clipboard.SetText(textBlock.Text);
+
+                                    // Opcional: mostrar mensaje
+                                    AppendMessage($"Celda seleccionada y copiada: {textBlock.Text}");
+                                }
+                            }
+                        };
+
+                        // Manejador de teclado para Ctrl+C en las celdas
+                        dataGrid.PreviewKeyDown += (s, keyEvent) =>
+                        {
+                            if (keyEvent.Key == Key.C && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+                            {
+                                if (dataGrid.CurrentCell.Item != null && dataGrid.CurrentCell.Column != null)
+                                {
+                                    var cellContent = dataGrid.CurrentCell.Column.GetCellContent(dataGrid.CurrentCell.Item);
+                                    if (cellContent is TextBlock tb && !string.IsNullOrEmpty(tb.Text))
+                                    {
+                                        Clipboard.SetText(tb.Text);
+                                        AppendMessage($"Celda copiada: {tb.Text}");
+                                        keyEvent.Handled = true;
+                                    }
+                                }
+                            }
+                        };
+
+                        // Menú contextual para las celdas
+                        var cellContextMenu = new ContextMenu();
+
+                        var menuCopiarCelda = new MenuItem { Header = "Copiar celda" };
+                        menuCopiarCelda.Click += (s, x) =>
+                        {
+                            if (dataGrid.CurrentCell.Item != null && dataGrid.CurrentCell.Column != null)
+                            {
+                                var cellContent = dataGrid.CurrentCell.Column.GetCellContent(dataGrid.CurrentCell.Item);
+                                if (cellContent is TextBlock tb && !string.IsNullOrEmpty(tb.Text))
+                                {
+                                    Clipboard.SetText(tb.Text);
+                                    AppendMessage($"Celda copiada: {tb.Text}");
+                                }
+                            }
+                        };
+                        cellContextMenu.Items.Add(menuCopiarCelda);
+
+                        var menuCopiarFila = new MenuItem { Header = "Copiar fila" };
+                        menuCopiarFila.Click += (s, x) =>
+                        {
+                            if (dataGrid.SelectedItem != null)
+                            {
+                                var row = dataGrid.SelectedItem as DataRowView;
+                                if (row != null)
+                                {
+                                    var valores = new List<string>();
+                                    foreach (DataColumn col in row.Row.Table.Columns)
+                                    {
+                                        valores.Add(row[col.ColumnName]?.ToString() ?? "");
+                                    }
+                                    string filaCompleta = string.Join("\t", valores);
+                                    Clipboard.SetText(filaCompleta);
+                                    AppendMessage("Fila completa copiada al portapapeles");
+                                }
+                            }
+                        };
+                        cellContextMenu.Items.Add(menuCopiarFila);
+
+                        cellContextMenu.Items.Add(new Separator());
+
+                        var menuCopiarTodo = new MenuItem { Header = "Copiar todo (con encabezados)" };
+                        menuCopiarTodo.Click += (s, x) =>
+                        {
+                            var view = dataGrid.ItemsSource as DataView;
+                            if (view != null)
+                            {
+                                var tabla = view.ToTable();
+                                var sb = new System.Text.StringBuilder();
+
+                                // Encabezados
+                                var headers = tabla.Columns.Cast<DataColumn>().Select(c => c.ColumnName);
+                                sb.AppendLine(string.Join("\t", headers));
+
+                                // Filas
+                                foreach (DataRow row in tabla.Rows)
+                                {
+                                    var valores = row.ItemArray.Select(v => v?.ToString() ?? "");
+                                    sb.AppendLine(string.Join("\t", valores));
+                                }
+
+                                Clipboard.SetText(sb.ToString());
+                                AppendMessage($"Tabla completa copiada ({tabla.Rows.Count} filas)");
+                            }
+                        };
+                        cellContextMenu.Items.Add(menuCopiarTodo);
+
+                        dataGrid.ContextMenu = cellContextMenu;
 
                         dataGrid.AutoGeneratedColumns += (s, ev) =>
                         {
@@ -553,6 +738,19 @@ namespace QueryAnalyzer
 
             txtMessages.AppendText($"[{DateTime.Now:HH:mm:ss}] {text}\n");
             txtMessages.ScrollToEnd();
+        }
+
+        private static T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+        {
+            var parentObject = System.Windows.Media.VisualTreeHelper.GetParent(child);
+
+            if (parentObject == null)
+                return null;
+
+            if (parentObject is T parent)
+                return parent;
+
+            return FindVisualParent<T>(parentObject);
         }
 
         // ────────────────────────────────────────────────────────
@@ -1206,13 +1404,6 @@ namespace QueryAnalyzer
 
         private void InsertarEnQuery(string texto)
         {
-            //int pos = txtQuery.CaretIndex;
-
-            //txtQuery.Text = txtQuery.Text.Remove(txtQuery.CaretIndex, txtQuery.SelectionLength);
-            //txtQuery.Text = txtQuery.Text.Insert(pos, texto);
-            //txtQuery.CaretIndex = pos + texto.Length;
-            //txtQuery.Focus();
-
             if (string.IsNullOrEmpty(texto)) return;
 
             // AvalonEdit usa CaretOffset y SelectionLength
