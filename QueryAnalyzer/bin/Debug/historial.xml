@@ -44022,4 +44022,17 @@ FECHBAJA_HX = '01/01/1900'
     <Parametros />
     <Fecha>2026-02-13T08:37:43.2451879-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+    </conexion>
+    <Consulta>SELECT * FROM SYSIBM.SYSCOLUMNS FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-13T11:05:28.7584346-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>

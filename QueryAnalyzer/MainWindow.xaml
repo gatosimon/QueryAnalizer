@@ -107,6 +107,7 @@
                                     TextWrapping="WrapWithOverflow"
                                     TextAlignment="Justify"
                                     Margin="4,2,36,316"
+                                    VerticalAlignment="Top"
                                     Padding="4"/>
                         <Button x:Name="btnBuscar"
                                     Grid.Column="1"
@@ -119,9 +120,17 @@
                                                         <Image Source="pack://application:,,,/Assets/buscar.png" 
                                        Stretch="Uniform"/>
                         </Button>
+                        <TreeView x:Name="tvSearch" 
+                                      Grid.Column="1"
+                                      Margin="4,32,4,2"
+                                      Visibility="Collapsed"
+                                      Background="#F9F9F9"
+                                      MouseDoubleClick="tvSchema_MouseDoubleClick" 
+                                      VerticalAlignment="Stretch"/>
                         <TreeView x:Name="tvSchema"
                                       Grid.Column="1"
                                       Margin="4,32,4,2"
+                                      Visibility="Visible"   
                                       MouseDoubleClick="tvSchema_MouseDoubleClick"
                                       VerticalAlignment="Stretch"/>
 

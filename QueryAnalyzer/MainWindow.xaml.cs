@@ -854,8 +854,9 @@ namespace QueryAnalyzer
             return numero.ToString(formato, System.Globalization.CultureInfo.InvariantCulture);
         }
 
-        private async void CargarEsquema(List<string> tablasConsulta = null, CancellationToken token = default(CancellationToken))
+        private async void CargarEsquema(string filtrado = "", List<string> tablasConsulta = null, CancellationToken token = default(CancellationToken))
         {
+            TreeView tvCargar = filtrado.Length == 0 ? tvSchema : tvSearch;
             if (conexionActual == null)
             {
                 AppendMessage("No hay conexión seleccionada.");
@@ -891,10 +892,10 @@ namespace QueryAnalyzer
                         // Obtiene las tablas
                         DataTable tablas = conn.GetSchema("Tables");
 
-                        Dispatcher.Invoke(() => tvSchema.Items.Clear());
+                        Dispatcher.Invoke(() => tvCargar.Items.Clear());
 
                         // Filtrar SOLO las filas cuyo tipo sea "TABLE"
-                        DataRow[] tablasFiltradas = tablas.Select("TABLE_TYPE = 'TABLE'");
+                        DataRow[] tablasFiltradas = tablas.Select($"TABLE_TYPE = 'TABLE'");
 
                         // Si querés seguir usando un DataTable:
                         DataTable tablasSolo = tablasFiltradas.Length > 0 ? tablasFiltradas.CopyToDataTable() : tablas.Clone();
@@ -946,8 +947,11 @@ namespace QueryAnalyzer
                                     };
                                     // 🖼️ FIN DE MODIFICACIÓN
 
-                                    tvSchema.Items.Add(tablaNode);
-                                    tablaNode.MouseDoubleClick += TablaNode_MouseDoubleClick;
+                                    if (filtrado.Length == 0 || (filtrado.Length > 0 && nombreTabla.ToUpper().Contains(filtrado.ToUpper())))
+                                    {
+                                        tvCargar.Items.Add(tablaNode);
+                                        tablaNode.MouseDoubleClick += TablaNode_MouseDoubleClick;
+                                    }
 
                                     // Agregar columnas
                                     foreach (DataRow col in columnas.Rows)
@@ -1082,7 +1086,7 @@ namespace QueryAnalyzer
                                             {
                                                 Dispatcher.Invoke(() =>
                                                 {
-                                                    var tablaNode = tvSchema.Items.OfType<TreeViewItem>()
+                                                    var tablaNode = tvCargar.Items.OfType<TreeViewItem>()
                                                         .FirstOrDefault(t => (string)t.Tag == nombreTabla);
                                                     if (tablaNode == null) return;
 
@@ -1156,19 +1160,6 @@ namespace QueryAnalyzer
             string tableName = (sender as TreeViewItem).Header.ToString();
             txtQuery.Text.Insert(txtQuery.SelectionStart, tableName);
         }
-
-        //private void tvSchema_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        //{
-        //    if (tvSchema.SelectedItem is TreeViewItem item && item.Tag != null)
-        //    {
-        //        string tableName = item.Header.ToString();
-        //        txtQuery.Text.Insert(txtQuery.SelectionStart, $"SELECT * FROM {tableName} FETCH FIRST 100 ROWS ONLY;");
-        //    }
-        //    else
-        //    {
-        //        txtQuery.Text.Insert(txtQuery.SelectionStart, tvSchema.SelectedItem.ToString());
-        //    }
-        //}
 
         private void tvSchema_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
@@ -1244,7 +1235,7 @@ namespace QueryAnalyzer
             // Se crea uno nuevo
             _explorarCTS = new CancellationTokenSource();
 
-            CargarEsquema(null, _explorarCTS.Token);
+            CargarEsquema(string.Empty, null, _explorarCTS.Token);
         }
 
         private void btnExplorarConsultas_Click(object sender, RoutedEventArgs e)
@@ -1255,7 +1246,7 @@ namespace QueryAnalyzer
             _explorarCTS = new CancellationTokenSource();
 
             List<string> tablasConsulta = ExtraerTablas(txtQuery.Text);
-            CargarEsquema(tablasConsulta, _explorarCTS.Token);
+            CargarEsquema(string.Empty, tablasConsulta, _explorarCTS.Token);
         }
 
         /// <summary>
@@ -1680,7 +1671,74 @@ namespace QueryAnalyzer
 
         private void btnBuscar_Click(object sender, RoutedEventArgs e)
         {
-            tvSchema.Items.Filter(txtBuscar.Text);
+            string filtro = txtBuscar.Text.Trim().ToLower();
+
+            if (string.IsNullOrEmpty(filtro))
+            {
+                // Si está vacío, volvemos al original
+                tvSearch.Visibility = Visibility.Collapsed;
+                tvSchema.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                // Si hay texto, filtramos
+                //FiltrarArbol(filtro);
+                CargarEsquema(filtro, null, _explorarCTS.Token);
+                tvSchema.Visibility = Visibility.Collapsed;
+                tvSearch.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void FiltrarArbol(string filtro)
+        {
+            tvSearch.Items.Clear();
+
+            foreach (TreeViewItem esquema in tvSchema.Items)
+            {
+                // 1. Extraemos el nombre del Esquema/Base de Datos
+                string nombreEsquema = ExtraerTextoDeHeader(esquema.Header);
+                TreeViewItem nuevoEsquema = new TreeViewItem { Header = nombreEsquema, IsExpanded = true };
+
+                bool tieneCoincidencias = false;
+
+                foreach (TreeViewItem tabla in esquema.Items)
+                {
+                    // 2. Extraemos el nombre real de la tabla (ej: "albums")
+                    string nombreTabla = ExtraerTextoDeHeader(tabla.Header);
+
+                    if (nombreTabla.ToLower().Contains(filtro))
+                    {
+                        // Creamos el nuevo item con el nombre limpio
+                        // Si quieres que el buscador también tenga iconos, 
+                        // tendrías que recrear el StackPanel aquí.
+                        TreeViewItem copiaTabla = new TreeViewItem { Header = nombreTabla };
+                        nuevoEsquema.Items.Add(copiaTabla);
+                        tieneCoincidencias = true;
+                    }
+                }
+
+                if (tieneCoincidencias)
+                {
+                    tvSearch.Items.Add(nuevoEsquema);
+                }
+            }
+        }
+
+        // Esta función ayuda a obtener el texto sin importar si el Header es un String o un StackPanel
+        private string ExtraerTextoDeHeader(object header)
+        {
+            if (header is string) return (string)header;
+
+            if (header is StackPanel sp)
+            {
+                // Buscamos el TextBlock dentro del StackPanel
+                foreach (var hijo in sp.Children)
+                {
+                    if (hijo is TextBlock tb) return tb.Text;
+                }
+            }
+
+            return header.ToString(); // Caso de respaldo
         }
     }
 }
