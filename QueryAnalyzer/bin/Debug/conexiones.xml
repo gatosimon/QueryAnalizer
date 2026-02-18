@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ArrayOfConexion xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ArrayOfConexion xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Conexion>
     <Nombre>Tributos PRODUCCION DB2</Nombre>
     <Motor>DB2</Motor>
@@ -135,5 +135,29 @@
     <BaseDatos>gis</BaseDatos>
     <Usuario>magic</Usuario>
     <Contrasena>DEriu7Dp45</Contrasena>
+  </Conexion>
+  <Conexion>
+    <Nombre>SQL ADMIN DESA</Nombre>
+    <Motor>MS_SQL</Motor>
+    <Servidor>DESARROLLO</Servidor>
+    <BaseDatos>ADMINISTRACION</BaseDatos>
+    <Usuario>usuario</Usuario>
+    <Contrasena>ci?r0ba</Contrasena>
+  </Conexion>
+  <Conexion>
+    <Nombre>TRIBUTOS SQL PROD</Nombre>
+    <Motor>MS_SQL</Motor>
+    <Servidor>PRODUCCION</Servidor>
+    <BaseDatos />
+    <Usuario>usuario</Usuario>
+    <Contrasena>ci?r0ba</Contrasena>
+  </Conexion>
+  <Conexion>
+    <Nombre>TRIBUTOS SQL DESA</Nombre>
+    <Motor>MS_SQL</Motor>
+    <Servidor>DESARROLLO</Servidor>
+    <BaseDatos>TRIBUTOS</BaseDatos>
+    <Usuario>usuario</Usuario>
+    <Contrasena>ci?r0ba</Contrasena>
   </Conexion>
 </ArrayOfConexion>

@@ -44164,4 +44164,277 @@ WHERE NroSistema = 100 AND Tipo = 2</Consulta>
     <Parametros />
     <Fecha>2026-02-13T13:40:40.5386927-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM n10parametros</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T17:30:58.6723581-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQL ADMIN DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>ADMINISTRACION</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N10PARAMETROS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T17:35:26.9855216-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N10PARAMETROS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T17:38:58.8966919-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.N10PARAMETROS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T17:40:37.4241749-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.N10PARAMETROS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T17:40:53.4185831-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL PROD</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos />
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.N10PARAMETROS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T17:42:44.9414372-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL PROD</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos />
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N10PARAMETROS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T17:42:54.0901164-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m10napleg</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T17:43:58.589189-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.N10PARAMETROS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T17:46:15.5601089-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.m10PARAMETROS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T17:51:00.8780956-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.m10PARAMETRO</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T17:51:54.6404523-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.n10PARAMETROs</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T17:58:20.5260609-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.m10tdemandas</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T18:44:13.1383276-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.M10DATEXPE</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T18:47:13.2256807-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.M10_FIRMASDEMANDAS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T23:26:31.2544423-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.M10DATEXPE</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T23:28:51.9468863-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.M10_FIRMASDEMANDAS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T23:29:51.6683421-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.PARASLEG</Consulta>
+    <Parametros />
+    <Fecha>2026-02-17T23:37:15.8884997-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.m10datexpe</Consulta>
+    <Parametros />
+    <Fecha>2026-02-18T07:21:04.5332058-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m10napleg</Consulta>
+    <Parametros />
+    <Fecha>2026-02-18T08:14:00.2961532-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m10napleg FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-18T08:16:05.6220429-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>
