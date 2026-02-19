@@ -89,7 +89,7 @@
     <Resource Include="Assets\columna.png" />
     <Resource Include="Assets\tabla.png" />
     <Resource Include="Assets\buscar.png" />
-    <Resource Include="Assets\columnaclave.png" />
+    <Resource Include="Assets\columnaClave.png" />
     <Content Include="Logo.ico" />
     <Content Include="Logo.png" />
   </ItemGroup>

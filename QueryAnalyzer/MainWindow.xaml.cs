@@ -1077,6 +1077,7 @@ namespace QueryAnalyzer
             var columnaIcon = new System.Windows.Media.Imaging.BitmapImage(columnaIconUri);
             var columnaClaveIcon = new System.Windows.Media.Imaging.BitmapImage(columnaClaveIconUri);
             var claveIcon = new System.Windows.Media.Imaging.BitmapImage(claveIconUri);
+            int tamañoIconos = 20;
             // 🖼️ FIN DE MODIFICACIÓN
 
             await Task.Run(() =>
@@ -1218,8 +1219,8 @@ namespace QueryAnalyzer
                                     tablaHeader.Children.Add(new System.Windows.Controls.Image
                                     {
                                         Source = tablaIcon,
-                                        Width = 16,
-                                        Height = 16,
+                                        Width = tamañoIconos,
+                                        Height = tamañoIconos,
                                         Margin = new System.Windows.Thickness(0, 0, 5, 0)
                                     });
                                     tablaHeader.Children.Add(new System.Windows.Controls.TextBlock { Text = headerText });
@@ -1284,8 +1285,8 @@ namespace QueryAnalyzer
                                         colHeader.Children.Add(new System.Windows.Controls.Image
                                         {
                                             Source = esClavePrimaria ? columnaClaveIcon : columnaIcon,
-                                            Width = 14,
-                                            Height = 14,
+                                            Width = tamañoIconos,
+                                            Height = tamañoIconos,
                                             Margin = new System.Windows.Thickness(0, 0, 5, 0)
                                         });
                                         colHeader.Children.Add(new System.Windows.Controls.TextBlock
@@ -1396,8 +1397,8 @@ namespace QueryAnalyzer
                                                         indiceHeader.Children.Add(new System.Windows.Controls.Image
                                                         {
                                                             Source = claveIcon,
-                                                            Width = 14,
-                                                            Height = 14,
+                                                            Width = tamañoIconos,
+                                                            Height = tamañoIconos,
                                                             Margin = new System.Windows.Thickness(0, 0, 5, 0)
                                                         });
                                                         indiceHeader.Children.Add(new System.Windows.Controls.TextBlock { Text = nombreIndice });
