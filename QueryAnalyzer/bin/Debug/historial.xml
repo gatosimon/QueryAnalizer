@@ -44690,4 +44690,3617 @@ select * from apremios.parasleg</Consulta>
     <Parametros />
     <Fecha>2026-02-19T09:25:09.0991534-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos PRODUCCION DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA AS COMUNA, COD_JURISDICCION AS JURISDICCION, COD_INSTANCIA AS INSTANCIA, AÑO_DEMANDA AS AÑO, NRO_JUICIO AS JUICIO, CODSISTEMA AS SISTEMA, 
+                                    FECHA_DEMANDA, MONTO_INICIAL AS MONTO, '01/01/1900' AS FECHA_ULT_MOV, NOMBRE AS DEMANDADO, CUIJ_J AS CUIJ, FECHA_CANCEL AS FECHA_CANCELACION, 0 AS MONTO_CANCELADO
+                                    FROM JUICIOSPORSISTEMA J , (SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO FROM (SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+                    FROM M10ESTJU WHERE COD_ESTADO IN (12) AND NROJUICIO &gt; ? AND 
+                    COD_ESTADO &gt; ?  
+                    GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO) AS CE 
+                    GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO HAVING COUNT(*) = 1) AS T  
+                                    WHERE COD_COMUNA = ? AND COD_INSTANCIA BETWEEN ? AND ? AND NRO_JUICIO BETWEEN ? AND ? AND 
+                                    FECHA_DEMANDA BETWEEN '01/01/2025' AND '19/02/2026' AND 
+                                    MONTO_INICIAL BETWEEN ? AND ? 
+                                    
+                                    
+                                     AND FECHA_CANCEL &gt; '01/01/1900' 
+                                     AND TIPOJUICIO = 'A' AND T.CODCOMUNA = J.COD_COMUNA AND T.JURISDICCION = J.COD_JURISDICCION AND T.INSTANCIA = J.COD_INSTANCIA AND 
+                    T.ANODEMANDA = J.AÑO_DEMANDA AND T.NROJUICIO = J.NRO_JUICIO
+                                     ORDER BY SISTEMA, FECHA_DEMANDA ASC</Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>@NROJUICIO</string>
+        <string>VarChar</string>
+        <string>0</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_ESTADO</string>
+        <string>VarChar</string>
+        <string>0</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_COMUNA</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_INSTANCIA_DESDE</string>
+        <string>SmallInt</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@COD_INSTANCIA_HASTA</string>
+        <string>SmallInt</string>
+        <string>4</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@NRO_JUICIO_DESDE</string>
+        <string>Double</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@NRO_JUICIO_HASTA</string>
+        <string>Double</string>
+        <string>999999999999</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@MONTO_INICIAL_DESDE</string>
+        <string>Double</string>
+        <string>1</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@MONTO_INICIAL_HASTA</string>
+        <string>Double</string>
+        <string>999999999999.99</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2026-02-19T09:44:58.4980795-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos PRODUCCION DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA AS COMUNA, COD_JURISDICCION AS JURISDICCION, COD_INSTANCIA AS INSTANCIA, AÑO_DEMANDA AS AÑO, NRO_JUICIO AS JUICIO, CODSISTEMA AS SISTEMA, 
+        FECHA_DEMANDA, MONTO_INICIAL AS MONTO, '01/01/1900' AS FECHA_ULT_MOV, NOMBRE AS DEMANDADO, CUIJ_J AS CUIJ, FECHA_CANCEL AS FECHA_CANCELACION, 0 AS MONTO_CANCELADO
+FROM JUICIOSPORSISTEMA J, (SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO FROM (SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+		                    FROM M10ESTJU 
+		                    WHERE COD_ESTADO IN (12) AND NROJUICIO &gt; 0 AND 
+		                    COD_ESTADO &gt; 0  
+		                    GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO) AS CE 
+		                    GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO HAVING COUNT(*) = 1) AS T  
+		                                    WHERE COD_COMUNA = 1 AND COD_INSTANCIA BETWEEN 1 AND 4 AND NRO_JUICIO BETWEEN ? AND ? AND 
+		                                    FECHA_DEMANDA BETWEEN '01/01/2025' AND '19/02/2026' AND 
+		                                    MONTO_INICIAL BETWEEN 1 AND 999999999999.99 
+		                                    
+		                                    
+		                                     AND FECHA_CANCEL &gt; '01/01/1900' 
+		                                     AND TIPOJUICIO = 'A' AND T.CODCOMUNA = J.COD_COMUNA AND T.JURISDICCION = J.COD_JURISDICCION AND T.INSTANCIA = J.COD_INSTANCIA AND 
+		                    T.ANODEMANDA = J.AÑO_DEMANDA AND T.NROJUICIO = J.NRO_JUICIO
+		                                     ORDER BY SISTEMA, FECHA_DEMANDA ASC</Consulta>
+    <Parametros>
+      <ArrayOfString>
+        <string>@NRO_JUICIO_DESDE</string>
+        <string>Double</string>
+        <string>0</string>
+      </ArrayOfString>
+      <ArrayOfString>
+        <string>@NRO_JUICIO_HASTA</string>
+        <string>Double</string>
+        <string>0</string>
+      </ArrayOfString>
+    </Parametros>
+    <Fecha>2026-02-19T09:47:06.5804544-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos PRODUCCION DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA AS COMUNA, COD_JURISDICCION AS JURISDICCION, COD_INSTANCIA AS INSTANCIA, AÑO_DEMANDA AS AÑO, NRO_JUICIO AS JUICIO, CODSISTEMA AS SISTEMA, 
+        FECHA_DEMANDA, MONTO_INICIAL AS MONTO, '01/01/1900' AS FECHA_ULT_MOV, NOMBRE AS DEMANDADO, CUIJ_J AS CUIJ, FECHA_CANCEL AS FECHA_CANCELACION, 0 AS MONTO_CANCELADO
+FROM JUICIOSPORSISTEMA J, (SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO FROM (SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+		                    FROM M10ESTJU 
+		                    WHERE COD_ESTADO IN (12) AND NROJUICIO &gt; 0 AND 
+		                    COD_ESTADO &gt; 0  
+		                    GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO) AS CE 
+		                    GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO HAVING COUNT(*) = 1) AS T  
+WHERE COD_COMUNA = 1 AND COD_INSTANCIA BETWEEN 1 AND 4 AND 
+		NRO_JUICIO BETWEEN 0 AND 999999999999 AND 
+		FECHA_DEMANDA BETWEEN '01/01/2025' AND '19/02/2026' AND 
+		MONTO_INICIAL BETWEEN 1 AND 999999999999.99 AND 
+		FECHA_CANCEL &gt; '01/01/1900' AND 
+		TIPOJUICIO = 'A' AND 
+		T.CODCOMUNA = J.COD_COMUNA AND 
+		T.JURISDICCION = J.COD_JURISDICCION AND 
+		T.INSTANCIA = J.COD_INSTANCIA AND 
+		T.ANODEMANDA = J.AÑO_DEMANDA AND T.NROJUICIO = J.NRO_JUICIO
+ORDER BY SISTEMA, FECHA_DEMANDA ASC</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T09:48:45.7140748-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos PRODUCCION DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO FROM (SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+		                    FROM M10ESTJU 
+		                    WHERE COD_ESTADO IN (12) AND NROJUICIO &gt; 0 AND 
+		                    COD_ESTADO &gt; 0  
+		                    GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T09:49:02.2325023-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos PRODUCCION DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO FROM (SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+		                    FROM M10ESTJU 
+		                    WHERE COD_ESTADO IN (12) AND NROJUICIO &gt; 0 AND 
+		                    COD_ESTADO &gt; 0  
+		                    GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T09:49:24.8600914-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos PRODUCCION DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO FROM (SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+		                    FROM M10ESTJU 
+		                    WHERE COD_ESTADO IN (12) AND NROJUICIO &gt; 0 AND 
+		                    COD_ESTADO &gt; 0  
+		                    GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO) AS CE </Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T09:50:01.1561552-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos PRODUCCION DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO FROM (SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+		                    FROM M10ESTJU 
+		                    WHERE COD_ESTADO IN (12) AND NROJUICIO &gt; 0 AND 
+		                    COD_ESTADO &gt; 0  
+		                    GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T09:51:53.1762204-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos PRODUCCION DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO FROM (SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+		                    FROM M10ESTJU 
+		                    WHERE COD_ESTADO IN (12) AND NROJUICIO &gt; 0 AND 
+		                    COD_ESTADO &gt; 0  
+		                    GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T09:52:13.1316131-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos PRODUCCION DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+		                    			FROM M10ESTJU 
+		                    			WHERE COD_ESTADO IN (12) AND NROJUICIO &gt; 0 AND 
+		                    				COD_ESTADO &gt; 0  
+		                    			GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T09:55:18.6724118-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos PRODUCCION DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO 
+								FROM (	SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+		                    			FROM M10ESTJU 
+		                    			WHERE COD_ESTADO IN (12) AND NROJUICIO &gt; 0 AND 
+		                    				COD_ESTADO &gt; 0  
+		                    			GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO
+                    				) AS CE 
+		                    	GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO HAVING COUNT(*) = 1</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T09:55:32.7443485-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos PRODUCCION DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA AS COMUNA, COD_JURISDICCION AS JURISDICCION, COD_INSTANCIA AS INSTANCIA, AÑO_DEMANDA AS AÑO, NRO_JUICIO AS JUICIO, CODSISTEMA AS SISTEMA, 
+        FECHA_DEMANDA, MONTO_INICIAL AS MONTO, '01/01/1900' AS FECHA_ULT_MOV, NOMBRE AS DEMANDADO, CUIJ_J AS CUIJ, FECHA_CANCEL AS FECHA_CANCELACION, 0 AS MONTO_CANCELADO
+FROM JUICIOSPORSISTEMA J, (	SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO 
+								FROM (	SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+		                    			FROM M10ESTJU 
+		                    			WHERE COD_ESTADO IN (12) AND NROJUICIO &gt; 0 AND 
+		                    				COD_ESTADO &gt; 0  
+		                    			GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO
+                    				) AS CE 
+		                    	GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO HAVING COUNT(*) = 1
+	                    	) AS T  
+WHERE COD_COMUNA = 1 
+	AND COD_INSTANCIA BETWEEN 1 AND 4 
+	AND NRO_JUICIO BETWEEN 0 AND 999999999999 
+	AND FECHA_DEMANDA BETWEEN '01/01/2025' AND '19/02/2026' 
+	AND MONTO_INICIAL BETWEEN 1 AND 999999999999.99 
+	AND FECHA_CANCEL &gt; '01/01/1900' 
+	AND TIPOJUICIO = 'A' 
+	AND T.CODCOMUNA = J.COD_COMUNA 
+	AND T.JURISDICCION = J.COD_JURISDICCION 
+	AND T.INSTANCIA = J.COD_INSTANCIA 
+	AND T.ANODEMANDA = J.AÑO_DEMANDA 
+	AND T.NROJUICIO = J.NRO_JUICIO
+ORDER BY SISTEMA, FECHA_DEMANDA ASC;
+
+</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T10:01:49.4252814-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos PRODUCCION DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA AS COMUNA, COD_JURISDICCION AS JURISDICCION, COD_INSTANCIA AS INSTANCIA, AÑO_DEMANDA AS AÑO, NRO_JUICIO AS JUICIO, CODSISTEMA AS SISTEMA, 
+        FECHA_DEMANDA, MONTO_INICIAL AS MONTO, '01/01/1900' AS FECHA_ULT_MOV, NOMBRE AS DEMANDADO, CUIJ_J AS CUIJ, FECHA_CANCEL AS FECHA_CANCELACION, 0 AS MONTO_CANCELADO
+FROM JUICIOSPORSISTEMA J, (	SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO 
+								FROM (	SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+		                    			FROM M10ESTJU 
+		                    			WHERE COD_ESTADO IN (12) AND NROJUICIO &gt; 0 AND 
+		                    				COD_ESTADO &gt; 0  
+		                    			GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO
+                    				) AS CE 
+		                    	GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO HAVING COUNT(*) = 1
+	                    	) AS T  
+WHERE COD_COMUNA = 1 
+	AND COD_INSTANCIA BETWEEN 1 AND 4 
+	AND NRO_JUICIO BETWEEN 0 AND 999999999999 
+	AND FECHA_DEMANDA BETWEEN '01/01/2025' AND '19/02/2026' 
+	AND MONTO_INICIAL BETWEEN 1 AND 999999999999.99 
+	AND FECHA_CANCEL &gt; '01/01/1900' 
+	AND T.CODCOMUNA = J.COD_COMUNA 
+	AND T.JURISDICCION = J.COD_JURISDICCION 
+	AND T.INSTANCIA = J.COD_INSTANCIA 
+	AND T.ANODEMANDA = J.AÑO_DEMANDA 
+	AND T.NROJUICIO = J.NRO_JUICIO
+ORDER BY SISTEMA, FECHA_DEMANDA ASC;
+
+</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T10:02:04.6620534-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos PRODUCCION DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA AS COMUNA, COD_JURISDICCION AS JURISDICCION, COD_INSTANCIA AS INSTANCIA, AÑO_DEMANDA AS AÑO, NRO_JUICIO AS JUICIO, CODSISTEMA AS SISTEMA, 
+        FECHA_DEMANDA, MONTO_INICIAL AS MONTO, '01/01/1900' AS FECHA_ULT_MOV, NOMBRE AS DEMANDADO, CUIJ_J AS CUIJ, FECHA_CANCEL AS FECHA_CANCELACION, 0 AS MONTO_CANCELADO
+FROM JUICIOSPORSISTEMA J, (	SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO 
+								FROM (	SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+		                    			FROM M10ESTJU 
+		                    			WHERE COD_ESTADO IN (12) AND NROJUICIO &gt; 0 AND 
+		                    				COD_ESTADO &gt; 0  
+		                    			GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO
+                    				) AS CE 
+		                    	GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO HAVING COUNT(*) = 1
+	                    	) AS T  
+WHERE COD_COMUNA = 1 
+	AND COD_INSTANCIA BETWEEN 1 AND 4 
+	AND NRO_JUICIO BETWEEN 0 AND 999999999999 
+	AND FECHA_DEMANDA BETWEEN '01/01/2025' AND '19/02/2026' 
+	AND MONTO_INICIAL BETWEEN 1 AND 999999999999.99 
+</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T10:03:01.7412587-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos PRODUCCION DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA AS COMUNA, COD_JURISDICCION AS JURISDICCION, COD_INSTANCIA AS INSTANCIA, AÑO_DEMANDA AS AÑO, NRO_JUICIO AS JUICIO, CODSISTEMA AS SISTEMA, 
+        FECHA_DEMANDA, MONTO_INICIAL AS MONTO, '01/01/1900' AS FECHA_ULT_MOV, NOMBRE AS DEMANDADO, CUIJ_J AS CUIJ, FECHA_CANCEL AS FECHA_CANCELACION, 0 AS MONTO_CANCELADO
+FROM JUICIOSPORSISTEMA J, (	SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO 
+								FROM (	SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+		                    			FROM M10ESTJU 
+		                    			WHERE COD_ESTADO IN (12) AND NROJUICIO &gt; 0 AND 
+		                    				COD_ESTADO &gt; 0  
+		                    			GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO
+                    				) AS CE 
+		                    	GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO HAVING COUNT(*) = 1
+	                    	) AS T  
+WHERE COD_COMUNA = 1 
+	AND COD_INSTANCIA BETWEEN 1 AND 4 
+	AND NRO_JUICIO BETWEEN 0 AND 999999999999 
+	AND FECHA_DEMANDA BETWEEN '01/01/2025' AND '19/02/2026' 
+	AND MONTO_INICIAL BETWEEN 1 AND 999999999999.99 
+	AND FECHA_CANCEL &gt; '01/01/1900' 
+	AND TIPOJUICIO = 'A' 
+	AND T.CODCOMUNA = J.COD_COMUNA 
+	AND T.JURISDICCION = J.COD_JURISDICCION 
+	AND T.INSTANCIA = J.COD_INSTANCIA 
+	AND T.ANODEMANDA = J.AÑO_DEMANDA 
+	AND T.NROJUICIO = J.NRO_JUICIO
+ORDER BY SISTEMA, FECHA_DEMANDA ASC;
+
+</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T10:27:01.4890706-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos PRODUCCION DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COD_COMUNA AS COMUNA, COD_JURISDICCION AS JURISDICCION, COD_INSTANCIA AS INSTANCIA, AÑO_DEMANDA AS AÑO, NRO_JUICIO AS JUICIO, CODSISTEMA AS SISTEMA, 
+        FECHA_DEMANDA, MONTO_INICIAL AS MONTO, '01/01/1900' AS FECHA_ULT_MOV, NOMBRE AS DEMANDADO, CUIJ_J AS CUIJ, FECHA_CANCEL AS FECHA_CANCELACION, 0 AS MONTO_CANCELADO
+FROM JUICIOSPORSISTEMA J, (	SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO 
+								FROM (	SELECT CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO 
+		                    			FROM M10ESTJU 
+		                    			WHERE COD_ESTADO IN (12) AND NROJUICIO &gt; 0 AND 
+		                    				COD_ESTADO &gt; 0  
+		                    			GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO, COD_ESTADO
+                    				) AS CE 
+		                    	GROUP BY CODCOMUNA, JURISDICCION, INSTANCIA, ANODEMANDA, NROJUICIO HAVING COUNT(*) = 1
+	                    	) AS T  
+WHERE COD_COMUNA = 1 
+	AND COD_INSTANCIA BETWEEN 1 AND 4 
+	AND NRO_JUICIO BETWEEN 0 AND 999999999999 
+	AND FECHA_DEMANDA BETWEEN '01/01/2025' AND '19/02/2026' 
+	AND MONTO_INICIAL BETWEEN 1 AND 999999999999.99 
+	AND FECHA_CANCEL &gt; '01/01/1900' 
+	AND TIPOJUICIO = '' 
+	AND T.CODCOMUNA = J.COD_COMUNA 
+	AND T.JURISDICCION = J.COD_JURISDICCION 
+	AND T.INSTANCIA = J.COD_INSTANCIA 
+	AND T.ANODEMANDA = J.AÑO_DEMANDA 
+	AND T.NROJUICIO = J.NRO_JUICIO
+ORDER BY SISTEMA, FECHA_DEMANDA ASC;
+
+</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T10:27:07.5365339-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.demandas_especiales</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T12:50:57.0728888-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM dbo.DEMANDAS_ESPECIALES</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T12:55:52.3340528-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>dbo.DEMADAS_ESPECIALES</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T12:59:07.843531-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM DEMADAS_ESPECIALES</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T12:59:36.1890344-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N10PARAMETROS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T13:02:42.1429211-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.N10PARAMETROS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T13:02:51.6234695-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM DEMADAS_ESPECIALES</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T13:04:03.7682704-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.N10PARAMETROS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T13:05:50.2890938-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.W10CLAEXP</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T13:25:17.357852-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.W10CLAEXP
+where codjuzgado = 127060</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T13:26:00.3276953-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.W10CLAEXP
+where COD_JUZGADO = 127060</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T13:26:45.3806337-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m00siste</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T13:41:13.4263869-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m00siste</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T13:42:03.417469-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00SISTE</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T13:42:11.7491626-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos PRODUCCION DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00SISTE</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T13:42:30.2573526-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00SISTE</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T13:42:37.8331443-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.w10claexpe</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T18:19:51.1230354-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.w10claexp
+where COD_COMUNA = 1
+AND NRODENOTA = 127060</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T18:21:14.5017753-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.w10claexp
+where COD_COMUNA = 1
+AND COD_JUZGADO = 127060</Consulta>
+    <Parametros />
+    <Fecha>2026-02-19T18:21:51.6164042-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM M00TABMA Where Codprin = 527</Consulta>
+    <Parametros />
+    <Fecha>2026-02-20T07:31:27.9874439-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m10tdemandas</Consulta>
+    <Parametros />
+    <Fecha>2026-02-20T08:03:36.6502722-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.m10tdemandas</Consulta>
+    <Parametros />
+    <Fecha>2026-02-20T08:03:45.2877765-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.m10datexpe</Consulta>
+    <Parametros />
+    <Fecha>2026-02-20T08:04:05.2333439-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.M10_FIRMASDEMANDAS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-20T08:05:45.6254857-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM apremios.m10datexpe</Consulta>
+    <Parametros />
+    <Fecha>2026-02-20T08:06:21.7362347-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM apremios.M10_FIRMASDEMANDAS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-20T08:07:27.3699267-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 100 * FROM apremios.M10_FIRMASDEMANDAS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-20T08:07:38.896675-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 100 * FROM apremios.M10DATEXPE;
+
+SELECT top 100 * FROM apremios.M10_FIRMASDEMANDAS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-20T08:09:38.210945-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.M10DATEXPE 
+WHERE NRODENOTA = 127060;
+
+SELECT top 100 * FROM apremios.M10_FIRMASDEMANDAS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-20T08:10:08.2320024-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 100 * FROM apremios.M10_FIRMASDEMANDAS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-20T08:10:34.5592344-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM W10CLAEXP</Consulta>
+    <Parametros />
+    <Fecha>2026-02-20T10:23:55.0277603-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.W10CLAEXP</Consulta>
+    <Parametros />
+    <Fecha>2026-02-20T10:24:17.7331824-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.W10CLAEXP where COD_COMUNA = 1 AND COD_JUZGADO = 127060</Consulta>
+    <Parametros />
+    <Fecha>2026-02-20T10:55:26.8121524-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.M10PARAMETROS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T07:42:11.9403374-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM dbo.M10PARAMETROS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T07:42:20.9332235-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.M10PARAMETROS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T07:42:28.9753589-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.M10PARAMETRO</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T07:43:12.7040163-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM apremios.W10CLAEXP</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T08:26:59.9968697-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM apremios.m10FIRMASDEMANDAS;</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T08:56:58.4452027-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM apremios.m10FIRMASDEMANDA;</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T08:57:02.9513397-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM DBO.m10FIRMASDEMANDA;</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T08:57:09.7035175-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM DBO.m10FIRMASDEMANDAS;</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T08:57:14.4778761-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM apremios.M10_FIRMASDEMANDAS;</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T08:57:36.4803302-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM apremios.W10CLAEXP;
+</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T09:29:13.8218775-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM apremios.W10CLAEXP
+WHERE Len(ARCHIVORESUMEN) &gt; 0 AND
+LEN(ARCHIVORESOLUCION) &gt; 0 AND
+LEN(ARCHIVOCEDULA) &gt; 0;</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T09:30:16.1634213-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>select Top 10 * from m10datexpe</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T09:48:42.945366-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>select Top 10 * from apremios.m10datexpe</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T09:48:57.0330883-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>select Top 10 * from apremios.m10datexpe
+where comuna = 1 AND
+nrodenota = 105561</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T09:49:23.9393567-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>select Top 10 * from apremios.m10datexpe
+where comuna = 1 AND
+nrodenota = 105561</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T09:57:18.5813234-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM apremios.W10CLAEXP
+WHERE cod_comuna = 1 AND
+cod_juzgado =  105561;</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T09:59:00.5087088-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.W10CLAEXP
+WHERE cod_comuna = 1 AND
+cod_juzgado =  105561;
+</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T09:59:08.9064082-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM apremios.W10CLAEXP
+WHERE Len(ARCHIVORESUMEN) &gt; 0 AND
+LEN(ARCHIVORESOLUCION) &gt; 0 AND
+LEN(ARCHIVOCEDULA) &gt; 0;</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:01:10.0363904-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM apremios.W10CLAEXP
+WHERE Len(ARCHIVORESUMEN) &gt; 0</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:01:24.6700885-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM apremios.W10CLAEXP
+WHERE Len(ARCHIVORESUMEN) &gt; 0 AND
+LEN(ARCHIVORESOLUCION) &gt; 0 </Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:01:37.7039666-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>select * from apremios.m10datexpe
+where comuna = 1 AND
+nrodenota = 101482</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:02:02.1629241-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.M10_FIRMASDEMANDAS
+WHERE FD_COMUNA = 1 AND FD_CODFIRMA = 1 AND FD_NRO_FIRMA = 1
+;
+</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:04:42.2948273-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.M10_FIRMASDEMANDAS
+</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:04:48.4369016-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM apremios.W10CLAEXP
+WHERE Len(ARCHIVORESUMEN) &gt; 0 AND
+LEN(ARCHIVORESOLUCION) &gt; 0 AND
+LEN(ARCHIVOCEDULA) &gt; 0;</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:05:08.8887458-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM apremios.W10CLAEXP
+WHERE Len(ARCHIVORESUMEN) &gt; 0 AND
+LEN(ARCHIVORESOLUCION) &gt; 0 </Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:05:24.1919556-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>
+select * from apremios.m10datexpe
+where comuna = 1 AND
+nrodenota = 102291</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:05:34.8832794-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>select * from apremios.m10datexpe
+where comuna = 1 AND
+nrodenota = 102291 AND 
+</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:06:38.0843487-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.M10_FIRMASDEMANDAS
+WHERE FD_COMUNA = 1 AND FD_CODFIRMA = 1 AND FD_NRO_FIRMA = 1
+</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:06:46.1503916-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.M10_FIRMASDEMANDAS
+</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:06:51.0365998-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM apremios.W10CLAEXP
+WHERE Len(ARCHIVORESUMEN) &gt; 0 AND
+LEN(ARCHIVORESOLUCION) &gt; 0 AND
+LEN(ARCHIVOCEDULA) &gt; 0;
+</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:10:11.4652232-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.M10DATEXPE M
+LEFT JOIN APREMIOS.W10CLAEXP W
+ON W.CODCOMUNA = M.COMUNA
+LEFT JOIN APREMIOS.M10_FIRMASDEMANDAS F
+ON F.FD_COMUNA = M.COMUNA AND F.FD_NRO_FIRMA = M.NRODENOTA
+WHERE M.COMUNA = 1
+AND LEN(W.ARCHIVORESUMEN) &gt; 0
+AND LEN(W.ARCHIVORESOLUCION) &gt; 0</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:13:42.4809198-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.M10DATEXPE M
+LEFT JOIN APREMIOS.W10CLAEXP W
+ON W.CODCOMUNA = M.COMUNA
+LEFT JOIN APREMIOS.M10_FIRMASDEMANDAS F
+ON F.FD_COMUNA = M.COMUNA AND F.FD_NRO_FIRMA = M.NRODENOTA
+WHERE M.COMUNA = 1
+AND LEN(W.ARCHIVORESUMEN) &gt; 0
+AND LEN(W.ARCHIVORESOLUCION) &gt; 0</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:16:55.0178908-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.M10_FIRMASDEMANDAS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:28:33.7825358-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM apremios.W10CLAEXP
+WHERE Len(ARCHIVORESUMEN) &gt; 0 AND
+LEN(ARCHIVORESOLUCION) &gt; 0 </Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:34:49.7039316-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.N10PARAMETROS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:38:14.3438605-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.N10PARAMETROS
+WHERE Nrosistema = 108 
+AND Tipo = 1</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T10:39:19.1382677-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM n10parametros</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T13:21:31.1122826-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.n10parametros</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T13:21:39.4551783-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.demandasespeciales</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T13:24:26.2279509-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.demadasespeciales</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T13:24:32.1416011-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM dbo.demadasespeciales</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T13:24:38.6446291-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM dbo.demadasespeciales</Consulta>
+    <Parametros />
+    <Fecha>2026-02-23T13:24:42.086835-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.M10_FIRMASDEMANDAS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T07:11:46.6488184-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.allanamientoscabecera</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T07:12:23.0813894-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.allanamientoscabeceras</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T07:12:27.1441612-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.allanamientocabecera</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T07:12:31.818769-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.allanamientocabecera</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T07:13:05.7851446-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT SCHEMANAME FROM SYSCAT.SCHEMATA</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T09:06:14.5687737-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT SCHEMANAME FROM SYSCAT.SCHEMATA;
+
+SELECT NAME FROM SYSIBM.SYSDATABASE</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T09:06:54.8881414-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM SYSCAT.SCHEMATA;
+
+SELECT * FROM SYSIBM.SYSDATABASE</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T09:07:07.4101025-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM SYSCAT.SCHEMATA;
+</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T09:07:12.9057576-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+    </conexion>
+    <Consulta>PRAGMA database_list</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T09:08:08.5804276-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM pg_database WHERE datistemplate = false ORDER BY datname</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T09:08:47.9918692-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T09:09:07.2041511-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT * CAPASNATIVAS.CODIGOURBANO</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T09:12:57.1257281-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM CODIGOURBANO</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T09:13:48.7640733-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM CAPASNATIVAS.CODIGOURBANO</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T09:13:50.2393766-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM CODIGOURBANO</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T09:13:57.769374-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS PRODUCCION</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM capasnativas.codigourbano</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T09:15:05.0731214-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS PRODUCCION</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM capasnativas.codigourbano</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T09:15:05.3863032-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS PRODUCCION</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM capasnativas.codigourbano LIMIT 10</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T09:15:37.3631651-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT SCHEMANAME, OWNER, CREATE_TIME FROM SYSCAT.SCHEMATA ORDER BY SCHEMANAME</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:20:43.5358939-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT TABSCHEMA, COUNT(*) AS TOTAL_TABLAS 
+            FROM SYSCAT.TABLES 
+            WHERE TYPE = 'T' 
+            GROUP BY TABSCHEMA 
+            ORDER BY TABSCHEMA</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:21:32.3659318-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM SYSCAT.SYSDUMMY1</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:22:02.839663-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM SYSIBM.SYSDUMMY1</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:22:13.5058154-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM SYSIBM.DBCFG</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:22:30.0681385-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM SYSIBMADM.DBCFG</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:22:40.5820745-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM SYSIBMADM.ENV_INST_INFO</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:32:11.921797-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM SYSIBMADM.TBSP_UTILIZATION</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:32:24.5653881-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM SYSIBMADM.SNAPDB</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:32:33.8048536-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT DB_NAME, DB_PATH, APPLS_CUR_CONS, LAST_BACKUP 
+            FROM TABLE(SYSPROC.SNAP_GET_DB('', -1)) AS T</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:32:58.3656019-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT DB_NAME, DB_PATH, APPLS_CUR_CONS, LAST_BACKUP 
+            FROM TABLE(SYSPROC.SNAP_GET_DB('', -1)) AS T</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:33:05.279813-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT DB_NAME, DB_PATH, MEMBER, DB_STATUS 
+            FROM TABLE(MON_GET_DATABASE(-2)) AS T</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:33:19.3747611-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM SYSIBM.SYSDATABASE </Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:33:39.0508159-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM SYSIBM.SYSTABLESPACE </Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:33:48.7199225-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM SYSIBM.SYSTABLES </Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:33:55.1862958-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM QSYS2.SYSSCHEMAS </Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:34:10.7752883-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM QSYS2.SYSTABLES  </Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:34:17.6299822-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT DISTINCT SCHEMANAME FROM SYSIBM.SYSSCHEMAAUTH ORDER BY SCHEMANAME</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:35:05.3090024-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT DISTINCT CREATOR FROM SYSIBM.SYSTABLES ORDER BY CREATOR</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:35:25.1640147-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM SYSIBM.SYSSCHEMAAUTH ORDER BY SCHEMANAME</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:35:38.8055134-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM SYSIBM.SYSTABLES ORDER BY CREATOR</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:35:58.9566675-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM SYSIBM.SYSTABLES ORDER BY CREATOR</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:36:13.631478-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM SYSIBM.SYSTABLES ORDER BY CREATOR</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:36:16.4100999-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT CREATOR, NAME, TYPE 
+            FROM SYSIBM.SYSTABLES 
+            WHERE TYPE = 'T' 
+            ORDER BY CREATOR, NAME</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:36:31.4849029-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * 
+            FROM SYSIBM.SYSTABLES 
+            WHERE TYPE = 'T' 
+            ORDER BY CREATOR, NAME</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:37:09.7802575-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT CREATOR, NAME, TYPE 
+            FROM SYSIBM.SYSTABLES 
+            WHERE TYPE = 'T' 
+            ORDER BY CREATOR, NAME</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:37:25.1932961-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+            FROM SYSIBM.SYSTABLES 
+            WHERE TYPE = 'T' 
+            ORDER BY CREATOR, NAME</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:37:41.7276481-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT CREATOR, NAME, TYPE 
+            FROM SYSIBM.SYSTABLES 
+            WHERE TYPE = 'T' 
+            ORDER BY CREATOR, NAME</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:37:53.9668996-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT CREATOR, NAME, TYPE, schema 
+            FROM SYSIBM.SYSTABLES 
+            WHERE TYPE = 'T' 
+            ORDER BY CREATOR, NAME</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:38:04.8660762-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT CREATOR, NAME, TYPE 
+            FROM SYSIBM.SYSTABLES 
+            WHERE TYPE = 'T' 
+            ORDER BY CREATOR, NAME</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:38:08.8598279-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT CREATOR, NAME, TYPE 
+            FROM SYSIBM.SYSTABLES 
+</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:38:30.8175835-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT DBNAME, NAME, TYPE 
+            FROM SYSIBM.SYSTABLESPACE 
+            ORDER BY DBNAME, NAME</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:39:31.5524371-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT NAME, CREATOR FROM SYSIBM.SYSDATABASE ORDER BY NAME</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T10:39:45.6856084-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m10_firmasdemandas</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T11:17:39.4214288-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m10_firmasdemanda</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T11:17:44.2885329-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.m10_firmasdemandas</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T11:17:51.1931786-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM SELECT SCHEMANAME FROM SYSCAT.SCHEMATA</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T12:11:04.7117869-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL PROD</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos />
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT UPPER(name) FROM sys.databases WHERE state = 0 ORDER BY name ASC</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T12:11:37.4455862-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS PRODUCCION</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT datname FROM pg_database WHERE datistemplate = false</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T12:11:59.6776547-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS PRODUCCION</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT UPPER(datname) FROM pg_database WHERE datistemplate = false</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T12:12:09.7367355-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+    </conexion>
+    <Consulta>PRAGMA database_list</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T12:12:40.4764628-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS PRODUCCION</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT UPPER(datname) FROM pg_database WHERE datistemplate = false</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T12:51:00.8438139-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * from apremios.m10firmasdemandas</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T13:06:36.5950955-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * from apremios.m10_firmasdemandas</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T13:06:41.9357355-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS PRODUCCION</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT UPPER(datname) FROM pg_database WHERE datistemplate = false</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T13:28:02.9049517-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS PRODUCCION</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT datname FROM pg_database WHERE datistemplate = false</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T13:28:10.6817121-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS PRODUCCION</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT UPPER(datname) FROM pg_database WHERE datistemplate = false</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T17:08:01.8627131-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS PRODUCCION</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT UPPER(datname) FROM pg_database WHERE datistemplate = false</Consulta>
+    <Parametros />
+    <Fecha>2026-02-24T17:08:04.4529152-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TABLE_SCHEMA, TABLE_NAME 
+                                FROM INFORMATION_SCHEMA.TABLES 
+                                WHERE TABLE_TYPE = 'BASE TABLE'
+                                ORDER BY TABLE_SCHEMA, TABLE_NAME</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T07:40:54.4770693-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.N10PARAMETROS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:07:43.28779-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.N10PARAMETROS
+where nrosistema = 0 and tipo = 0</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:08:21.0998202-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:40:19.6264173-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where NRO_JUICIO &gt; 0
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:42:10.8357695-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where NRO_JUICIO &gt; 0 AND ASCII(ENVIADJUICIO) = 0
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:43:00.7817101-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where NRO_JUICIO &gt; 0 AND ASCII(ENVIADJUICIO) = 1
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:43:04.4655501-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where NRO_JUICIO &gt; 0 AND CHR(ENVIADJUICIO) = 1
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:43:15.5537868-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where NRO_JUICIO &gt; 0 AND CHR(ENVIADJUICIO) = 0
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:43:18.3268686-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where NRO_JUICIO &gt; 0 AND CHAR(ENVIADJUICIO) = '0'
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:43:53.3874053-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where NRO_JUICIO &gt; 0 AND CHAR(ENVIADJUICIO) = '1'
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:43:57.5221155-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where CHAR(ENVIADJUICIO) = 0</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:44:23.6948387-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where CHAR(ENVIADJUICIO) = '0'</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:44:37.1117632-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where ASCII(ENVIADJUICIO) = '1'
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:45:22.0112984-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where ASCII(ENVIADJUICIO) = 1
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:45:28.140765-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where ENVIADJUICIO = '1'
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:47:01.2302278-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where ENVIADJUICIO = '0'
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:47:04.2754359-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where ENVIADJUICIO = true
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:47:21.5180312-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where ENVIADJUICIO = 'true'
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:47:25.6202523-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where ENVIADJUICIO = 'T'
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:47:31.6826273-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where ENVIADJUICIO = 'F'
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:47:35.0242357-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where ENVIADJUICIO = 'f'
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:47:37.2253361-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m08juzmae 
+where ENVIADJUICIO = 't'
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T10:47:39.2618468-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.m10_firmasDemandas</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T11:40:20.7985386-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.N10PARAMETROS</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T12:03:57.4854332-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.demandasespeciales</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T12:19:07.6240628-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.demandas_especiales</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T12:19:14.5694302-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.demandas_especiales</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T12:19:15.6284516-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM dbo.demandas_especiales</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T12:19:19.8871366-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM dbo.demadas_especiales</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T12:19:35.521973-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.m10_firmasdemandas</Consulta>
+    <Parametros />
+    <Fecha>2026-02-25T12:49:09.8157009-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT LTRIM(RTRIM(NAME)) AS Nombre, COLTYPE as Tipo, LENGTH as Longitud, SCALE as Escala, CASE WHEN NULLS = 'N' THEN 'NO' ELSE 'SÍ' END as AceptaNulos FROM SYSIBM.SYSCOLUMNS </Consulta>
+    <Parametros />
+    <Fecha>2026-02-26T06:43:09.1768227-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT LTRIM(RTRIM(NAME)) AS Nombre, COLTYPE as Tipo, LENGTH as Longitud, SCALE as Escala, CASE WHEN NULLS = 'N' THEN 'NO' ELSE 'SÍ' END as AceptaNulos FROM SYSIBM.SYSCOLUMNS WHERE SCALE &gt; 0</Consulta>
+    <Parametros />
+    <Fecha>2026-02-26T06:43:23.5164353-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT LTRIM(RTRIM(NAME)) AS Nombre, COLTYPE as Tipo, LENGTH as Longitud, SCALE as Escala, CASE WHEN NULLS = 'N' THEN 'NO' ELSE 'SÍ' END as AceptaNulos FROM SYSIBM.SYSCOLUMNS WHERE SCALE &gt; 0</Consulta>
+    <Parametros />
+    <Fecha>2026-02-26T07:01:15.5176714-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT LTRIM(RTRIM(NAME)) AS Nombre, COLTYPE as Tipo, LENGTH as Longitud, SCALE as Escala, CASE WHEN NULLS = 'N' THEN 'NO' ELSE 'SÍ' END as AceptaNulos FROM SYSIBM.SYSCOLUMNS 
+WHERE COLTYPE = 'DECIMAL'</Consulta>
+    <Parametros />
+    <Fecha>2026-02-26T07:01:41.7857242-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT TBNAME, LTRIM(RTRIM(NAME)) AS Nombre, COLTYPE as Tipo, LENGTH as Longitud, SCALE as Escala, CASE WHEN NULLS = 'N' THEN 'NO' ELSE 'SÍ' END as AceptaNulos FROM SYSIBM.SYSCOLUMNS 
+WHERE COLTYPE = 'DECIMAL'</Consulta>
+    <Parametros />
+    <Fecha>2026-02-26T07:03:14.7769221-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.m10datexpe</Consulta>
+    <Parametros />
+    <Fecha>2026-02-26T07:36:37.9846459-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos PRODUCCION DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM m00tabma</Consulta>
+    <Parametros />
+    <Fecha>2026-02-26T07:50:45.6466819-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.m10datexpe</Consulta>
+    <Parametros />
+    <Fecha>2026-02-26T07:51:06.7030882-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>COCO POSTGRES</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM app.usuariosgrupos</Consulta>
+    <Parametros />
+    <Fecha>2026-02-26T09:11:51.0058274-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>COCO POSTGRES</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM capasnativas.camaras</Consulta>
+    <Parametros />
+    <Fecha>2026-02-26T09:12:03.4816142-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+    </conexion>
+    <Consulta>CREATE TABLE IF NOT EXISTS usuarios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL,
+    apellido TEXT NOT NULL,
+    email TEXT UNIQUE,
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    activo INTEGER NOT NULL DEFAULT 1
+);</Consulta>
+    <Parametros />
+    <Fecha>2026-02-26T09:14:10.1349042-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top 10 * FROM m10datexpe</Consulta>
+    <Parametros />
+    <Fecha>2026-02-26T09:36:32.8211098-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top (10) * FROM m10datexpe</Consulta>
+    <Parametros />
+    <Fecha>2026-02-26T09:36:38.1260355-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT top (10) * FROM apremios.m10datexpe</Consulta>
+    <Parametros />
+    <Fecha>2026-02-26T09:36:44.5920848-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_LIQUI2026</Consulta>
+    <Parametros />
+    <Fecha>2026-02-26T11:16:13.7044991-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM tb_memmpl where NROLegajo = 5078</Consulta>
+    <Parametros />
+    <Fecha>2026-02-26T11:37:40.0132484-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM tb_mempl where NROLegajo = 5078</Consulta>
+    <Parametros />
+    <Fecha>2026-02-26T11:37:54.0006567-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM tb_mempl where nrolegajo = 5078 FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-27T06:52:34.7311139-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT fecha_egreso, * FROM tb_mempl where nrolegajo = 5078 FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-27T06:52:45.7474652-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT fechaegreso, * FROM tb_mempl where nrolegajo = 5078 FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-27T06:52:50.5995374-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT FECHA_EGRESO, * FROM tb_mempl where nrolegajo = 5078 FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-27T06:53:14.3294386-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT FECHA_EGRESO FROM tb_mempl where nrolegajo = 5078 FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-02-27T06:53:18.9265354-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.M10DATEXPE</Consulta>
+    <Parametros />
+    <Fecha>2026-02-27T11:23:34.7304894-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM APREMIOS.M10DATEXPE
+where nrodenota in (126953, 126955, 126956)</Consulta>
+    <Parametros />
+    <Fecha>2026-02-27T11:49:41.3743741-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT FECHAENVIOTRIB, USUARIOENVIOTRIB, * FROM APREMIOS.M10DATEXPE
+where nrodenota in (126953, 126955, 126956)</Consulta>
+    <Parametros />
+    <Fecha>2026-02-27T11:50:07.2997562-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT FECHAENVIOTRIB, USUARIOENVIOTRIB, * FROM APREMIOS.M10DATEXPE
+where nrodenota in (126953, 126955, 126956)</Consulta>
+    <Parametros />
+    <Fecha>2026-02-27T11:56:16.6211366-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT FECHAENVIOTRIB, USUARIOENVIOTRIB, * FROM APREMIOS.M10DATEXPE
+where nrodenota in (126953, 126955, 126956)</Consulta>
+    <Parametros />
+    <Fecha>2026-02-27T12:04:55.5448033-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT FECHAENVIOTRIB, USUARIOENVIOTRIB, * FROM APREMIOS.M10DATEXPE
+where nrodenota in (126953, 126955, 126956)</Consulta>
+    <Parametros />
+    <Fecha>2026-02-27T12:04:56.6858163-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL PROD</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos />
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT FECHAENVIOTRIB, USUARIOENVIOTRIB, * FROM APREMIOS.M10DATEXPE
+where nrodenota in (126953, 126955, 126956)</Consulta>
+    <Parametros />
+    <Fecha>2026-02-27T12:05:24.9630407-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL PROD</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos />
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT FECHAENVIOTRIB, USUARIOENVIOTRIB, * FROM APREMIOS.M10DATEXPE
+where nrodenota in (126953, 126955, 126956)</Consulta>
+    <Parametros />
+    <Fecha>2026-02-27T12:05:30.8669243-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL PROD</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos />
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT FECHAENVIOTRIB, USUARIOENVIOTRIB, * FROM APREMIOS.M10DATEXPE
+where nrodenota in (126953, 126955, 126956)</Consulta>
+    <Parametros />
+    <Fecha>2026-02-27T12:05:31.7322367-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL PROD</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos />
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT FECHAENVIOTRIB, USUARIOENVIOTRIB, * FROM APREMIOS.M10DATEXPE
+where nrodenota in (126953, 126955, 126956)</Consulta>
+    <Parametros />
+    <Fecha>2026-02-27T12:05:35.8917826-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT FECHAENVIOTRIB, USUARIOENVIOTRIB, * FROM APREMIOS.M10DATEXPE
+where nrodenota in (126953, 126955, 126956)</Consulta>
+    <Parametros />
+    <Fecha>2026-02-27T12:05:42.1346707-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT FECHAENVIOTRIB, USUARIOENVIOTRIB, * FROM APREMIOS.M10DATEXPE
+where nrodenota in (126953, 126955, 126956)</Consulta>
+    <Parametros />
+    <Fecha>2026-02-27T12:10:54.9607707-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fich FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T06:23:10.8129626-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fich FETCH 
+WHERE legajo55 = 6935
+FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T06:23:37.0036642-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fich FETCH 
+WHERE legajo55 = 6935</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T06:23:49.9703314-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fich FETCH 
+WHERE legajo_55 = 6935
+FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T06:24:04.5664632-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fich 
+WHERE legajo_55 = 6935
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T06:24:27.4737402-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fich 
+WHERE legajo_55 = 6935
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T06:28:41.4684551-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_LIQUI2026
+WHERE LEGAJO = 6935
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T06:33:02.3789311-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_LIQUI2026
+WHERE LEGAJO = 6935</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T06:33:11.2364704-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_LIQUI2026
+WHERE LEGAJO = 6935</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T06:39:25.8578918-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT LEGAJO,PERIODO,NRO_RECIBOPERIODO,TIPO_CPTO,COD_CPTO,SUBCOD_CPTO,AJUSTE,RESTA,IMPORT_CPTO,AGUINALDO,PRIORIDAD, FROM N29_LIQUI2026
+WHERE LEGAJO = 6935</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T06:40:42.8019378-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT LEGAJO,PERIODO,NRO_RECIBOPERIODO,TIPO_CPTO,COD_CPTO,SUBCOD_CPTO,AJUSTE,RESTA,IMPORT_CPTO,AGUINALDO,PRIORIDAD FROM N29_LIQUI2026
+WHERE LEGAJO = 6935</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T06:40:46.1458566-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT LEGAJO,PERIODO,NRO_RECIBOPERIODO,TIPO_CPTO,COD_CPTO,SUBCOD_CPTO,AJUSTE,RESTA,IMPORT_CPTO,AGUINALDO,PRIORIDAD FROM N29_LIQUI2026
+WHERE LEGAJO = 6935
+ORDER BY LEGAJO,PERIODO,NRO_RECIBOPERIODO,TIPO_CPTO,COD_CPTO</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T06:43:20.0143043-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT LEGAJO,PERIODO,NRO_RECIBOPERIODO,TIPO_CPTO,COD_CPTO,SUBCOD_CPTO,AJUSTE,RESTA,IMPORT_CPTO,AGUINALDO,PRIORIDAD FROM N29_LIQUI2026
+WHERE LEGAJO = 6935
+ORDER BY LEGAJO,PERIODO,NRO_RECIBOPERIODO,TIPO_CPTO,COD_CPTO</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T06:44:16.1351378-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT LEGAJO,PERIODO,NRO_RECIBOPERIODO,TIPO_CPTO,COD_CPTO,SUBCOD_CPTO,AJUSTE,RESTA,IMPORT_CPTO,AGUINALDO,PRIORIDAD FROM N29_LIQUI2026
+WHERE LEGAJO = 6935
+ORDER BY LEGAJO,PERIODO,NRO_RECIBOPERIODO,TIPO_CPTO,COD_CPTO</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T07:24:41.4953035-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fich 
+WHERE legajo_55 = 6935
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T07:25:16.1166049-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT LEGAJO,PERIODO,NRO_RECIBOPERIODO,TIPO_CPTO,COD_CPTO,SUBCOD_CPTO,AJUSTE,RESTA,IMPORT_CPTO,AGUINALDO,PRIORIDAD FROM N29_LIQUI2026
+WHERE LEGAJO = 6935
+ORDER BY LEGAJO,PERIODO,NRO_RECIBOPERIODO,TIPO_CPTO,COD_CPTO</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T07:26:17.2313007-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT LEGAJO,PERIODO,NRO_RECIBOPERIODO,TIPO_CPTO,COD_CPTO,SUBCOD_CPTO,AJUSTE,RESTA,IMPORT_CPTO,AGUINALDO,PRIORIDAD FROM N29_LIQUI2026
+WHERE LEGAJO = 6935
+ORDER BY LEGAJO,PERIODO,NRO_RECIBOPERIODO,TIPO_CPTO,COD_CPTO</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T16:37:38.7418337-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fich 
+WHERE legajo_55 = 6935
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T16:38:09.410179-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fich 
+WHERE legajo_55 = 6935
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T16:45:19.8129548-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM w12fich 
+WHERE legajo_55 = 6935
+FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-03-02T16:46:49.3176755-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>

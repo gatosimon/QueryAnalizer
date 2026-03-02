@@ -20,4 +20,3 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnaly
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.csproj.CopyComplete
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.exe
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.pdb
-C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.csproj.AssemblyReference.cache

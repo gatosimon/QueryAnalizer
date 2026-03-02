@@ -160,4 +160,12 @@
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
   </Conexion>
+  <Conexion>
+    <Nombre>COCO POSTGRES</Nombre>
+    <Motor>POSTGRES</Motor>
+    <Servidor>200.58.108.122</Servidor>
+    <BaseDatos>gis</BaseDatos>
+    <Usuario>magic</Usuario>
+    <Contrasena>DEriu7Dp45</Contrasena>
+  </Conexion>
 </ArrayOfConexion>

@@ -67,19 +67,15 @@ namespace QueryAnalyzer
             switch (motor)
             {
                 case TipoMotor.MS_SQL:
-                    //stringConnection = $@"Driver={{ODBC Driver 17 for SQL Server}};Server=SQL{servidor}\{servidor};Database={baseDatos};Uid={usuario};Pwd={contraseña};TrustServerCertificate=yes;";
                     stringConnection = $@"Driver={{{driver}}};Server=SQL{servidor}\{servidor};Database={baseDatos};Uid={usuario};Pwd={contraseña};TrustServerCertificate=yes;";
                     break;
                 case TipoMotor.DB2:
-                    //stringConnection = $"Driver={{IBM DB2 ODBC DRIVER}};Database={baseDatos};Hostname={servidor};Port=50000; Protocol=TCPIP;Uid={usuario};Pwd={contraseña};";
                     stringConnection = $"Driver={{{driver}}};Database={baseDatos};Hostname={servidor};Port=50000; Protocol=TCPIP;Uid={usuario};Pwd={contraseña};";
                     break;
                 case TipoMotor.POSTGRES:
-                    //stringConnection = $"Driver={{PostgreSQL Unicode(x86)}};Server={servidor};Port=5432;Database={baseDatos};Uid={usuario};Pwd={contraseña};";
                     stringConnection = $"Driver={{{driver}}};Server={servidor};Port=5432;Database={baseDatos};Uid={usuario};Pwd={contraseña};";
                     break;
                 case TipoMotor.SQLite:
-                    //stringConnection = $"Driver={{SQLite3 ODBC Driver}};Database={servidor};"; //"Data Source={conexionActual.Servidor};Version=3;";
                     stringConnection = $"Driver={{{driver}}};Database={servidor};"; //"Data Source={conexionActual.Servidor};Version=3;";
                     break;
                 default:
@@ -87,6 +83,7 @@ namespace QueryAnalyzer
             }
             return stringConnection;
         }
+        
         public static string ObtenerNombreDriver(TipoMotor motor)
         {
             string palabraClave = string.Empty;
@@ -112,19 +109,6 @@ namespace QueryAnalyzer
 
             // Los drivers de ODBC se encuentran en esta ruta del registro
             string registroPath = @"SOFTWARE\ODBC\ODBCINST.INI\ODBC Drivers";
-
-            //// Abrimos la llave local (HKEY_LOCAL_MACHINE)
-            //using (RegistryKey rk = Registry.LocalMachine.OpenSubKey(registroPath))
-            //{
-            //    if (rk != null)
-            //    {
-            //        // Leemos todos los nombres de valores (que son los nombres de los drivers)
-            //        foreach (string nombreDriver in rk.GetValueNames())
-            //        {
-            //            drivers.Add(nombreDriver);
-            //        }
-            //    }
-            //}
 
             // Forzamos la apertura de la vista de 32 bits (RegistryView.Registry32)
             using (var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32))
