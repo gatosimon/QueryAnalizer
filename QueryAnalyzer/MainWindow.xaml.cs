@@ -1,4 +1,4 @@
-﻿using Models;
+using Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -35,6 +35,9 @@ namespace QueryAnalyzer
 
         static public Conexion conexionActual = null;
 
+        // Tema
+        private bool _modoOscuro = false;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -59,6 +62,35 @@ namespace QueryAnalyzer
             BloquearUI(true);
             ConfigurarMenuContextualAvalonEdit();
         }
+        private void BtnToggleTema_Click(object sender, RoutedEventArgs e)
+        {
+            _modoOscuro = !_modoOscuro;
+            string source = _modoOscuro ? "ThemeDark.xaml" : "ThemeLight.xaml";
+            var uri = new Uri(source, UriKind.Relative);
+            var newDict = new ResourceDictionary { Source = uri };
+
+            var merged = this.Resources.MergedDictionaries;
+            if (merged.Count > 0) merged[0] = newDict;
+            else merged.Add(newDict);
+
+            foreach (Window w in Application.Current.Windows)
+            {
+                if (w == this) continue;
+                var wd = w.Resources.MergedDictionaries;
+                if (wd.Count > 0) wd[0] = new ResourceDictionary { Source = uri };
+                else wd.Add(new ResourceDictionary { Source = uri });
+            }
+
+            btnToggleTema.Content = _modoOscuro ? "☀" : "🌙";
+
+            var bg = _modoOscuro ? "#1E1E1E" : "#FFFFFF";
+            var fg = _modoOscuro ? "#D4D4D4" : "#1A1A1A";
+            txtQuery.Background = new System.Windows.Media.SolidColorBrush(
+                (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(bg));
+            txtQuery.Foreground = new System.Windows.Media.SolidColorBrush(
+                (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(fg));
+        }
+
         private void ConfigurarMenuContextualAvalonEdit()
         {
             // Crear el menú contextual

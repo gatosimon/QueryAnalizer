@@ -1,10 +1,22 @@
-﻿<Window x:Class="QueryAnalyzer.DatosConexion"
+<Window x:Class="QueryAnalyzer.DatosConexion"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Configuración de Conexión"
         Height="265.25" Width="400"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize"
+        Background="{DynamicResource BrushWindowBG}"
+        Foreground="{DynamicResource BrushFG}">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Usa el mismo archivo de tema que MainWindow cargó en runtime -->
+                <ResourceDictionary Source="ThemeLight.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -23,37 +35,24 @@
         <!-- NOMBRE -->
         <TextBlock Grid.Row="0" Grid.Column="0" Text="Nombre:" Margin="5" VerticalAlignment="Center"/>
         <TextBox x:Name="txtNombre" Grid.Row="0" Grid.Column="1" Margin="5"/>
-        
+
         <!-- MOTOR -->
         <TextBlock Grid.Row="1" Grid.Column="0" Text="Motor:" Margin="5" VerticalAlignment="Center"/>
-        <ComboBox x:Name="cmbMotor" Grid.Row="1" Grid.Column="1" Margin="5" DisplayMemberPath="Value" SelectedValuePath="Key" SelectionChanged="cmbMotor_SelectionChanged"/>
+        <ComboBox x:Name="cmbMotor" Grid.Row="1" Grid.Column="1" Margin="5"
+                  DisplayMemberPath="Value" SelectedValuePath="Key"
+                  SelectionChanged="cmbMotor_SelectionChanged"/>
 
         <!-- SERVIDOR -->
         <TextBlock Grid.Row="2" Grid.Column="0" Text="Servidor:" Margin="5" VerticalAlignment="Center"/>
-
         <Grid Grid.Row="2" Grid.Column="1" Margin="5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="30"/>
-                <!-- Espacio reservado para el botón -->
             </Grid.ColumnDefinitions>
-
-            <!-- TextBox alineado siempre igual -->
-            <TextBox x:Name="txtServidor"
-             Grid.Column="0"
-             VerticalAlignment="Center"
-             Margin="0,0,5,0"/>
-
-            <!-- Botón que aparece solo en SQLite -->
-            <Button x:Name="btnBuscarBase"
-            Grid.Column="1"
-            Content="..."
-            Width="25"
-            HorizontalAlignment="Right"
-            IsEnabled="False"
-            Click="btnBuscarBase_Click"/>
+            <TextBox x:Name="txtServidor" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            <Button x:Name="btnBuscarBase" Grid.Column="1" Content="..." Width="25"
+                    HorizontalAlignment="Right" IsEnabled="False" Click="btnBuscarBase_Click"/>
         </Grid>
-
 
         <!-- USUARIO -->
         <TextBlock x:Name="lblUsuario" Grid.Row="3" Grid.Column="0" Text="Usuario:" Margin="5" VerticalAlignment="Center"/>
@@ -61,18 +60,20 @@
 
         <!-- CONTRASEÑA -->
         <TextBlock x:Name="lblContrasena" Grid.Row="4" Grid.Column="0" Text="Contraseña:" Margin="5" VerticalAlignment="Center"/>
-        <PasswordBox x:Name="txtContrasena" Grid.Row="4" Grid.Column="1" Margin="5" LostFocus="txtContrasena_LostFocus"/>
+        <PasswordBox x:Name="txtContrasena" Grid.Row="4" Grid.Column="1" Margin="5"
+                     LostFocus="txtContrasena_LostFocus"/>
 
         <!-- BASE DE DATOS -->
         <TextBlock x:Name="lblBaseDatos" Grid.Row="5" Grid.Column="0" Text="Base de datos:" Margin="5" VerticalAlignment="Center"/>
         <TextBox x:Name="txtBaseDatos" Grid.Row="5" Grid.Column="1" Margin="5"/>
         <ComboBox x:Name="cmbBaseDatos" Visibility="Hidden" Grid.Row="5" Grid.Column="1" Margin="5"/>
 
-        <!-- BOTÓN GUARDAR -->
-        <Button x:Name="btnGuardar" Grid.Row="6" Grid.Column="1" Margin="0,6,5,2" 
+        <!-- BOTONES -->
+        <Button x:Name="btnGuardar" Grid.Row="6" Grid.Column="1" Margin="0,6,5,2"
                 Content="Guardar Conexión" Width="113" HorizontalAlignment="Right"
                 Click="btnGuardar_Click"/>
-        <Button x:Name="btnProbar" Grid.Row="6" Grid.Column="1" Margin="5,6,5,2" 
-            Content="Probar Conexión" Width="113" HorizontalAlignment="left" Click="btnProbar_Click"/>
+        <Button x:Name="btnProbar" Grid.Row="6" Grid.Column="1" Margin="5,6,5,2"
+                Content="Probar Conexión" Width="113" HorizontalAlignment="Left"
+                Click="btnProbar_Click"/>
     </Grid>
 </Window>

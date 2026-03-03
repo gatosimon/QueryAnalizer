@@ -5,24 +5,232 @@
         Title="Query Analyzer (ODBC)" Height="700" Width="1100"
         MinHeight="500" MinWidth="800"
         Icon="/Assets/Logo.ico"
-        WindowStartupLocation="CenterScreen" Background="White" WindowState="Maximized">
+        WindowStartupLocation="CenterScreen" WindowState="Maximized"
+        Background="{DynamicResource BrushWindowBG}"
+        Foreground="{DynamicResource BrushFG}">
 
     <Window.Resources>
-        <Style x:Key="ResultGridRowStyle" TargetType="DataGridRow">
-            <Setter Property="Background" Value="White"/>
-            <Style.Triggers>
-                <Trigger Property="AlternationIndex" Value="1">
-                    <Setter Property="Background" Value="#5A23AAF2"/>
-                </Trigger>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#FFD800"/>
-                </Trigger>
-                <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#A7C7FF"/>
-                    <Setter Property="Foreground" Value="Black"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
+
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Tema inicial: claro. El code-behind lo reemplaza al hacer toggle. -->
+                <ResourceDictionary Source="ThemeLight.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- ── Estilos que usan la paleta via DynamicResource ── -->
+
+            <Style TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+            </Style>
+
+            <Style TargetType="TextBox">
+                <Setter Property="Background"      Value="{DynamicResource BrushControlBG}"/>
+                <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"     Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="CaretBrush"      Value="{DynamicResource BrushFG}"/>
+                <Setter Property="SelectionBrush"  Value="{DynamicResource BrushSelected}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding"         Value="3,2"/>
+            </Style>
+
+            <Style TargetType="PasswordBox">
+                <Setter Property="Background"  Value="{DynamicResource BrushControlBG}"/>
+                <Setter Property="Foreground"  Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+            </Style>
+
+            <Style TargetType="Button">
+                <Setter Property="Background"      Value="{DynamicResource BrushBtnBG}"/>
+                <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"     Value="{DynamicResource BrushBtnBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding"         Value="6,3"/>
+                <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="3"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource BrushAccent}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="Opacity" Value="0.8"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.4"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="ComboBox">
+                <Setter Property="Background"      Value="{DynamicResource BrushControlBG}"/>
+                <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"     Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+            </Style>
+            <Style TargetType="ComboBoxItem">
+                <Setter Property="Background" Value="{DynamicResource BrushControlBG}"/>
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsHighlighted" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource BrushSelected}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource BrushSelectedFG}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style TargetType="GridSplitter">
+                <Setter Property="Background" Value="{DynamicResource BrushSplitter}"/>
+            </Style>
+
+            <Style TargetType="TreeView">
+                <Setter Property="Background"      Value="{DynamicResource BrushPanelBG}"/>
+                <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"     Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+            </Style>
+            <Style TargetType="TreeViewItem">
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Padding"    Value="2,1"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource BrushTreeHover}"/>
+                    </Trigger>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource BrushTreeSel}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource BrushSelectedFG}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style TargetType="TabControl">
+                <Setter Property="Background"  Value="{DynamicResource BrushPanelBG}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+            </Style>
+            <Style TargetType="TabItem">
+                <Setter Property="Background"  Value="{DynamicResource BrushBtnBG}"/>
+                <Setter Property="Foreground"  Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="Padding"     Value="8,3"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TabItem">
+                            <Border x:Name="tabBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="1,1,1,0"
+                                    CornerRadius="3,3,0,0"
+                                    Margin="1,0,1,0"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter ContentSource="Header"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="tabBorder" Property="Background"  Value="{DynamicResource BrushTabSelBG}"/>
+                                    <Setter TargetName="tabBorder" Property="BorderBrush" Value="{DynamicResource BrushTabSelBdr}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource BrushTabSelFG}"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="tabBorder" Property="Background" Value="{DynamicResource BrushHover}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="ListBox">
+                <Setter Property="Background"  Value="{DynamicResource BrushPanelBG}"/>
+                <Setter Property="Foreground"  Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+            </Style>
+
+            <Style TargetType="DataGrid">
+                <Setter Property="Background"               Value="{DynamicResource BrushPanelBG}"/>
+                <Setter Property="Foreground"               Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"              Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="RowBackground"            Value="{DynamicResource BrushControlBG}"/>
+                <Setter Property="AlternatingRowBackground" Value="{DynamicResource BrushAltRowBG}"/>
+                <Setter Property="GridLinesVisibility"      Value="Horizontal"/>
+                <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource BrushBorder}"/>
+            </Style>
+            <Style TargetType="DataGridCell">
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background"  Value="{DynamicResource BrushSelected}"/>
+                        <Setter Property="Foreground"  Value="{DynamicResource BrushSelectedFG}"/>
+                        <Setter Property="BorderBrush" Value="Transparent"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            <Style TargetType="DataGridColumnHeader">
+                <Setter Property="Background"                 Value="{DynamicResource BrushHeaderBG}"/>
+                <Setter Property="Foreground"                 Value="{DynamicResource BrushHeaderFG}"/>
+                <Setter Property="FontWeight"                 Value="SemiBold"/>
+                <Setter Property="BorderBrush"                Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="BorderThickness"            Value="0,0,1,1"/>
+                <Setter Property="Padding"                    Value="6,4"/>
+                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            </Style>
+            <Style TargetType="DataGridRowHeader">
+                <Setter Property="Background" Value="{DynamicResource BrushAltRowBG}"/>
+                <Setter Property="Width"      Value="0"/>
+            </Style>
+
+            <Style TargetType="ContextMenu">
+                <Setter Property="Background"  Value="{DynamicResource BrushMenuBG}"/>
+                <Setter Property="Foreground"  Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+            </Style>
+            <Style TargetType="MenuItem">
+                <Setter Property="Background" Value="{DynamicResource BrushMenuBG}"/>
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsHighlighted" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource BrushMenuHover}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource BrushSelectedFG}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            <Style TargetType="Separator">
+                <Setter Property="Background" Value="{DynamicResource BrushSeparator}"/>
+            </Style>
+
+            <!-- Filas de resultados de queries -->
+            <Style x:Key="ResultGridRowStyle" TargetType="DataGridRow">
+                <Setter Property="Background" Value="{DynamicResource BrushControlBG}"/>
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+                <Style.Triggers>
+                    <Trigger Property="AlternationIndex" Value="1">
+                        <Setter Property="Background" Value="{DynamicResource BrushAltRowBG}"/>
+                    </Trigger>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource BrushRowHover}"/>
+                    </Trigger>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource BrushSelected}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource BrushSelectedFG}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+        </ResourceDictionary>
     </Window.Resources>
 
     <Grid Margin="8">
@@ -33,14 +241,23 @@
             <RowDefinition Height="100"/>
         </Grid.RowDefinitions>
 
-
+        <!-- ── Toolbar superior ─────────────────────────────────── -->
         <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,6">
             <TextBlock Text="Driver/Proveedor:" VerticalAlignment="Center" Margin="0,0,6,0"/>
-            <ComboBox x:Name="cbDriver" Width="400" IsEditable="True" VerticalAlignment="Center" SelectionChanged="cbDriver_SelectionChanged"/>
-            <Button x:Name="btnTest" Content="Probar conexión" Padding="2,2" Margin="8,0,0,0" Click="BtnTest_Click"/>
-            <Button x:Name="btnNewConn" Content="Nueva" Padding="2,2" Margin="8,0,0,0" Click="BtnNewConn_Click"/>
-            <Button x:Name="btnDeleteConn_Copy" Content="Eliminar" Padding="2,2" Margin="8,0,0,0" Click="btnDeleteConn_Click"/>
-            <Button x:Name="btnEditConn" Content="Editar" Padding="2,2" Margin="8,0,0,0" Click="BtnEditConn_Click"/>
+            <ComboBox x:Name="cbDriver" Width="400" IsEditable="True" VerticalAlignment="Center"
+                      SelectionChanged="cbDriver_SelectionChanged"/>
+            <Button x:Name="btnTest"           Content="Probar conexión" Padding="2,2" Margin="8,0,0,0" Click="BtnTest_Click"/>
+            <Button x:Name="btnNewConn"        Content="Nueva"           Padding="2,2" Margin="8,0,0,0" Click="BtnNewConn_Click"/>
+            <Button x:Name="btnDeleteConn_Copy" Content="Eliminar"       Padding="2,2" Margin="8,0,0,0" Click="btnDeleteConn_Click"/>
+            <Button x:Name="btnEditConn"       Content="Editar"          Padding="2,2" Margin="8,0,0,0" Click="BtnEditConn_Click"/>
+            <!-- Botón toggle de tema: el icono cambia en code-behind -->
+            <Button x:Name="btnToggleTema"
+                    Content="&#x1F319;"
+                    Padding="4,2"
+                    Margin="16,0,0,0"
+                    FontSize="14"
+                    ToolTip="Alternar modo claro / oscuro"
+                    Click="BtnToggleTema_Click"/>
         </StackPanel>
 
         <Grid Grid.Row="1">
@@ -49,7 +266,6 @@
                 <ColumnDefinition Width="5"/>
                 <ColumnDefinition Width="1.5*"/>
             </Grid.ColumnDefinitions>
-
 
             <Grid Grid.Column="0" x:Name="grdPrincipal">
                 <Grid.RowDefinitions>
@@ -60,13 +276,13 @@
 
                 <Grid Grid.Row="0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="3*" />
-                        <ColumnDefinition Width="25" />
-                        <ColumnDefinition Width="5" />
-                        <ColumnDefinition Width="6*" />
+                        <ColumnDefinition Width="3*"/>
+                        <ColumnDefinition Width="25"/>
+                        <ColumnDefinition Width="5"/>
+                        <ColumnDefinition Width="6*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Grid x:Name="grdExplorador" Grid.Column="0" >
+                    <Grid x:Name="grdExplorador" Grid.Column="0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
@@ -74,100 +290,71 @@
                         </Grid.ColumnDefinitions>
 
                         <Button x:Name="btnExplorar"
-                                    Grid.Column="0"
-                                    Content="Explorar"
-                                    Width="60"
-                                    Height="25"
-                                    Margin="2,2,2,0"
-                                    Padding="2"
-                                    VerticalAlignment="Top" Click="btnExplorar_Click"/>
-                        <Button x:Name="btnExplorarConsultas" Click="btnExplorarConsultas_Click"
-                                    Grid.Column="0"
-                                    Width="60"
-                                    Height="50"
-                                    Margin="2,32,2,0"
-                                    Padding="2"
-                                    VerticalAlignment="Top">
+                                Grid.Column="0" Content="Explorar"
+                                Width="60" Height="25" Margin="2,2,2,0"
+                                Padding="2" VerticalAlignment="Top"
+                                Click="btnExplorar_Click"/>
+                        <Button x:Name="btnExplorarConsultas"
+                                Grid.Column="0" Width="60" Height="50"
+                                Margin="2,32,2,0" Padding="2" VerticalAlignment="Top"
+                                Click="btnExplorarConsultas_Click">
                             <TextBlock Text="Explorar&#10;consultas"
-                                    TextAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    HorizontalAlignment="Center"/>
+                                       TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
                         <TextBlock x:Name="txtExplorar"
-                                    Grid.Column="0"
-                                    Text="Tablas exploradas"
-                                    Width="60"
-                                    TextWrapping="WrapWithOverflow"
-                                    TextAlignment="Justify"
-                                    Margin="2,88,2,159"
-                                    Padding="2"/>
+                                   Grid.Column="0" Text="Tablas exploradas"
+                                   Width="60" TextWrapping="WrapWithOverflow"
+                                   TextAlignment="Justify" Margin="2,88,2,159" Padding="2"/>
                         <TextBox x:Name="txtBuscar"
-                                    Grid.Column="1"
-                                    Text=""
-                                    TextWrapping="WrapWithOverflow"
-                                    TextAlignment="Justify"
-                                    Margin="4,2,36,316"
-                                    VerticalAlignment="Top"
-                                    KeyDown="txtBuscar_KeyDown" 
-                                    Padding="4"/>
+                                 Grid.Column="1" Text=""
+                                 TextWrapping="WrapWithOverflow" TextAlignment="Justify"
+                                 Margin="4,2,36,316" VerticalAlignment="Top"
+                                 KeyDown="txtBuscar_KeyDown" Padding="4"/>
                         <Button x:Name="btnBuscar"
-                                    Grid.Column="1"
-                                    Width="25"
-                                    Height="25"
-                                    Margin="4,2,4,2"
-                                    Padding="4"
-                                    VerticalAlignment="Top"
-                                    HorizontalAlignment="Right" Click="btnBuscar_Click">
-                                                        <Image Source="pack://application:,,,/Assets/buscar.png" 
-                                       Stretch="Uniform"/>
+                                Grid.Column="1" Width="25" Height="25"
+                                Margin="4,2,4,2" Padding="4"
+                                VerticalAlignment="Top" HorizontalAlignment="Right"
+                                Click="btnBuscar_Click">
+                            <Image Source="pack://application:,,,/Assets/buscar.png" Stretch="Uniform"/>
                         </Button>
-                        <TreeView x:Name="tvSearch" 
-                                      Grid.Column="1"
-                                      Margin="4,32,4,2"
-                                      Visibility="Collapsed"
-                                      Background="#F9F9F9"
-                                      MouseDoubleClick="tvSchema_MouseDoubleClick" 
-                                      VerticalAlignment="Stretch"/>
+                        <TreeView x:Name="tvSearch"
+                                  Grid.Column="1" Margin="4,32,4,2"
+                                  Visibility="Collapsed"
+                                  MouseDoubleClick="tvSchema_MouseDoubleClick"
+                                  VerticalAlignment="Stretch"/>
                         <TreeView x:Name="tvSchema"
-                                      Grid.Column="1"
-                                      Margin="4,32,4,2"
-                                      Visibility="Visible"   
-                                      MouseDoubleClick="tvSchema_MouseDoubleClick"
-                                      VerticalAlignment="Stretch"/>
-
+                                  Grid.Column="1" Margin="4,32,4,2"
+                                  Visibility="Visible"
+                                  MouseDoubleClick="tvSchema_MouseDoubleClick"
+                                  VerticalAlignment="Stretch"/>
                     </Grid>
+
                     <Button x:Name="btnExpandirColapsar" Grid.Column="1" Content="&lt;&lt;"
-                                VerticalAlignment="Stretch" Margin="0,2,0,2"
-                                Click="btnExpandirColapsar_Click"/>
+                            VerticalAlignment="Stretch" Margin="0,2,0,2"
+                            Click="btnExpandirColapsar_Click"/>
 
                     <GridSplitter Grid.Column="2" Width="5" HorizontalAlignment="Stretch"
-                                  ResizeDirection="Columns" Background="#DDD" ShowsPreview="True"/>
+                                  ResizeDirection="Columns" ShowsPreview="True"/>
 
                     <DockPanel Grid.Column="3">
                         <TextBlock Text="Consulta:" Margin="4,0,0,4"/>
                         <avalon:TextEditor x:Name="txtQuery"
-                               Margin="4,0,0,0"
-                               FontFamily="Consolas"
-                               FontSize="12"
-                               ShowLineNumbers="True"
-                               SyntaxHighlighting="SQL"
-                               WordWrap="False"
-                               VerticalScrollBarVisibility="Auto"
-                               HorizontalScrollBarVisibility="Auto"
-                               KeyUp="txtQuery_KeyUp"/>
-                        <!--<TextBox x:Name="txtQuery" Margin="4,0,0,0"
-                                 AcceptsReturn="True"
-                                 VerticalScrollBarVisibility="Auto"
-                                 HorizontalScrollBarVisibility="Auto"
-                                 FontFamily="Consolas"
-                                 FontSize="12"
-                                 TextWrapping="NoWrap"
-                                 KeyUp="txtQuery_KeyUp"/>-->
+                                           Margin="4,0,0,0"
+                                           FontFamily="Consolas"
+                                           FontSize="12"
+                                           ShowLineNumbers="True"
+                                           SyntaxHighlighting="SQL"
+                                           WordWrap="False"
+                                           Background="{DynamicResource BrushEditor}"
+                                           Foreground="{DynamicResource BrushEditorFG}"
+                                           VerticalScrollBarVisibility="Auto"
+                                           HorizontalScrollBarVisibility="Auto"
+                                           KeyUp="txtQuery_KeyUp"/>
                     </DockPanel>
                 </Grid>
 
                 <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch"
-                              ResizeDirection="Rows" Background="#DDD" ShowsPreview="True" />
+                              ResizeDirection="Rows" ShowsPreview="True"/>
 
                 <Grid Grid.Row="2">
                     <Grid.RowDefinitions>
@@ -176,12 +363,11 @@
                     </Grid.RowDefinitions>
 
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
-                        <Button x:Name="btnExecute" Padding="2,2" Content="Ejecutar (F5)" Width="84" Click="BtnExecute_Click" Margin="0,4,0,-4"/>
-                        <Button x:Name="btnExecuteScalar" Padding="2,2" Content="Ejecutar Escalar" Margin="8,0,0,-4" Click="BtnExecuteScalar_Click" Height="22" VerticalAlignment="Bottom"/>
-                        <Button x:Name="btnClear" Padding="2,2" Content="Limpiar Resultados" Margin="8,4,0,-4" Click="BtnClear_Click"/>
-                        <Button x:Name="btnLimpiarLog" Padding="2,2" Content="Limpiar log" Margin="8,4,0,-4" Click="BtnLimpiarLog_Click"/>
-                        <Button x:Name="btnExcel" Padding="2,2" Content="Generar Excel" Margin="8,4,0,-4" Click="BtnExcel_Click"/>
-
+                        <Button x:Name="btnExecute"       Padding="2,2" Content="Ejecutar (F5)"    Width="84" Click="BtnExecute_Click"       Margin="0,4,0,-4"/>
+                        <Button x:Name="btnExecuteScalar" Padding="2,2" Content="Ejecutar Escalar"            Click="BtnExecuteScalar_Click" Margin="8,0,0,-4" Height="22" VerticalAlignment="Bottom"/>
+                        <Button x:Name="btnClear"         Padding="2,2" Content="Limpiar Resultados"          Click="BtnClear_Click"         Margin="8,4,0,-4"/>
+                        <Button x:Name="btnLimpiarLog"    Padding="2,2" Content="Limpiar log"                 Click="BtnLimpiarLog_Click"    Margin="8,4,0,-4"/>
+                        <Button x:Name="btnExcel"         Padding="2,2" Content="Generar Excel"               Click="BtnExcel_Click"         Margin="8,4,0,-4"/>
                         <TextBlock Text="Columnas (Total):" VerticalAlignment="Center" Margin="12,7,0,-1"/>
                         <TextBlock x:Name="txtColumnCount" Text="0" VerticalAlignment="Center" Margin="6,7,0,-1"/>
                         <TextBlock Text="Filas (Total):" VerticalAlignment="Center" Margin="12,7,0,-1"/>
@@ -190,15 +376,12 @@
                         <TextBlock x:Name="txtTiempoDeEjecucion" Text="0" VerticalAlignment="Center" Margin="6,7,0,-1"/>
                     </StackPanel>
 
-                    <TabControl x:Name="tcResults"
-                                Grid.Row="1"
-                                Margin="0,4,0,0"/>
-
+                    <TabControl x:Name="tcResults" Grid.Row="1" Margin="0,4,0,0"/>
                 </Grid>
             </Grid>
 
             <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"
-                          ResizeDirection="Columns" Background="#DDD" ShowsPreview="True"/>
+                          ResizeDirection="Columns" ShowsPreview="True"/>
 
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
@@ -214,7 +397,7 @@
                               CanUserAddRows="True"
                               CanUserDeleteRows="True"
                               HeadersVisibility="Column"
-                              Margin="2,2,2,2" >
+                              Margin="2,2,2,2">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="NOMBRE"
                                                 Binding="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}"
@@ -227,15 +410,13 @@
                                 <DataGridComboBoxColumn.ElementStyle>
                                     <Style TargetType="ComboBox">
                                         <Setter Property="ItemsSource"
-                                                Value="{Binding DataContext.OdbcTypes,
-                                                                RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                Value="{Binding DataContext.OdbcTypes, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                     </Style>
                                 </DataGridComboBoxColumn.ElementStyle>
                                 <DataGridComboBoxColumn.EditingElementStyle>
                                     <Style TargetType="ComboBox">
                                         <Setter Property="ItemsSource"
-                                                Value="{Binding DataContext.OdbcTypes,
-                                                                RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                Value="{Binding DataContext.OdbcTypes, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                     </Style>
                                 </DataGridComboBoxColumn.EditingElementStyle>
                             </DataGridComboBoxColumn>
@@ -247,7 +428,7 @@
                 </StackPanel>
 
                 <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch"
-                              ResizeDirection="Rows" Background="#DDD" ShowsPreview="True"/>
+                              ResizeDirection="Rows" ShowsPreview="True"/>
 
                 <Grid Grid.Row="2">
                     <Grid.RowDefinitions>
@@ -255,32 +436,31 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Text="Historial" Margin="0,2,0,0" Padding="2"  Grid.Row="0"/>
+                    <TextBlock Text="Historial" Margin="0,2,0,0" Padding="2" Grid.Row="0"/>
 
                     <ListBox x:Name="lstHistory"
-         Grid.Row="1"
-         SelectionChanged="LstHistory_SelectionChanged"
-         KeyDown="lstHistory_KeyDown"
-         AlternationCount="2" 
-         ScrollViewer.VerticalScrollBarVisibility="Auto"
-         ScrollViewer.HorizontalScrollBarVisibility="Auto" 
-         Margin="0,10,0,0">
+                             Grid.Row="1"
+                             SelectionChanged="LstHistory_SelectionChanged"
+                             KeyDown="lstHistory_KeyDown"
+                             AlternationCount="2"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                             Margin="0,10,0,0">
                         <ListBox.ItemContainerStyle>
                             <Style TargetType="ListBoxItem">
-                                <Setter Property="Background" Value="White"/>
-                                <Setter Property="Padding" Value="4,2"/>
+                                <Setter Property="Background" Value="{DynamicResource BrushControlBG}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+                                <Setter Property="Padding"    Value="4,2"/>
                                 <Style.Triggers>
                                     <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                                        <Setter Property="Background" Value="#5A23AAF2"/>
+                                        <Setter Property="Background" Value="{DynamicResource BrushAltRowBG}"/>
                                     </Trigger>
-
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#FFD800"/>
+                                        <Setter Property="Background" Value="{DynamicResource BrushHover}"/>
                                     </Trigger>
-
                                     <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="#A7C7FF"/>
-                                        <Setter Property="Foreground" Value="Black"/>
+                                        <Setter Property="Background" Value="{DynamicResource BrushSelected}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource BrushSelectedFG}"/>
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>
@@ -290,12 +470,8 @@
             </Grid>
         </Grid>
 
-        <GridSplitter Grid.Row="2"
-                      Height="5"
-                      HorizontalAlignment="Stretch"
-                      ResizeDirection="Rows"
-                      Background="#DDD"
-                      ShowsPreview="True"/>
+        <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch"
+                      ResizeDirection="Rows" ShowsPreview="True"/>
 
         <Grid Grid.Row="3" Margin="0,6,0,0">
             <TextBox x:Name="txtMessages"
