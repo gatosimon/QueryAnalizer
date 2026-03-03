@@ -20348,3 +20348,110 @@ SELECT * FROM w12fich
 WHERE legajo_55 = 6935
 FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2
 ---
+SELECT * FROM apremios.m10_firmasdemandas
+---
+SELECT * FROM apremios.m10_firmasdemandas
+---
+SELECT * FROM app.contenidos
+---
+SELECT * FROM app.modulos
+---
+SELECT * FROM apremios.m10_firmasdemandas
+---
+SELECT * FROM apremios.m10_firmasdemandas where FD_COMUNA = 1
+and FD_FECHA_BAJA = '01/01/1900'
+---
+SELECT * FROM apremios.m10_firmasdemandas where FD_COMUNA = 1
+---
+update apremios.m10_firmasdemandas set FD_FECHA_BAJA = '01/01/1900'
+---
+
+SELECT * FROM apremios.m10_firmasdemandas where FD_COMUNA = 1
+and FD_FECHA_BAJA = '01/01/1900'
+---
+
+SELECT * FROM apremios.m10_firmasdemandas where FD_COMUNA = 1
+and FD_FECHA_BAJA = '01/01/1900' AND len(TRIM(FD_DEMANDASAFIRMAR)) > 0
+---
+SELECT TOP 10 *
+FROM APREMIOS.M10DATEXPE;
+---
+SELECT
+    [COMUNA],
+    [NRODENOTA],
+    [CODIGO_SISTEMA],
+    [DESCRIPSISTEMA],
+    [APELLIDONBRE],
+    [CODPOSTAL],
+    [DESCRIPCP],
+    [CODCALLE],
+    [DESCRIPCALL],
+    [NROPUERTA],
+    [PISO],
+    [DEPTO],
+    [IMPORTE],
+    [IMPENLETRAS],
+    [FECHA_ACTUALIZAC],
+    [FECHA_IMPRESION],
+    [NOMBRE_REDUC],
+    [USUARIO],
+    [GENDARMERIA],
+    [FIRMANOTA],
+    [TIPOJUICIO],
+    [FECHAMODI],
+    [HORAMODI],
+    [USUMODI],
+    [FECHABAJA],
+    [HORABAJA],
+    [USUBAJA],
+    [CODBAJA],
+    [MSGBAJA],
+    [FECHAENVIOTRIB],
+    [USUARIOENVIOTRIB]
+FROM APREMIOS.M10DATEXPE;
+---
+
+SELECT COUNT(*) FROM APREMIOS.M10DATEXPE;
+---
+select * from m00tabma
+---
+SELECT *
+FROM DB2ADMIN.M00TABMA
+FETCH FIRST 10 ROWS ONLY;
+---
+SELECT COUNT(*) FROM DB2ADMIN.M00TABMA;
+---
+SELECT *
+FROM artists
+LIMIT 10;
+---
+SELECT COUNT(*) FROM artists;
+---
+SELECT COUNT(*) FROM app.encuestas;
+---
+SELECT COUNT(*) FROM capasnativas.bancos;
+---
+SELECT *
+FROM capasnativas.bancos
+LIMIT 10;
+---
+SELECT
+    "id",
+    "user_id_creator",
+    "created",
+    "user_id_updater",
+    "modified",
+    "catastro",
+    "calle",
+    "calle_codigo",
+    "altura",
+    "geom",
+    "nombre",
+    "telefono",
+    "paginaweb",
+    "descripcion",
+    "observaciones",
+    "email",
+    "bancos_tipobanco_id"
+FROM capasnativas.bancos;
+---

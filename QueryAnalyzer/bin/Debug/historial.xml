@@ -48303,4 +48303,353 @@ FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
     <Parametros />
     <Fecha>2026-03-02T16:46:49.3176755-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.m10_firmasdemandas</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T06:49:45.4261936-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.m10_firmasdemandas</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T12:00:10.7889086-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS PRODUCCION</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM app.contenidos</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T12:13:23.1861528-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS PRODUCCION</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM app.modulos</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T12:13:31.08243-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.m10_firmasdemandas</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T12:38:19.3267884-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.m10_firmasdemandas where FD_COMUNA = 1
+and FD_FECHA_BAJA = '01/01/1900'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T12:41:57.7023949-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM apremios.m10_firmasdemandas where FD_COMUNA = 1</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T12:42:13.1440535-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>update apremios.m10_firmasdemandas set FD_FECHA_BAJA = '01/01/1900'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T12:44:02.7697143-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>
+SELECT * FROM apremios.m10_firmasdemandas where FD_COMUNA = 1
+and FD_FECHA_BAJA = '01/01/1900'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T12:44:05.5091294-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>
+SELECT * FROM apremios.m10_firmasdemandas where FD_COMUNA = 1
+and FD_FECHA_BAJA = '01/01/1900' AND len(TRIM(FD_DEMANDASAFIRMAR)) &gt; 0</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T12:44:55.3235586-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TOP 10 *
+FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T13:11:12.8575609-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    [COMUNA],
+    [NRODENOTA],
+    [CODIGO_SISTEMA],
+    [DESCRIPSISTEMA],
+    [APELLIDONBRE],
+    [CODPOSTAL],
+    [DESCRIPCP],
+    [CODCALLE],
+    [DESCRIPCALL],
+    [NROPUERTA],
+    [PISO],
+    [DEPTO],
+    [IMPORTE],
+    [IMPENLETRAS],
+    [FECHA_ACTUALIZAC],
+    [FECHA_IMPRESION],
+    [NOMBRE_REDUC],
+    [USUARIO],
+    [GENDARMERIA],
+    [FIRMANOTA],
+    [TIPOJUICIO],
+    [FECHAMODI],
+    [HORAMODI],
+    [USUMODI],
+    [FECHABAJA],
+    [HORABAJA],
+    [USUBAJA],
+    [CODBAJA],
+    [MSGBAJA],
+    [FECHAENVIOTRIB],
+    [USUARIOENVIOTRIB]
+FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T13:11:34.1335337-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>
+SELECT COUNT(*) FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T13:13:22.2713954-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>select * from m00tabma</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T13:14:41.3065645-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.M00TABMA
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T13:14:55.6959438-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COUNT(*) FROM DB2ADMIN.M00TABMA;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T13:15:52.8700745-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+    </conexion>
+    <Consulta>SELECT *
+FROM artists
+LIMIT 10;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T13:16:12.4343658-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+    </conexion>
+    <Consulta>SELECT COUNT(*) FROM artists;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T13:17:17.644842-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS PRODUCCION</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT COUNT(*) FROM app.encuestas;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T13:17:43.9889968-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS PRODUCCION</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT COUNT(*) FROM capasnativas.bancos;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T13:17:57.7277138-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS PRODUCCION</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM capasnativas.bancos
+LIMIT 10;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T13:18:03.7854297-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS PRODUCCION</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    "id",
+    "user_id_creator",
+    "created",
+    "user_id_updater",
+    "modified",
+    "catastro",
+    "calle",
+    "calle_codigo",
+    "altura",
+    "geom",
+    "nombre",
+    "telefono",
+    "paginaweb",
+    "descripcion",
+    "observaciones",
+    "email",
+    "bancos_tipobanco_id"
+FROM capasnativas.bancos;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-03T13:18:14.5116188-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>

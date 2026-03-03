@@ -1267,6 +1267,42 @@ namespace QueryAnalyzer
                                     {
                                         tvCargar.Items.Add(tablaNode);
                                         tablaNode.MouseDoubleClick += TablaNode_MouseDoubleClick;
+
+                                        // ── Menú contextual de scripts ───────────────────────────
+                                        string capSchema = schema;
+                                        string capTabla = nombreTabla;
+                                        DataTable capColumnas = columnas.Copy();
+
+                                        var ctxMenu = new ContextMenu();
+
+                                        Action<string, Func<string>> agregarOpcion = (hdr, gen) =>
+                                        {
+                                            var menuItem = new MenuItem { Header = hdr };
+                                            menuItem.Click += (s, ev) =>
+                                            {
+                                                try { InsertarEnQuery(gen()); }
+                                                catch (Exception ex) { AppendMessage("Error generando script: " + ex.Message); }
+                                            };
+                                            ctxMenu.Items.Add(menuItem);
+                                        };
+
+                                        agregarOpcion("📋 SELECT TOP 10", () => GenerarSelectTop10(capSchema, capTabla));
+                                        agregarOpcion("📋 SELECT (todas las cols)", () => GenerarSelectAllCols(capSchema, capTabla, capColumnas));
+                                        ctxMenu.Items.Add(new Separator());
+                                        agregarOpcion("📄 CREATE TABLE", () => GenerarCreateTable(capSchema, capTabla, capColumnas));
+                                        agregarOpcion("✏️  ALTER TABLE (add col)", () => GenerarAlterTableAddColumn(capSchema, capTabla));
+                                        agregarOpcion("🗑️  DROP TABLE", () => GenerarDropTable(capSchema, capTabla));
+                                        ctxMenu.Items.Add(new Separator());
+                                        agregarOpcion("➕ INSERT INTO", () => GenerarInsert(capSchema, capTabla, capColumnas));
+                                        agregarOpcion("✏️  UPDATE ... SET", () => GenerarUpdate(capSchema, capTabla, capColumnas));
+                                        agregarOpcion("🗑️  DELETE FROM", () => GenerarDelete(capSchema, capTabla));
+                                        ctxMenu.Items.Add(new Separator());
+                                        agregarOpcion("🔑 CREATE INDEX", () => GenerarCreateIndex(capSchema, capTabla));
+                                        agregarOpcion("🔑 DROP INDEX", () => GenerarDropIndex(capSchema, capTabla));
+                                        agregarOpcion("📊 COUNT(*)", () => GenerarCount(capSchema, capTabla));
+
+                                        tablaNode.ContextMenu = ctxMenu;
+                                        // ─────────────────────────────────────────────────────────
                                     }
 
                                     // Agregar columnas
@@ -1479,6 +1515,180 @@ namespace QueryAnalyzer
             string tableName = (sender as TreeViewItem).Header.ToString();
             txtQuery.Text.Insert(txtQuery.SelectionStart, tableName);
         }
+
+        // ════════════════════════════════════════════════════════════════
+        // GENERADORES DE SCRIPTS — adaptados por TipoMotor
+        // ════════════════════════════════════════════════════════════════
+
+        /// Calificador de nombre: schema.tabla o solo tabla (SQLite no usa schemas)
+        private string NombreCompleto(string schema, string tabla)
+        {
+            TipoMotor motor = conexionActual?.Motor ?? TipoMotor.DB2;
+            if (string.IsNullOrEmpty(schema) || motor == TipoMotor.SQLite) return tabla;
+            return schema + "." + tabla;
+        }
+
+        /// Comillas de identificador según motor
+        private string Q(string nombre)
+        {
+            TipoMotor motor = conexionActual?.Motor ?? TipoMotor.DB2;
+            if (motor == TipoMotor.MS_SQL) return "[" + nombre + "]";
+            if (motor == TipoMotor.POSTGRES) return "\"" + nombre + "\"";
+            return nombre; // DB2 y SQLite sin comillas por defecto
+        }
+
+        private string GenerarSelectTop10(string schema, string tabla)
+        {
+            TipoMotor motor = conexionActual?.Motor ?? TipoMotor.DB2;
+            string t = NombreCompleto(schema, tabla);
+            switch (motor)
+            {
+                case TipoMotor.MS_SQL: return "SELECT TOP 10 *\r\nFROM " + t + ";";
+                case TipoMotor.DB2: return "SELECT *\r\nFROM " + t + "\r\nFETCH FIRST 10 ROWS ONLY;";
+                case TipoMotor.POSTGRES: return "SELECT *\r\nFROM " + t + "\r\nLIMIT 10;";
+                case TipoMotor.SQLite: return "SELECT *\r\nFROM " + tabla + "\r\nLIMIT 10;";
+                default: return "SELECT *\r\nFROM " + t + ";";
+            }
+        }
+
+        private string GenerarSelectAllCols(string schema, string tabla, DataTable columnas)
+        {
+            string t = NombreCompleto(schema, tabla);
+            var cols = new System.Text.StringBuilder();
+            var rows = columnas.Rows.Cast<DataRow>().ToList();
+            for (int i = 0; i < rows.Count; i++)
+            {
+                cols.Append("    " + Q(rows[i]["COLUMN_NAME"].ToString()));
+                if (i < rows.Count - 1) cols.Append(",\r\n");
+            }
+            return "SELECT\r\n" + cols.ToString() + "\r\nFROM " + t + ";";
+        }
+
+        private string GenerarCreateTable(string schema, string tabla, DataTable columnas)
+        {
+            TipoMotor motor = conexionActual?.Motor ?? TipoMotor.DB2;
+            string t = (motor == TipoMotor.SQLite) ? tabla : NombreCompleto(schema, tabla);
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("CREATE TABLE " + t + " (");
+
+            var filas = columnas.Rows.Cast<DataRow>().ToList();
+            for (int i = 0; i < filas.Count; i++)
+            {
+                DataRow col = filas[i];
+                string colName = col["COLUMN_NAME"].ToString();
+                string tipoDB = col["TYPE_NAME"].ToString();
+                string longitud = col["COLUMN_SIZE"].ToString();
+
+                string nullable = "";
+                if (col.Table.Columns.Contains("IS_NULLABLE") && col["IS_NULLABLE"] != DBNull.Value)
+                {
+                    string n = col["IS_NULLABLE"].ToString().ToUpper();
+                    nullable = (n == "NO") ? " NOT NULL" : " NULL";
+                }
+
+                string defVal = "";
+                if (col.Table.Columns.Contains("COLUMN_DEF") && col["COLUMN_DEF"] != DBNull.Value
+                    && !string.IsNullOrWhiteSpace(col["COLUMN_DEF"].ToString()))
+                    defVal = " DEFAULT " + col["COLUMN_DEF"].ToString();
+
+                string tipoUpper = tipoDB.ToUpper();
+                bool tieneLogitud = tipoUpper.Contains("CHAR") || tipoUpper.Contains("BINARY");
+                string tipoCompleto = (tieneLogitud && !string.IsNullOrEmpty(longitud))
+                    ? tipoDB + "(" + longitud + ")" : tipoDB;
+
+                string coma = (i < filas.Count - 1) ? "," : "";
+                sb.AppendLine("    " + Q(colName) + " " + tipoCompleto + nullable + defVal + coma);
+            }
+            sb.Append(");");
+            return sb.ToString();
+        }
+
+        private string GenerarAlterTableAddColumn(string schema, string tabla)
+        {
+            TipoMotor motor = conexionActual?.Motor ?? TipoMotor.DB2;
+            string t = NombreCompleto(schema, tabla);
+            switch (motor)
+            {
+                case TipoMotor.MS_SQL: return "ALTER TABLE " + t + "\r\nADD nueva_columna VARCHAR(100) NULL;";
+                case TipoMotor.DB2: return "ALTER TABLE " + t + "\r\nADD COLUMN NUEVA_COLUMNA VARCHAR(100);";
+                case TipoMotor.POSTGRES: return "ALTER TABLE " + t + "\r\nADD COLUMN nueva_columna VARCHAR(100);";
+                case TipoMotor.SQLite: return "ALTER TABLE " + tabla + "\r\nADD COLUMN nueva_columna TEXT;";
+                default: return "ALTER TABLE " + t + " ADD COLUMN nueva_columna VARCHAR(100);";
+            }
+        }
+
+        private string GenerarDropTable(string schema, string tabla)
+        {
+            TipoMotor motor = conexionActual?.Motor ?? TipoMotor.DB2;
+            string t = NombreCompleto(schema, tabla);
+            switch (motor)
+            {
+                case TipoMotor.MS_SQL: return "IF OBJECT_ID(N'" + t + "', N'U') IS NOT NULL\r\n    DROP TABLE " + t + ";";
+                case TipoMotor.DB2: return "DROP TABLE " + t + ";";
+                case TipoMotor.POSTGRES: return "DROP TABLE IF EXISTS " + t + ";";
+                case TipoMotor.SQLite: return "DROP TABLE IF EXISTS " + tabla + ";";
+                default: return "DROP TABLE " + t + ";";
+            }
+        }
+
+        private string GenerarInsert(string schema, string tabla, DataTable columnas)
+        {
+            string t = NombreCompleto(schema, tabla);
+            var colNames = columnas.Rows.Cast<DataRow>().Select(r => Q(r["COLUMN_NAME"].ToString())).ToList();
+            var vals = columnas.Rows.Cast<DataRow>().Select(r => "?").ToList();
+            return "INSERT INTO " + t + "\r\n    (" + string.Join(", ", colNames) + ")\r\nVALUES\r\n    (" + string.Join(", ", vals) + ");";
+        }
+
+        private string GenerarUpdate(string schema, string tabla, DataTable columnas)
+        {
+            string t = NombreCompleto(schema, tabla);
+            var sets = columnas.Rows.Cast<DataRow>()
+                .Select(r => "    " + Q(r["COLUMN_NAME"].ToString()) + " = ?")
+                .ToList();
+            return "UPDATE " + t + "\r\nSET\r\n" + string.Join(",\r\n", sets) + "\r\nWHERE <condicion>;";
+        }
+
+        private string GenerarDelete(string schema, string tabla)
+        {
+            string t = NombreCompleto(schema, tabla);
+            return "DELETE FROM " + t + "\r\nWHERE <condicion>;";
+        }
+
+        private string GenerarCreateIndex(string schema, string tabla)
+        {
+            TipoMotor motor = conexionActual?.Motor ?? TipoMotor.DB2;
+            string t = NombreCompleto(schema, tabla);
+            string idxName = "IDX_" + tabla + "_COL";
+            switch (motor)
+            {
+                case TipoMotor.MS_SQL: return "CREATE INDEX " + idxName + "\r\nON " + t + " (columna ASC);";
+                case TipoMotor.DB2: return "CREATE INDEX " + idxName + "\r\nON " + t + " (COLUMNA ASC);";
+                case TipoMotor.POSTGRES: return "CREATE INDEX " + idxName.ToLower() + "\r\nON " + t + " (columna ASC);";
+                case TipoMotor.SQLite: return "CREATE INDEX " + idxName.ToLower() + "\r\nON " + tabla + " (columna ASC);";
+                default: return "CREATE INDEX " + idxName + " ON " + t + " (columna);";
+            }
+        }
+
+        private string GenerarDropIndex(string schema, string tabla)
+        {
+            TipoMotor motor = conexionActual?.Motor ?? TipoMotor.DB2;
+            string idxName = "IDX_" + tabla + "_COL";
+            string t = NombreCompleto(schema, tabla);
+            switch (motor)
+            {
+                case TipoMotor.MS_SQL: return "DROP INDEX " + t + "." + idxName + ";";
+                case TipoMotor.DB2: return "DROP INDEX " + idxName + ";";
+                case TipoMotor.POSTGRES: return "DROP INDEX IF EXISTS " + idxName.ToLower() + ";";
+                case TipoMotor.SQLite: return "DROP INDEX IF EXISTS " + idxName.ToLower() + ";";
+                default: return "DROP INDEX " + idxName + ";";
+            }
+        }
+
+        private string GenerarCount(string schema, string tabla)
+        {
+            return "SELECT COUNT(*) FROM " + NombreCompleto(schema, tabla) + ";";
+        }
+        // ════════════════════════════════════════════════════════════════
 
         private void tvSchema_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
