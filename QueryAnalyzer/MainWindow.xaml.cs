@@ -20,6 +20,7 @@ using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using System.Xml;
 using System.Threading;
 using System.Windows.Documents;
+using System.Windows.Media;
 
 namespace QueryAnalyzer
 {
@@ -91,13 +92,33 @@ namespace QueryAnalyzer
                 (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(fg));
         }
 
+        /// <summary>Aplica fondo y foreground del tema activo a un ContextMenu creado en code-behind.</summary>
+        private void AplicarEstiloContextMenu(ContextMenu menu)
+        {
+            // SetResourceReference es el equivalente a DynamicResource en code-behind:
+            // actualiza el color automaticamente cuando cambia el tema.
+            menu.SetResourceReference(ContextMenu.BackgroundProperty, "BrushMenuBG");
+            menu.SetResourceReference(ContextMenu.ForegroundProperty, "BrushFG");
+            menu.SetResourceReference(ContextMenu.BorderBrushProperty, "BrushBorder");
+        }
+
+        /// <summary>Aplica fondo y foreground del tema activo a un MenuItem creado en code-behind.</summary>
+        private void AplicarEstiloMenuItem(MenuItem item)
+        {
+            // SetResourceReference es el equivalente a DynamicResource en code-behind.
+            item.SetResourceReference(MenuItem.BackgroundProperty, "BrushMenuBG");
+            item.SetResourceReference(MenuItem.ForegroundProperty, "BrushFG");
+        }
+
         private void ConfigurarMenuContextualAvalonEdit()
         {
             // Crear el menú contextual
             var contextMenu = new ContextMenu();
+            AplicarEstiloContextMenu(contextMenu);
 
             // Opción Copiar
             var menuCopiar = new MenuItem { Header = "Copiar" };
+            AplicarEstiloMenuItem(menuCopiar);
             menuCopiar.Click += (s, e) =>
             {
                 if (!string.IsNullOrEmpty(txtQuery.SelectedText))
@@ -107,6 +128,7 @@ namespace QueryAnalyzer
 
             // Opción Cortar
             var menuCortar = new MenuItem { Header = "Cortar" };
+            AplicarEstiloMenuItem(menuCortar);
             menuCortar.Click += (s, e) =>
             {
                 if (!string.IsNullOrEmpty(txtQuery.SelectedText))
@@ -119,6 +141,7 @@ namespace QueryAnalyzer
 
             // Opción Pegar
             var menuPegar = new MenuItem { Header = "Pegar" };
+            AplicarEstiloMenuItem(menuPegar);
             menuPegar.Click += (s, e) =>
             {
                 if (Clipboard.ContainsText())
@@ -133,6 +156,7 @@ namespace QueryAnalyzer
 
             // Opción Seleccionar todo
             var menuSeleccionarTodo = new MenuItem { Header = "Seleccionar todo" };
+            AplicarEstiloMenuItem(menuSeleccionarTodo);
             menuSeleccionarTodo.Click += (s, e) => txtQuery.SelectAll();
             contextMenu.Items.Add(menuSeleccionarTodo);
 
@@ -411,8 +435,10 @@ namespace QueryAnalyzer
 
                         // Menú contextual para las celdas
                         var cellContextMenu = new ContextMenu();
+                        AplicarEstiloContextMenu(cellContextMenu);
 
                         var menuCopiarCelda = new MenuItem { Header = "Copiar celda" };
+                        AplicarEstiloMenuItem(menuCopiarCelda);
                         menuCopiarCelda.Click += (s, x) =>
                         {
                             if (dataGrid.CurrentCell.Item != null && dataGrid.CurrentCell.Column != null)
@@ -428,6 +454,7 @@ namespace QueryAnalyzer
                         cellContextMenu.Items.Add(menuCopiarCelda);
 
                         var menuCopiarFila = new MenuItem { Header = "Copiar fila" };
+                        AplicarEstiloMenuItem(menuCopiarFila);
                         menuCopiarFila.Click += (s, x) =>
                         {
                             if (dataGrid.SelectedItem != null)
@@ -451,6 +478,7 @@ namespace QueryAnalyzer
                         cellContextMenu.Items.Add(new Separator());
 
                         var menuCopiarTodo = new MenuItem { Header = "Copiar todo (con encabezados)" };
+                        AplicarEstiloMenuItem(menuCopiarTodo);
                         menuCopiarTodo.Click += (s, x) =>
                         {
                             var view = dataGrid.ItemsSource as DataView;
@@ -1306,10 +1334,12 @@ namespace QueryAnalyzer
                                         DataTable capColumnas = columnas.Copy();
 
                                         var ctxMenu = new ContextMenu();
+                                        AplicarEstiloContextMenu(ctxMenu);
 
                                         Action<string, Func<string>> agregarOpcion = (hdr, gen) =>
                                         {
                                             var menuItem = new MenuItem { Header = hdr };
+                                            AplicarEstiloMenuItem(menuItem);
                                             menuItem.Click += (s, ev) =>
                                             {
                                                 try { InsertarEnQuery(gen()); }

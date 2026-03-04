@@ -165,8 +165,9 @@
                 <Setter Property="BorderBrush"              Value="{DynamicResource BrushBorder}"/>
                 <Setter Property="RowBackground"            Value="{DynamicResource BrushControlBG}"/>
                 <Setter Property="AlternatingRowBackground" Value="{DynamicResource BrushAltRowBG}"/>
-                <Setter Property="GridLinesVisibility"      Value="Horizontal"/>
+                <Setter Property="GridLinesVisibility" Value="All"/>
                 <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="VerticalGridLinesBrush"   Value="{DynamicResource BrushBorder}"/>
             </Style>
             <Style TargetType="DataGridCell">
                 <Setter Property="BorderThickness" Value="0"/>
@@ -222,6 +223,7 @@
                     </Trigger>
                     <Trigger Property="IsMouseOver" Value="True">
                         <Setter Property="Background" Value="{DynamicResource BrushRowHover}"/>
+                        <Setter Property="Foreground" Value="#1A1A1A"/>
                     </Trigger>
                     <Trigger Property="IsSelected" Value="True">
                         <Setter Property="Background" Value="{DynamicResource BrushSelected}"/>
@@ -254,7 +256,7 @@
             <Button x:Name="btnToggleTema"
                     Content="&#x1F319;"
                     Padding="4,2"
-                    Margin="16,0,0,0"
+                    Margin="6,0,0,0"
                     FontSize="14"
                     ToolTip="Alternar modo claro / oscuro"
                     Click="BtnToggleTema_Click"/>
@@ -297,9 +299,9 @@
                         <Button x:Name="btnExplorarConsultas"
                                 Grid.Column="0" Width="60" Height="50"
                                 Margin="2,32,2,0" Padding="2" VerticalAlignment="Top"
-                                Click="btnExplorarConsultas_Click">
-                            <TextBlock Text="Explorar&#10;consultas"
-                                       TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                Click="btnExplorarConsultas_Click" Content=" Explorar&#10;consultas">
+                            <!--<TextBlock Text="Explorar&#10;consultas"
+                                       TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center"/>-->
                         </Button>
                         <TextBlock x:Name="txtExplorar"
                                    Grid.Column="0" Text="Tablas exploradas"
