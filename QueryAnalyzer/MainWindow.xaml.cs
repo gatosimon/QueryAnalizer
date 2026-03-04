@@ -1891,9 +1891,8 @@ namespace QueryAnalyzer
         {
             if (string.IsNullOrEmpty(texto)) return;
 
-            // AvalonEdit usa CaretOffset y SelectionLength
+            int offset = txtQuery.SelectionStart;
             int length = txtQuery.SelectionLength;
-            int offset = txtQuery.CaretOffset - length;
 
             // Reemplaza el texto seleccionado o inserta en la posición del cursor
             try
@@ -1904,7 +1903,6 @@ namespace QueryAnalyzer
             {
                 MessageBox.Show(err.Message);
             }
-
             // Reposicionar el cursor al final de lo insertado y dar foco
             txtQuery.CaretOffset = offset + texto.Length;
             txtQuery.Focus();
