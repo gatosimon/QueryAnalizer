@@ -11,10 +11,10 @@
     <SolidColorBrush x:Key="BrushFG"         Color="#D4D4D4"/>
     <SolidColorBrush x:Key="BrushFGMuted"    Color="#9CDCFE"/>
     <SolidColorBrush x:Key="BrushHover"      Color="#FF00DC"/>
-    <SolidColorBrush x:Key="BrushSelected"   Color="#FFD800"/>
+    <SolidColorBrush x:Key="BrushSelected"   Color="CornflowerBlue"/>
     <SolidColorBrush x:Key="BrushSelectedFG" Color="Black"/>
     <SolidColorBrush x:Key="BrushAccent"     Color="#007ACC"/>
-    <SolidColorBrush x:Key="BrushHeaderBG"   Color="#3F3F46"/>
+    <SolidColorBrush x:Key="BrushHeaderBG"   Color="RoyalBlue"/>
     <SolidColorBrush x:Key="BrushHeaderFG"   Color="#DCDCAA"/>
     <SolidColorBrush x:Key="BrushBtnBG"      Color="#4827FF"/>
     <SolidColorBrush x:Key="BrushBtnBorder"  Color="#3F3F46"/>

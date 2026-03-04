@@ -49918,4 +49918,242 @@ FROM APREMIOS.M10DATEXPE;</Consulta>
     <Parametros />
     <Fecha>2026-03-04T09:05:38.8225507-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TOP 10 *
+FROM APREMIOS.M10DATEXPE;
+
+SELECT count (*)
+FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-04T10:20:36.416478-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TOP 10 *
+FROM APREMIOS.M10DATEXPE;
+
+SELECT count (*)
+FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-04T10:23:55.1490138-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TOP 10 *
+FROM APREMIOS.M10DATEXPE;
+
+SELECT count (*)
+FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-04T10:29:38.3808325-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TOP 10 *
+FROM APREMIOS.M10DATEXPE;
+
+SELECT count (*)
+FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-04T10:30:17.5102465-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TOP 10 *
+FROM APREMIOS.M10DATEXPE;
+
+SELECT count (*)
+FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-04T10:32:39.6149055-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TOP 10 *
+FROM APREMIOS.M10DATEXPE;
+
+SELECT count (*)
+FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-04T10:33:34.514978-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TOP 10 *
+FROM APREMIOS.M10DATEXPE;
+
+SELECT count (*)
+FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-04T10:33:57.793993-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TOP 10 *
+FROM APREMIOS.M10DATEXPE;
+
+SELECT count (*)
+FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-04T10:34:01.0248686-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TOP 10 *
+FROM APREMIOS.M10DATEXPE;
+
+SELECT count (*)
+FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-04T10:34:30.8646292-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TOP 10 *
+FROM APREMIOS.M10DATEXPE;
+
+SELECT count (*)
+FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-04T10:35:26.8270389-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TOP 10 *
+FROM APREMIOS.M10DATEXPE;
+
+SELECT count (*)
+FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-04T10:37:30.7077597-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TOP 10 *
+FROM APREMIOS.M10DATEXPE;
+
+SELECT count (*)
+FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-04T10:38:10.880905-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TOP 10 *
+FROM APREMIOS.M10DATEXPE;
+
+SELECT count (*)
+FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-04T10:39:13.6733932-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TOP 10 *
+FROM APREMIOS.M10DATEXPE;
+
+SELECT count (*)
+FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-04T10:39:38.1165407-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>
