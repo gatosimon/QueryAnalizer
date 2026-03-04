@@ -36,8 +36,12 @@ namespace QueryAnalyzer
 
         static public Conexion conexionActual = null;
 
-        // Tema
+        // ── Tema ────────────────────────────────────────────────────────
         private bool _modoOscuro = false;
+        private ResourceDictionary _temaClaro = null;
+        private ResourceDictionary _temaOscuro = null;
+        private static readonly string ThemesFolder =
+            System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Themes");
 
         public MainWindow()
         {
@@ -61,39 +65,95 @@ namespace QueryAnalyzer
             gridParams.ItemsSource = Parametros;
             InicializarConexiones();
             BloquearUI(true);
+            InicializarTemas();
             ConfigurarMenuContextualAvalonEdit();
         }
-        private void BtnToggleTema_Click(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// Primera vez: extrae los .xaml de tema desde recursos embebidos a disco (carpeta Themes\ junto al .exe).
+        /// Luego siempre lee desde disco, permitiendo al usuario editar los colores.
+        /// </summary>
+        private void InicializarTemas()
         {
-            _modoOscuro = !_modoOscuro;
-            string source = _modoOscuro ? "ThemeDark.xaml" : "ThemeLight.xaml";
-            var uri = new Uri(source, UriKind.Relative);
-            var newDict = new ResourceDictionary { Source = uri };
+            if (!System.IO.Directory.Exists(ThemesFolder))
+                System.IO.Directory.CreateDirectory(ThemesFolder);
 
+            ExtraerTemaADisco("ThemeLight.xaml");
+            ExtraerTemaADisco("ThemeDark.xaml");
+
+            _temaClaro = LeerTemaDesdeDisco("ThemeLight.xaml");
+            _temaOscuro = LeerTemaDesdeDisco("ThemeDark.xaml");
+
+            AplicarTema(_temaClaro);
+        }
+
+        /// <summary>
+        /// Copia el .xaml embebido a disco solo si no existe todavia.
+        /// Si ya existe (el usuario lo modifico) no lo toca.
+        /// </summary>
+        private void ExtraerTemaADisco(string archivo)
+        {
+            string destino = System.IO.Path.Combine(ThemesFolder, archivo);
+            if (System.IO.File.Exists(destino)) return;
+
+            // Leer el recurso embebido y escribirlo en disco
+            var uri = new Uri($"pack://application:,,,/{archivo}", UriKind.Absolute);
+            var info = Application.GetResourceStream(uri);
+            if (info == null) return;
+            using (var src = info.Stream)
+            using (var dst = System.IO.File.Create(destino))
+                src.CopyTo(dst);
+        }
+
+        /// <summary>
+        /// Lee y parsea el .xaml de tema desde la carpeta Themes\ en disco.
+        /// </summary>
+        private ResourceDictionary LeerTemaDesdeDisco(string archivo)
+        {
+            string ruta = System.IO.Path.Combine(ThemesFolder, archivo);
+            using (var stream = System.IO.File.OpenRead(ruta))
+                return (ResourceDictionary)System.Windows.Markup.XamlReader.Load(stream);
+        }
+
+        /// <summary>
+        /// Aplica un ResourceDictionary a esta ventana y a todas las ventanas hijas abiertas.
+        /// Tambien actualiza AvalonEdit y los headers de grillas ya creadas.
+        /// </summary>
+        private void AplicarTema(ResourceDictionary tema)
+        {
             var merged = this.Resources.MergedDictionaries;
-            if (merged.Count > 0) merged[0] = newDict;
-            else merged.Add(newDict);
+            if (merged.Count > 0) merged[0] = tema;
+            else merged.Add(tema);
 
             foreach (Window w in Application.Current.Windows)
             {
                 if (w == this) continue;
                 var wd = w.Resources.MergedDictionaries;
-                if (wd.Count > 0) wd[0] = new ResourceDictionary { Source = uri };
-                else wd.Add(new ResourceDictionary { Source = uri });
+                if (wd.Count > 0) wd[0] = tema;
+                else wd.Add(tema);
             }
 
-            btnToggleTema.Content = _modoOscuro ? "☀" : "🌙";
-
             // AvalonEdit no responde a DynamicResource
-            var bg = _modoOscuro ? "#1E1E1E" : "#FFFFFF";
-            var fg = _modoOscuro ? "#D4D4D4" : "#1A1A1A";
-            txtQuery.Background = new System.Windows.Media.SolidColorBrush(
-                (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(bg));
-            txtQuery.Foreground = new System.Windows.Media.SolidColorBrush(
-                (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(fg));
+            if (tema.Contains("BrushEditor") && tema.Contains("BrushEditorFG"))
+            {
+                txtQuery.Background = (System.Windows.Media.Brush)tema["BrushEditor"];
+                txtQuery.Foreground = (System.Windows.Media.Brush)tema["BrushEditorFG"];
+            }
 
-            // Actualizar headers de DataGrids ya creados en tcResults
             ActualizarHeadersGrillas();
+        }
+
+        private void BtnToggleTema_Click(object sender, RoutedEventArgs e)
+        {
+            _modoOscuro = !_modoOscuro;
+
+            // Recargar desde disco por si el usuario modifico el archivo mientras la app estaba abierta
+            if (_modoOscuro)
+                _temaOscuro = LeerTemaDesdeDisco("ThemeDark.xaml");
+            else
+                _temaClaro = LeerTemaDesdeDisco("ThemeLight.xaml");
+
+            AplicarTema(_modoOscuro ? _temaOscuro : _temaClaro);
+            btnToggleTema.Content = _modoOscuro ? "☀" : "🌙";
         }
 
         /// <summary>
