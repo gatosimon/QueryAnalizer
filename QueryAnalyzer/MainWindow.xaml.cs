@@ -84,12 +84,39 @@ namespace QueryAnalyzer
 
             btnToggleTema.Content = _modoOscuro ? "☀" : "🌙";
 
+            // AvalonEdit no responde a DynamicResource
             var bg = _modoOscuro ? "#1E1E1E" : "#FFFFFF";
             var fg = _modoOscuro ? "#D4D4D4" : "#1A1A1A";
             txtQuery.Background = new System.Windows.Media.SolidColorBrush(
                 (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(bg));
             txtQuery.Foreground = new System.Windows.Media.SolidColorBrush(
                 (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(fg));
+
+            // Actualizar headers de DataGrids ya creados en tcResults
+            ActualizarHeadersGrillas();
+        }
+
+        /// <summary>
+        /// Recorre los DataGrids ya creados en tcResults y les actualiza el ColumnHeaderStyle
+        /// con los colores del tema activo. Necesario porque FindResource resuelve el color
+        /// una sola vez al crear el estilo, no dinamicamente.
+        /// </summary>
+        private void ActualizarHeadersGrillas()
+        {
+            foreach (TabItem tab in tcResults.Items)
+            {
+                if (tab.Content is DataGrid dg)
+                {
+                    var hs = new Style(typeof(DataGridColumnHeader));
+                    hs.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Center));
+                    hs.Setters.Add(new Setter(Control.BackgroundProperty, (System.Windows.Media.Brush)this.FindResource("BrushHeaderBG")));
+                    hs.Setters.Add(new Setter(Control.ForegroundProperty, (System.Windows.Media.Brush)this.FindResource("BrushHeaderFG")));
+                    hs.Setters.Add(new Setter(Control.FontWeightProperty, FontWeights.SemiBold));
+                    hs.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(6, 4, 6, 4)));
+                    hs.Setters.Add(new Setter(DataGridColumnHeader.SeparatorBrushProperty, (System.Windows.Media.Brush)this.FindResource("BrushBorder")));
+                    dg.ColumnHeaderStyle = hs;
+                }
+            }
         }
 
         /// <summary>Aplica fondo y foreground del tema activo a un ContextMenu creado en code-behind.</summary>
