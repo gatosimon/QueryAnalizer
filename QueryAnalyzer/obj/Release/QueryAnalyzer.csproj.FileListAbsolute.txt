@@ -8,6 +8,7 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\System.Val
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\ICSharpCode.AvalonEdit.xml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\Npgsql.xml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\System.Threading.Tasks.Extensions.xml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.csproj.AssemblyReference.cache
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\DatosConexion.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\MainWindow.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\DatosConexion.g.cs
