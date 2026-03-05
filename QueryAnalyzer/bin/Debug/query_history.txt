@@ -20998,3 +20998,15 @@ FROM APREMIOS.M10DATEXPE;
 SELECT count (*)
 FROM APREMIOS.M10DATEXPE;
 ---
+SELECT *
+FROM app.notificaciones_usuarios
+LIMIT 10;
+---
+SELECT *
+FROM app.notificaciones_usuarios
+LIMIT 10;
+---
+SELECT *
+FROM app.logs
+LIMIT 10;
+---

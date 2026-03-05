@@ -50284,4 +50284,49 @@ FROM APREMIOS.M10DATEXPE;</Consulta>
     <Parametros />
     <Fecha>2026-03-04T11:16:02.8703751-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM app.notificaciones_usuarios
+LIMIT 10;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-04T18:02:29.8710493-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM app.notificaciones_usuarios
+LIMIT 10;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-05T07:41:47.9177884-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>GIS</Nombre>
+      <Motor>POSTGRES</Motor>
+      <Servidor>200.58.108.122</Servidor>
+      <BaseDatos>gis</BaseDatos>
+      <Usuario>magic</Usuario>
+      <Contrasena>DEriu7Dp45</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM app.logs
+LIMIT 10;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-05T10:34:15.9627491-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>
