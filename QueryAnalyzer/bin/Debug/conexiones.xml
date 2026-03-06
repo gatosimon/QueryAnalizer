@@ -148,7 +148,7 @@
     <Nombre>TRIBUTOS SQL PROD</Nombre>
     <Motor>MS_SQL</Motor>
     <Servidor>PRODUCCION</Servidor>
-    <BaseDatos />
+    <BaseDatos>TRIBUTOS</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
   </Conexion>
@@ -167,5 +167,21 @@
     <BaseDatos>gis</BaseDatos>
     <Usuario>magic</Usuario>
     <Contrasena>DEriu7Dp45</Contrasena>
+  </Conexion>
+  <Conexion>
+    <Nombre>ADMINISTRACION SQL PROD</Nombre>
+    <Motor>MS_SQL</Motor>
+    <Servidor>PRODUCCION</Servidor>
+    <BaseDatos>ADMINISTRACION</BaseDatos>
+    <Usuario>usuario</Usuario>
+    <Contrasena>ci?r0ba</Contrasena>
+  </Conexion>
+  <Conexion>
+    <Nombre>ADMINISTRACION SQL DESA</Nombre>
+    <Motor>MS_SQL</Motor>
+    <Servidor>DESARROLLO</Servidor>
+    <BaseDatos>ADMINISTRACION</BaseDatos>
+    <Usuario>usuario</Usuario>
+    <Contrasena>ci?r0ba</Contrasena>
   </Conexion>
 </ArrayOfConexion>

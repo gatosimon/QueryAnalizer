@@ -17,6 +17,11 @@ namespace QueryAnalyzer
         {
             return $"Nombre={Nombre}; Motor={Motor}; Servidor={Servidor}; BaseDatos={BaseDatos}; Usuario={Usuario}; Contraseña={Contrasena}";
         }
+
+        public string GetConnGetConnectionString()
+        {
+            return ConexionesManager.GetConnectionString(this);
+        }
     }
 
     public enum TipoMotor
