@@ -51812,4 +51812,829 @@ WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO 
     <Parametros />
     <Fecha>2026-03-06T13:26:51.2734219-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>TRIBUTOS SQL</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TOP 10 *
+FROM APREMIOS.M10DATEXPE;
+
+SELECT count (*)
+FROM APREMIOS.M10DATEXPE;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-08T21:22:15.8803104-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_LIQUI2026</Consulta>
+    <Parametros />
+    <Fecha>2026-03-08T21:22:52.9339595-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-08T21:24:38.8470492-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-08T21:31:29.6049996-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-08T21:36:17.2855095-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-08T21:38:59.7093702-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-08T21:39:28.0068063-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-09T06:26:23.5066747-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-09T06:29:58.0945848-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-09T06:33:46.9571185-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-09T06:34:15.937639-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-09T06:43:35.3278814-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-09T06:44:08.9322124-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-09T06:55:17.3156444-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-09T06:56:06.0959751-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-09T06:59:12.6828119-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-09T07:09:19.3617286-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-09T07:09:38.8668186-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-09T07:10:34.2723655-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_LIQUI2026
+FETCH FIRST 10 ROWS ONLY;
+
+SELECT * FROM N29_VIGENCIA_SUEL
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-09T07:34:13.2292404-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA, LEGAJO, PERIODO, NRO_RECIBOPERIODO, TIPO_CPTO, COD_CPTO, SUBCOD_CPTO, AJUSTE, RESTA, IMPORT_CPTO, AGUINALDO, PRIORIDAD,
+    CARGA_MANUAL, CAMPO_AUX01, CAMPO_AUX02, DTO_CPTO002, DTO_CPTO009, SECRETARIA, SUBSECRET, NIVEL01, NIVEL02, NIVEL03, CATEG_ACTUAL,
+    CATEG_SUBROGA, SECRET_XPROG, SUBSECR_XPROG, NIVEL01_XPROG, NIVEL02_XPROG, NIVEL03_XPROG
+FROM DB2ADMIN.N29_LIQUI2026
+WHERE COMUNA = 1
+AND PERIODO = '01/02/2026'
+AND NRO_RECIBOPERIODO = 1
+AND COD_CPTO = 155
+AND SUBCOD_CPTO = 4
+FETCH FIRST 10 ROWS ONLY;
+
+SELECT
+    COMUNA, LEGAJO, F_DESDE, F_HASTA, NRO_RECIBOPERIODO, TIPO_CPTO, COD_CPTO, SUBCOD_CPTO, AJUSTE, RESTA, AGUINALDO, PRIORIDAD_DTO,
+    IMPORTE_VIG, CAMPO_AUX01, CAMPO_AUX02, CARGA_MANUAL, F_ALTA, H_ALTA, U_ALTA, F_MODI, H_MODI, U_MODI
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-09T07:48:48.6556844-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA, LEGAJO, PERIODO, NRO_RECIBOPERIODO, TIPO_CPTO, COD_CPTO, SUBCOD_CPTO, AJUSTE, RESTA, IMPORT_CPTO, AGUINALDO, PRIORIDAD,
+    CARGA_MANUAL, CAMPO_AUX01, CAMPO_AUX02, DTO_CPTO002, DTO_CPTO009, SECRETARIA, SUBSECRET, NIVEL01, NIVEL02, NIVEL03, CATEG_ACTUAL,
+    CATEG_SUBROGA, SECRET_XPROG, SUBSECR_XPROG, NIVEL01_XPROG, NIVEL02_XPROG, NIVEL03_XPROG
+FROM DB2ADMIN.N29_LIQUI2026
+WHERE COMUNA = 1
+AND PERIODO = '01/02/2026'
+AND NRO_RECIBOPERIODO = 1
+AND COD_CPTO = 155
+AND SUBCOD_CPTO = 4;
+
+SELECT
+    COMUNA, LEGAJO, F_DESDE, F_HASTA, NRO_RECIBOPERIODO, TIPO_CPTO, COD_CPTO, SUBCOD_CPTO, AJUSTE, RESTA, AGUINALDO, PRIORIDAD_DTO,
+    IMPORTE_VIG, CAMPO_AUX01, CAMPO_AUX02, CARGA_MANUAL, F_ALTA, H_ALTA, U_ALTA, F_MODI, H_MODI, U_MODI
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-09T07:48:58.3808097-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA_J,
+    SISTEMA_J,
+    SUBSIST_J,
+    CUENTA_J,
+    SUBCTA_J,
+    CONVENIO_J,
+    NROINTER_J,
+    JURISDIC_J,
+    INSTANCIA_J,
+    ANDEMAN_J,
+    NROJUICIO_J,
+    FGRABAC_J,
+    USUARIO_J,
+    FACTUAL_J,
+    MONTOAC_J,
+    CONVCANC_J,
+    OBSERVA_J,
+    MOTIVOBAJA_J,
+    FBAJA_J,
+    USUABAJA_J,
+    ESCONCURSAL_J,
+    ACT_CTAS_ADEL,
+    FECHA_HISTORICO,
+    HORA_HISTORICO,
+    USUARIO_HISTORICO
+FROM DB2ADMIN.H0JUINT
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-09T07:52:56.6503646-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>
