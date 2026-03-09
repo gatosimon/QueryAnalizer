@@ -1,4 +1,4 @@
-<Window x:Class="QueryAnalyzer.MainWindow"
+    <Window x:Class="QueryAnalyzer.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:avalon="http://icsharpcode.net/sharpdevelop/avalonedit"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -13,11 +13,11 @@
 
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- Tema inicial: claro. El code-behind lo reemplaza al hacer toggle. -->
+                 Tema inicial: claro. El code-behind lo reemplaza al hacer toggle. 
                 <ResourceDictionary Source="ThemeLight.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- ── Estilos que usan la paleta via DynamicResource ── -->
+             ── Estilos que usan la paleta via DynamicResource ── 
 
             <Style TargetType="TextBlock">
                 <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
@@ -104,78 +104,15 @@
                 <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="Padding"    Value="2,1"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="TreeViewItem">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition/>
-                                </Grid.RowDefinitions>
-                                <Border x:Name="Bd"
-                                        Grid.Row="0"
-                                        Background="{TemplateBinding Background}"
-                                        Padding="{TemplateBinding Padding}">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="16"/>
-                                            <ColumnDefinition/>
-                                        </Grid.ColumnDefinitions>
-                                        <!-- Expander: el trigger IsChecked rota la flecha dentro de su propio template -->
-                                        <ToggleButton x:Name="Expander"
-                                                      Grid.Column="0"
-                                                      Focusable="False"
-                                                      IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"
-                                                      ClickMode="Press">
-                                            <ToggleButton.Template>
-                                                <ControlTemplate TargetType="ToggleButton">
-                                                    <Border Background="Transparent" Width="16" Height="16">
-                                                        <Path x:Name="Arrow"
-                                                              Data="M 2 0 L 8 6 L 2 12"
-                                                              Stroke="{DynamicResource BrushFGMuted}"
-                                                              StrokeThickness="1.5"
-                                                              HorizontalAlignment="Center"
-                                                              VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <!-- La rotación vive DENTRO del template del ToggleButton,
-                                                             así no hay referencias cruzadas entre templates -->
-                                                        <Trigger Property="IsChecked" Value="True">
-                                                            <Setter TargetName="Arrow" Property="Data" Value="M 0 2 L 6 8 L 12 2"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </ToggleButton.Template>
-                                        </ToggleButton>
-                                        <ContentPresenter x:Name="PART_Header"
-                                                          Grid.Column="1"
-                                                          ContentSource="Header"
-                                                          VerticalAlignment="Center"/>
-                                    </Grid>
-                                </Border>
-                                <ItemsPresenter x:Name="ItemsHost"
-                                                Grid.Row="1"
-                                                Margin="16,0,0,0"
-                                                Visibility="Collapsed"/>
-                            </Grid>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsExpanded" Value="True">
-                                    <Setter TargetName="ItemsHost" Property="Visibility" Value="Visible"/>
-                                </Trigger>
-                                <Trigger Property="HasItems" Value="False">
-                                    <Setter TargetName="Expander" Property="Visibility" Value="Hidden"/>
-                                </Trigger>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushTreeHover}"/>
-                                </Trigger>
-                                <Trigger Property="IsSelected" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushTreeSel}"/>
-                                    <Setter Property="Foreground" Value="{DynamicResource BrushSelectedFG}"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource BrushTreeHover}"/>
+                    </Trigger>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource BrushTreeSel}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource BrushSelectedFG}"/>
+                    </Trigger>
+                </Style.Triggers>
             </Style>
 
             <Style TargetType="TabControl">
@@ -276,7 +213,7 @@
                 <Setter Property="Background" Value="{DynamicResource BrushSeparator}"/>
             </Style>
 
-            <!-- Filas de resultados de queries -->
+             Filas de resultados de queries 
             <Style x:Key="ResultGridRowStyle" TargetType="DataGridRow">
                 <Setter Property="Background" Value="{DynamicResource BrushControlBG}"/>
                 <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
@@ -306,7 +243,7 @@
             <RowDefinition Height="100"/>
         </Grid.RowDefinitions>
 
-        <!-- ── Toolbar superior ─────────────────────────────────── -->
+         ── Toolbar superior ─────────────────────────────────── 
         <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,6">
             <TextBlock Text="Driver/Proveedor:" VerticalAlignment="Center" Margin="0,0,6,0"/>
             <ComboBox x:Name="cbDriver" Width="400" IsEditable="True" VerticalAlignment="Center"
@@ -315,7 +252,7 @@
             <Button x:Name="btnNewConn"        Content="Nueva"           Padding="2,2" Margin="8,0,0,0" Click="BtnNewConn_Click"/>
             <Button x:Name="btnDeleteConn_Copy" Content="Eliminar"       Padding="2,2" Margin="8,0,0,0" Click="btnDeleteConn_Click"/>
             <Button x:Name="btnEditConn"       Content="Editar"          Padding="2,2" Margin="8,0,0,0" Click="BtnEditConn_Click"/>
-            <!-- Botón toggle de tema: el icono cambia en code-behind -->
+             Botón toggle de tema: el icono cambia en code-behind 
             <Button x:Name="btnToggleTema"
                     Content="&#x1F319;"
                     Padding="4,2"
@@ -363,8 +300,8 @@
                                 Grid.Column="0" Width="60" Height="50"
                                 Margin="2,32,2,0" Padding="2" VerticalAlignment="Top"
                                 Click="btnExplorarConsultas_Click" Content=" Explorar&#10;consultas">
-                            <!--<TextBlock Text="Explorar&#10;consultas"
-                                       TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center"/>-->
+                            <TextBlock Text="Explorar&#10;consultas"
+                                       TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
                         <TextBlock x:Name="txtExplorar"
                                    Grid.Column="0" Text="Tablas exploradas"

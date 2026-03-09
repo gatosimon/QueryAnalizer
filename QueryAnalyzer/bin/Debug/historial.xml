@@ -50329,4 +50329,1487 @@ LIMIT 10;</Consulta>
     <Parametros />
     <Fecha>2026-03-05T10:34:15.9627491-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>ADMINISTRACION SQL PROD</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>ADMINISTRACION</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    [IdMenu],
+    [IdSistema],
+    [IdMenuPadre],
+    [Descripcion],
+    [Estado],
+    [Redireccionar],
+    [Orden],
+    [Mostrar],
+    [Icono],
+    [Ruteo],
+    [UsrAlta],
+    [FAlta],
+    [UsrModi],
+    [FModi],
+    [UsrBaja],
+    [FBaja],
+    [ExcluirDelVip]
+FROM dbo.SistemasMenu;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T07:34:31.7380806-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>ADMINISTRACION SQL DESA</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>DESARROLLO</Servidor>
+      <BaseDatos>ADMINISTRACION</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    [IdMenu],
+    [IdSistema],
+    [IdMenuPadre],
+    [Descripcion],
+    [Estado],
+    [Redireccionar],
+    [Orden],
+    [Mostrar],
+    [Icono],
+    [Ruteo],
+    [UsrAlta],
+    [FAlta],
+    [UsrModi],
+    [FModi],
+    [UsrBaja],
+    [FBaja],
+    [ExcluirDelVip]
+FROM dbo.SistemasMenu;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T07:35:29.7831367-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:00:22.5137869-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COMUNA = 1 AND PERDIODO = '01/02/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:01:02.8881407-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COMUNA = 1 AND PERDIODO = '01-02-2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:01:10.9007057-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COMUNA = 1 AND PERDIODO between '01/02/2026' AND '28/02/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:01:32.8046429-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COMUNA = 1 AND PERIODO between '01/02/2026' AND '28/02/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:01:41.394929-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COMUNA = 1 AND PERIODO = '01/02/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:01:50.764609-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COMUNA = 1 AND PERIODO = '01/02/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:02:00.5886823-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>DELETE
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COMUNA = 1 AND PERIODO = '01/02/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:09:30.8685336-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COMUNA = 1 AND PERIODO = '01/02/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:09:41.2677598-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COMUNA = 1 AND PERIODO = '01/02/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:12:39.8298748-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.Vigencias_Sueldos</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:27:33.9456092-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM Vigencias_Sueldos</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:27:38.4358165-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:28:41.9994557-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE FDESDE &gt;= '01/02/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:29:21.7954438-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE FDESDE &gt;= '01/01/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:29:32.3436895-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:30:04.8104344-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE F_DESDE &gt;= '01/03/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:34:11.7443471-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE F_DESDE &gt;= '01/03/2026' AND LEN(TRIM(CAMPOAUX01)) &gt; 0</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:34:52.0405005-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE F_DESDE &gt;= '01/03/2026' AND LEN(CAMPOAUX01) &gt; 0</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:35:06.6391861-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE F_DESDE &gt;= '01/03/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:35:12.8812448-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE F_DESDE &gt;= '01/03/2026' AND LEN(TRIM(CAMPO_AUX01)) &gt; 0</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:35:38.1612866-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE F_DESDE &gt;= '01/03/2026' AND LEN(TRIM(CAMPO_AUX01)) &gt; 0</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:35:48.2624703-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE F_DESDE &gt;= '01/03/2026' AND LEN((CAMPO_AUX01)) &gt; 0</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:35:52.563458-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE F_DESDE &gt;= '01/03/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:36:01.3369335-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE F_DESDE &gt;= '01/03/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T08:47:17.9605209-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>ADMINISTRACION SQL PROD</Nombre>
+      <Motor>MS_SQL</Motor>
+      <Servidor>PRODUCCION</Servidor>
+      <BaseDatos>ADMINISTRACION</BaseDatos>
+      <Usuario>usuario</Usuario>
+      <Contrasena>ci?r0ba</Contrasena>
+    </conexion>
+    <Consulta>SELECT TOP 10 *
+FROM dbo.AreasSistema;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T09:02:50.0479003-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA,
+    LEGAJO,
+    F_DESDE,
+    F_HASTA,
+    NRO_RECIBOPERIODO,
+    TIPO_CPTO,
+    COD_CPTO,
+    SUBCOD_CPTO,
+    AJUSTE,
+    RESTA,
+    AGUINALDO,
+    PRIORIDAD_DTO,
+    IMPORTE_VIG,
+    CAMPO_AUX01,
+    CAMPO_AUX02,
+    CARGA_MANUAL,
+    F_ALTA,
+    H_ALTA,
+    U_ALTA,
+    F_MODI,
+    H_MODI,
+    U_MODI
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T09:14:11.461414-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>DELETE
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T09:14:32.3569789-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T09:14:40.8019191-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>select *
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COMUNA = 1 AND PERIODO = '01/02/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T09:48:27.3875683-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T09:50:00.6038455-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COMUNA = 1 AND COD_CPTO &lt;&gt; 308</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T09:55:58.4271518-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COMUNA = 1 AND COD_CPTO &lt;&gt; 308 AND (TIPO_CPTO = 4 AND (COD_CPTO = 700 OR COD_CPTO = 755 OR COD_CPTO = 870))</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T09:57:18.5911746-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COMUNA = 1 AND COD_CPTO &lt;&gt; 308</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T09:58:07.5821716-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COMUNA = 1 AND COD_CPTO &lt;&gt; 308 OR (TIPO_CPTO = 4 AND (COD_CPTO = 700 OR COD_CPTO = 755 OR COD_CPTO = 870))</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T09:58:52.127241-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COMUNA = 1 AND COD_CPTO &lt;&gt; 308 OR (TIPO_CPTO = 4 AND (COD_CPTO = 700 OR COD_CPTO = 755 OR COD_CPTO = 870))
+ORDER BY TIPO_CPTO</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:02:28.1015455-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * 
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:15:46.8967338-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>DELETE
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:16:06.2716894-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:16:14.4196473-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:48:18.5427739-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>DELETE
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:48:50.0810397-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:48:55.3448705-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQ_EneConAument
+WHERE COD_Cpto1 &lt;&gt; 308</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:52:10.256882-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM DB2ADMIN.LIQ_EneConAument
+WHERE COD_Cpto1 &lt;&gt; 308</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:52:24.8790907-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COD_Cpto1 &lt;&gt; 308</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:52:46.0493688-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COD_CPTO &lt;&gt; 308</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:53:17.7258823-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COD_CPTO &lt;&gt; 308 AND (TIPO_CPTO = 4 AND (COD_CPTO = 700 OR COD_CPTO = 755 OR COD_CPTO = 870))
+;
+
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:54:52.4541592-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COD_CPTO &lt;&gt; 308 AND (TIPO_CPTO = 4 AND (COD_CPTO = 700 OR COD_CPTO = 755 OR COD_CPTO = 870))
+ORDER BY TIPO_CPTO
+;
+
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:55:10.871381-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT distinct tipo_cpto FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COD_CPTO &lt;&gt; 308 AND (TIPO_CPTO = 4 AND (COD_CPTO = 700 OR COD_CPTO = 755 OR COD_CPTO = 870))
+ORDER BY TIPO_CPTO
+;
+
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:55:49.3155887-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT distinct tipo_cpto FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE (TIPO_CPTO &lt;&gt; 4 AND COD_CPTO &lt;&gt; 308) OR (TIPO_CPTO = 4 AND (COD_CPTO = 700 OR COD_CPTO = 755 OR COD_CPTO = 870))
+ORDER BY TIPO_CPTO
+;
+
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:56:23.6949807-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT distinct tipo_cpto FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE (TIPO_CPTO IN (1,2,3) AND COD_CPTO &lt;&gt; 308) OR (TIPO_CPTO = 4 AND (COD_CPTO = 700 OR COD_CPTO = 755 OR COD_CPTO = 870))
+ORDER BY TIPO_CPTO
+;
+
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:56:43.7574411-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE (TIPO_CPTO IN (1,2,3) AND COD_CPTO &lt;&gt; 308) OR (TIPO_CPTO = 4 AND (COD_CPTO = 700 OR COD_CPTO = 755 OR COD_CPTO = 870))
+ORDER BY TIPO_CPTO
+;
+
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:56:59.9690531-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE (TIPO_CPTO BETWEEN 1 AND 3 AND COD_CPTO &lt;&gt; 308) OR (TIPO_CPTO = 4 AND (COD_CPTO = 700 OR COD_CPTO = 755 OR COD_CPTO = 870))
+ORDER BY TIPO_CPTO
+;
+
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T10:57:49.5529806-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE U_ALTA = 'SSNUNEZ' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T11:10:31.930338-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE 
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+WHERE F_DESDE &gt;= '01/03/2026'
+
+</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T11:59:31.5247125-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE 
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+WHERE N.F_DESDE &gt;= '01/03/2026'
+
+</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T11:59:49.4472263-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE 
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26'
+
+</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T12:05:41.9046297-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE 
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26'
+
+</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T12:05:55.9065728-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE 
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26'
+
+FETCH FIRST 10 ROW ONLY</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T12:07:24.7949361-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE 
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T12:14:23.630425-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE 
+FROM N29_VIGENCIA_SUEL L
+JOIN LIQUI_ENECONAUMENTO N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T12:14:51.8188321-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE 
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T12:15:12.9468063-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T12:16:35.8692351-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T12:19:11.1240754-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T12:32:30.5772637-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T12:55:08.3538236-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T13:01:26.0202421-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T13:06:41.8512518-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T13:09:41.038649-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T13:11:18.4758771-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T13:12:25.3673336-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T13:12:57.9580023-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T13:13:39.4790663-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T13:14:11.2182953-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T13:14:35.3948718-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T13:15:09.9879294-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T13:17:27.6416301-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T13:17:59.452946-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T13:20:49.8421616-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T13:24:03.4262439-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T13:26:10.2532016-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT L.LEGAJO, L.TIPO_CPTO, L.COD_CPTO, L.SUBCOD_CPTO, L.AJUSTE, N.TIPO_CPTO, N.COD_CPTO, N.SUBCOD_CPTO, N.AJUSTE, N.IMPORTE_VIG
+FROM LIQUI_ENECONAUMENTO L
+JOIN N29_VIGENCIA_SUEL N
+ON L.LEGAJO = N.LEGAJO AND
+L.TIPO_CPTO = N.TIPO_CPTO AND
+L.COD_CPTO = N.COD_CPTO AND
+L.SUBCOD_CPTO = N.SUBCOD_CPTO
+WHERE N.F_DESDE &gt;= '01/03/2026' AND N.CAMPO_AUX01 = 'Aj.Feb.26' AND L.LEGAJO = 6744</Consulta>
+    <Parametros />
+    <Fecha>2026-03-06T13:26:51.2734219-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>
