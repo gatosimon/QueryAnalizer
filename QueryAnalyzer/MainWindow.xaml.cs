@@ -1277,11 +1277,13 @@ namespace QueryAnalyzer
             var columnaIconUri = new Uri("pack://application:,,,/Assets/columna.png");
             var columnaClaveIconUri = new Uri("pack://application:,,,/Assets/columnaClave.png");
             var claveIconUri = new Uri("pack://application:,,,/Assets/clave.png");
+            var vistaIconUri = new Uri("pack://application:,,,/Assets/vista.png"); // 👈 NUEVO
 
             var tablaIcon = new System.Windows.Media.Imaging.BitmapImage(tablaIconUri);
             var columnaIcon = new System.Windows.Media.Imaging.BitmapImage(columnaIconUri);
             var columnaClaveIcon = new System.Windows.Media.Imaging.BitmapImage(columnaClaveIconUri);
             var claveIcon = new System.Windows.Media.Imaging.BitmapImage(claveIconUri);
+            var vistaIcon = new System.Windows.Media.Imaging.BitmapImage(vistaIconUri); // 👈 NUEVO
             int tamañoIconos = 20;
             // 🖼️ FIN DE MODIFICACIÓN
 
@@ -1289,386 +1291,7 @@ namespace QueryAnalyzer
             {
                 try
                 {
-                    using (var conn = new OdbcConnection(connStr))
-                    {
-                        conn.Open();
-
-                        // Obtiene las tablas
-                        DataTable tablas = conn.GetSchema("Tables");
-
-                        Dispatcher.Invoke(() => tvCargar.Items.Clear());
-
-                        // Filtrar SOLO las filas cuyo tipo sea "TABLE"
-                        DataRow[] tablasFiltradas = tablas.Select($"TABLE_TYPE = 'TABLE'");
-
-                        // Si querés seguir usando un DataTable:
-                        DataTable tablasSolo = tablasFiltradas.Length > 0 ? tablasFiltradas.CopyToDataTable() : tablas.Clone();
-
-                        bool cargarTabla = true;
-                        int tablasLeidas = 0;
-                        int cantidadDeTablas = tablasConsulta == null ? tablasSolo.Rows.Count : tablasConsulta.Count;
-
-                        // Ahora usás tablasSolo.Rows en el foreach
-                        foreach (DataRow tabla in tablasSolo.Rows)
-                        {
-                            token.ThrowIfCancellationRequested();
-
-                            string schema = tabla["TABLE_SCHEM"].ToString();
-                            string nombreTabla = tabla["TABLE_NAME"].ToString();
-
-                            cargarTabla = tablasConsulta == null || (tablasConsulta != null &&
-                                tablasConsulta.Any(t => t.ToUpper().Trim().EndsWith(nombreTabla.ToUpper().Trim())));
-                            if (cargarTabla)
-                            {
-                                string tipo = tabla["TABLE_TYPE"].ToString();
-                                if (tipo != "TABLE") continue;
-
-                                string headerText = string.IsNullOrEmpty(schema) ? nombreTabla : $"{schema}.{nombreTabla}";
-                                var columnas = conn.GetSchema("Columns", new string[] { null, schema, nombreTabla });
-
-                                // 🔑 Obtener columnas que son clave primaria mediante SQL según el motor
-                                var columnasClaveSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                                try
-                                {
-                                    string sqlPK = null;
-                                    switch (conexionActual.Motor)
-                                    {
-                                        case TipoMotor.MS_SQL:
-                                            sqlPK = $@"SELECT c.name AS COLUMN_NAME
-                                                FROM sys.indexes i
-                                                INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
-                                                INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
-                                                INNER JOIN sys.tables t ON i.object_id = t.object_id
-                                                WHERE i.is_primary_key = 1 AND t.name = '{nombreTabla}'";
-                                            break;
-                                        case TipoMotor.DB2:
-                                            sqlPK = $@"SELECT UPPER(COLNAMES) AS COLUMN_NAME FROM SYSCAT.INDEXES WHERE TABNAME = '{nombreTabla}' AND UNIQUERULE IN ('U')";
-                                            break;
-                                        case TipoMotor.POSTGRES:
-                                            sqlPK = $@"SELECT a.attname AS COLUMN_NAME
-                                                FROM pg_index ix
-                                                JOIN pg_class t ON t.oid = ix.indrelid
-                                                JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
-                                                WHERE ix.indisprimary = true AND t.relname = '{nombreTabla}'";
-                                            break;
-                                        case TipoMotor.SQLite:
-                                            sqlPK = $"PRAGMA table_info('{nombreTabla}')";
-                                            break;
-                                        default:
-                                            break;
-                                    }
-
-                                    if (!string.IsNullOrEmpty(sqlPK))
-                                    {
-                                        using (var cmdPK = conn.CreateCommand())
-                                        {
-                                            cmdPK.CommandText = sqlPK;
-                                            using (var rdrPK = cmdPK.ExecuteReader())
-                                            {
-                                                if (conexionActual.Motor == TipoMotor.SQLite)
-                                                {
-                                                    // PRAGMA table_info devuelve una fila por columna con campo "pk" > 0 si es PK
-                                                    while (rdrPK.Read())
-                                                    {
-                                                        int pkOrdinal = rdrPK.GetOrdinal("pk");
-                                                        int nameOrdinal = rdrPK.GetOrdinal("name");
-                                                        if (!rdrPK.IsDBNull(pkOrdinal) && rdrPK.GetInt32(pkOrdinal) > 0)
-                                                            columnasClaveSet.Add(rdrPK.GetString(nameOrdinal));
-                                                    }
-                                                }
-                                                else if (conexionActual.Motor == TipoMotor.DB2)
-                                                {
-                                                    List<string> claves = new List<string>();
-                                                    while (rdrPK.Read())
-                                                    {
-                                                        claves.Add(rdrPK.GetString(0));
-                                                    }
-                                                    if (claves.Count > 0)
-                                                    {
-                                                        int minCantidad = claves.Min(s => s.Count(c => c == '+'));
-
-                                                        // Paso 2: filtrar los strings con esa cantidad mínima
-                                                        List<string> clave = claves
-                                                            .Where(s => s.Count(c => c == '+') == minCantidad)
-                                                            .Select(s => s.Split('+'))
-                                                            .FirstOrDefault().ToList();
-                                                        // Eliminar los elementos vacíos
-                                                        clave.RemoveAll(s => string.IsNullOrWhiteSpace(s));
-
-                                                        foreach (string item in clave)
-                                                        {
-                                                            columnasClaveSet.Add(item);
-                                                        }
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    while (rdrPK.Read())
-                                                        columnasClaveSet.Add(rdrPK["COLUMN_NAME"].ToString());
-                                                }
-
-                                            }
-                                        }
-                                    }
-                                }
-                                catch { /* Si el motor no soporta la consulta, se muestra icono normal para todas */ }
-
-                                // 🎨 INICIO DE MODIFICACIÓN: Cálculo del fondo alternado
-                                //System.Windows.Media.Brush currentTableBackground = (tablasLeidas % 2 == 0) ? evenRowBrush : oddRowBrush;
-                                // 🎨 FIN DE MODIFICACIÓN
-
-                                Dispatcher.Invoke(() =>
-                                {
-                                    // 🖼️ INICIO DE MODIFICACIÓN: nodo de tabla con icono
-                                    var tablaHeader = new StackPanel { Orientation = Orientation.Horizontal };
-                                    tablaHeader.Children.Add(new System.Windows.Controls.Image
-                                    {
-                                        Source = tablaIcon,
-                                        Width = tamañoIconos,
-                                        Height = tamañoIconos,
-                                        Margin = new System.Windows.Thickness(0, 0, 5, 0)
-                                    });
-                                    tablaHeader.Children.Add(new System.Windows.Controls.TextBlock { Text = headerText });
-
-                                    var tablaNode = new TreeViewItem
-                                    {
-                                        Header = tablaHeader,
-                                        Tag = nombreTabla,
-                                        //Background = currentTableBackground
-                                    };
-                                    // 🖼️ FIN DE MODIFICACIÓN
-
-                                    if (filtrado.Length == 0 || (filtrado.Length > 0 && nombreTabla.ToUpper().Contains(filtrado.ToUpper())))
-                                    {
-                                        tvCargar.Items.Add(tablaNode);
-                                        tablaNode.MouseDoubleClick += TablaNode_MouseDoubleClick;
-
-                                        // ── Menú contextual de scripts ───────────────────────────
-                                        string capSchema = schema;
-                                        string capTabla = nombreTabla;
-                                        DataTable capColumnas = columnas.Copy();
-
-                                        var ctxMenu = new ContextMenu();
-                                        AplicarEstiloContextMenu(ctxMenu);
-
-                                        Action<string, Func<string>> agregarOpcion = (hdr, gen) =>
-                                        {
-                                            var menuItem = new MenuItem { Header = hdr };
-                                            AplicarEstiloMenuItem(menuItem);
-                                            menuItem.Click += (s, ev) =>
-                                            {
-                                                try { InsertarEnQuery(gen()); }
-                                                catch (Exception ex) { AppendMessage("Error generando script: " + ex.Message); }
-                                            };
-                                            ctxMenu.Items.Add(menuItem);
-                                        };
-
-                                        agregarOpcion("📋 SELECT TOP 10", () => GenerarSelectTop10(capSchema, capTabla));
-                                        agregarOpcion("📋 SELECT (todas las cols)", () => GenerarSelectAllCols(capSchema, capTabla, capColumnas));
-                                        ctxMenu.Items.Add(new Separator());
-                                        agregarOpcion("📄 CREATE TABLE", () => GenerarCreateTable(capSchema, capTabla, capColumnas));
-                                        agregarOpcion("✏️  ALTER TABLE (add col)", () => GenerarAlterTableAddColumn(capSchema, capTabla));
-                                        agregarOpcion("🗑️  DROP TABLE", () => GenerarDropTable(capSchema, capTabla));
-                                        ctxMenu.Items.Add(new Separator());
-                                        agregarOpcion("➕ INSERT INTO", () => GenerarInsert(capSchema, capTabla, capColumnas));
-                                        agregarOpcion("✏️  UPDATE ... SET", () => GenerarUpdate(capSchema, capTabla, capColumnas));
-                                        agregarOpcion("🗑️  DELETE FROM", () => GenerarDelete(capSchema, capTabla));
-                                        ctxMenu.Items.Add(new Separator());
-                                        agregarOpcion("🔑 CREATE INDEX", () => GenerarCreateIndex(capSchema, capTabla));
-                                        agregarOpcion("🔑 DROP INDEX", () => GenerarDropIndex(capSchema, capTabla));
-                                        agregarOpcion("📊 COUNT(*)", () => GenerarCount(capSchema, capTabla));
-
-                                        tablaNode.ContextMenu = ctxMenu;
-                                        // ─────────────────────────────────────────────────────────
-                                    }
-
-                                    // Agregar columnas
-                                    foreach (DataRow col in columnas.Rows)
-                                    {
-                                        token.ThrowIfCancellationRequested();
-
-                                        string colName = col["COLUMN_NAME"].ToString();
-                                        string tipoCol = col["TYPE_NAME"].ToString();
-                                        string longitud = col["COLUMN_SIZE"].ToString();
-
-                                        string escala = string.Empty;
-                                        if (col.Table.Columns.Contains("DECIMAL_DIGITS") && col["DECIMAL_DIGITS"] != DBNull.Value)
-                                            escala = col["DECIMAL_DIGITS"].ToString();
-                                        else if (col.Table.Columns.Contains("NUMERIC_SCALE") && col["NUMERIC_SCALE"] != DBNull.Value)
-                                            escala = col["NUMERIC_SCALE"].ToString();
-                                        else if (col.Table.Columns.Contains("COLUMN_SCALE") && col["COLUMN_SCALE"] != DBNull.Value)
-                                            escala = col["COLUMN_SCALE"].ToString();
-                                        else if (col.Table.Columns.Contains("COLUMN_SIZE") && col["COLUMN_SIZE"] != DBNull.Value)
-                                            escala = col["COLUMN_SIZE"].ToString();
-
-                                        string aceptaNulos = string.Empty;
-                                        if (col.Table.Columns.Contains("IS_NULLABLE") && col["IS_NULLABLE"] != DBNull.Value)
-                                        {
-                                            string nuloStr = col["IS_NULLABLE"].ToString().ToUpper();
-                                            aceptaNulos = nuloStr == "YES" ? "NULL" : nuloStr == "NO" ? "NOT NULL" : string.Empty;
-                                        }
-
-                                        string defecto = string.Empty;
-                                        if (col.Table.Columns.Contains("COLUMN_DEF") && col["COLUMN_DEF"] != DBNull.Value)
-                                            defecto = col["COLUMN_DEF"].ToString();
-
-                                        string tipoCompleto = tipoCol;
-                                        string tipoNormalizado = tipoCol.ToUpper();
-                                        bool esNumericoDecimal = tipoNormalizado.Contains("DECIMAL") || tipoNormalizado.Contains("NUMERIC");
-
-                                        if (!string.IsNullOrEmpty(longitud))
-                                        {
-                                            if (esNumericoDecimal && !string.IsNullOrEmpty(escala))
-                                                tipoCompleto += $" [{longitud}, {escala}]";
-                                            else
-                                                tipoCompleto += $" [{longitud}]";
-                                        }
-
-                                        // 🖼️ INICIO DE MODIFICACIÓN: nodo de columna con icono (clave o normal)
-                                        bool esClavePrimaria = columnasClaveSet.Contains(colName);
-                                        var colHeader = new StackPanel { Orientation = Orientation.Horizontal };
-                                        colHeader.Children.Add(new System.Windows.Controls.Image
-                                        {
-                                            Source = esClavePrimaria ? columnaClaveIcon : columnaIcon,
-                                            Width = tamañoIconos,
-                                            Height = tamañoIconos,
-                                            Margin = new System.Windows.Thickness(0, 0, 5, 0)
-                                        });
-                                        colHeader.Children.Add(new System.Windows.Controls.TextBlock
-                                        {
-                                            Text = $"{colName} ({tipoCompleto}{(string.IsNullOrEmpty(aceptaNulos) ? string.Empty : $", {aceptaNulos}")}{(string.IsNullOrEmpty(defecto) ? string.Empty : $", DEFAULT {defecto}")})"
-                                        });
-
-                                        var colNode = new TreeViewItem { Header = colHeader };
-                                        // 🖼️ FIN DE MODIFICACIÓN
-
-                                        tablaNode.Items.Add(colNode);
-                                    }
-                                });
-
-                                // 🔹 Carga de índices (sin UI pesada)
-                                try
-                                {
-                                    using (var cmd = conn.CreateCommand())
-                                    {
-                                        switch (conexionActual.Motor)
-                                        {
-                                            case TipoMotor.MS_SQL:
-                                                cmd.CommandText = $@"SELECT
-                                            s.name AS SchemaName,
-                                            t.name AS TableName,
-                                            i.name AS IndexName,
-                                            i.type_desc AS IndexType,
-                                            c.name AS ColumnName,
-                                            ic.key_ordinal AS ColumnOrder,
-                                            i.is_primary_key AS IsPrimaryKey,
-                                            i.is_unique AS IsUnique
-                                        FROM sys.indexes i
-                                        INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
-                                        INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
-                                        INNER JOIN sys.tables t ON i.object_id = t.object_id
-                                        INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
-                                        WHERE t.name = '{nombreTabla}'
-                                        ORDER BY i.name, ic.key_ordinal;";
-                                                break;
-                                            case TipoMotor.DB2:
-                                                cmd.CommandText = $@"SELECT
-                                            i.TABSCHEMA AS SchemaName,
-                                            i.TABNAME AS TableName,
-                                            i.INDNAME AS IndexName,
-                                            i.UNIQUERULE AS UniqueRule,
-                                            c.COLNAME AS ColumnName,
-                                            c.COLSEQ AS ColumnOrder,
-                                            i.INDEXTYPE AS IndexType
-                                        FROM SYSCAT.INDEXES i
-                                        JOIN SYSCAT.INDEXCOLUSE c
-                                            ON i.INDNAME = c.INDNAME AND i.INDSCHEMA = c.INDSCHEMA
-                                        WHERE i.TABNAME = UPPER('{nombreTabla}')
-                                        ORDER BY i.INDNAME, c.COLSEQ;";
-                                                break;
-                                            case TipoMotor.POSTGRES:
-                                                cmd.CommandText = $@"SELECT
-                                            n.nspname AS SchemaName,
-                                            t.relname AS TableName,
-                                            i.relname AS IndexName,
-                                            a.attname AS ColumnName,
-                                            ix.indisunique AS IsUnique,
-                                            ix.indisprimary AS IsPrimary
-                                        FROM pg_class t
-                                        JOIN pg_index ix ON t.oid = ix.indrelid
-                                        JOIN pg_class i ON i.oid = ix.indexrelid
-                                        JOIN pg_namespace n ON n.oid = t.relnamespace
-                                        JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
-                                        WHERE t.relname = '{nombreTabla}'
-                                        ORDER BY i.relname, a.attnum;";
-                                                break;
-                                            case TipoMotor.SQLite:
-                                                cmd.CommandText = $"PRAGMA index_list('{nombreTabla}');";
-                                                break;
-                                            default:
-                                                break;
-                                        }
-
-                                        using (var adapter = new OdbcDataAdapter(cmd))
-                                        {
-                                            var dtIndices = new DataTable();
-                                            adapter.Fill(dtIndices);
-
-                                            if (dtIndices.Rows.Count > 0)
-                                            {
-                                                Dispatcher.Invoke(() =>
-                                                {
-                                                    var tablaNode = tvCargar.Items.OfType<TreeViewItem>()
-                                                        .FirstOrDefault(t => (string)t.Tag == nombreTabla);
-                                                    if (tablaNode == null) return;
-
-                                                    var indiceRaiz = new TreeViewItem
-                                                    {
-                                                        Header = "Índices",
-                                                    };
-
-                                                    string indexNameColumn = conexionActual.Motor == TipoMotor.SQLite ? "NAME" : "INDEXNAME";
-
-                                                    var indicesAgrupados = dtIndices.AsEnumerable()
-                                                        .GroupBy(row => row.Field<string>(indexNameColumn))
-                                                        .OrderBy(g => g.Key);
-
-                                                    foreach (var grupoIndice in indicesAgrupados)
-                                                    {
-                                                        string nombreIndice = grupoIndice.Key;
-
-                                                        // 🖼️ INICIO DE MODIFICACIÓN: nodo de índice con icono
-                                                        var indiceHeader = new StackPanel { Orientation = Orientation.Horizontal };
-                                                        indiceHeader.Children.Add(new System.Windows.Controls.Image
-                                                        {
-                                                            Source = claveIcon,
-                                                            Width = tamañoIconos,
-                                                            Height = tamañoIconos,
-                                                            Margin = new System.Windows.Thickness(0, 0, 5, 0)
-                                                        });
-                                                        indiceHeader.Children.Add(new System.Windows.Controls.TextBlock { Text = nombreIndice });
-
-                                                        var nodoIndice = new TreeViewItem { Header = indiceHeader };
-                                                        // 🖼️ FIN DE MODIFICACIÓN
-
-                                                        indiceRaiz.Items.Add(nodoIndice);
-                                                    }
-
-                                                    tablaNode.Items.Add(indiceRaiz);
-                                                });
-                                            }
-                                        }
-                                    }
-                                }
-                                catch { /* Algunos motores no exponen esa vista */ }
-
-                                tablasLeidas++;
-                            }
-
-                            Dispatcher.Invoke(() => txtExplorar.Text = $"{tablasLeidas} tablas leídas de {cantidadDeTablas}");
-                            if (tablasLeidas == cantidadDeTablas) break;
-                        }
-                    }
+                    Cargar(new string[] { "TABLE", "VIEW" }, filtrado, tablasConsulta, tvCargar, connStr, tablaIcon, columnaIcon, columnaClaveIcon, claveIcon, vistaIcon, tamañoIconos, token);
                 }
                 catch (TaskCanceledException)
                 {
@@ -1685,6 +1308,407 @@ namespace QueryAnalyzer
                     Dispatcher.Invoke(() => AppendMessage("Error al cargar esquema: " + ex.Message));
                 }
             });
+        }
+
+        private void Cargar(string[] tiposTabla, string filtrado, List<string> tablasConsulta, TreeView tvCargar, string connStr, System.Windows.Media.Imaging.BitmapImage tablaIcon, System.Windows.Media.Imaging.BitmapImage columnaIcon, System.Windows.Media.Imaging.BitmapImage columnaClaveIcon, System.Windows.Media.Imaging.BitmapImage claveIcon, System.Windows.Media.Imaging.BitmapImage vistaIcon, int tamañoIconos, CancellationToken token)
+        {
+            using (var conn = new OdbcConnection(connStr))
+            {
+                conn.Open();
+
+                // Obtiene las tablas
+                DataTable tablas = new DataTable();
+
+                foreach (string tipo in tiposTabla)
+                {
+                    // Obtenemos el esquema actual (ej: "Tables", "Views")
+                    DataTable esquemaTemporal = conn.GetSchema($"{tipo}s");
+
+                    // Fusionamos el contenido en nuestra tabla principal
+                    tablas.Merge(esquemaTemporal);
+                }
+
+                string selecciones = string.Join(" OR ", tiposTabla.Select(t => $"TABLE_TYPE = '{t}'").ToArray());
+
+                Dispatcher.Invoke(() => tvCargar.Items.Clear());
+
+                // Filtrar las filas cuyo tipo sea "TABLE" o "VIEW" 👈 CAMBIADO
+                DataRow[] tablasFiltradas = tablas.Select(selecciones);
+
+                // Si querés seguir usando un DataTable:
+                DataTable tablasSolo = tablasFiltradas.Length > 0 ? tablasFiltradas.CopyToDataTable() : tablas.Clone();
+
+                bool cargarTabla = true;
+                int tablasLeidas = 0;
+                int cantidadDeTablas = tablasConsulta == null ? tablasSolo.Rows.Count : tablasConsulta.Count;
+
+                // Ahora usás tablasSolo.Rows en el foreach
+                foreach (DataRow tabla in tablasSolo.Rows)
+                {
+                    token.ThrowIfCancellationRequested();
+
+                    string schema = tabla["TABLE_SCHEM"].ToString();
+                    string nombreTabla = tabla["TABLE_NAME"].ToString();
+
+                    cargarTabla = tablasConsulta == null || (tablasConsulta != null &&
+                        tablasConsulta.Any(t => t.ToUpper().Trim().EndsWith(nombreTabla.ToUpper().Trim())));
+                    if (cargarTabla)
+                    {
+                        string tipo = tabla["TABLE_TYPE"].ToString();
+                        //if (tipo != "TABLE" && tipo != "VIEW") continue; // 👈 CAMBIADO
+
+                        string headerText = string.IsNullOrEmpty(schema) ? nombreTabla : $"{schema}.{nombreTabla}";
+                        var columnas = conn.GetSchema("Columns", new string[] { null, schema, nombreTabla });
+
+                        // 🔑 Obtener columnas que son clave primaria mediante SQL según el motor
+                        var columnasClaveSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        //if (tipo == "TABLE") // 👈 NUEVO: las vistas no tienen PK
+                        {
+                            try
+                            {
+                                string sqlPK = null;
+                                switch (conexionActual.Motor)
+                                {
+                                    case TipoMotor.MS_SQL:
+                                        sqlPK = $@"SELECT c.name AS COLUMN_NAME
+                                                FROM sys.indexes i
+                                                INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+                                                INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+                                                INNER JOIN sys.tables t ON i.object_id = t.object_id
+                                                WHERE i.is_primary_key = 1 AND t.name = '{nombreTabla}'";
+                                        break;
+                                    case TipoMotor.DB2:
+                                        sqlPK = $@"SELECT UPPER(COLNAMES) AS COLUMN_NAME FROM SYSCAT.INDEXES WHERE TABNAME = '{nombreTabla}' AND UNIQUERULE IN ('U')";
+                                        break;
+                                    case TipoMotor.POSTGRES:
+                                        sqlPK = $@"SELECT a.attname AS COLUMN_NAME
+                                                FROM pg_index ix
+                                                JOIN pg_class t ON t.oid = ix.indrelid
+                                                JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
+                                                WHERE ix.indisprimary = true AND t.relname = '{nombreTabla}'";
+                                        break;
+                                    case TipoMotor.SQLite:
+                                        sqlPK = $"PRAGMA table_info('{nombreTabla}')";
+                                        break;
+                                    default:
+                                        break;
+                                }
+
+                                if (!string.IsNullOrEmpty(sqlPK))
+                                {
+                                    using (var cmdPK = conn.CreateCommand())
+                                    {
+                                        cmdPK.CommandText = sqlPK;
+                                        using (var rdrPK = cmdPK.ExecuteReader())
+                                        {
+                                            if (conexionActual.Motor == TipoMotor.SQLite)
+                                            {
+                                                // PRAGMA table_info devuelve una fila por columna con campo "pk" > 0 si es PK
+                                                while (rdrPK.Read())
+                                                {
+                                                    int pkOrdinal = rdrPK.GetOrdinal("pk");
+                                                    int nameOrdinal = rdrPK.GetOrdinal("name");
+                                                    if (!rdrPK.IsDBNull(pkOrdinal) && rdrPK.GetInt32(pkOrdinal) > 0)
+                                                        columnasClaveSet.Add(rdrPK.GetString(nameOrdinal));
+                                                }
+                                            }
+                                            else if (conexionActual.Motor == TipoMotor.DB2)
+                                            {
+                                                List<string> claves = new List<string>();
+                                                while (rdrPK.Read())
+                                                {
+                                                    claves.Add(rdrPK.GetString(0));
+                                                }
+                                                if (claves.Count > 0)
+                                                {
+                                                    int minCantidad = claves.Min(s => s.Count(c => c == '+'));
+
+                                                    // Paso 2: filtrar los strings con esa cantidad mínima
+                                                    List<string> clave = claves
+                                                        .Where(s => s.Count(c => c == '+') == minCantidad)
+                                                        .Select(s => s.Split('+'))
+                                                        .FirstOrDefault().ToList();
+                                                    // Eliminar los elementos vacíos
+                                                    clave.RemoveAll(s => string.IsNullOrWhiteSpace(s));
+
+                                                    foreach (string item in clave)
+                                                    {
+                                                        columnasClaveSet.Add(item);
+                                                    }
+                                                }
+                                            }
+                                            else
+                                            {
+                                                while (rdrPK.Read())
+                                                    columnasClaveSet.Add(rdrPK["COLUMN_NAME"].ToString());
+                                            }
+
+                                        }
+                                    }
+                                }
+                            }
+                            catch { /* Si el motor no soporta la consulta, se muestra icono normal para todas */ }
+                        } // 👈 NUEVO: fin del if (tipo == "TABLE") para PK
+
+                        // 🎨 INICIO DE MODIFICACIÓN: Cálculo del fondo alternado
+                        //System.Windows.Media.Brush currentTableBackground = (tablasLeidas % 2 == 0) ? evenRowBrush : oddRowBrush;
+                        // 🎨 FIN DE MODIFICACIÓN
+
+                        Dispatcher.Invoke(() =>
+                        {
+                            // 🖼️ INICIO DE MODIFICACIÓN: nodo de tabla/vista con icono
+                            var tablaHeader = new StackPanel { Orientation = Orientation.Horizontal };
+                            tablaHeader.Children.Add(new System.Windows.Controls.Image
+                            {
+                                Source = tipo == "VIEW" ? vistaIcon : tablaIcon, // 👈 CAMBIADO
+                                Width = tamañoIconos,
+                                Height = tamañoIconos,
+                                Margin = new System.Windows.Thickness(0, 0, 5, 0)
+                            });
+                            tablaHeader.Children.Add(new System.Windows.Controls.TextBlock { Text = headerText });
+
+                            var tablaNode = new TreeViewItem
+                            {
+                                Header = tablaHeader,
+                                Tag = nombreTabla,
+                                //Background = currentTableBackground
+                            };
+                            // 🖼️ FIN DE MODIFICACIÓN
+
+                            if (filtrado.Length == 0 || (filtrado.Length > 0 && nombreTabla.ToUpper().Contains(filtrado.ToUpper())))
+                            {
+                                tvCargar.Items.Add(tablaNode);
+                                tablaNode.MouseDoubleClick += TablaNode_MouseDoubleClick;
+
+                                // ── Menú contextual de scripts ───────────────────────────
+                                string capSchema = schema;
+                                string capTabla = nombreTabla;
+                                DataTable capColumnas = columnas.Copy();
+
+                                var ctxMenu = new ContextMenu();
+                                AplicarEstiloContextMenu(ctxMenu);
+
+                                Action<string, Func<string>> agregarOpcion = (hdr, gen) =>
+                                {
+                                    var menuItem = new MenuItem { Header = hdr };
+                                    AplicarEstiloMenuItem(menuItem);
+                                    menuItem.Click += (s, ev) =>
+                                    {
+                                        try { InsertarEnQuery(gen()); }
+                                        catch (Exception ex) { AppendMessage("Error generando script: " + ex.Message); }
+                                    };
+                                    ctxMenu.Items.Add(menuItem);
+                                };
+
+                                agregarOpcion("📋 SELECT TOP 10", () => GenerarSelectTop10(capSchema, capTabla));
+                                agregarOpcion("📋 SELECT (todas las cols)", () => GenerarSelectAllCols(capSchema, capTabla, capColumnas));
+                                ctxMenu.Items.Add(new Separator());
+                                agregarOpcion("📄 CREATE TABLE", () => GenerarCreateTable(capSchema, capTabla, capColumnas));
+                                agregarOpcion("✏️  ALTER TABLE (add col)", () => GenerarAlterTableAddColumn(capSchema, capTabla));
+                                agregarOpcion("🗑️  DROP TABLE", () => GenerarDropTable(capSchema, capTabla));
+                                ctxMenu.Items.Add(new Separator());
+                                agregarOpcion("➕ INSERT INTO", () => GenerarInsert(capSchema, capTabla, capColumnas));
+                                agregarOpcion("✏️  UPDATE ... SET", () => GenerarUpdate(capSchema, capTabla, capColumnas));
+                                agregarOpcion("🗑️  DELETE FROM", () => GenerarDelete(capSchema, capTabla));
+                                ctxMenu.Items.Add(new Separator());
+                                agregarOpcion("🔑 CREATE INDEX", () => GenerarCreateIndex(capSchema, capTabla));
+                                agregarOpcion("🔑 DROP INDEX", () => GenerarDropIndex(capSchema, capTabla));
+                                agregarOpcion("📊 COUNT(*)", () => GenerarCount(capSchema, capTabla));
+
+                                tablaNode.ContextMenu = ctxMenu;
+                                // ─────────────────────────────────────────────────────────
+                            }
+
+                            // Agregar columnas
+                            foreach (DataRow col in columnas.Rows)
+                            {
+                                token.ThrowIfCancellationRequested();
+
+                                string colName = col["COLUMN_NAME"].ToString();
+                                string tipoCol = col["TYPE_NAME"].ToString();
+                                string longitud = col["COLUMN_SIZE"].ToString();
+
+                                string escala = string.Empty;
+                                if (col.Table.Columns.Contains("DECIMAL_DIGITS") && col["DECIMAL_DIGITS"] != DBNull.Value)
+                                    escala = col["DECIMAL_DIGITS"].ToString();
+                                else if (col.Table.Columns.Contains("NUMERIC_SCALE") && col["NUMERIC_SCALE"] != DBNull.Value)
+                                    escala = col["NUMERIC_SCALE"].ToString();
+                                else if (col.Table.Columns.Contains("COLUMN_SCALE") && col["COLUMN_SCALE"] != DBNull.Value)
+                                    escala = col["COLUMN_SCALE"].ToString();
+                                else if (col.Table.Columns.Contains("COLUMN_SIZE") && col["COLUMN_SIZE"] != DBNull.Value)
+                                    escala = col["COLUMN_SIZE"].ToString();
+
+                                string aceptaNulos = string.Empty;
+                                if (col.Table.Columns.Contains("IS_NULLABLE") && col["IS_NULLABLE"] != DBNull.Value)
+                                {
+                                    string nuloStr = col["IS_NULLABLE"].ToString().ToUpper();
+                                    aceptaNulos = nuloStr == "YES" ? "NULL" : nuloStr == "NO" ? "NOT NULL" : string.Empty;
+                                }
+
+                                string defecto = string.Empty;
+                                if (col.Table.Columns.Contains("COLUMN_DEF") && col["COLUMN_DEF"] != DBNull.Value)
+                                    defecto = col["COLUMN_DEF"].ToString();
+
+                                string tipoCompleto = tipoCol;
+                                string tipoNormalizado = tipoCol.ToUpper();
+                                bool esNumericoDecimal = tipoNormalizado.Contains("DECIMAL") || tipoNormalizado.Contains("NUMERIC");
+
+                                if (!string.IsNullOrEmpty(longitud))
+                                {
+                                    if (esNumericoDecimal && !string.IsNullOrEmpty(escala))
+                                        tipoCompleto += $" [{longitud}, {escala}]";
+                                    else
+                                        tipoCompleto += $" [{longitud}]";
+                                }
+
+                                // 🖼️ INICIO DE MODIFICACIÓN: nodo de columna con icono (clave o normal)
+                                bool esClavePrimaria = columnasClaveSet.Contains(colName);
+                                var colHeader = new StackPanel { Orientation = Orientation.Horizontal };
+                                colHeader.Children.Add(new System.Windows.Controls.Image
+                                {
+                                    Source = esClavePrimaria ? columnaClaveIcon : columnaIcon,
+                                    Width = tamañoIconos,
+                                    Height = tamañoIconos,
+                                    Margin = new System.Windows.Thickness(0, 0, 5, 0)
+                                });
+                                colHeader.Children.Add(new System.Windows.Controls.TextBlock
+                                {
+                                    Text = $"{colName} ({tipoCompleto}{(string.IsNullOrEmpty(aceptaNulos) ? string.Empty : $", {aceptaNulos}")}{(string.IsNullOrEmpty(defecto) ? string.Empty : $", DEFAULT {defecto}")})"
+                                });
+
+                                var colNode = new TreeViewItem { Header = colHeader };
+                                // 🖼️ FIN DE MODIFICACIÓN
+
+                                tablaNode.Items.Add(colNode);
+                            }
+                        });
+
+                        // 🔹 Carga de índices (sin UI pesada)
+                        if (tipo == "TABLE") // 👈 NUEVO: las vistas no tienen índices
+                        {
+                            try
+                            {
+                                using (var cmd = conn.CreateCommand())
+                                {
+                                    switch (conexionActual.Motor)
+                                    {
+                                        case TipoMotor.MS_SQL:
+                                            cmd.CommandText = $@"SELECT
+                                                s.name AS SchemaName,
+                                                t.name AS TableName,
+                                                i.name AS IndexName,
+                                                i.type_desc AS IndexType,
+                                                c.name AS ColumnName,
+                                                ic.key_ordinal AS ColumnOrder,
+                                                i.is_primary_key AS IsPrimaryKey,
+                                                i.is_unique AS IsUnique
+                                            FROM sys.indexes i
+                                            INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+                                            INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+                                            INNER JOIN sys.tables t ON i.object_id = t.object_id
+                                            INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
+                                            WHERE t.name = '{nombreTabla}'
+                                            ORDER BY i.name, ic.key_ordinal;";
+                                            break;
+                                        case TipoMotor.DB2:
+                                            cmd.CommandText = $@"SELECT
+                                                i.TABSCHEMA AS SchemaName,
+                                                i.TABNAME AS TableName,
+                                                i.INDNAME AS IndexName,
+                                                i.UNIQUERULE AS UniqueRule,
+                                                c.COLNAME AS ColumnName,
+                                                c.COLSEQ AS ColumnOrder,
+                                                i.INDEXTYPE AS IndexType
+                                            FROM SYSCAT.INDEXES i
+                                            JOIN SYSCAT.INDEXCOLUSE c
+                                                ON i.INDNAME = c.INDNAME AND i.INDSCHEMA = c.INDSCHEMA
+                                            WHERE i.TABNAME = UPPER('{nombreTabla}')
+                                            ORDER BY i.INDNAME, c.COLSEQ;";
+                                            break;
+                                        case TipoMotor.POSTGRES:
+                                            cmd.CommandText = $@"SELECT
+                                                n.nspname AS SchemaName,
+                                                t.relname AS TableName,
+                                                i.relname AS IndexName,
+                                                a.attname AS ColumnName,
+                                                ix.indisunique AS IsUnique,
+                                                ix.indisprimary AS IsPrimary
+                                            FROM pg_class t
+                                            JOIN pg_index ix ON t.oid = ix.indrelid
+                                            JOIN pg_class i ON i.oid = ix.indexrelid
+                                            JOIN pg_namespace n ON n.oid = t.relnamespace
+                                            JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
+                                            WHERE t.relname = '{nombreTabla}'
+                                            ORDER BY i.relname, a.attnum;";
+                                            break;
+                                        case TipoMotor.SQLite:
+                                            cmd.CommandText = $"PRAGMA index_list('{nombreTabla}');";
+                                            break;
+                                        default:
+                                            break;
+                                    }
+
+                                    using (var adapter = new OdbcDataAdapter(cmd))
+                                    {
+                                        var dtIndices = new DataTable();
+                                        adapter.Fill(dtIndices);
+
+                                        if (dtIndices.Rows.Count > 0)
+                                        {
+                                            Dispatcher.Invoke(() =>
+                                            {
+                                                var tablaNode = tvCargar.Items.OfType<TreeViewItem>()
+                                                    .FirstOrDefault(t => (string)t.Tag == nombreTabla);
+                                                if (tablaNode == null) return;
+
+                                                var indiceRaiz = new TreeViewItem
+                                                {
+                                                    Header = "Índices",
+                                                };
+
+                                                string indexNameColumn = conexionActual.Motor == TipoMotor.SQLite ? "NAME" : "INDEXNAME";
+
+                                                var indicesAgrupados = dtIndices.AsEnumerable()
+                                                    .GroupBy(row => row.Field<string>(indexNameColumn))
+                                                    .OrderBy(g => g.Key);
+
+                                                foreach (var grupoIndice in indicesAgrupados)
+                                                {
+                                                    string nombreIndice = grupoIndice.Key;
+
+                                                    // 🖼️ INICIO DE MODIFICACIÓN: nodo de índice con icono
+                                                    var indiceHeader = new StackPanel { Orientation = Orientation.Horizontal };
+                                                    indiceHeader.Children.Add(new System.Windows.Controls.Image
+                                                    {
+                                                        Source = claveIcon,
+                                                        Width = tamañoIconos,
+                                                        Height = tamañoIconos,
+                                                        Margin = new System.Windows.Thickness(0, 0, 5, 0)
+                                                    });
+                                                    indiceHeader.Children.Add(new System.Windows.Controls.TextBlock { Text = nombreIndice });
+
+                                                    var nodoIndice = new TreeViewItem { Header = indiceHeader };
+                                                    // 🖼️ FIN DE MODIFICACIÓN
+
+                                                    indiceRaiz.Items.Add(nodoIndice);
+                                                }
+
+                                                tablaNode.Items.Add(indiceRaiz);
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                            catch { /* Algunos motores no exponen esa vista */ }
+                        } // 👈 NUEVO: fin del if (tipo == "TABLE") para índices
+
+                        tablasLeidas++;
+                    }
+
+                    Dispatcher.Invoke(() => txtExplorar.Text = $"{tablasLeidas} tablas leídas de {cantidadDeTablas}");
+                    if (tablasLeidas == cantidadDeTablas) break;
+                }
+            }
         }
 
         private void TablaNode_MouseDoubleClick(object sender, MouseButtonEventArgs e)

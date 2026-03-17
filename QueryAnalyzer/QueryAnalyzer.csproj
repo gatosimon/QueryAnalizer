@@ -100,6 +100,7 @@
     <Resource Include="Assets\tabla.png" />
     <Resource Include="Assets\buscar.png" />
     <Resource Include="Assets\columnaClave.png" />
+    <Resource Include="Assets\vista.png" />
     <Content Include="Logo.ico" />
     <Content Include="Logo.png" />
   </ItemGroup>
