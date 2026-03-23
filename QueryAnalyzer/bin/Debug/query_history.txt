@@ -23294,3 +23294,655 @@ FROM sys.dm_clr_tasks;
 SELECT TOP 10 *
 FROM sys.columns;
 ---
+SELECT
+    "nombre",
+    "codigo",
+    "created",
+    "modified",
+    "user_id_creator",
+    "user_id_updater",
+    "palabrasclaves",
+    "titulo"
+FROM public.calles_ot_loc;
+---
+SELECT
+    "nombre",
+    "codigo",
+    "created",
+    "modified",
+    "user_id_creator",
+    "user_id_updater",
+    "palabrasclaves",
+    "titulo"
+FROM public.calles;
+---
+SELECT
+    "id",
+    "user_id_creator",
+    "created",
+    "user_id_updater",
+    "modified",
+    "catastro",
+    "calle",
+    "calle_codigo",
+    "altura",
+    "geom",
+    "descbarrio",
+    "concesion",
+    "codmqf",
+    "loteopoligono",
+    "nromensura",
+    "superficiestitulo",
+    "partidainmob",
+    "decord",
+    "expdonacion",
+    "ultpropietario",
+    "obervaciones"
+FROM capasconsultas.vw_lotesbaldios;
+---
+SELECT
+    "id",
+    "user_id_creator",
+    "created",
+    "user_id_updater",
+    "modified",
+    "catastro",
+    "calle",
+    "calle_codigo",
+    "altura",
+    "geom"
+FROM capasconsultas.vw_loteos;
+---
+SELECT
+    "id",
+    "user_id_creator",
+    "created",
+    "user_id_updater",
+    "modified",
+    "catastro",
+    "calle",
+    "calle_codigo",
+    "altura",
+    "geom",
+    "fechainicio",
+    "fechamedia",
+    "fechafin",
+    "fecha_actual",
+    "luminarias_tipo_id",
+    "luminarias_tipo_ilum_id",
+    "luminarias_tipodeilum_id",
+    "tipodeluminaria",
+    "luminarias_categdeilum_id",
+    "luminarias_plan_id",
+    "luminarias_colocacion_id"
+FROM capasconsultas.vw_luminarias;
+---
+SELECT * FROM M29_cptos
+---
+SELECT * FROM M29_cptos where cod_cpto = 389
+---
+SELECT * FROM M29_cptos where cod_cpto = 389
+---
+SELECT * FROM Liqui_eneconaumento
+---
+SELECT * FROM Liqui_eneconaumento
+where COD_CPTO <> 308 and COD_CPTO <> 399 and PERIODO '01/12/2025'
+---
+SELECT * FROM Liqui_eneconaumento
+where COD_CPTO NOT IN (308, 399) and PERIODO '01/12/2025'
+---
+SELECT * FROM Liqui_eneconaumento
+where COD_CPTO <> 308 and COD_CPTO <> 399 
+---
+SELECT * FROM Liqui_eneconaumento
+where COD_CPTO <> 308 and COD_CPTO <> 399 AND PERIODO = '01/12/2025'
+---
+SELECT * FROM Liqui_eneconaumento
+where COD_CPTO <> 308 AND PERIODO = '01/12/2025'
+---
+SELECT * FROM Liqui_eneconaumento
+where COD_CPTO <> 399 AND PERIODO = '01/12/2025'
+---
+SELECT * FROM Liqui_eneconaumento
+where COD_CPTO <> 308 and COD_CPTO <> 399 AND PERIODO = '01/12/2025'
+---
+SELECT * FROM M29_VIG_LEG_GRI
+---
+SELECT * FROM N29_VIGENCIA_SUEL
+WHERE Legajo = 2149
+---
+SELECT * FROM N29_VIGENCIA_SUEL
+WHERE Legajo = 2149 and f_desde = '01/12/2025'
+---
+SELECT *
+FROM app.logs
+LIMIT 10;
+---
+SELECT
+    "id",
+    "user_id_creator",
+    "created",
+    "user_id_updater",
+    "modified",
+    "catastro",
+    "calle",
+    "calle_codigo",
+    "altura",
+    "geom",
+    "fechainicio",
+    "fechamedia",
+    "fechafin",
+    "fecha_actual",
+    "luminarias_tipo_id",
+    "luminarias_tipo_ilum_id",
+    "luminarias_tipodeilum_id",
+    "tipodeluminaria",
+    "luminarias_categdeilum_id",
+    "luminarias_plan_id",
+    "luminarias_colocacion_id"
+FROM capasconsultas.vw_luminarias;
+---
+SELECT
+    "id",
+    "user_id_creator",
+    "created",
+    "user_id_updater",
+    "modified",
+    "catastro",
+    "calle",
+    "calle_codigo",
+    "altura",
+    "geom"
+FROM capasconsultas.vw_luminarias2;
+---
+SELECT
+    "user_id_creator",
+    "created",
+    "user_id_updater",
+    "modified",
+    "calle_codigo",
+    "altura",
+    "destino",
+    "observaciones",
+    "lotessegunuso_clasificacionlote_id",
+    "lotessegunuso_destinouso_id",
+    "esprincipal",
+    "actualizacionautomatica",
+    "id",
+    "geom",
+    "catastro",
+    "partidainmob",
+    "concesion",
+    "cod_manzana",
+    "calle",
+    "nropuerta",
+    "descbarrio",
+    "loteparcelario",
+    "loteopoligono",
+    "nroordpathist",
+    "desccategoria",
+    "supm2imponible",
+    "cantidadplantas",
+    "observacion",
+    "fec_aprobacion_mun",
+    "tomoexpte",
+    "ficheroexpte",
+    "digitoverif",
+    "nroexpte",
+    "letraexpte",
+    "matricula_prof",
+    "cod_profesional",
+    "fec_aprob_dpc",
+    "nromensura",
+    "tipomensura",
+    "propietario",
+    "propietario_domicilio_legal",
+    "superficiestitulo",
+    "fecha_aprob_dpc",
+    "clasificacionlote",
+    "destinouso"
+FROM capasconsultas.vw_lotessegunusos;
+---
+SELECT
+    "id",
+    "geom",
+    "catastro",
+    "tipomensura",
+    "nromensura",
+    "fec_aprob_dpc",
+    "matricula_prof",
+    "categ_tgi",
+    "categ_tgi_texto",
+    "esprincipal",
+    "escriturado",
+    "calle",
+    "calle_codigo",
+    "nropuerta",
+    "destino",
+    "barrio_codigo",
+    "barrio",
+    "concesion",
+    "codmqf",
+    "partidainmob",
+    "loteopoligono",
+    "propietario",
+    "observaciones",
+    "lotesmunicipales_descripcionclasificacionlote_id",
+    "lotesmunicipales_tipoclasificacionlote_id",
+    "lotesmunicipales_tipolotemunicipal_id",
+    "lotesmunicipales_descripcionclasificacionlote_nombre",
+    "lotesmunicipales_tipoclasificacionlote_nombre",
+    "lotesmunicipales_tipolotemunicipal_nombre",
+    "superficie"
+FROM capasconsultas.vw_lotesmunicipalesconsulta;
+---
+SELECT
+    "id",
+    "user_id_creator",
+    "created",
+    "user_id_updater",
+    "modified",
+    "catastro",
+    "calle",
+    "calle_codigo",
+    "altura",
+    "geom",
+    "ejemplo_tutorial",
+    "tipocalle_tutorial",
+    "tipotexto_tutorial",
+    "tipotextolong_tutorial",
+    "tiponumentero_tutorial",
+    "tiponumerodecimal_tutorial",
+    "tipoboolean",
+    "tipocolor",
+    "tipofecha",
+    "tipohora",
+    "tutorial_tipolista_id",
+    "tipoarchivo"
+FROM capasnativas.tutorial;
+---
+SELECT
+    COMUNA,
+    LEGAJO,
+    PERIODO,
+    NRO_RECIBOPERIODO,
+    TIPO_CPTO,
+    COD_CPTO,
+    SUBCOD_CPTO,
+    AJUSTE,
+    RESTA,
+    IMPORT_CPTO,
+    AGUINALDO,
+    PRIORIDAD,
+    CARGA_MANUAL,
+    CAMPO_AUX01,
+    CAMPO_AUX02,
+    DTO_CPTO002,
+    DTO_CPTO009,
+    SECRETARIA,
+    SUBSECRET,
+    NIVEL01,
+    NIVEL02,
+    NIVEL03,
+    CATEG_ACTUAL,
+    CATEG_SUBROGA,
+    SECRET_XPROG,
+    SUBSECR_XPROG,
+    NIVEL01_XPROG,
+    NIVEL02_XPROG,
+    NIVEL03_XPROG
+FROM DB2ADMIN.N29_LIQUI2026;
+---
+SELECT
+    COMUNA,
+    LEGAJO,
+    PERIODO,
+    NRO_RECIBOPERIODO,
+    TIPO_CPTO,
+    COD_CPTO,
+    SUBCOD_CPTO,
+    AJUSTE,
+    RESTA,
+    IMPORT_CPTO,
+    AGUINALDO,
+    PRIORIDAD,
+    CARGA_MANUAL,
+    CAMPO_AUX01,
+    CAMPO_AUX02,
+    DTO_CPTO002,
+    DTO_CPTO009,
+    SECRETARIA,
+    SUBSECRET,
+    NIVEL01,
+    NIVEL02,
+    NIVEL03,
+    CATEG_ACTUAL,
+    CATEG_SUBROGA,
+    SECRET_XPROG,
+    SUBSECR_XPROG,
+    NIVEL01_XPROG,
+    NIVEL02_XPROG,
+    NIVEL03_XPROG
+FROM DB2ADMIN.N29_LIQUI2026
+WHERE COMUNA = 3;
+---
+SELECT
+    COMUNA,
+    LEGAJO,
+    PERIODO,
+    NRO_RECIBOPERIODO,
+    TIPO_CPTO,
+    COD_CPTO,
+    SUBCOD_CPTO,
+    AJUSTE,
+    RESTA,
+    IMPORT_CPTO,
+    AGUINALDO,
+    PRIORIDAD,
+    CARGA_MANUAL,
+    CAMPO_AUX01,
+    CAMPO_AUX02,
+    DTO_CPTO002,
+    DTO_CPTO009,
+    SECRETARIA,
+    SUBSECRET,
+    NIVEL01,
+    NIVEL02,
+    NIVEL03,
+    CATEG_ACTUAL,
+    CATEG_SUBROGA,
+    SECRET_XPROG,
+    SUBSECR_XPROG,
+    NIVEL01_XPROG,
+    NIVEL02_XPROG,
+    NIVEL03_XPROG
+FROM DB2ADMIN.N29_LIQUI2026
+WHERE COMUNA = 3 AND PRIORIDAD = '01/01/2026';
+---
+SELECT
+    COMUNA,
+    LEGAJO,
+    PERIODO,
+    NRO_RECIBOPERIODO,
+    TIPO_CPTO,
+    COD_CPTO,
+    SUBCOD_CPTO,
+    AJUSTE,
+    RESTA,
+    IMPORT_CPTO,
+    AGUINALDO,
+    PRIORIDAD,
+    CARGA_MANUAL,
+    CAMPO_AUX01,
+    CAMPO_AUX02,
+    DTO_CPTO002,
+    DTO_CPTO009,
+    SECRETARIA,
+    SUBSECRET,
+    NIVEL01,
+    NIVEL02,
+    NIVEL03,
+    CATEG_ACTUAL,
+    CATEG_SUBROGA,
+    SECRET_XPROG,
+    SUBSECR_XPROG,
+    NIVEL01_XPROG,
+    NIVEL02_XPROG,
+    NIVEL03_XPROG
+FROM DB2ADMIN.N29_LIQUI2026
+WHERE COMUNA = 3 AND PERIDODO = '01/01/2026';
+---
+SELECT
+    COMUNA,
+    LEGAJO,
+    PERIODO,
+    NRO_RECIBOPERIODO,
+    TIPO_CPTO,
+    COD_CPTO,
+    SUBCOD_CPTO,
+    AJUSTE,
+    RESTA,
+    IMPORT_CPTO,
+    AGUINALDO,
+    PRIORIDAD,
+    CARGA_MANUAL,
+    CAMPO_AUX01,
+    CAMPO_AUX02,
+    DTO_CPTO002,
+    DTO_CPTO009,
+    SECRETARIA,
+    SUBSECRET,
+    NIVEL01,
+    NIVEL02,
+    NIVEL03,
+    CATEG_ACTUAL,
+    CATEG_SUBROGA,
+    SECRET_XPROG,
+    SUBSECR_XPROG,
+    NIVEL01_XPROG,
+    NIVEL02_XPROG,
+    NIVEL03_XPROG
+FROM DB2ADMIN.N29_LIQUI2026
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026';
+---
+SELECT
+    COMUNA,
+    LEGAJO,
+    PERIODO,
+    NRO_RECIBOPERIODO,
+    TIPO_CPTO,
+    COD_CPTO,
+    SUBCOD_CPTO,
+    AJUSTE,
+    RESTA,
+    IMPORT_CPTO,
+    AGUINALDO,
+    PRIORIDAD,
+    CARGA_MANUAL,
+    CAMPO_AUX01,
+    CAMPO_AUX02,
+    DTO_CPTO002,
+    DTO_CPTO009,
+    SECRETARIA,
+    SUBSECRET,
+    NIVEL01,
+    NIVEL02,
+    NIVEL03,
+    CATEG_ACTUAL,
+    CATEG_SUBROGA,
+    SECRET_XPROG,
+    SUBSECR_XPROG,
+    NIVEL01_XPROG,
+    NIVEL02_XPROG,
+    NIVEL03_XPROG
+FROM DB2ADMIN.N29_LIQUI2026
+WHERE COMUNA = 3
+---
+
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+FETCH FIRST 10 ROWS ONLY;
+---
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERECOMUNA = 3 AND F_DESDE = '01/01/2026'
+FETCH FIRST 10 ROWS ONLY;
+---
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERECOMUNA = 3 AND F_DESDE >= '01/01/2026'
+FETCH FIRST 10 ROWS ONLY;
+---
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERECOMUNA = 3 AND F_DESDE >= '01-01-2026'
+FETCH FIRST 10 ROWS ONLY;
+---
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE >= '01/01/2026'
+FETCH FIRST 10 ROWS ONLY;
+---
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE >= '01/01/2026'
+---
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 
+AND F_DESDE >= '01/01/2026' 
+AND CAMPO_AUX01 like '%Aj%'
+---
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 
+AND F_DESDE >= '01/01/2026' 
+AND CAMPO_AUX01 like '%Aj.Ene%'
+---
+DELETE
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 
+AND F_DESDE >= '01/01/2026' 
+AND CAMPO_AUX01 like '%Aj.Ene%'
+---
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 
+AND F_DESDE >= '01/01/2026' 
+AND CAMPO_AUX01 like '%Aj.Ene%'
+---
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 
+AND F_DESDE >= '01/01/2026' 
+AND CAMPO_AUX01 like '%Aj.Ene%'
+---
+DELETE
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 
+AND F_DESDE >= '01/01/2026' 
+AND CAMPO_AUX01 like '%Aj.Ene%'
+---
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 
+AND F_DESDE >= '01/01/2026' 
+AND CAMPO_AUX01 like '%Aj.Ene%'
+---
+SELECT * FROM 
+LIQUI_EneConAumento
+---
+SELECT * FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026'
+---
+SELECT * FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026'
+---
+SELECT * FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026' AND LEGAJO = 2149
+---
+SELECT * FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026' AND LEGAJO = 2149
+---
+SELECT * FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026' AND LEGAJO = 2149
+---
+SELECT * FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026'
+---
+SELECT * FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026' AND LEGAJO = 2149
+---
+SELECT * FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026' AND LEGAJO = 2149
+ORDER BY COD_CPTO, PRIORIDAD
+---
+SELECT * FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026' AND LEGAJO = 2149
+ORDER BY COD_CPTO, PRIORIDAD
+---
+SELECT * FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026' 
+ORDER BY COD_CPTO, PRIORIDAD
+---
+SELECT * FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026' 
+ORDER BY LEGAJO, COD_CPTO, PRIORIDAD
+---
+SELECT DISTINCT(LEGAJO) FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026' 
+---
+SELECT * FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026' 
+ORDER BY LEGAJO, COD_CPTO, PRIORIDAD;
+
+---
+SELECT DISTINCT(COMUNA, LEGAJO, PERIODO, NRO_RECIBOPERIODO, TIPO_CPTO, COD_CPTO, SUBCOD_CPTO, AJUSTE, RESTA, AGUINALDO) FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026' 
+ORDER BY LEGAJO, COD_CPTO, PRIORIDAD
+---
+SELECT DISTINCT COMUNA, LEGAJO, PERIODO, NRO_RECIBOPERIODO, TIPO_CPTO, COD_CPTO, SUBCOD_CPTO, AJUSTE, RESTA, AGUINALDO FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026' 
+ORDER BY LEGAJO, COD_CPTO, PRIORIDAD
+---
+    COMUNA, LEGAJO, PERIODO, NRO_RECIBOPERIODO,
+    TIPO_CPTO, COD_CPTO, SUBCOD_CPTO, AJUSTE, RESTA, AGUINALDO
+FROM LIQUI_EneConAumento
+WHERE COMUNA = 3
+  AND PERIODO = '01/01/2026'
+ORDER BY LEGAJO, COD_CPTO
+---
+
+
+SELECT DISTINCT
+    COMUNA, LEGAJO, PERIODO, NRO_RECIBOPERIODO,
+    TIPO_CPTO, COD_CPTO, SUBCOD_CPTO, AJUSTE, RESTA, AGUINALDO
+FROM LIQUI_EneConAumento
+WHERE COMUNA = 3
+  AND PERIODO = '01/01/2026'
+ORDER BY LEGAJO, COD_CPTO
+---
+SELECT DISTINCT
+    COMUNA, LEGAJO, PERIODO, NRO_RECIBOPERIODO,
+    TIPO_CPTO, COD_CPTO, SUBCOD_CPTO, AJUSTE, RESTA, AGUINALDO, PRIORIDAD
+FROM LIQUI_EneConAumento
+WHERE COMUNA = 3
+  AND PERIODO = '01/01/2026'
+ORDER BY LEGAJO, COD_CPTO
+---
+SELECT * FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026' 
+ORDER BY LEGAJO, COD_CPTO, PRIORIDAD;
+---
+
+SELECT *
+FROM DB2ADMIN.N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 
+AND F_DESDE >= '01/01/2026' 
+AND CAMPO_AUX01 like '%Aj.Ene%'
+---
+SELECT * FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026' 
+ORDER BY LEGAJO, COD_CPTO, PRIORIDAD;
+---
+SELECT * FROM capasnativas.tutorial
+---
+SELECT * FROM m00tabma
+---
