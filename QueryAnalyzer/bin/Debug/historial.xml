@@ -56672,4 +56672,945 @@ ORDER BY LEGAJO, COD_CPTO, PRIORIDAD;</Consulta>
     <Parametros />
     <Fecha>2026-03-22T02:46:43.3018604-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026' 
+ORDER BY LEGAJO, COD_CPTO, PRIORIDAD;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:34:54.6099039-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM 
+LIQUI_EneConAumento
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026' 
+ORDER BY LEGAJO, COD_CPTO, PRIORIDAD;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:38:19.2695066-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND LEGAJO = 2149 AND PERIODO = '01/01/2026' AND NRO_RECIBOPERIODO = 1 AND TIPO_CPTO = 1 AND COD_CPTO = 20 AND SUBCOD_CPTO = 1 AND AJUSTE = 0 AND RESTA = 'N' AND AGUINALDO = 0 AND PRIORIDAD = 21</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:46:09.4329914-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND LEGAJO = 2149 AND PERIODO = '01/01/2026' AND NRO_RECIBOPERIODO = 1 </Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:46:19.7158506-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND LEGAJO = 2149 AND PERIODO = '01/01/2026' AND NRO_RECIBOPERIODO = 1 AND TIPO_CPTO = 1 </Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:46:30.1009342-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND LEGAJO = 2149 AND PERIODO = '01/01/2026' AND NRO_RECIBOPERIODO = 1 AND TIPO_CPTO = 1 AND COD_CPTO = 20 </Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:46:34.447047-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND LEGAJO = 2149 AND PERIODO = '01/01/2026' AND NRO_RECIBOPERIODO = 1 AND TIPO_CPTO = 1 AND COD_CPTO = 20 AND SUBCOD_CPTO = 1 </Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:46:46.0665022-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND LEGAJO = 2149 AND PERIODO = '01/01/2026' AND NRO_RECIBOPERIODO = 1 AND TIPO_CPTO = 1 AND COD_CPTO = 20 AND SUBCOD_CPTO = 1 AND AJUSTE = 0 </Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:46:49.0385296-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND LEGAJO = 2149 AND PERIODO = '01/01/2026' AND NRO_RECIBOPERIODO = 1 AND TIPO_CPTO = 1 AND COD_CPTO = 20 AND SUBCOD_CPTO = 1 AND AJUSTE = 'false'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:46:58.0460357-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND LEGAJO = 2149 AND PERIODO = '01/01/2026' AND NRO_RECIBOPERIODO = 1 AND TIPO_CPTO = 1 AND COD_CPTO = 20 AND SUBCOD_CPTO = 1 AND AJUSTE = '0'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:47:39.4263238-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND LEGAJO = 2149 AND PERIODO = '01/01/2026' AND NRO_RECIBOPERIODO = 1 AND TIPO_CPTO = 1 AND COD_CPTO = 20 AND SUBCOD_CPTO = 1 AND AJUSTE = 'False'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:47:54.8150754-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND LEGAJO = 2149 AND PERIODO = '01/01/2026' AND NRO_RECIBOPERIODO = 1 AND TIPO_CPTO = 1 AND COD_CPTO = 20 AND SUBCOD_CPTO = 1 AND AJUSTE = 'F'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:48:11.0330565-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND LEGAJO = 2149 AND PERIODO = '01/01/2026' AND NRO_RECIBOPERIODO = 1 AND TIPO_CPTO = 1 AND COD_CPTO = 20 AND SUBCOD_CPTO = 1</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:48:19.9415476-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND LEGAJO = 2149 AND PERIODO = '01/01/2026' AND NRO_RECIBOPERIODO = 1 AND TIPO_CPTO = 1 AND COD_CPTO = 20 AND SUBCOD_CPTO = 1 AND ASCII(AJUSTE) = 0</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:57:13.9702661-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND LEGAJO = 2149 AND PERIODO = '01/01/2026' AND NRO_RECIBOPERIODO = 1 AND TIPO_CPTO = 1 AND COD_CPTO = 20 AND SUBCOD_CPTO = 1 AND ASCII(AJUSTE) = 0 AND RESTA = 'N'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:57:29.6696694-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND LEGAJO = 2149 AND PERIODO = '01/01/2026' AND NRO_RECIBOPERIODO = 1 AND TIPO_CPTO = 1 AND COD_CPTO = 20 AND SUBCOD_CPTO = 1 AND ASCII(AJUSTE) = 0 AND RESTA = 'N' AND AGUINALDO = 0</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:57:34.2862915-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND LEGAJO = 2149 AND PERIODO = '01/01/2026' AND NRO_RECIBOPERIODO = 1 AND TIPO_CPTO = 1 AND COD_CPTO = 20 AND SUBCOD_CPTO = 1 AND ASCII(AJUSTE) = 0 AND RESTA = 'N' AND ASCII(AGUINALDO) = 0 </Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:57:45.2729697-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND LEGAJO = 2149 AND PERIODO = '01/01/2026' AND NRO_RECIBOPERIODO = 1 AND TIPO_CPTO = 1 AND COD_CPTO = 20 AND SUBCOD_CPTO = 1 AND ASCII(AJUSTE) = 0 AND RESTA = 'N' AND ASCII(AGUINALDO) = 0 AND PRIORIDAD = 21</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T06:57:55.0900043-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND PERIODO = '01/01/2026'
+</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T07:29:06.9107728-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT COUNT(COMUNA) FROM LIQUI_EneConAumento </Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T07:32:57.1061493-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA,
+    LEGAJO,
+    PERIODO,
+    NRO_RECIBOPERIODO,
+    TIPO_CPTO,
+    COD_CPTO,
+    SUBCOD_CPTO,
+    AJUSTE,
+    RESTA,
+    IMPORT_CPTO,
+    AGUINALDO,
+    PRIORIDAD,
+    CARGA_MANUAL,
+    CAMPO_AUX01,
+    CAMPO_AUX02,
+    DTO_CPTO002,
+    DTO_CPTO009,
+    SECRETARIA,
+    SUBSECRET,
+    NIVEL01,
+    NIVEL02,
+    NIVEL03,
+    CATEG_ACTUAL,
+    CATEG_SUBROGA,
+    SECRET_XPROG,
+    SUBSECR_XPROG,
+    NIVEL01_XPROG,
+    NIVEL02_XPROG,
+    NIVEL03_XPROG
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T07:38:33.276188-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT
+    COMUNA,
+    LEGAJO,
+    PERIODO,
+    NRO_RECIBOPERIODO,
+    TIPO_CPTO,
+    COD_CPTO,
+    SUBCOD_CPTO,
+    AJUSTE,
+    RESTA,
+    IMPORT_CPTO,
+    AGUINALDO,
+    PRIORIDAD,
+    CARGA_MANUAL,
+    CAMPO_AUX01,
+    CAMPO_AUX02,
+    DTO_CPTO002,
+    DTO_CPTO009,
+    SECRETARIA,
+    SUBSECRET,
+    NIVEL01,
+    NIVEL02,
+    NIVEL03,
+    CATEG_ACTUAL,
+    CATEG_SUBROGA,
+    SECRET_XPROG,
+    SUBSECR_XPROG,
+    NIVEL01_XPROG,
+    NIVEL02_XPROG,
+    NIVEL03_XPROG
+FROM DB2ADMIN.LIQUI_ENECONAUMENTO
+WHERE COMUNA = 3 AND PERIODO = '01/01/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T07:38:41.8447984-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND PERIODO = '01/01/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T07:43:20.9421113-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>DELETE FROM LIQUI_EneConABack</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T07:45:35.0055628-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConABack</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T07:46:34.0657657-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_ENECONAUMENTO WHERE COMUNA = 3 AND PERIODO = '01/01/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T07:46:54.7664308-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>DELETE FROM LIQUI_ENECONAUMENTO WHERE COMUNA = 3 AND PERIODO = '01/01/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T07:47:16.1155047-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_ENECONAUMENTO WHERE COMUNA = 3 AND PERIODO = '01/01/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T07:47:20.7512101-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_ENECONAUMENTO WHERE COMUNA = 3 AND PERIODO = '01/01/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:03:01.438986-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/01/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:07:21.6378245-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/01/2026' AND F_HASTA &lt;= '31/01/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:12:21.3816971-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>DELETE FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/01/2026' AND F_HASTA &lt;= '31/01/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:15:08.619798-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/01/2026' AND F_HASTA &lt;= '31/01/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:15:16.7370524-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/01/2026' AND F_HASTA &lt;= '31/01/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:26:28.6791157-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/01/2026' AND F_HASTA &lt;= '31/01/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:26:40.9965125-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:26:59.2745256-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND CAMPO_AUX01 like 'Aj.Feb'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:29:42.9126201-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:31:51.9278355-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' and campo_aux01 like 'Aj.Feb'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:32:17.2450711-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:32:32.0431215-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX like '%AJ.Feb%'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:33:49.8396245-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX like '%Aj.Feb%'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:33:55.1210235-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX like '%Feb%'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:33:58.4610712-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:34:09.4693468-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:34:39.4439656-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX1 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:34:46.6669468-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:34:51.1413429-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:34:57.9061431-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX01 = 'Aj.Feb.26' AND COD_CPTO = 308</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:53:50.0646796-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND COD_CPTO = 308</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:54:00.4352336-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX01 = 'Aj.Feb.26' AND COD_CPTO &lt;&gt; 308</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:54:41.1915691-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:54:47.8260589-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>UPDATE DB2ADMIN.N29_VIGENCIA_SUEL
+SET
+    CAMPO_AUX01 = 'Aj.Ene.26'
+WHERE WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX01 = 'Aj.Feb.26' AND COD_CPTO &lt;&gt; 308</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:57:17.4284825-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX01 = 'Aj.Feb.26' AND COD_CPTO &lt;&gt; 308
+</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:57:25.0875227-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>UPDATE DB2ADMIN.N29_VIGENCIA_SUEL
+SET
+    CAMPO_AUX01 = 'Aj.Ene.26'
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX01 = 'Aj.Feb.26' AND COD_CPTO &lt;&gt; 308
+</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:57:33.4449095-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX01 = 'Aj.Feb.26' AND COD_CPTO &lt;&gt; 308</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:57:38.031698-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX01 = 'Aj.Ene.26' AND COD_CPTO &lt;&gt; 308</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T08:57:45.7019682-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND PERIODO = '01/01/2026'
+</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T09:25:14.1594914-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND PERIODO = '01/02/2026'
+</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T09:25:22.674516-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM LIQUI_EneConAumento WHERE COMUNA = 3 AND PERIODO = '01/02/2026'
+</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T09:25:39.2980868-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX01 = 'Aj.Ene.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T09:28:51.9136695-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T09:29:04.0495963-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T09:29:26.9404045-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+    </conexion>
+    <Consulta>SELECT * FROM N29_VIGENCIA_SUEL
+WHERE COMUNA = 3 AND F_DESDE &gt;= '01/03/2026' AND F_HASTA &lt;= '31/03/2026' AND CAMPO_AUX01 = 'Aj.Feb.26'</Consulta>
+    <Parametros />
+    <Fecha>2026-03-25T11:39:08.8099302-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>
