@@ -57,17 +57,28 @@ namespace QueryAnalyzer
 
         public static string GetConnectionString(Conexion conexion)
         {
-            return GetConnectionString(conexion.Motor, conexion.Servidor, conexion.BaseDatos, conexion.Usuario, conexion.Contrasena);
+            return GetConnectionString(conexion.Motor, conexion.Servidor, conexion.BaseDatos, conexion.Usuario, conexion.Contrasena, conexion.EsWeb);
         }
 
-        public static string GetConnectionString(TipoMotor motor, string servidor, string baseDatos, string usuario, string contraseña)
+        public static string GetConnectionString(TipoMotor motor, string servidor, string baseDatos, string usuario, string contraseña, bool esWeb)
         {
             string stringConnection = string.Empty;
             string driver = ObtenerNombreDriver(motor);
             switch (motor)
             {
                 case TipoMotor.MS_SQL:
-                    stringConnection = $@"Driver={{{driver}}};Server=SQL{servidor}\{servidor};Database={baseDatos};Uid={usuario};Pwd={contraseña};TrustServerCertificate=yes;";
+                    if (esWeb)
+                    {
+                        stringConnection = $@"Driver={{{driver}}};Server={servidor};Database={baseDatos};Uid={usuario};Pwd={contraseña};TrustServerCertificate=yes;";
+                    }
+                    else if (servidor.EndsWith("WEB"))
+                    {
+                        stringConnection = $@"Driver={{{driver}}};Server=SQL{servidor.Replace("WEB", string.Empty)}\{servidor};Database=;Uid={usuario};Pwd={contraseña};TrustServerCertificate=yes;";
+                    }
+                    else
+                    {
+                        stringConnection = $@"Driver={{{driver}}};Server=SQL{servidor}\{servidor};Database={baseDatos};Uid={usuario};Pwd={contraseña};TrustServerCertificate=yes;";
+                    }
                     break;
                 case TipoMotor.DB2:
                     stringConnection = $"Driver={{{driver}}};Database={baseDatos};Hostname={servidor};Port=50000; Protocol=TCPIP;Uid={usuario};Pwd={contraseña};";

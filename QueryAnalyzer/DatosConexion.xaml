@@ -195,10 +195,13 @@
         <Grid Grid.Row="2" Grid.Column="1" Margin="5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="30"/>
             </Grid.ColumnDefinitions>
             <TextBox x:Name="txtServidor" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,5,0"/>
-            <Button x:Name="btnBuscarBase" Grid.Column="1" Content="..." Width="25"
+            <CheckBox x:Name="chkEsWeb" Grid.Column="1" Content="¿Es Web?" VerticalAlignment="Center" Margin="0,0,5,0"
+                      Foreground="{DynamicResource BrushFG}"/>
+            <Button x:Name="btnBuscarBase" Grid.Column="2" Content="..." Width="25"
                     HorizontalAlignment="Right" IsEnabled="False" Click="btnBuscarBase_Click"/>
         </Grid>
 

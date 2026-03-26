@@ -7,6 +7,7 @@
     <BaseDatos>TRIBUTOS</BaseDatos>
     <Usuario>db2admin</Usuario>
     <Contrasena>db2admin</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>Tributos Desarrollo DB2</Nombre>
@@ -15,6 +16,7 @@
     <BaseDatos>TRIBUTOS</BaseDatos>
     <Usuario>db2admin</Usuario>
     <Contrasena>db2admin</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>RRHH Desarrollo DB2</Nombre>
@@ -23,6 +25,7 @@
     <BaseDatos>RRHH</BaseDatos>
     <Usuario>db2admin</Usuario>
     <Contrasena>db2admin</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>Apremios Desarrollo SQL</Nombre>
@@ -31,6 +34,7 @@
     <BaseDatos>TRIBUTOS</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>NUEVA</Nombre>
@@ -39,6 +43,7 @@
     <BaseDatos>TRIBUTOS</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>PG prueba</Nombre>
@@ -47,6 +52,7 @@
     <BaseDatos>Postgresim10</BaseDatos>
     <Usuario>postgres</Usuario>
     <Contrasena>postgres</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>Base Chica DB2</Nombre>
@@ -55,6 +61,7 @@
     <BaseDatos>CONTCBEL</BaseDatos>
     <Usuario>db2admin</Usuario>
     <Contrasena>db2admin</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>SQLite prueba</Nombre>
@@ -63,6 +70,7 @@
     <BaseDatos />
     <Usuario />
     <Contrasena />
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>Desarrollo DB2 ConstCBEL</Nombre>
@@ -71,6 +79,7 @@
     <BaseDatos>CONTCBEL</BaseDatos>
     <Usuario>db2admin</Usuario>
     <Contrasena>db2admin</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>GIS</Nombre>
@@ -79,6 +88,7 @@
     <BaseDatos>gis</BaseDatos>
     <Usuario>magic</Usuario>
     <Contrasena>DEriu7Dp45</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>DESARROLLO WEB</Nombre>
@@ -87,6 +97,7 @@
     <BaseDatos />
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>Historico tributos</Nombre>
@@ -95,6 +106,7 @@
     <BaseDatos>HISTOTRIB</BaseDatos>
     <Usuario>db2admin</Usuario>
     <Contrasena>db2admin</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>RRHH PROD DB2</Nombre>
@@ -103,6 +115,7 @@
     <BaseDatos>RRHH</BaseDatos>
     <Usuario>db2admin</Usuario>
     <Contrasena>db2admin</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>CONTABIL PROD DB2</Nombre>
@@ -111,6 +124,7 @@
     <BaseDatos>CONTABIL</BaseDatos>
     <Usuario>db2admin</Usuario>
     <Contrasena>db2admin</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>Desarrollo SQL</Nombre>
@@ -119,6 +133,7 @@
     <BaseDatos>TRIBUTOS</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>TRIBUTOS SQL</Nombre>
@@ -127,6 +142,7 @@
     <BaseDatos>TRIBUTOS</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>GIS PRODUCCION</Nombre>
@@ -135,6 +151,7 @@
     <BaseDatos>gis</BaseDatos>
     <Usuario>magic</Usuario>
     <Contrasena>DEriu7Dp45</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>SQL ADMIN DESA</Nombre>
@@ -143,6 +160,7 @@
     <BaseDatos>ADMINISTRACION</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>TRIBUTOS SQL PROD</Nombre>
@@ -151,6 +169,7 @@
     <BaseDatos>TRIBUTOS</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>TRIBUTOS SQL DESA</Nombre>
@@ -159,6 +178,7 @@
     <BaseDatos>TRIBUTOS</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>COCO POSTGRES</Nombre>
@@ -167,6 +187,7 @@
     <BaseDatos>gis</BaseDatos>
     <Usuario>magic</Usuario>
     <Contrasena>DEriu7Dp45</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>ADMINISTRACION SQL PROD</Nombre>
@@ -175,6 +196,7 @@
     <BaseDatos>ADMINISTRACION</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
+    <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
     <Nombre>ADMINISTRACION SQL DESA</Nombre>
@@ -183,5 +205,15 @@
     <BaseDatos>ADMINISTRACION</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
+    <EsWeb>false</EsWeb>
+  </Conexion>
+  <Conexion>
+    <Nombre>RafaelaGobAr DESA</Nombre>
+    <Motor>MS_SQL</Motor>
+    <Servidor>133.123.108.29</Servidor>
+    <BaseDatos>RAFAELAGOVAR</BaseDatos>
+    <Usuario>rafaelaweb</Usuario>
+    <Contrasena>gw2471n</Contrasena>
+    <EsWeb>true</EsWeb>
   </Conexion>
 </ArrayOfConexion>
