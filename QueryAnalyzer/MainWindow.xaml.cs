@@ -959,7 +959,7 @@ namespace QueryAnalyzer
             string stringConnection = string.Empty;
             if (conexionActual != null)
             {
-                stringConnection = ConexionesManager.GetConnectionString(conexionActual.Motor, conexionActual.Servidor, conexionActual.BaseDatos, conexionActual.Usuario, conexionActual.Contrasena, conexionActual.EsWeb);
+                stringConnection = ConexionesManager.GetConnectionString(conexionActual.Motor, conexionActual.Servidor, conexionActual.Puerto, conexionActual.BaseDatos, conexionActual.Usuario, conexionActual.Contrasena, conexionActual.EsWeb);
             }
             return stringConnection;
         }

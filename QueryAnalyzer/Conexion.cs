@@ -12,11 +12,12 @@ namespace QueryAnalyzer
         public string BaseDatos { get; set; }
         public string Usuario { get; set; }
         public string Contrasena { get; set; }
+        public string Puerto { get; set; }
         public bool EsWeb { get; set; }
 
         public override string ToString()
         {
-            return $"Nombre={Nombre}; Motor={Motor}; Servidor={Servidor}; BaseDatos={BaseDatos}; Usuario={Usuario}; Contraseña={Contrasena}; EsWeb={EsWeb}";
+            return $"Nombre={Nombre}; Motor={Motor}; Servidor={Servidor}; Puerto={Puerto}; BaseDatos={BaseDatos}; Usuario={Usuario}; Contraseña={Contrasena}; EsWeb={EsWeb}";
         }
 
         public string GetConnGetConnectionString()

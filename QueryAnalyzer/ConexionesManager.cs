@@ -57,10 +57,10 @@ namespace QueryAnalyzer
 
         public static string GetConnectionString(Conexion conexion)
         {
-            return GetConnectionString(conexion.Motor, conexion.Servidor, conexion.BaseDatos, conexion.Usuario, conexion.Contrasena, conexion.EsWeb);
+            return GetConnectionString(conexion.Motor, conexion.Servidor, conexion.Puerto, conexion.BaseDatos, conexion.Usuario, conexion.Contrasena, conexion.EsWeb);
         }
 
-        public static string GetConnectionString(TipoMotor motor, string servidor, string baseDatos, string usuario, string contraseña, bool esWeb)
+        public static string GetConnectionString(TipoMotor motor, string servidor, string puerto, string baseDatos, string usuario, string contraseña, bool esWeb)
         {
             string stringConnection = string.Empty;
             string driver = ObtenerNombreDriver(motor);
@@ -81,10 +81,10 @@ namespace QueryAnalyzer
                     }
                     break;
                 case TipoMotor.DB2:
-                    stringConnection = $"Driver={{{driver}}};Database={baseDatos};Hostname={servidor};Port=50000; Protocol=TCPIP;Uid={usuario};Pwd={contraseña};";
+                    stringConnection = $"Driver={{{driver}}};Database={baseDatos};Hostname={servidor};{(puerto.Trim().Length > 0 ? $"Port={puerto};" : string.Empty)}Protocol=TCPIP;Uid={usuario};Pwd={contraseña};";
                     break;
                 case TipoMotor.POSTGRES:
-                    stringConnection = $"Driver={{{driver}}};Server={servidor};Port=5432;Database={baseDatos};Uid={usuario};Pwd={contraseña};";
+                    stringConnection = $"Driver={{{driver}}};Server={servidor};{(puerto.Trim().Length > 0 ? $"Port={puerto};" : string.Empty)}Database={baseDatos};Uid={usuario};Pwd={contraseña};";
                     break;
                 case TipoMotor.SQLite:
                     stringConnection = $"Driver={{{driver}}};Database={servidor};"; //"Data Source={conexionActual.Servidor};Version=3;";

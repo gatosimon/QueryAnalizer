@@ -68,6 +68,7 @@ namespace QueryAnalyzer
                 txtServidor.Text = ConexionActual.Servidor;
                 txtUsuario.Text = ConexionActual.Usuario;
                 txtContrasena.Password = ConexionActual.Contrasena;
+                txtPuerto.Text = ConexionActual.Puerto;
                 chkEsWeb.IsChecked = ConexionActual.EsWeb;
 
                 AjustarControlBaseDatos(ConexionActual.Motor, ConexionActual.BaseDatos);
@@ -149,6 +150,7 @@ namespace QueryAnalyzer
             ConexionActual.BaseDatos = cmbBaseDatos.Visibility == Visibility.Visible ? cmbBaseDatos.Text.Trim() : txtBaseDatos.Text.Trim();
             ConexionActual.Usuario = txtUsuario.Text.Trim();
             ConexionActual.Contrasena = txtContrasena.Password;
+            ConexionActual.Puerto = txtPuerto.Text;
             ConexionActual.EsWeb = chkEsWeb.IsChecked.GetValueOrDefault();
 
             var conexiones = ConexionesManager.Cargar();
@@ -214,7 +216,7 @@ namespace QueryAnalyzer
         {
             if (cmbMotor.SelectedValue.ToString() == TipoMotor.MS_SQL.ToString())
             {
-                string stringConnection = ConexionesManager.GetConnectionString(TipoMotor.MS_SQL, txtServidor.Text.Trim(), string.Empty, txtUsuario.Text.Trim(), txtContrasena.Password, chkEsWeb.IsChecked.GetValueOrDefault());
+                string stringConnection = ConexionesManager.GetConnectionString(TipoMotor.MS_SQL, txtServidor.Text.Trim(), txtPuerto.Text, string.Empty, txtUsuario.Text.Trim(), txtContrasena.Password, chkEsWeb.IsChecked.GetValueOrDefault());
                 try
                 {
                     using (var c = new OdbcConnection(stringConnection))
@@ -267,7 +269,7 @@ namespace QueryAnalyzer
             TipoMotor motor = (TipoMotor)cmbMotor.SelectedValue;
 
             string baseDatos = cmbBaseDatos.Text.Trim().Length > 0 ? cmbBaseDatos.Text.Trim() : txtBaseDatos.Text.Trim();
-            string stringConnection = ConexionesManager.GetConnectionString(motor, txtServidor.Text, baseDatos, txtUsuario.Text, txtContrasena.Password, chkEsWeb.IsChecked.GetValueOrDefault());
+            string stringConnection = ConexionesManager.GetConnectionString(motor, txtServidor.Text, txtPuerto.Text, baseDatos, txtUsuario.Text, txtContrasena.Password, chkEsWeb.IsChecked.GetValueOrDefault());
 
             if (string.IsNullOrWhiteSpace(stringConnection))
             {
