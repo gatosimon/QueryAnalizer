@@ -38,7 +38,11 @@ namespace QueryAnalyzer
             };
 
             base.OnStartup(e);
-            //UpdateHelper.CheckForUpdates("https://tuservidor.com/updates/MiApp/version.xml");
+
+            // Si CheckForUpdates devuelve false, se aplicó una actualización
+            // y la versión nueva ya fue relanzada. No continuar con esta instancia.
+            if (!UpdateHelper.CheckForUpdates("https://github.com/gatosimon/QueryAnalyzerUpdates/releases/latest/download/version.xml"))
+                return;
         }
     }
 }

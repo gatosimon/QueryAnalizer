@@ -114,6 +114,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Resources\AutoUpdater.exe" />
     <Resource Include="Assets\Logo.ico" />
     <Resource Include="Assets\clave.png" />
     <Resource Include="Assets\columna.png" />
