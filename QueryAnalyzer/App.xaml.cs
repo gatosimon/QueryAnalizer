@@ -38,21 +38,7 @@ namespace QueryAnalyzer
             };
 
             base.OnStartup(e);
+            //UpdateHelper.CheckForUpdates("https://tuservidor.com/updates/MiApp/version.xml");
         }
     }
 }
-//using System;
-//using System.Windows;
-
-//namespace QueryAnalyzer
-//{
-//    public partial class App : Application
-//    {
-//        protected override void OnStartup(StartupEventArgs e)
-//        {
-//            AppDomain.CurrentDomain.UnhandledException += (s, ex) =>
-//                System.IO.File.WriteAllText("error.log", ex.ExceptionObject.ToString());
-//            base.OnStartup(e);
-//        }
-//    }
-//}

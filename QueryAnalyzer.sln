@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryAnalyzer", "QueryAnaly
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "InstaladorQueryAnalyzer", "InstaladorQueryAnalyzer\InstaladorQueryAnalyzer.vdproj", "{729173CD-BA5D-467C-87C7-B251765718ED}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryAnalyzerCustomActions", "QueryAnalyzerCustomActions\QueryAnalyzerCustomActions.csproj", "{C6074512-5528-4F22-9230-A1C55A21BCAA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,6 +20,10 @@ Global
 		{B2F7F7B5-9A2A-4A60-8086-7A8D2D8A9E3F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{729173CD-BA5D-467C-87C7-B251765718ED}.Debug|Any CPU.ActiveCfg = Debug
 		{729173CD-BA5D-467C-87C7-B251765718ED}.Release|Any CPU.ActiveCfg = Release
+		{C6074512-5528-4F22-9230-A1C55A21BCAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6074512-5528-4F22-9230-A1C55A21BCAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6074512-5528-4F22-9230-A1C55A21BCAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6074512-5528-4F22-9230-A1C55A21BCAA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
