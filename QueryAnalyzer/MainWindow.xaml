@@ -307,14 +307,27 @@
         </Grid.RowDefinitions>
 
         <!-- ── Toolbar superior ─────────────────────────────────── -->
-        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,6">
-            <TextBlock Text="Driver/Proveedor:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+        <DockPanel Grid.Row="0" Margin="0,0,0,6" LastChildFill="False">
+
+            <!-- Versión: anclada a la derecha -->
+            <TextBlock x:Name="txtVersion"
+                       DockPanel.Dock="Right"
+                       VerticalAlignment="Center"
+                       Margin="12,0,0,0"
+                       FontSize="11"
+                       Foreground="{DynamicResource BrushFGMuted}"
+                       ToolTip="Versión de la aplicación"/>
+
+            <!-- Controles de conexión: izquierda -->
+            <TextBlock Text="Driver/Proveedor:" VerticalAlignment="Center" Margin="0,0,6,0"
+                       DockPanel.Dock="Left"/>
             <ComboBox x:Name="cbDriver" Width="400" IsEditable="True" VerticalAlignment="Center"
+                      DockPanel.Dock="Left"
                       SelectionChanged="cbDriver_SelectionChanged"/>
-            <Button x:Name="btnTest"           Content="Probar conexión" Padding="2,2" Margin="8,0,0,0" Click="BtnTest_Click"/>
-            <Button x:Name="btnNewConn"        Content="Nueva"           Padding="2,2" Margin="8,0,0,0" Click="BtnNewConn_Click"/>
-            <Button x:Name="btnDeleteConn_Copy" Content="Eliminar"       Padding="2,2" Margin="8,0,0,0" Click="btnDeleteConn_Click"/>
-            <Button x:Name="btnEditConn"       Content="Editar"          Padding="2,2" Margin="8,0,0,0" Click="BtnEditConn_Click"/>
+            <Button x:Name="btnTest"            Content="Probar conexión" Padding="2,2" Margin="8,0,0,0" Click="BtnTest_Click"        DockPanel.Dock="Left"/>
+            <Button x:Name="btnNewConn"         Content="Nueva"           Padding="2,2" Margin="8,0,0,0" Click="BtnNewConn_Click"      DockPanel.Dock="Left"/>
+            <Button x:Name="btnDeleteConn_Copy" Content="Eliminar"        Padding="2,2" Margin="8,0,0,0" Click="btnDeleteConn_Click"   DockPanel.Dock="Left"/>
+            <Button x:Name="btnEditConn"        Content="Editar"          Padding="2,2" Margin="8,0,0,0" Click="BtnEditConn_Click"     DockPanel.Dock="Left"/>
             <!-- Botón toggle de tema: el icono cambia en code-behind -->
             <Button x:Name="btnToggleTema"
                     Content="&#x1F319;"
@@ -322,8 +335,9 @@
                     Margin="6,0,0,0"
                     FontSize="14"
                     ToolTip="Alternar modo claro / oscuro"
-                    Click="BtnToggleTema_Click"/>
-        </StackPanel>
+                    Click="BtnToggleTema_Click"
+                    DockPanel.Dock="Left"/>
+        </DockPanel>
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>

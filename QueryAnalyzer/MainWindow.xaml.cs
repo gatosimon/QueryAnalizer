@@ -48,6 +48,8 @@ namespace QueryAnalyzer
         public MainWindow()
         {
             InitializeComponent();
+            // en MainWindow() después de InitializeComponent()
+            txtVersion.Text = UpdateHelper.GetInstalledVersion();
 
             // 🔹 AÑADIDO: esto asegura que los bindings de DataContext funcionen correctamente.
             DataContext = this;

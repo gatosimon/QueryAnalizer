@@ -59849,4 +59849,36 @@ FETCH FIRST 10 ROWS ONLY;</Consulta>
     <Parametros />
     <Fecha>2026-03-29T17:04:34.9462644-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.CHOFECOCHE
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-31T06:59:47.8025397-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>SELECT *
+FROM DB2ADMIN.C08MODELOS
+FETCH FIRST 10 ROWS ONLY;</Consulta>
+    <Parametros />
+    <Fecha>2026-03-31T07:00:32.2877005-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>
