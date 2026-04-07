@@ -24271,3 +24271,63 @@ ALTER TABLE employees ADD COLUMN NickName varchar(50);
 ---
 ALTER TABLE employees DROP COLUMN NickName;
 ---
+ALTER TABLE employees ADD COLUMN NickName varchar(50);
+
+ALTER TABLE employees RENAME TO Empleados;
+---
+ALTER TABLE Empleados RENAME TO employees;
+---
+ALTER TABLE employees DROP COLUMN NickName;
+---
+ALTER TABLE employees RENAME TO Empleados;
+---
+ALTER TABLE Empleados RENAME TO employees;
+---
+ALTER TABLE employees RENAME COLUMN Email TO CorreoElectronico;
+---
+ALTER TABLE employees RENAME COLUMN CorreoElectronico TO Email;
+---
+ALTER TABLE employees ADD COLUMN NickName varchar(50);
+---
+ALTER TABLE employees DROP COLUMN NickName;
+
+ALTER TABLE employees RENAME TO Empleados;
+---
+ALTER TABLE Empleados ADD COLUMN NickName varchar(50);
+---
+ALTER TABLE Empleados DROP COLUMN NickName;
+
+ALTER TABLE Empleados RENAME TO employees;
+---
+ALTER TABLE employees ADD COLUMN NickName varchar(50);
+
+ALTER TABLE employees RENAME TO Empleados;
+---
+ALTER TABLE Empleados DROP COLUMN NickName;
+
+ALTER TABLE Empleados RENAME TO employees;
+---
+ALTER TABLE employees ADD COLUMN NickName varchar(50);
+
+ALTER TABLE employees RENAME TO Empleados;
+---
+ALTER TABLE Empleados DROP COLUMN NickName;
+
+ALTER TABLE Empleados RENAME TO employees;
+---
+ALTER TABLE artists ADD COLUMN nick varchar(50);
+
+ALTER TABLE artists RENAME TO artistas;
+---
+ALTER TABLE artistas DROP COLUMN nick;
+
+ALTER TABLE artistas RENAME TO artists;
+---
+ALTER TABLE employees ADD COLUMN NickName varchar(50);
+
+ALTER TABLE employees RENAME TO Empleados;
+---
+ALTER TABLE Empleados DROP COLUMN NickName;
+
+ALTER TABLE Empleados RENAME TO employees;
+---

@@ -31,6 +31,9 @@ namespace QueryAnalyzer
         private const string HISTORIAL_XML = "historial.xml";
         private bool iniciarColapasado = true;
         private CancellationTokenSource _explorarCTS;
+        // Filtros del explorador (persisten entre llamadas a CargarEsquema)
+        private string _filtroTipo = "BOTH";   // "BOTH" | "TABLE" | "VIEW"
+        private string _filtroSchema = "";       // "" = todos
 
         public Dictionary<string, OdbcType> OdbcTypes { get; set; }
         public List<QueryParameter> Parametros { get; set; }
@@ -2038,24 +2041,203 @@ namespace QueryAnalyzer
             return "SELECT COUNT(*) FROM " + NombreCompleto(schema, tabla) + ";";
         }
 
+        // ════════════════════════════════════════════════════════════════
+        // REEMPLAZAR en MainWindow.xaml.cs el método Diseñar() existente
+        // (líneas 2037-2052 aprox.) por el siguiente bloque completo.
+        // ════════════════════════════════════════════════════════════════
+
         static public string scriptDiseño = string.Empty;
-        
+
+        // En el handler del ContextMenu del TreeView (o donde ya tenés el click derecho):
         private string Diseñar(string schema, string tabla)
         {
-            // "nombreTabla" es el string del nodo seleccionado; "conexionActual" es tu Conexion activa
             var w = new TableDesignerWindow(conexionActual, tabla) { Owner = this };
             scriptDiseño = string.Empty;
             w.ShowDialog();
 
             if (scriptDiseño.Length > 0)
             {
+                // ── 1. Cargar el script en el editor y ejecutarlo ────────────────
                 txtQuery.Text = scriptDiseño;
                 BtnExecute_Click(this, new RoutedEventArgs());
-                
+
+                // ── 2. Determinar el nombre definitivo de la tabla tras el renombre ──
+                //    Si el usuario renombró la tabla, el nodo en el tvSchema aún
+                //    tiene el nombre viejo; usamos ese para buscarlo y luego
+                //    actualizamos su header con el nombre nuevo.
+                string nuevoNombre = w.NuevoNombreTabla;          // null si no renombró
+                bool huboRenombre = !string.IsNullOrEmpty(nuevoNombre);
+                string nombreFinalTabla = huboRenombre ? nuevoNombre : tabla;
+
+                // ── 3. Localizar el nodo de la tabla en tvSchema ─────────────────
+                TreeViewItem nodoTabla = EncontrarNodoTabla(tvSchema, tabla, schema);
+
+                if (nodoTabla != null)
+                {
+                    // ── 4a. Si hubo renombre, actualizar el texto del header del nodo ──
+                    if (huboRenombre)
+                    {
+                        ActualizarHeaderNodoTabla(nodoTabla, schema, nombreFinalTabla);
+                        // Actualizar también el Tag del nodo para que futuras
+                        // operaciones (doble clic, context menu) usen el nombre nuevo
+                        nodoTabla.Tag = nombreFinalTabla;
+                    }
+
+                    // ── 4b. Recargar solo los hijos del nodo (columnas + índices) ──
+                    RecargarNodoTabla(nodoTabla, schema, nombreFinalTabla);
+                }
+                else
+                {
+                    // Fallback: si no se encontró el nodo (caso raro), recargar todo
+                    CargarEsquema();
+                }
             }
 
             return string.Empty;
         }
+
+        // ─────────────────────────────────────────────────────────────────────────────
+        // Helpers de recarga parcial del nodo
+        // ─────────────────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Busca en el TreeView el TreeViewItem que corresponde a la tabla dada,
+        /// comparando por Tag (nombre de tabla) y opcionalmente por schema en el header.
+        /// </summary>
+        private TreeViewItem EncontrarNodoTabla(TreeView tv, string tabla, string schema)
+        {
+            foreach (TreeViewItem item in tv.Items)
+            {
+                // El Tag del nodo se asigna con capTabla (nombre sin schema) en Cargar()
+                if (item.Tag is string tag &&
+                    string.Equals(tag, tabla, StringComparison.OrdinalIgnoreCase))
+                {
+                    return item;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Actualiza el TextBlock de texto dentro del StackPanel header del nodo
+        /// para reflejar el nuevo nombre de la tabla tras un RENAME.
+        /// </summary>
+        private void ActualizarHeaderNodoTabla(TreeViewItem nodo, string schema, string nuevoNombre)
+        {
+            if (!(nodo.Header is StackPanel sp)) return;
+
+            string nuevoHeaderText = string.IsNullOrEmpty(schema)
+                ? nuevoNombre
+                : string.Format("{0}.{1}", schema, nuevoNombre);
+
+            foreach (var child in sp.Children)
+            {
+                if (child is TextBlock tb)
+                {
+                    tb.Text = nuevoHeaderText;
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Limpia los hijos del nodo de la tabla y fuerza una recarga inmediata
+        /// de sus columnas e índices (igual que al expandir por primera vez,
+        /// pero sin esperar a que el usuario colapse y vuelva a expandir).
+        /// </summary>
+        private void RecargarNodoTabla(TreeViewItem nodoTabla, string schema, string nombreTabla)
+        {
+            var columnaIcon = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/columna.png"));
+            var columnaClaveIcon = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/columnaClave.png"));
+            var claveIcon = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/clave.png"));
+            int tamañoIconos = 20;
+
+            // Freeze para que los bitmaps sean seguros entre hilos
+            columnaIcon.Freeze();
+            columnaClaveIcon.Freeze();
+            claveIcon.Freeze();
+
+            string connStr = GetConnectionString();
+
+            // ── Clave del fix ──────────────────────────────────────────────────────
+            // 1. Limpiamos los hijos existentes.
+            // 2. Ponemos el placeholder "Cargando…" (igual que al crear el nodo en Cargar()).
+            //    Con al menos un hijo el TreeView vuelve a mostrar la flecha de expansión.
+            // 3. CargarDetallesTabla comprueba ese placeholder y lo elimina antes de
+            //    agregar las columnas reales (mismo patrón que el handler Expanded).
+            nodoTabla.Items.Clear();
+            nodoTabla.Items.Add(new TreeViewItem { Header = "Cargando..." });
+
+            // Expandir para que el usuario vea el resultado inmediatamente
+            nodoTabla.IsExpanded = true;
+
+            Task.Run(async () =>
+            {
+                try
+                {
+                    // Pequeña pausa para que la UI se refresque y muestre el nodo expandido
+                    // antes de que la carga bloquee el Dispatcher con muchos Invokes.
+                    await Task.Delay(50);
+
+                    // Eliminar el placeholder igual que lo hace el handler Expanded nativo
+                    Dispatcher.Invoke(() => nodoTabla.Items.Clear());
+
+                    CargarDetallesTabla(
+                        nodoTabla, schema, nombreTabla,
+                        "TABLE",
+                        connStr,
+                        columnaIcon, columnaClaveIcon, claveIcon, tamañoIconos);
+                }
+                catch (Exception ex)
+                {
+                    Dispatcher.Invoke(() =>
+                        AppendMessage($"Error recargando nodo de '{nombreTabla}': {ex.Message}"));
+                }
+            });
+        }
+
+
+
+
+        //private void RecargarNodoTabla(TreeViewItem nodoTabla, string schema, string nombreTabla)
+        //{
+        //    // Íconos necesarios (mismos que en CargarEsquema)
+        //    var columnaIcon = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/columna.png"));
+        //    var columnaClaveIcon = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/columnaClave.png"));
+        //    var claveIcon = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/clave.png"));
+        //    int tamañoIconos = 20;
+
+        //    // Freeze para que sean seguros entre hilos
+        //    columnaIcon.Freeze();
+        //    columnaClaveIcon.Freeze();
+        //    claveIcon.Freeze();
+
+        //    string connStr = GetConnectionString();
+
+        //    // Limpiar SIN agregar placeholder: CargarDetallesTabla agrega directamente al nodo vacío.
+        //    // Si dejamos "Recargando..." acá, CargarDetallesTabla agrega los items DESPUÉS de ese
+        //    // placeholder pero nunca lo elimina, por eso el nodo quedaba eternamente en "Recargando...".
+        //    nodoTabla.Items.Clear();
+        //    nodoTabla.IsExpanded = true;
+
+        //    // Cargar en background igual que el Expanded handler original
+        //    Task.Run(() =>
+        //    {
+        //        try
+        //        {
+        //            CargarDetallesTabla(
+        //                nodoTabla, schema, nombreTabla,
+        //                "TABLE",   // asumimos TABLE; las vistas no pasan por DESIGN
+        //                connStr,
+        //                columnaIcon, columnaClaveIcon, claveIcon, tamañoIconos);
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            Dispatcher.Invoke(() =>
+        //                AppendMessage(string.Format("Error recargando nodo de '{0}': {1}", nombreTabla, ex.Message)));
+        //        }
+        //    });
+        //}
 
         // ════════════════════════════════════════════════════════════════
 
@@ -2125,14 +2307,21 @@ namespace QueryAnalyzer
 
         private void btnExplorar_Click(object sender, RoutedEventArgs e)
         {
-            // Si había un proceso anterior, se cancela
             _explorarCTS?.Cancel();
-
-            // Se crea uno nuevo
             _explorarCTS = new CancellationTokenSource();
-
-            CargarEsquema(string.Empty, null, _explorarCTS.Token);
+            LanzarCargarEsquema();
         }
+
+        //private void btnExplorar_Click(object sender, RoutedEventArgs e)
+        //{
+        //    // Si había un proceso anterior, se cancela
+        //    _explorarCTS?.Cancel();
+
+        //    // Se crea uno nuevo
+        //    _explorarCTS = new CancellationTokenSource();
+
+        //    CargarEsquema(string.Empty, null, _explorarCTS.Token);
+        //}
 
         private void btnExplorarConsultas_Click(object sender, RoutedEventArgs e)
         {
@@ -2143,6 +2332,192 @@ namespace QueryAnalyzer
 
             List<string> tablasConsulta = ExtraerTablas(txtQuery.Text);
             CargarEsquema(string.Empty, tablasConsulta, _explorarCTS.Token);
+        }
+
+        // ── Selector de tipo (Tablas / Vistas / Ambas) ───────────────────────────────
+        private void cbTipoObjeto_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (cbTipoObjeto.SelectedItem is ComboBoxItem item)
+            {
+                _filtroTipo = item.Tag?.ToString() ?? "BOTH";
+                // Refrescar esquema con el nuevo filtro de tipo
+                LanzarCargarEsquema();
+            }
+        }
+
+        // ── Selector de schema ───────────────────────────────────────────────────────
+        private void cbSchema_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (cbSchema.SelectedItem is ComboBoxItem item)
+            {
+                _filtroSchema = item.Tag?.ToString() ?? "";
+                // Refrescar el TreeView filtrando por schema (no recarga de la BD)
+                AplicarFiltroSchemaEnUI();
+            }
+        }
+
+        /// <summary>
+        /// Lanza una recarga completa del esquema aplicando _filtroTipo.
+        /// También actualiza el combo de schemas con los disponibles.
+        /// </summary>
+        private void LanzarCargarEsquema()
+        {
+            // Guard: puede llamarse durante InitializeComponent antes de que tvSchema esté listo
+            if (tvSchema == null || conexionActual == null) return;
+
+            _explorarCTS?.Cancel();
+            _explorarCTS = new CancellationTokenSource();
+
+            string[] tipos = _filtroTipo == "BOTH" ? new[] { "TABLE", "VIEW" }
+                           : _filtroTipo == "TABLE" ? new[] { "TABLE" }
+                                                    : new[] { "VIEW" };
+
+            CargarEsquemaConTipos(tipos, _explorarCTS.Token);
+        }
+
+        /// <summary>
+        /// Versión de CargarEsquema que acepta un array de tipos y, al terminar,
+        /// puebla el ComboBox de schemas con los schemas distintos encontrados.
+        /// </summary>
+        private async void CargarEsquemaConTipos(string[] tipos, CancellationToken token)
+        {
+            if (conexionActual == null) { AppendMessage("No hay conexión seleccionada."); return; }
+
+            string connStr = GetConnectionString();
+
+            var tablaIconUri = new Uri("pack://application:,,,/Assets/tabla.png");
+            var columnaIconUri = new Uri("pack://application:,,,/Assets/columna.png");
+            var columnaClaveIconUri = new Uri("pack://application:,,,/Assets/columnaClave.png");
+            var claveIconUri = new Uri("pack://application:,,,/Assets/clave.png");
+            var vistaIconUri = new Uri("pack://application:,,,/Assets/vista.png");
+
+            var tablaIcon = new System.Windows.Media.Imaging.BitmapImage(tablaIconUri);
+            var columnaIcon = new System.Windows.Media.Imaging.BitmapImage(columnaIconUri);
+            var columnaClaveIcon = new System.Windows.Media.Imaging.BitmapImage(columnaClaveIconUri);
+            var claveIcon = new System.Windows.Media.Imaging.BitmapImage(claveIconUri);
+            var vistaIcon = new System.Windows.Media.Imaging.BitmapImage(vistaIconUri);
+            int tamañoIconos = 20;
+
+            // Lista de schemas encontrados, para luego poblar cbSchema
+            var schemasEncontrados = new List<string>();
+
+            await Task.Run(() =>
+            {
+                try
+                {
+                    token.ThrowIfCancellationRequested();
+
+                    // Usamos el Cargar() existente que ya sabe dibujar los nodos
+                    Cargar(tipos, string.Empty, null, tvSchema, connStr,
+                           tablaIcon, columnaIcon, columnaClaveIcon, claveIcon, vistaIcon,
+                           tamañoIconos, token);
+
+                    // Recopilar schemas de los nodos ya creados (corremos en UI thread vía Invoke)
+                    Dispatcher.Invoke(() =>
+                    {
+                        foreach (TreeViewItem nodo in tvSchema.Items)
+                        {
+                            // El header del nodo es un StackPanel; el TextBlock tiene "schema.tabla" o "tabla"
+                            string headerText = ObtenerHeaderText(nodo);
+                            if (!string.IsNullOrEmpty(headerText) && headerText.Contains("."))
+                            {
+                                string schema = headerText.Substring(0, headerText.IndexOf('.'));
+                                if (!schemasEncontrados.Contains(schema, StringComparer.OrdinalIgnoreCase))
+                                    schemasEncontrados.Add(schema);
+                            }
+                        }
+                    });
+                }
+                catch (TaskCanceledException) { Dispatcher.Invoke(() => AppendMessage("Exploración cancelada.")); }
+                catch (OperationCanceledException) { Dispatcher.Invoke(() => AppendMessage("Exploración cancelada.")); }
+                catch (Exception ex) { Dispatcher.Invoke(() => AppendMessage("Error al cargar esquema: " + ex.Message)); }
+            });
+
+            // Poblar cbSchema preservando la selección actual
+            PoblarCbSchema(schemasEncontrados);
+        }
+
+        /// <summary>
+        /// Extrae el texto visible (primer TextBlock) del header de un TreeViewItem de tabla.
+        /// </summary>
+        private string ObtenerHeaderText(TreeViewItem nodo)
+        {
+            if (nodo.Header is System.Windows.Controls.StackPanel sp)
+            {
+                foreach (var child in sp.Children)
+                    if (child is System.Windows.Controls.TextBlock tb)
+                        return tb.Text;
+            }
+            return nodo.Header?.ToString() ?? string.Empty;
+        }
+
+        /// <summary>
+        /// Puebla el ComboBox de schemas con "(todos)" + la lista recibida.
+        /// Intenta preservar la selección anterior; si no existe, selecciona "(todos)".
+        /// Luego aplica el filtro visual sobre el TreeView.
+        /// </summary>
+        private void PoblarCbSchema(List<string> schemas)
+        {
+            string seleccionAnterior = _filtroSchema;
+
+            cbSchema.SelectionChanged -= cbSchema_SelectionChanged;  // evitar recursión
+            cbSchema.Items.Clear();
+
+            var itemTodos = new ComboBoxItem { Content = "(todos)", Tag = "" };
+            cbSchema.Items.Add(itemTodos);
+
+            foreach (string s in schemas.OrderBy(x => x))
+            {
+                var ci = new ComboBoxItem { Content = s, Tag = s };
+                cbSchema.Items.Add(ci);
+            }
+
+            // Restaurar selección
+            bool restaurado = false;
+            if (!string.IsNullOrEmpty(seleccionAnterior))
+            {
+                foreach (ComboBoxItem ci in cbSchema.Items)
+                {
+                    if (string.Equals(ci.Tag?.ToString(), seleccionAnterior, StringComparison.OrdinalIgnoreCase))
+                    {
+                        cbSchema.SelectedItem = ci;
+                        restaurado = true;
+                        break;
+                    }
+                }
+            }
+            if (!restaurado) cbSchema.SelectedIndex = 0;
+
+            cbSchema.SelectionChanged += cbSchema_SelectionChanged;
+
+            // Aplicar filtro visual con la selección resultante
+            AplicarFiltroSchemaEnUI();
+        }
+
+        /// <summary>
+        /// Muestra u oculta los nodos del TreeView según el schema seleccionado,
+        /// SIN tocar la base de datos. Es una operación puramente de UI.
+        /// </summary>
+        private void AplicarFiltroSchemaEnUI()
+        {
+            // Guard: puede llamarse durante InitializeComponent antes de que tvSchema esté listo
+            if (tvSchema == null) return;
+
+            bool mostrarTodos = string.IsNullOrEmpty(_filtroSchema);
+
+            foreach (TreeViewItem nodo in tvSchema.Items)
+            {
+                if (mostrarTodos)
+                {
+                    nodo.Visibility = Visibility.Visible;
+                    continue;
+                }
+
+                // El header del nodo es "schema.tabla" o solo "tabla"
+                string headerText = ObtenerHeaderText(nodo);
+                bool coincide = headerText.StartsWith(_filtroSchema + ".", StringComparison.OrdinalIgnoreCase);
+                nodo.Visibility = coincide ? Visibility.Visible : Visibility.Collapsed;
+            }
         }
 
         /// <summary>

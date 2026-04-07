@@ -1,6 +1,0 @@
-C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzerCustomActions\bin\Debug\QueryAnalyzerCustomActions.dll
-C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzerCustomActions\bin\Debug\QueryAnalyzerCustomActions.pdb
-C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzerCustomActions\obj\Debug\QueryAnalyzerCustomActions.csproj.AssemblyReference.cache
-C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzerCustomActions\obj\Debug\QueryAnalyzerCustomActions.csproj.CoreCompileInputs.cache
-C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzerCustomActions\obj\Debug\QueryAnalyzerCustomActions.dll
-C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzerCustomActions\obj\Debug\QueryAnalyzerCustomActions.pdb

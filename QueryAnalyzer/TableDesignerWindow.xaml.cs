@@ -13,6 +13,13 @@ namespace QueryAnalyzer
 
         private ObservableCollection<ColumnDesignInfo> _columnas;
 
+        // ── Resultado expuesto a MainWindow ──────────────────────────────────────
+        /// <summary>
+        /// Nombre al que se quiere renombrar la tabla.
+        /// Null o vacío = sin renombre.
+        /// </summary>
+        public string NuevoNombreTabla { get; private set; }
+
         public TableDesignerWindow(Conexion conexion, string tabla)
         {
             InitializeComponent();
@@ -35,6 +42,7 @@ namespace QueryAnalyzer
             btnScript.IsEnabled    = false;
             btnAgregar.IsEnabled   = false;
             btnRecargar.IsEnabled  = false;
+            btnRenombrar.IsEnabled = false;
 
             try
             {
@@ -51,9 +59,10 @@ namespace QueryAnalyzer
             }
             finally
             {
-                btnScript.IsEnabled   = true;
-                btnAgregar.IsEnabled  = true;
-                btnRecargar.IsEnabled = true;
+                btnScript.IsEnabled    = true;
+                btnAgregar.IsEnabled   = true;
+                btnRecargar.IsEnabled  = true;
+                btnRenombrar.IsEnabled = true;
             }
         }
 
@@ -69,41 +78,69 @@ namespace QueryAnalyzer
                 EsNulable    = true,
                 EsNueva      = true
             };
-            // No llamamos MarcarComoOriginal() porque es nueva: Modificado no se evalúa para nuevas
 
             _columnas.Add(nueva);
             dgColumnas.SelectedItem  = nueva;
             dgColumnas.ScrollIntoView(nueva);
 
-            // Forzar edición inmediata del nombre
             dgColumnas.CurrentCell = new DataGridCellInfo(nueva, dgColumnas.Columns[0]);
             dgColumnas.BeginEdit();
 
             txtEstado.Text = "Nueva columna agregada. Completá el nombre y el tipo de dato.";
         }
 
+        // ── Toolbar: Renombrar tabla ──────────────────────────────────────────────
+
+        private void RenombrarTabla_Click(object sender, RoutedEventArgs e)
+        {
+            string nuevoNombre = txtNuevoNombre.Text.Trim();
+
+            if (string.IsNullOrEmpty(nuevoNombre))
+            {
+                MessageBox.Show("Escribí el nuevo nombre de la tabla antes de continuar.",
+                    Title, MessageBoxButton.OK, MessageBoxImage.Warning);
+                txtNuevoNombre.Focus();
+                return;
+            }
+
+            if (nuevoNombre.Equals(_tabla, StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show("El nuevo nombre es igual al nombre actual.", Title,
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            // Confirmar para evitar clicks accidentales
+            var r = MessageBox.Show(
+                string.Format("¿Renombrar la tabla '{0}' a '{1}'?\n\nSe agregará la sentencia RENAME al script.", _tabla, nuevoNombre),
+                Title, MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (r != MessageBoxResult.Yes) return;
+
+            NuevoNombreTabla = nuevoNombre;
+            txtEstado.Text   = string.Format("Tabla marcada para renombrar → '{0}'.", nuevoNombre);
+            btnRenombrar.IsEnabled = false;   // una sola vez por sesión
+            txtNuevoNombre.IsEnabled = false;
+        }
+
         // ── Toolbar: Generar script ───────────────────────────────────────────────
-
-        //private void GenerarScript_Click(object sender, RoutedEventArgs e)
-        //{
-        //    if (_columnas == null || _columnas.Count == 0) return;
-
-        //    string script = TableDesignerService.GenerarScript(
-        //        _conexion.Motor, _tabla, _columnas.ToList());
-
-        //    var ventana = new ScriptResultWindow(script, _conexion.Motor)
-        //    {
-        //        Owner = this
-        //    };
-        //    ventana.ShowDialog();
-        //}
 
         private void GenerarScript_Click(object sender, RoutedEventArgs e)
         {
             if (_columnas == null || _columnas.Count == 0) return;
 
+            if (txtNuevoNombre.Text.Trim().Length > 0)
+            {
+                string nuevoNombre = txtNuevoNombre.Text.Trim();
+
+                if (!string.IsNullOrEmpty(nuevoNombre) && !nuevoNombre.Equals(_tabla, StringComparison.OrdinalIgnoreCase))
+                {
+                    NuevoNombreTabla = nuevoNombre;
+                }
+            }
+
             MainWindow.scriptDiseño = TableDesignerService.GenerarScript(
-                _conexion.Motor, _tabla, _columnas.ToList());
+                _conexion.Motor, _tabla, _columnas.ToList(), NuevoNombreTabla);
 
             this.Close();
         }
@@ -117,7 +154,13 @@ namespace QueryAnalyzer
                 Title, MessageBoxButton.YesNo, MessageBoxImage.Question);
 
             if (r == MessageBoxResult.Yes)
+            {
+                NuevoNombreTabla = null;
+                txtNuevoNombre.Text      = string.Empty;
+                txtNuevoNombre.IsEnabled = true;
+                btnRenombrar.IsEnabled   = true;
                 await CargarColumnas();
+            }
         }
 
         // ── Context menu: Marcar / desmarcar para eliminar ────────────────────────
@@ -128,7 +171,6 @@ namespace QueryAnalyzer
 
             if (col.EsNueva)
             {
-                // Columna todavía no existe en la BD → quitar directo de la lista
                 _columnas.Remove(col);
                 txtEstado.Text = "Columna nueva eliminada.";
             }

@@ -265,7 +265,6 @@ ORDER BY c.ORDINAL_POSITION", t);
 
                 case TipoMotor.DB2:
                 {
-                    // SYSIBM.SYSCOLUMNS: NAME, COLTYPE, LENGTH, SCALE, NULLS, DEFAULT, KEYSEQ
                     string sql = string.Format(@"
 SELECT NAME, COLTYPE, LENGTH, SCALE, NULLS, DEFAULT, KEYSEQ
 FROM SYSIBM.SYSCOLUMNS
@@ -345,7 +344,6 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
 
                 case TipoMotor.SQLite:
                 {
-                    // PRAGMA table_info: cid | name | type | notnull | dflt_value | pk
                     using (var cmd = new OdbcCommand("PRAGMA table_info(" + tabla + ")", conn))
                     using (var r = cmd.ExecuteReader())
                     {
@@ -391,13 +389,24 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
 
         /// <summary>
         /// Genera el script DDL comparando el estado original vs el actual de cada columna.
-        /// Contempla: nuevas columnas, columnas a eliminar y columnas modificadas (rename, tipo, nullable).
-        /// Nota: cambios de DEFAULT en MS SQL requieren conocer el nombre del constraint; por ahora se omiten.
+        /// Contempla: nuevas columnas, columnas a eliminar, columnas modificadas y renombre de tabla.
         /// </summary>
-        public static string GenerarScript(TipoMotor motor, string tabla, List<ColumnDesignInfo> columnas)
+        /// <param name="motor">Motor de base de datos.</param>
+        /// <param name="tabla">Nombre actual de la tabla.</param>
+        /// <param name="columnas">Lista de columnas con su estado.</param>
+        /// <param name="nuevoNombreTabla">
+        ///     Nombre al que se renombra la tabla. Null o vacío = sin renombre.
+        ///     La sentencia de renombre se agrega AL FINAL del script, después de todos los ALTER.
+        /// </param>
+        public static string GenerarScript(
+            TipoMotor motor,
+            string tabla,
+            List<ColumnDesignInfo> columnas,
+            string nuevoNombreTabla = null)
         {
             var sb = new StringBuilder();
 
+            // ── Cambios en columnas ───────────────────────────────────────────────
             foreach (var col in columnas)
             {
                 // ── ELIMINAR ──────────────────────────────────────────────────────
@@ -438,7 +447,6 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
                             sb.AppendLine(string.Format("CALL SYSPROC.ADMIN_CMD('REORG TABLE {0}');", tabla));
                             break;
                         case TipoMotor.SQLite:
-                            // ADD COLUMN en SQLite no acepta NOT NULL sin DEFAULT; se omite nullable
                             sb.AppendLine(string.Format("ALTER TABLE {0} ADD COLUMN {1} {2}{3};", tabla, col.Nombre, tipo, def));
                             break;
                     }
@@ -449,7 +457,7 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
                 // ── MODIFICADA ────────────────────────────────────────────────────
                 if (!col.EsNueva && !col.MarcarParaEliminar && col.Modificado)
                 {
-                    // 1. Rename (si cambió el nombre)
+                    // 1. Rename de columna
                     bool renombrada = col.Nombre != col.NombreOriginal;
                     if (renombrada)
                     {
@@ -474,14 +482,13 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
 
                     if (tipoModificado || nullableModificado)
                     {
-                        string colActual    = col.Nombre; // ya renombrada si aplica
-                        string tipoActual   = col.TipoDatoCompleto;
-                        string nullableAct  = col.EsNulable ? "NULL" : "NOT NULL";
+                        string colActual   = col.Nombre;
+                        string tipoActual  = col.TipoDatoCompleto;
+                        string nullableAct = col.EsNulable ? "NULL" : "NOT NULL";
 
                         switch (motor)
                         {
                             case TipoMotor.MS_SQL:
-                                // ALTER COLUMN exige especificar tipo Y nullable juntos
                                 sb.AppendLine(string.Format("ALTER TABLE {0} ALTER COLUMN {1} {2} {3};",
                                     tabla, colActual, tipoActual, nullableAct));
                                 break;
@@ -516,6 +523,29 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
 
                     sb.AppendLine();
                 }
+            }
+
+            // ── RENOMBRAR TABLA (al final, después de todos los ALTER) ────────────
+            if (!string.IsNullOrWhiteSpace(nuevoNombreTabla) &&
+                !nuevoNombreTabla.Equals(tabla, StringComparison.OrdinalIgnoreCase))
+            {
+                switch (motor)
+                {
+                    case TipoMotor.MS_SQL:
+                        // sp_rename funciona tanto para tabla como para columna; sin tercer parámetro = tabla
+                        sb.AppendLine(string.Format("EXEC sp_rename '{0}', '{1}';", tabla, nuevoNombreTabla));
+                        break;
+                    case TipoMotor.POSTGRES:
+                        sb.AppendLine(string.Format("ALTER TABLE {0} RENAME TO {1};", tabla, nuevoNombreTabla));
+                        break;
+                    case TipoMotor.DB2:
+                        sb.AppendLine(string.Format("RENAME TABLE {0} TO {1};", tabla, nuevoNombreTabla));
+                        break;
+                    case TipoMotor.SQLite:
+                        sb.AppendLine(string.Format("ALTER TABLE {0} RENAME TO {1};", tabla, nuevoNombreTabla));
+                        break;
+                }
+                sb.AppendLine();
             }
 
             string resultado = sb.ToString().Trim();

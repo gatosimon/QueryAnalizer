@@ -60229,4 +60229,292 @@ ALTER TABLE employees ADD COLUMN Father varchar(50);</Consulta>
     <Parametros />
     <Fecha>2026-04-07T11:03:44.0550542-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE employees ADD COLUMN NickName varchar(50);
+
+ALTER TABLE employees RENAME TO Empleados;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T11:38:21.0775047-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE Empleados RENAME TO employees;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T11:39:36.0033785-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE employees DROP COLUMN NickName;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T11:39:51.0948706-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE employees RENAME TO Empleados;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T11:46:42.8949698-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE Empleados RENAME TO employees;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T11:56:06.4970638-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE employees RENAME COLUMN Email TO CorreoElectronico;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T12:10:13.9748578-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE employees RENAME COLUMN CorreoElectronico TO Email;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T12:10:29.3167607-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE employees ADD COLUMN NickName varchar(50);</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T12:19:38.0074279-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE employees DROP COLUMN NickName;
+
+ALTER TABLE employees RENAME TO Empleados;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T12:20:18.1196502-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE Empleados ADD COLUMN NickName varchar(50);</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T12:20:38.0275567-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE Empleados DROP COLUMN NickName;
+
+ALTER TABLE Empleados RENAME TO employees;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T12:21:12.1052759-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE employees ADD COLUMN NickName varchar(50);
+
+ALTER TABLE employees RENAME TO Empleados;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T12:28:01.7328181-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE Empleados DROP COLUMN NickName;
+
+ALTER TABLE Empleados RENAME TO employees;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T12:28:28.9022731-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE employees ADD COLUMN NickName varchar(50);
+
+ALTER TABLE employees RENAME TO Empleados;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T12:58:36.174601-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE Empleados DROP COLUMN NickName;
+
+ALTER TABLE Empleados RENAME TO employees;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T13:05:50.0649027-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE artists ADD COLUMN nick varchar(50);
+
+ALTER TABLE artists RENAME TO artistas;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T13:08:17.9591794-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE artistas DROP COLUMN nick;
+
+ALTER TABLE artistas RENAME TO artists;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T13:10:58.392327-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE employees ADD COLUMN NickName varchar(50);
+
+ALTER TABLE employees RENAME TO Empleados;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T16:34:54.0978575-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE Empleados DROP COLUMN NickName;
+
+ALTER TABLE Empleados RENAME TO employees;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T17:14:15.5556518-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>
