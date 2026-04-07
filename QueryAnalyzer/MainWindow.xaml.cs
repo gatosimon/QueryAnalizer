@@ -1531,6 +1531,7 @@ namespace QueryAnalyzer
                                 agregarOpcion("🔑 CREATE INDEX", () => GenerarCreateIndex(capSchema, capTabla));
                                 agregarOpcion("🔑 DROP INDEX", () => GenerarDropIndex(capSchema, capTabla));
                                 agregarOpcion("📊 COUNT(*)", () => GenerarCount(capSchema, capTabla));
+                                agregarOpcion("⚒︎ DESIGN", () => Diseñar(capSchema, capTabla));
 
                                 tablaNode.ContextMenu = ctxMenu;
                                 // ─────────────────────────────────────────────────────────
@@ -2006,6 +2007,16 @@ namespace QueryAnalyzer
         {
             return "SELECT COUNT(*) FROM " + NombreCompleto(schema, tabla) + ";";
         }
+
+        // En el handler del ContextMenu del TreeView (o donde ya tenés el click derecho):
+        private string Diseñar(string schema, string tabla)
+        {
+            // "nombreTabla" es el string del nodo seleccionado; "conexionActual" es tu Conexion activa
+            var w = new TableDesignerWindow(conexionActual, tabla) { Owner = this };
+            w.ShowDialog();
+            return string.Empty;
+        }
+
         // ════════════════════════════════════════════════════════════════
 
         private void tvSchema_MouseDoubleClick(object sender, MouseButtonEventArgs e)

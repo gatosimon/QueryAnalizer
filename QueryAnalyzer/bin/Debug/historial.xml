@@ -60129,4 +60129,32 @@ AND NRORELOJ = 2</Consulta>
     <Parametros />
     <Fecha>2026-04-01T12:24:28.7005039-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE employees ADD COLUMN NickName varchar(50);</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T08:51:00.4777297-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE employees DROP COLUMN NickName;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T08:53:21.6061587-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>

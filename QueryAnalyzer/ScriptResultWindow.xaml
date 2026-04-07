@@ -1,0 +1,37 @@
+<Window x:Class="QueryAnalyzer.ScriptResultWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Script generado"
+        Width="700" Height="460"
+        MinWidth="400" MinHeight="250"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBox Grid.Row="0" x:Name="txtScript"
+                 IsReadOnly="False"
+                 FontFamily="Consolas" FontSize="13"
+                 AcceptsReturn="True"
+                 AcceptsTab="True"
+                 VerticalScrollBarVisibility="Auto"
+                 HorizontalScrollBarVisibility="Auto"
+                 TextWrapping="NoWrap"
+                 Background="#1E1E1E"
+                 Foreground="#DCDCDC"
+                 CaretBrush="White"
+                 BorderThickness="0"
+                 Padding="6"/>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,8,0,0">
+            <Button Content="Copiar al portapapeles" Padding="10,4"
+                    Margin="0,0,8,0" Click="Copiar_Click"/>
+            <Button Content="Cerrar" Padding="10,4"
+                    IsCancel="True" Click="Cerrar_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

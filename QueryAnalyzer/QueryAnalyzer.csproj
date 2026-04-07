@@ -91,6 +91,9 @@
     <Compile Include="MainWindow.xaml.cs" />
     <Compile Include="Models\QueryParameter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ScriptResultWindow.xaml.cs" />
+    <Compile Include="TableDesignerService.cs" />
+    <Compile Include="TableDesignerWindow.xaml.cs" />
     <Compile Include="UpdateHelper.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -100,6 +103,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="MainWindow.xaml" />
+    <Page Include="ScriptResultWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="TableDesignerWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Resource Include="ThemeDark.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
