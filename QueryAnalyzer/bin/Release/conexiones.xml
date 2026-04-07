@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<ArrayOfConexion xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Conexion>
+    <Nombre>RRHH DESA</Nombre>
+    <Motor>DB2</Motor>
+    <Servidor>133.123.120.120</Servidor>
+    <BaseDatos>RRHH</BaseDatos>
+    <Usuario>db2admin</Usuario>
+    <Contrasena>db2admin</Contrasena>
+    <Puerto>50000</Puerto>
+    <EsWeb>false</EsWeb>
+  </Conexion>
+</ArrayOfConexion>

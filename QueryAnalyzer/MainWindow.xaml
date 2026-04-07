@@ -321,9 +321,14 @@
             <!-- Controles de conexión: izquierda -->
             <TextBlock Text="Driver/Proveedor:" VerticalAlignment="Center" Margin="0,0,6,0"
                        DockPanel.Dock="Left"/>
-            <ComboBox x:Name="cbDriver" Width="400" IsEditable="True" VerticalAlignment="Center"
+            <ComboBox x:Name="cbDriver" Width="100" IsEditable="True" VerticalAlignment="Center"
+                      DockPanel.Dock="Left" Margin="0,0,6,0"
+                      SelectionChanged="cbdriver_SelectionChanged"/>
+            <TextBlock Text="Nombre:" VerticalAlignment="Center" Margin="0,0,6,0"
+                       DockPanel.Dock="Left"/>
+            <ComboBox x:Name="cbConnectionName" Width="400" IsEditable="True" VerticalAlignment="Center"
                       DockPanel.Dock="Left"
-                      SelectionChanged="cbDriver_SelectionChanged"/>
+                      SelectionChanged="cbConnectionName_SelectionChanged"/>
             <Button x:Name="btnTest"            Content="Probar conexión" Padding="2,2" Margin="8,0,0,0" Click="BtnTest_Click"        DockPanel.Dock="Left"/>
             <Button x:Name="btnNewConn"         Content="Nueva"           Padding="2,2" Margin="8,0,0,0" Click="BtnNewConn_Click"      DockPanel.Dock="Left"/>
             <Button x:Name="btnDeleteConn_Copy" Content="Eliminar"        Padding="2,2" Margin="8,0,0,0" Click="btnDeleteConn_Click"   DockPanel.Dock="Left"/>

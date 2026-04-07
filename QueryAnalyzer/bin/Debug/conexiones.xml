@@ -7,7 +7,7 @@
     <BaseDatos>TRIBUTOS</BaseDatos>
     <Usuario>db2admin</Usuario>
     <Contrasena>db2admin</Contrasena>
-	<Puerto>50000</Puerto>
+    <Puerto>50000</Puerto>
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -17,7 +17,7 @@
     <BaseDatos>TRIBUTOS</BaseDatos>
     <Usuario>db2admin</Usuario>
     <Contrasena>db2admin</Contrasena>
-	<Puerto>50000</Puerto>
+    <Puerto>50000</Puerto>
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -27,7 +27,7 @@
     <BaseDatos>RRHH</BaseDatos>
     <Usuario>db2admin</Usuario>
     <Contrasena>db2admin</Contrasena>
-	<Puerto>50000</Puerto>
+    <Puerto>50000</Puerto>
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -55,7 +55,7 @@
     <BaseDatos>Postgresim10</BaseDatos>
     <Usuario>postgres</Usuario>
     <Contrasena>postgres</Contrasena>
-	<Puerto>5432</Puerto>
+    <Puerto>5432</Puerto>
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -65,7 +65,7 @@
     <BaseDatos>CONTCBEL</BaseDatos>
     <Usuario>db2admin</Usuario>
     <Contrasena>db2admin</Contrasena>
-	<Puerto>50000</Puerto>
+    <Puerto>50000</Puerto>
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -75,7 +75,7 @@
     <BaseDatos />
     <Usuario />
     <Contrasena />
-	<Puerto></Puerto>
+    <Puerto />
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -85,7 +85,7 @@
     <BaseDatos>CONTCBEL</BaseDatos>
     <Usuario>db2admin</Usuario>
     <Contrasena>db2admin</Contrasena>
-	<Puerto>50000</Puerto>
+    <Puerto>50000</Puerto>
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -95,7 +95,7 @@
     <BaseDatos>gis</BaseDatos>
     <Usuario>magic</Usuario>
     <Contrasena>DEriu7Dp45</Contrasena>
-	<Puerto>5432</Puerto>
+    <Puerto>5432</Puerto>
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -105,7 +105,7 @@
     <BaseDatos />
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
-	<Puerto></Puerto>
+    <Puerto />
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -115,7 +115,7 @@
     <BaseDatos>HISTOTRIB</BaseDatos>
     <Usuario>db2admin</Usuario>
     <Contrasena>db2admin</Contrasena>
-	<Puerto>50000</Puerto>
+    <Puerto>50000</Puerto>
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -125,7 +125,7 @@
     <BaseDatos>RRHH</BaseDatos>
     <Usuario>db2admin</Usuario>
     <Contrasena>db2admin</Contrasena>
-	<Puerto>50000</Puerto>
+    <Puerto>50000</Puerto>
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -135,7 +135,7 @@
     <BaseDatos>CONTABIL</BaseDatos>
     <Usuario>db2admin</Usuario>
     <Contrasena>db2admin</Contrasena>
-	<Puerto>50000</Puerto>
+    <Puerto>50000</Puerto>
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -145,7 +145,7 @@
     <BaseDatos>TRIBUTOS</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
-	<Puerto>50000</Puerto>
+    <Puerto>50000</Puerto>
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -155,7 +155,7 @@
     <BaseDatos>TRIBUTOS</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
-	<Puerto>50000</Puerto>
+    <Puerto>50000</Puerto>
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -165,7 +165,7 @@
     <BaseDatos>gis</BaseDatos>
     <Usuario>magic</Usuario>
     <Contrasena>DEriu7Dp45</Contrasena>
-	<Puerto>5432</Puerto>
+    <Puerto>5432</Puerto>
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -175,7 +175,7 @@
     <BaseDatos>ADMINISTRACION</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
-	<Puerto></Puerto>
+    <Puerto />
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -185,7 +185,7 @@
     <BaseDatos>TRIBUTOS</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
-	<Puerto></Puerto>
+    <Puerto />
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -195,7 +195,7 @@
     <BaseDatos>TRIBUTOS</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
-	<Puerto></Puerto>
+    <Puerto />
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -205,7 +205,7 @@
     <BaseDatos>gis</BaseDatos>
     <Usuario>magic</Usuario>
     <Contrasena>DEriu7Dp45</Contrasena>
-	<Puerto>5432</Puerto>
+    <Puerto>5432</Puerto>
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -215,7 +215,7 @@
     <BaseDatos>ADMINISTRACION</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
-	<Puerto></Puerto>
+    <Puerto />
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -225,7 +225,7 @@
     <BaseDatos>ADMINISTRACION</BaseDatos>
     <Usuario>usuario</Usuario>
     <Contrasena>ci?r0ba</Contrasena>
-	<Puerto></Puerto>
+    <Puerto />
     <EsWeb>false</EsWeb>
   </Conexion>
   <Conexion>
@@ -235,7 +235,17 @@
     <BaseDatos>RAFAELAGOVAR</BaseDatos>
     <Usuario>rafaelaweb</Usuario>
     <Contrasena>gw2471n</Contrasena>
-	<Puerto></Puerto>
+    <Puerto />
     <EsWeb>true</EsWeb>
+  </Conexion>
+  <Conexion>
+    <Nombre>RRHH DESA</Nombre>
+    <Motor>DB2</Motor>
+    <Servidor>133.123.120.120</Servidor>
+    <BaseDatos>RRHH</BaseDatos>
+    <Usuario>db2admin</Usuario>
+    <Contrasena>db2admin</Contrasena>
+    <Puerto>50000</Puerto>
+    <EsWeb>false</EsWeb>
   </Conexion>
 </ArrayOfConexion>

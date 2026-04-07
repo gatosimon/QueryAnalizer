@@ -17,6 +17,7 @@ using System.Windows.Data;
 using System.Windows.Controls.Primitives;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
+using ICSharpCode.AvalonEdit.CodeCompletion;
 using System.Xml;
 using System.Threading;
 using System.Windows.Documents;
@@ -45,11 +46,20 @@ namespace QueryAnalyzer
         private static readonly string ThemesFolder =
             System.IO.Path.Combine(App.AppDataFolder, "Themes");
 
+        // ── Intellisense ────────────────────────────────────────────────
+        private CompletionWindow _completionWindow;
+        private Dictionary<string, List<ColumnInfo>> _cacheColumnas = new Dictionary<string, List<ColumnInfo>>(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, string> _mapaAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private HashSet<string> _tablasEnCarga = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        // Caché de tablas de la base de datos activa (se carga al conectar y se invalida al cambiar conexión)
+        private List<TablaInfo> _cacheTablas = new List<TablaInfo>();
+        private bool _tablasEnCargaGlobal = false;
+
         public MainWindow()
         {
             InitializeComponent();
             // en MainWindow() después de InitializeComponent()
-            txtVersion.Text = UpdateHelper.GetInstalledVersion();
+            txtVersion.Text = $"Versión: {UpdateHelper.GetInstalledVersion()}";
 
             // 🔹 AÑADIDO: esto asegura que los bindings de DataContext funcionen correctamente.
             DataContext = this;
@@ -67,10 +77,18 @@ namespace QueryAnalyzer
             // Configura ItemsSource correctamente
             Parametros = new List<QueryParameter>();
             gridParams.ItemsSource = Parametros;
+            InicializarDrivers();
             InicializarConexiones();
             BloquearUI(true);
             InicializarTemas();
             ConfigurarMenuContextualAvalonEdit();
+
+            // Intellisense: suscripción a eventos de AvalonEdit
+            txtQuery.TextArea.TextEntering += TxtQuery_TextEntering;
+            txtQuery.TextArea.TextEntered += TxtQuery_TextEntered;
+            // Ctrl+Space: disparar intellisense manualmente
+            // Ctrl+Shift+Home: corregir selección hasta el inicio del documento
+            txtQuery.TextArea.PreviewKeyDown += TxtQueryArea_PreviewKeyDown;
         }
         /// <summary>
         /// Primera vez: extrae los .xaml de tema desde recursos embebidos a disco (carpeta Themes\ junto al .exe).
@@ -330,16 +348,54 @@ namespace QueryAnalyzer
                 .ToDictionary(t => t.ToString(), t => t);
         }
 
+        private void InicializarDrivers()
+        {
+            // Proyectamos el enum a una lista de objetos con nombre amigable y el valor real
+            cbDriver.ItemsSource = Enum.GetValues(typeof(TipoMotor))
+                .Cast<TipoMotor>()
+                .Select(m => new {
+                    NombreAmigable = m.ToString().Replace("_", " "),
+                    ValorReal = m
+                }).ToList();
+
+            // Indicamos qué propiedad se muestra y cuál es el valor de fondo
+            cbDriver.DisplayMemberPath = "NombreAmigable";
+            cbDriver.SelectedValuePath = "ValorReal";
+        }
+
         private void InicializarConexiones()
         {
             var conexiones = ConexionesManager.Cargar();
-            cbDriver.ItemsSource = conexiones.Values.ToList();
-            cbDriver.DisplayMemberPath = "Nombre";
+            cbConnectionName.ItemsSource = conexiones.Values.ToList();
+            cbConnectionName.DisplayMemberPath = "Nombre";
         }
 
-        private void cbDriver_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void FiltrarConexiones(TipoMotor motor)
         {
-            if (cbDriver.SelectedItem is Conexion conexion)
+            var conexiones = ConexionesManager.Cargar();
+            cbConnectionName.ItemsSource = conexiones.Values.ToList().Where(c => c.Motor == motor);
+            cbConnectionName.DisplayMemberPath = "Nombre";
+        }
+
+        private void cbdriver_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                // Usamos SelectedValue para obtener el TipoMotor (definido en SelectedValuePath)
+                if (cbDriver.SelectedValue is TipoMotor driver)
+                {
+                    FiltrarConexiones(driver);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppendMessage("Error al filtrar conexiones: " + ex.Message);
+            }
+        }
+
+        private void cbConnectionName_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (cbConnectionName.SelectedItem is Conexion conexion)
             {
                 conexionActual = conexion;
                 BloquearUI(false);
@@ -347,6 +403,13 @@ namespace QueryAnalyzer
 
                 // NUEVO: al seleccionar conexión, filtramos historial para esa conexión
                 LoadHistoryForConnection(conexion);
+                // Limpiamos el caché de intellisense al cambiar de conexión
+                _cacheColumnas.Clear();
+                _mapaAliases.Clear();
+                _tablasEnCarga.Clear();
+                // Invalidamos y recargamos el caché de tablas para la nueva conexión
+                _cacheTablas.Clear();
+                CargarTablasEnBackground(conexion);
                 btnExplorar_Click(sender, e);
             }
         }
@@ -1206,13 +1269,13 @@ namespace QueryAnalyzer
             DatosConexion datosConexion = new DatosConexion(conexionActual);
             datosConexion.ShowDialog();
             InicializarConexiones();
-            foreach (var item in cbDriver.Items)
+            foreach (var item in cbConnectionName.Items)
             {
                 try
                 {
                     if (conexionActual != null && ((Conexion)item).Nombre == conexionActual.Nombre)
                     {
-                        cbDriver.SelectedItem = item;
+                        cbConnectionName.SelectedItem = item;
                         break;
                     }
                 }
@@ -1228,13 +1291,13 @@ namespace QueryAnalyzer
             DatosConexion datosConexion = new DatosConexion();
             datosConexion.ShowDialog();
             InicializarConexiones();
-            foreach (var item in cbDriver.Items)
+            foreach (var item in cbConnectionName.Items)
             {
                 try
                 {
                     if (conexionActual != null && ((Conexion)item).Nombre == conexionActual.Nombre)
                     {
-                        cbDriver.SelectedItem = item;
+                        cbConnectionName.SelectedItem = item;
                         break;
                     }
                 }
@@ -1247,14 +1310,14 @@ namespace QueryAnalyzer
 
         private void btnDeleteConn_Click(object sender, RoutedEventArgs e)
         {
-            if (cbDriver.SelectedItem is Conexion conexion)
+            if (cbConnectionName.SelectedItem is Conexion conexion)
             {
                 conexionActual = conexion;
                 var conexiones = ConexionesManager.Cargar();
                 conexiones.Remove(conexionActual.Nombre);
                 ConexionesManager.Guardar(conexiones);
-                cbDriver.ItemsSource = conexiones.Values.ToList();
-                cbDriver.DisplayMemberPath = "Nombre";
+                cbConnectionName.ItemsSource = conexiones.Values.ToList();
+                cbConnectionName.DisplayMemberPath = "Nombre";
             }
         }
 
@@ -2516,8 +2579,388 @@ namespace QueryAnalyzer
                 btnBuscar_Click(sender, e);
             }
         }
+
+        // ════════════════════════════════════════════════════════════════
+        // INTELLISENSE
+        // ════════════════════════════════════════════════════════════════
+
+        // Palabras reservadas SQL que nunca deben abrir la ventana de completion.
+        private static readonly HashSet<string> _palabrasReservadas = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "SELECT","FROM","WHERE","GROUP","ORDER","BY","HAVING","FETCH","FIRST","ROWS","ONLY",
+            "INSERT","INTO","VALUES","UPDATE","SET","DELETE","ON","CASE","ADD","WHEN","THEN",
+            "ELSE","END","AS","DISTINCT","UNION","CREATE","TABLE","DROP","ALTER","VIEW",
+            "PROCEDURE","TRIGGER","ASC","DESC","SCHEMA","JOIN","LEFT","RIGHT","INNER","OUTER",
+            "CROSS","FULL","LIMIT","OFFSET","AND","OR","NOT","NULL","IS","IN","BETWEEN","LIKE",
+            "EXISTS","ALL","SUM","COUNT","CAST","CONVERT","COALESCE","NULLIF","ISNULL",
+            "ROW_NUMBER","RANK","DENSE_RANK","LAG","LEAD","MAX","MIN"
+        };
+
+        /// <summary>
+        /// Devuelve el token (palabra parcial) que el usuario está escribiendo justo antes del cursor.
+        /// </summary>
+        private string ObtenerTokenActual(int caretOffset)
+        {
+            if (caretOffset <= 0) return string.Empty;
+            int inicio = caretOffset - 1;
+            while (inicio > 0 &&
+                   (char.IsLetterOrDigit(txtQuery.Document.GetCharAt(inicio - 1)) ||
+                    txtQuery.Document.GetCharAt(inicio - 1) == '_'))
+            {
+                inicio--;
+            }
+            int len = caretOffset - inicio;
+            return len > 0 ? txtQuery.Document.GetText(inicio, len) : string.Empty;
+        }
+
+        /// <summary>
+        /// Maneja Ctrl+Space (disparar intellisense manualmente según contexto)
+        /// y Ctrl+Shift+Home (seleccionar desde el cursor hasta el inicio del documento).
+        /// </summary>
+        private void TxtQueryArea_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            // ── Ctrl+Shift+Home: seleccionar desde cursor hasta inicio ──────────
+            if (e.Key == Key.Home &&
+                (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control &&
+                (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
+            {
+                var area = txtQuery.TextArea;
+                int desde = area.Caret.Offset;
+                // Crear selección desde la posición actual hasta el inicio del documento
+                area.Selection = ICSharpCode.AvalonEdit.Editing.Selection.Create(area, desde, 0);
+                area.Caret.Offset = 0;
+                e.Handled = true;
+                return;
+            }
+
+            // ── Ctrl+Space: disparar intellisense manual ─────────────────────────
+            if (e.Key == Key.Space && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                e.Handled = true;
+
+                // Cerrar ventana previa si existe
+                _completionWindow?.Close();
+                _completionWindow = null;
+
+                ActualizarAliasesYCargarColumnas(txtQuery.Text);
+                int caret = txtQuery.CaretOffset;
+                string token = ObtenerTokenActual(caret);
+
+                // Verificar si hay un punto antes del token (contexto alias.columna)
+                int tokenStart = caret - token.Length;
+                if (tokenStart > 0 && txtQuery.Document.GetCharAt(tokenStart - 1) == '.')
+                {
+                    // Buscar el alias/tabla antes del punto
+                    int pPos = tokenStart - 1;
+                    int aInicio = pPos - 1;
+                    while (aInicio > 0 &&
+                           (char.IsLetterOrDigit(txtQuery.Document.GetCharAt(aInicio - 1)) ||
+                            txtQuery.Document.GetCharAt(aInicio - 1) == '_'))
+                    {
+                        aInicio--;
+                    }
+                    string prefijo = txtQuery.Document.GetText(aInicio, pPos - aInicio).Trim();
+                    if (!string.IsNullOrEmpty(prefijo))
+                    {
+                        AbrirIntellisense(prefijo, false);
+                        return;
+                    }
+                }
+
+                // Determinar contexto y abrir suggestions
+                bool enContextoTabla = EstaEnContextoTabla(txtQuery.Text, caret);
+                AbrirIntellisense(null, enContextoTabla);
+                return;
+            }
+        }
+
+        /// <summary>
+        /// Si la ventana de completion está abierta y el usuario escribe un carácter
+        /// que no forma parte de un identificador, cierra la ventana SIN autocompletar
+        /// (si es espacio) o confirma la selección (si es otro separador como punto, coma, etc.).
+        /// </summary>
+        private void TxtQuery_TextEntering(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            if (e.Text.Length > 0 && _completionWindow != null)
+            {
+                char c = e.Text[0];
+                if (!char.IsLetterOrDigit(c) && c != '_')
+                {
+                    if (c == ' ')
+                    {
+                        // Espacio: cerrar la ventana sin insertar nada
+                        _completionWindow.Close();
+                        _completionWindow = null;
+                    }
+                    else
+                    {
+                        // Cualquier otro separador (punto, coma, paréntesis, etc.): confirmar inserción
+                        _completionWindow.CompletionList.RequestInsertion(e);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Reacciona a cada carácter escrito en el editor:
+        ///   - Actualiza el mapa de aliases/tablas y dispara carga en background.
+        ///   - Si es un punto, abre suggestions de la tabla/alias que precede al punto.
+        ///   - Si es una letra y no hay ventana abierta, y el token actual NO es una
+        ///     palabra reservada, abre suggestions generales.
+        /// </summary>
+        private void TxtQuery_TextEntered(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            // Actualizamos alias y disparamos carga de columnas en background
+            ActualizarAliasesYCargarColumnas(txtQuery.Text);
+
+            if (e.Text == ".")
+            {
+                // Buscar hacia atrás la palabra antes del punto
+                int offset = txtQuery.CaretOffset;
+                int inicio = offset - 2; // -1 por el ".", -1 más para empezar antes del punto
+                while (inicio > 0 &&
+                       (char.IsLetterOrDigit(txtQuery.Document.GetCharAt(inicio - 1)) ||
+                        txtQuery.Document.GetCharAt(inicio - 1) == '_'))
+                {
+                    inicio--;
+                }
+
+                if (inicio < offset - 1)
+                {
+                    string prefijo = txtQuery.Document.GetText(inicio, offset - inicio - 1).Trim();
+                    if (!string.IsNullOrEmpty(prefijo))
+                        AbrirIntellisense(prefijo);
+                }
+            }
+            else if (e.Text.Length == 1 && char.IsLetter(e.Text[0]) && _completionWindow == null)
+            {
+                // Obtener el token completo que el usuario está escribiendo
+                string tokenActual = ObtenerTokenActual(txtQuery.CaretOffset);
+
+                // No abrir intellisense si el token es (o empieza a ser) una palabra reservada SQL
+                // Para evitar falsos positivos solo ignoramos si el token completo coincide exactamente,
+                // o si ningún elemento de la lista de tablas/columnas empieza con ese token.
+                if (_palabrasReservadas.Contains(tokenActual))
+                    return;
+
+                // Determinamos si el cursor está en contexto FROM/JOIN para priorizar tablas
+                bool enContextoTabla = EstaEnContextoTabla(txtQuery.Text, txtQuery.CaretOffset);
+                // Sugerencias generales al empezar a escribir texto
+                AbrirIntellisense(null, enContextoTabla);
+            }
+        }
+
+        /// <summary>
+        /// Detecta si la posición actual del cursor está inmediatamente después de
+        /// FROM, JOIN (y variantes) para priorizar las sugerencias de tablas.
+        /// </summary>
+        private bool EstaEnContextoTabla(string sql, int caretOffset)
+        {
+            if (string.IsNullOrEmpty(sql) || caretOffset <= 0) return false;
+
+            // Tomamos el texto antes del cursor y buscamos la última palabra clave de contexto tabla
+            string anterior = sql.Substring(0, caretOffset).TrimEnd();
+
+            // Palabras clave que introducen un nombre de tabla
+            string[] palabrasContexto = { "FROM", "JOIN", "INTO", "UPDATE", "TABLE" };
+
+            // Buscamos hacia atrás ignorando el token que el usuario está escribiendo ahora
+            // Eliminamos el token parcial actual (hasta el último espacio/retorno)
+            int ultimoEspacio = anterior.LastIndexOfAny(new char[] { ' ', '\t', '\r', '\n' });
+            string sinTokenActual = ultimoEspacio >= 0 ? anterior.Substring(0, ultimoEspacio).TrimEnd() : string.Empty;
+
+            if (string.IsNullOrEmpty(sinTokenActual)) return false;
+
+            // Obtenemos la última "palabra" antes del token actual
+            int penultimoEspacio = sinTokenActual.LastIndexOfAny(new char[] { ' ', '\t', '\r', '\n' });
+            string ultimaPalabra = penultimoEspacio >= 0
+                ? sinTokenActual.Substring(penultimoEspacio + 1)
+                : sinTokenActual;
+
+            return Array.Exists(palabrasContexto,
+                p => p.Equals(ultimaPalabra, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
+        /// Carga en background la lista completa de tablas de la base de datos activa.
+        /// Se llama al conectar y al cambiar de conexión. Silencioso ante errores.
+        /// </summary>
+        private async void CargarTablasEnBackground(Conexion conexion)
+        {
+            if (conexion == null) return;
+            if (_tablasEnCargaGlobal) return;
+
+            _tablasEnCargaGlobal = true;
+            try
+            {
+                var tablas = await IntelliSenseService.GetTablasAsync(conexion);
+                // Actualizamos en el hilo de UI para evitar condiciones de carrera
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    _cacheTablas = tablas ?? new List<TablaInfo>();
+                });
+            }
+            catch (Exception err)
+            {
+                Console.WriteLine("Error cargando tablas para intellisense: " + err.Message);
+                // Silencioso
+            }
+            finally
+            {
+                _tablasEnCargaGlobal = false;
+            }
+        }
+
+        /// <summary>
+        /// Parsea el SQL para detectar tablas y aliases (FROM tabla [AS] alias / JOIN tabla [AS] alias).
+        /// Por cada tabla nueva detectada dispara la carga asíncrona de sus columnas.
+        /// </summary>
+        private void ActualizarAliasesYCargarColumnas(string sql)
+        {
+            _mapaAliases.Clear();
+
+            string pattern = @"(?i)\b(?:FROM|JOIN)\s+([a-zA-Z0-9_.]+)(?:\s+(?:AS\s+)?([a-zA-Z0-9_]+))?";
+            var matches = Regex.Matches(sql, pattern);
+
+            // Palabras reservadas SQL que pueden confundirse con alias
+            string[] reservadas = { "WHERE", "SET", "ON", "AND", "OR", "INNER", "LEFT", "RIGHT",
+                                     "OUTER", "CROSS", "FULL", "GROUP", "ORDER", "HAVING", "FETCH",
+                                     "LIMIT", "OFFSET", "UNION", "EXCEPT", "INTERSECT" };
+
+            foreach (Match m in matches)
+            {
+                string tabla = m.Groups[1].Value.Trim();
+                string alias = m.Groups[2].Value.Trim();
+
+                if (Array.Exists(reservadas, p => p.Equals(alias, StringComparison.OrdinalIgnoreCase)))
+                    alias = string.Empty;
+
+                if (!string.IsNullOrEmpty(tabla) && !_mapaAliases.ContainsKey(tabla))
+                    _mapaAliases[tabla] = tabla;
+
+                if (!string.IsNullOrEmpty(alias) && !_mapaAliases.ContainsKey(alias))
+                    _mapaAliases[alias] = tabla;
+
+                // Disparar carga de columnas si la tabla no está en caché
+                CargarColumnasEnBackground(tabla);
+            }
+        }
+
+        /// <summary>
+        /// Carga columnas de una tabla en background sin bloquear la UI.
+        /// Silencioso ante errores para no interrumpir la escritura.
+        /// </summary>
+        private async void CargarColumnasEnBackground(string tabla)
+        {
+            if (conexionActual == null) return;
+            if (_cacheColumnas.ContainsKey(tabla)) return;
+            if (_tablasEnCarga.Contains(tabla)) return;
+
+            _tablasEnCarga.Add(tabla);
+            try
+            {
+                var columnas = await IntelliSenseService.GetColumnasAsync(conexionActual, tabla);
+                if (columnas != null && columnas.Count > 0)
+                    _cacheColumnas[tabla] = columnas;
+            }
+            finally
+            {
+                _tablasEnCarga.Remove(tabla);
+            }
+        }
+
+        /// <summary>
+        /// Abre la CompletionWindow de AvalonEdit con las columnas relevantes.
+        /// Si prefijo no es null, filtra por tabla/alias; si es null, muestra todo el caché.
+        /// Si enContextoTabla es true, las tablas de la BD aparecen al inicio de la lista.
+        /// El StartOffset de la ventana se ajusta para reemplazar el token que ya se escribió,
+        /// evitando así la duplicación del primer carácter.
+        /// </summary>
+        private void AbrirIntellisense(string prefijo, bool enContextoTabla = false)
+        {
+            _completionWindow = new CompletionWindow(txtQuery.TextArea);
+
+            // ── Ajustar StartOffset para incluir el token ya escrito ──────────────
+            // Buscamos hacia atrás desde el cursor hasta el inicio del token actual
+            // (letras, dígitos y guión bajo). Así la CompletionWindow sabe que debe
+            // reemplazar esos caracteres en lugar de insertar delante de ellos.
+            int caretOffset = txtQuery.CaretOffset;
+            int tokenStart = caretOffset;
+            while (tokenStart > 0 &&
+                   (char.IsLetterOrDigit(txtQuery.Document.GetCharAt(tokenStart - 1)) ||
+                    txtQuery.Document.GetCharAt(tokenStart - 1) == '_'))
+            {
+                tokenStart--;
+            }
+            _completionWindow.StartOffset = tokenStart;
+
+            IList<ICompletionData> data = _completionWindow.CompletionList.CompletionData;
+
+            if (!string.IsNullOrEmpty(prefijo))
+            {
+                // Resolver alias → tabla real
+                string tablaReal;
+                if (!_mapaAliases.TryGetValue(prefijo, out tablaReal))
+                    tablaReal = prefijo;
+
+                if (_cacheColumnas.ContainsKey(tablaReal))
+                {
+                    foreach (var col in _cacheColumnas[tablaReal])
+                        data.Add(new SqlCompletionItem(col.Nombre, col.Tipo, tablaReal));
+                }
+            }
+            else
+            {
+                if (enContextoTabla)
+                {
+                    // En contexto FROM/JOIN: las tablas de la BD van primero
+                    foreach (var t in _cacheTablas)
+                        data.Add(new SqlCompletionItem(t.Nombre, t.Tipo == "V" || t.Tipo == "view" || t.Tipo == "VIEW" ? "Vista" : "Tabla", string.Empty));
+
+                    // Luego las columnas ya conocidas por las tablas del query actual
+                    foreach (var kvp in _cacheColumnas)
+                    {
+                        foreach (var col in kvp.Value)
+                            data.Add(new SqlCompletionItem(col.Nombre, col.Tipo, kvp.Key));
+                    }
+                }
+                else
+                {
+                    // Contexto general: tablas conocidas del query actual + sus columnas
+                    foreach (var kvp in _cacheColumnas)
+                    {
+                        data.Add(new SqlCompletionItem(kvp.Key, "Tabla", null));
+                        foreach (var col in kvp.Value)
+                            data.Add(new SqlCompletionItem(col.Nombre, col.Tipo, kvp.Key));
+                    }
+
+                    // Además incluimos las tablas de la BD por si el usuario quiere escribir una nueva
+                    foreach (var t in _cacheTablas)
+                    {
+                        // Solo agregar si no está ya en el caché de columnas (evitar duplicados)
+                        if (!_cacheColumnas.ContainsKey(t.Nombre))
+                            data.Add(new SqlCompletionItem(t.Nombre, t.Tipo == "V" || t.Tipo == "view" || t.Tipo == "VIEW" ? "Vista" : "Tabla", string.Empty));
+                    }
+                }
+            }
+
+            if (data.Count > 0)
+            {
+                _completionWindow.Show();
+                _completionWindow.Closed += (s, args) => _completionWindow = null;
+            }
+            else
+            {
+                _completionWindow = null;
+            }
+        }
     }
 }
+
+// ════════════════════════════════════════════════════════════════
+// CLASES DE SOPORTE (fuera del namespace principal de la ventana)
+// ════════════════════════════════════════════════════════════════
+
 public class GridLengthAnimation : AnimationTimeline
 {
     public override Type TargetPropertyType => typeof(GridLength);
@@ -2554,5 +2997,73 @@ public class GridLengthAnimation : AnimationTimeline
     protected override Freezable CreateInstanceCore()
     {
         return new GridLengthAnimation();
+    }
+}
+
+/// <summary>
+/// Item de autocompletado para AvalonEdit.
+/// Muestra el nombre de la columna en negrita y la tabla de origen en gris.
+/// TAB o ENTER insertan solo el nombre de la columna/tabla.
+/// </summary>
+public class SqlCompletionItem : ICSharpCode.AvalonEdit.CodeCompletion.ICompletionData
+{
+    private readonly string _tipo;
+    private readonly string _tabla;
+
+    public SqlCompletionItem(string texto, string tipo, string tabla)
+    {
+        Text = texto;
+        _tipo = tipo ?? string.Empty;
+        _tabla = tabla ?? string.Empty;
+    }
+
+    public System.Windows.Media.ImageSource Image => null;
+    public string Text { get; private set; }
+    public double Priority => 0;
+
+    // Tooltip lateral de la ventana de completion
+    public object Description =>
+        string.IsNullOrEmpty(_tabla)
+            ? (object)_tipo
+            : $"{_tipo}  —  {_tabla}";
+
+    // Contenido visual del ítem en la lista desplegable
+    public object Content
+    {
+        get
+        {
+            // Para ítems de tipo "Tabla" (sin tabla padre) mostramos solo el nombre
+            if (string.IsNullOrEmpty(_tabla))
+                return Text;
+
+            var panel = new System.Windows.Controls.StackPanel
+            {
+                Orientation = System.Windows.Controls.Orientation.Horizontal
+            };
+            panel.Children.Add(new System.Windows.Controls.TextBlock
+            {
+                Text = Text,
+                FontWeight = System.Windows.FontWeights.SemiBold
+            });
+            panel.Children.Add(new System.Windows.Controls.TextBlock
+            {
+                Text = "  " + _tabla,
+                Foreground = new System.Windows.Media.SolidColorBrush(
+                                        System.Windows.Media.Color.FromRgb(130, 130, 130)),
+                FontSize = 10,
+                VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                Margin = new System.Windows.Thickness(4, 0, 0, 0)
+            });
+            return panel;
+        }
+    }
+
+    public void Complete(
+        ICSharpCode.AvalonEdit.Editing.TextArea textArea,
+        ICSharpCode.AvalonEdit.Document.ISegment completionSegment,
+        EventArgs insertionEventArgs)
+    {
+        // Inserta solo el nombre, sin el tipo ni la tabla
+        textArea.Document.Replace(completionSegment, Text);
     }
 }

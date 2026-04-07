@@ -59881,4 +59881,252 @@ FETCH FIRST 10 ROWS ONLY;</Consulta>
     <Parametros />
     <Fecha>2026-03-31T07:00:32.2877005-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>SELECT W.NRO_LEGAJO_69, W.FECHA_69, W.COD_NOVEDAD_69, W.CANT_TIEMPO_69, W.VIG_DESDE_69, W.VIG_HASTA_69, 0,0,0,0,0,0
+FROM w12perfn W
+JOIN tb_mempl T
+ON T.NROLEGAJO = W.NRO_LEGAJO_69 
+WHERE W.FECHA_69 &gt;= '01/12/2025' 
+AND W.FECHA_69 &lt;= '31/03/2026' 
+AND W.COD_NOVEDAD_69 &gt;= 'A5' 
+AND W.COD_NOVEDAD_69 &lt;= 'A5' 
+AND T.NRORELOJ = 2</Consulta>
+    <Parametros />
+    <Fecha>2026-03-31T10:30:18.4435199-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>SELECT NRO_LEGAJO_69, FECHA_69, COD_NOVEDAD_69, CANT_TIEMPO_69, VIG_DESDE_69, VIG_HASTA_69, 0,0,0,0,0,0
+FROM w12perfn 
+JOIN tb_mempl 
+ON NROLEGAJO = NRO_LEGAJO_69 
+WHERE FECHA_69 &gt;= '01/12/2025' 
+AND FECHA_69 &lt;= '31/03/2026' 
+AND COD_NOVEDAD_69 &gt;= 'A5' 
+AND COD_NOVEDAD_69 &lt;= 'A5' 
+AND NRORELOJ = 2</Consulta>
+    <Parametros />
+    <Fecha>2026-03-31T10:31:00.2507376-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH PROD DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>SERVER01</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>SELECT NRO_LEGAJO_69, FECHA_69, COD_NOVEDAD_69, CANT_TIEMPO_69, VIG_DESDE_69, VIG_HASTA_69, 0,0,0,0,0,0
+FROM w12perfn 
+JOIN tb_mempl 
+ON NROLEGAJO = NRO_LEGAJO_69 
+WHERE FECHA_69 &gt;= '01/12/2025' 
+AND FECHA_69 &lt;= '31/03/2026' 
+AND COD_NOVEDAD_69 &gt;= 'A5' 
+AND COD_NOVEDAD_69 &lt;= 'A5' 
+AND NRORELOJ = 2</Consulta>
+    <Parametros />
+    <Fecha>2026-03-31T11:24:04.1595518-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>SELECT * FROM SYSIBM.SYSCOLUMNS FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2</Consulta>
+    <Parametros />
+    <Fecha>2026-04-01T07:04:18.7276753-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>SELECT COLNAME, COLTYPE FROM SYSIBM.SYSCOLUMNS WHERE TBNAME = 'M00TABMA' ORDER BY COLNAME</Consulta>
+    <Parametros />
+    <Fecha>2026-04-01T08:55:06.3728122-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>SELECT COLNAME, COLTYPE FROM SYSIBM.SYSCOLUMNS</Consulta>
+    <Parametros />
+    <Fecha>2026-04-01T08:55:23.9329101-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>SELECT * FROM SYSIBM.SYSCOLUMNS</Consulta>
+    <Parametros />
+    <Fecha>2026-04-01T08:55:49.4939973-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>SELECT NAME, COLTYPE FROM SYSIBM.SYSCOLUMNS WHERE TBNAME = 'M00TABMA' ORDER BY COLNO</Consulta>
+    <Parametros />
+    <Fecha>2026-04-01T08:56:36.4103585-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>Select * From MM00TABMA where CODPRIN = 0</Consulta>
+    <Parametros />
+    <Fecha>2026-04-01T11:20:21.84953-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>Select * From M00TABMA where CODPRIN = 0</Consulta>
+    <Parametros />
+    <Fecha>2026-04-01T11:20:27.2484506-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>Select * From M00TABMA where CODPRIN = 1</Consulta>
+    <Parametros />
+    <Fecha>2026-04-01T11:20:37.8163085-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>Select * From M00TABMA where CODPRIN = 27</Consulta>
+    <Parametros />
+    <Fecha>2026-04-01T11:20:40.7106986-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>RRHH Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>RRHH</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>Select * From M00TABMA</Consulta>
+    <Parametros />
+    <Fecha>2026-04-01T11:20:44.9148187-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>SELECT * FROM M00TABMA where CODPRIN = 1</Consulta>
+    <Parametros />
+    <Fecha>2026-04-01T12:23:47.1814236-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>SELECT * FROM M00TABMA where CODPRIN = 1 and SUBCOD = 0</Consulta>
+    <Parametros />
+    <Fecha>2026-04-01T12:24:25.8638556-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>Tributos Desarrollo DB2</Nombre>
+      <Motor>DB2</Motor>
+      <Servidor>133.123.120.120</Servidor>
+      <BaseDatos>TRIBUTOS</BaseDatos>
+      <Usuario>db2admin</Usuario>
+      <Contrasena>db2admin</Contrasena>
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>SELECT * FROM M00TABMA where CODPRIN = 1 and SUBCOD = 2</Consulta>
+    <Parametros />
+    <Fecha>2026-04-01T12:24:28.7005039-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>

@@ -87,6 +87,7 @@
     </Compile>
     <Compile Include="ExcelService.cs" />
     <Compile Include="Historial.cs" />
+    <Compile Include="IntelliSenseService.cs" />
     <Compile Include="MainWindow.xaml.cs" />
     <Compile Include="Models\QueryParameter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
