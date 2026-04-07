@@ -24259,3 +24259,15 @@ ALTER TABLE employees ADD COLUMN NickName varchar(50);
 ---
 ALTER TABLE employees DROP COLUMN NickName;
 ---
+ALTER TABLE employees ADD COLUMN NickName varchar(50);
+---
+ALTER TABLE employees DROP COLUMN NickName;
+
+ALTER TABLE employees ADD COLUMN Father varchar(50);
+---
+ALTER TABLE employees DROP COLUMN Father;
+---
+ALTER TABLE employees ADD COLUMN NickName varchar(50);
+---
+ALTER TABLE employees DROP COLUMN NickName;
+---

@@ -84,18 +84,28 @@ namespace QueryAnalyzer
 
         // ── Toolbar: Generar script ───────────────────────────────────────────────
 
+        //private void GenerarScript_Click(object sender, RoutedEventArgs e)
+        //{
+        //    if (_columnas == null || _columnas.Count == 0) return;
+
+        //    string script = TableDesignerService.GenerarScript(
+        //        _conexion.Motor, _tabla, _columnas.ToList());
+
+        //    var ventana = new ScriptResultWindow(script, _conexion.Motor)
+        //    {
+        //        Owner = this
+        //    };
+        //    ventana.ShowDialog();
+        //}
+
         private void GenerarScript_Click(object sender, RoutedEventArgs e)
         {
             if (_columnas == null || _columnas.Count == 0) return;
 
-            string script = TableDesignerService.GenerarScript(
+            MainWindow.scriptDiseño = TableDesignerService.GenerarScript(
                 _conexion.Motor, _tabla, _columnas.ToList());
 
-            var ventana = new ScriptResultWindow(script, _conexion.Motor)
-            {
-                Owner = this
-            };
-            ventana.ShowDialog();
+            this.Close();
         }
 
         // ── Toolbar: Recargar ─────────────────────────────────────────────────────

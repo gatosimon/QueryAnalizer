@@ -60157,4 +60157,76 @@ AND NRORELOJ = 2</Consulta>
     <Parametros />
     <Fecha>2026-04-07T08:53:21.6061587-03:00</Fecha>
   </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE employees ADD COLUMN NickName varchar(50);</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T11:01:18.8738592-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE employees DROP COLUMN NickName;
+
+ALTER TABLE employees ADD COLUMN Father varchar(50);</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T11:02:02.7024783-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE employees DROP COLUMN Father;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T11:02:30.9872384-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE employees ADD COLUMN NickName varchar(50);</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T11:03:16.2156201-03:00</Fecha>
+  </Historial>
+  <Historial>
+    <conexion>
+      <Nombre>SQLite prueba</Nombre>
+      <Motor>SQLite</Motor>
+      <Servidor>C:\Users\ssnunez\Downloads\PROYECTOS\chinook\chinook.db</Servidor>
+      <BaseDatos />
+      <Usuario />
+      <Contrasena />
+      <EsWeb>false</EsWeb>
+    </conexion>
+    <Consulta>ALTER TABLE employees DROP COLUMN NickName;</Consulta>
+    <Parametros />
+    <Fecha>2026-04-07T11:03:44.0550542-03:00</Fecha>
+  </Historial>
 </ArrayOfHistorial>

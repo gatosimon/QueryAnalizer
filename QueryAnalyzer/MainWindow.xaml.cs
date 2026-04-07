@@ -70,7 +70,7 @@ namespace QueryAnalyzer
 
             LoadHistory(); // mantiene compatibilidad con el archivo de texto
             //txtQuery.KeyDown += TxtQuery_KeyDown;
-            txtQuery.Text = "SELECT * FROM SYSIBM.SYSCOLUMNS FETCH FIRST 10 ROWS ONLY; -- ejemplo para DB2";
+            txtQuery.Text = "PUTO EL QUE LEE";
 
             CargarTipos();
 
@@ -411,6 +411,55 @@ namespace QueryAnalyzer
                 _cacheTablas.Clear();
                 CargarTablasEnBackground(conexion);
                 btnExplorar_Click(sender, e);
+                if (lstHistory.Items.Count > 0)
+                {
+                    CargarHistoriaEnConsultas(lstHistory.Items[0]);
+                }
+            }
+        }
+
+        private void CargarHistoriaEnConsultas(object itemCargar)
+        {
+            try
+            {
+                if (itemCargar is ListBoxItem lbi && lbi.Tag is Historial hist)
+                {
+                    txtQuery.Text = hist.Consulta ?? string.Empty;
+
+                    SincronizarParametros();
+                }
+                else
+                {
+                    if (itemCargar is string s)
+                        txtQuery.Text = s;
+                    else if (itemCargar is ListBoxItem li && li.Content is string cs)
+                        txtQuery.Text = cs;
+                    else
+                    {
+                        switch (conexionActual.Motor)
+                        {
+                            case TipoMotor.MS_SQL:
+                                txtQuery.Text = "SELECT TOP 10 * FROM INFORMATION_SCHEMA.COLUMNS;";
+                                break;
+                            case TipoMotor.DB2:
+                                txtQuery.Text = "SELECT * FROM SYSIBM.SYSCOLUMNS FETCH FIRST 10 ROWS ONLY;";
+                                break;
+                            case TipoMotor.POSTGRES:
+                                txtQuery.Text = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS LIMIT 10;";
+                                break;
+                            case TipoMotor.SQLite:
+                                txtQuery.Text = "SELECT * FROM pragma_table_list AS l JOIN pragma_table_info(l.name) LIMIT 10;";
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                AppendMessage("Error al cargar selección del historial: " + ex.Message);
             }
         }
 
@@ -1212,26 +1261,7 @@ namespace QueryAnalyzer
             if (lstHistory.SelectedItem == null)
                 return;
 
-            try
-            {
-                if (lstHistory.SelectedItem is ListBoxItem lbi && lbi.Tag is Historial hist)
-                {
-                    txtQuery.Text = hist.Consulta ?? string.Empty;
-
-                    SincronizarParametros();
-                }
-                else
-                {
-                    if (lstHistory.SelectedItem is string s)
-                        txtQuery.Text = s;
-                    else if (lstHistory.SelectedItem is ListBoxItem li && li.Content is string cs)
-                        txtQuery.Text = cs;
-                }
-            }
-            catch (Exception ex)
-            {
-                AppendMessage("Error al cargar selección del historial: " + ex.Message);
-            }
+            CargarHistoriaEnConsultas(lstHistory.SelectedItem);
         }
 
         // ────────────────────────────────────────────────────────
@@ -2008,12 +2038,22 @@ namespace QueryAnalyzer
             return "SELECT COUNT(*) FROM " + NombreCompleto(schema, tabla) + ";";
         }
 
-        // En el handler del ContextMenu del TreeView (o donde ya tenés el click derecho):
+        static public string scriptDiseño = string.Empty;
+        
         private string Diseñar(string schema, string tabla)
         {
             // "nombreTabla" es el string del nodo seleccionado; "conexionActual" es tu Conexion activa
             var w = new TableDesignerWindow(conexionActual, tabla) { Owner = this };
+            scriptDiseño = string.Empty;
             w.ShowDialog();
+
+            if (scriptDiseño.Length > 0)
+            {
+                txtQuery.Text = scriptDiseño;
+                BtnExecute_Click(this, new RoutedEventArgs());
+                
+            }
+
             return string.Empty;
         }
 
