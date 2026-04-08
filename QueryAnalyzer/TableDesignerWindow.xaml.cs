@@ -33,7 +33,25 @@ namespace QueryAnalyzer
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            // Aplicar el tema activo de MainWindow antes de mostrar contenido
+            AplicarTemaActual();
             await CargarColumnas();
+        }
+
+        /// <summary>
+        /// Copia el ResourceDictionary de tema activo desde MainWindow a esta ventana,
+        /// garantizando que los DynamicResource resuelvan con los colores correctos
+        /// independientemente de si el usuario está en modo claro u oscuro.
+        /// </summary>
+        private void AplicarTemaActual()
+        {
+            var mainWindow = System.Windows.Application.Current.MainWindow;
+            if (mainWindow == null) return;
+            var tema = mainWindow.Resources.MergedDictionaries.FirstOrDefault();
+            if (tema == null) return;
+            var wd = this.Resources.MergedDictionaries;
+            if (wd.Count > 0) wd[0] = tema;
+            else wd.Add(tema);
         }
 
         private async System.Threading.Tasks.Task CargarColumnas()

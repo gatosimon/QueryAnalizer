@@ -4,7 +4,26 @@
         Title="Script generado"
         Width="700" Height="460"
         MinWidth="400" MinHeight="250"
-        WindowStartupLocation="CenterOwner">
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BrushWindowBG}"
+        Foreground="{DynamicResource BrushFG}">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Tema inicial claro; el code-behind aplica el tema activo de MainWindow en el constructor. -->
+                <ResourceDictionary Source="ThemeLight.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style TargetType="Button">
+                <Setter Property="Background"      Value="{DynamicResource BrushBtnBG}"/>
+                <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"     Value="{DynamicResource BrushBtnBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding"         Value="6,3"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
 
     <Grid Margin="8">
         <Grid.RowDefinitions>
@@ -20,9 +39,9 @@
                  VerticalScrollBarVisibility="Auto"
                  HorizontalScrollBarVisibility="Auto"
                  TextWrapping="NoWrap"
-                 Background="#1E1E1E"
-                 Foreground="#DCDCDC"
-                 CaretBrush="White"
+                 Background="{DynamicResource BrushEditor}"
+                 Foreground="{DynamicResource BrushEditorFG}"
+                 CaretBrush="{DynamicResource BrushFG}"
                  BorderThickness="0"
                  Padding="6"/>
 

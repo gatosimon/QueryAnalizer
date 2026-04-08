@@ -2203,49 +2203,6 @@ namespace QueryAnalyzer
             });
         }
 
-
-
-
-        //private void RecargarNodoTabla(TreeViewItem nodoTabla, string schema, string nombreTabla)
-        //{
-        //    // Íconos necesarios (mismos que en CargarEsquema)
-        //    var columnaIcon = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/columna.png"));
-        //    var columnaClaveIcon = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/columnaClave.png"));
-        //    var claveIcon = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/clave.png"));
-        //    int tamañoIconos = 20;
-
-        //    // Freeze para que sean seguros entre hilos
-        //    columnaIcon.Freeze();
-        //    columnaClaveIcon.Freeze();
-        //    claveIcon.Freeze();
-
-        //    string connStr = GetConnectionString();
-
-        //    // Limpiar SIN agregar placeholder: CargarDetallesTabla agrega directamente al nodo vacío.
-        //    // Si dejamos "Recargando..." acá, CargarDetallesTabla agrega los items DESPUÉS de ese
-        //    // placeholder pero nunca lo elimina, por eso el nodo quedaba eternamente en "Recargando...".
-        //    nodoTabla.Items.Clear();
-        //    nodoTabla.IsExpanded = true;
-
-        //    // Cargar en background igual que el Expanded handler original
-        //    Task.Run(() =>
-        //    {
-        //        try
-        //        {
-        //            CargarDetallesTabla(
-        //                nodoTabla, schema, nombreTabla,
-        //                "TABLE",   // asumimos TABLE; las vistas no pasan por DESIGN
-        //                connStr,
-        //                columnaIcon, columnaClaveIcon, claveIcon, tamañoIconos);
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            Dispatcher.Invoke(() =>
-        //                AppendMessage(string.Format("Error recargando nodo de '{0}': {1}", nombreTabla, ex.Message)));
-        //        }
-        //    });
-        //}
-
         // ════════════════════════════════════════════════════════════════
 
         private void tvSchema_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -2318,17 +2275,6 @@ namespace QueryAnalyzer
             _explorarCTS = new CancellationTokenSource();
             LanzarCargarEsquema();
         }
-
-        //private void btnExplorar_Click(object sender, RoutedEventArgs e)
-        //{
-        //    // Si había un proceso anterior, se cancela
-        //    _explorarCTS?.Cancel();
-
-        //    // Se crea uno nuevo
-        //    _explorarCTS = new CancellationTokenSource();
-
-        //    CargarEsquema(string.Empty, null, _explorarCTS.Token);
-        //}
 
         private void btnExplorarConsultas_Click(object sender, RoutedEventArgs e)
         {

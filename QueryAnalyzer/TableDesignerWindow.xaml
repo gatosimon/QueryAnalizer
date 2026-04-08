@@ -5,51 +5,129 @@
         Width="820" Height="520"
         MinWidth="520" MinHeight="320"
         WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BrushWindowBG}"
+        Foreground="{DynamicResource BrushFG}"
         Loaded="Window_Loaded">
 
     <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Tema inicial claro; el code-behind aplica el tema activo de MainWindow en Loaded. -->
+                <ResourceDictionary Source="ThemeLight.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
 
-        <Style x:Key="ColHeaderStyle" TargetType="DataGridColumnHeader">
-            <Setter Property="Background"       Value="#F0F0F0"/>
-            <Setter Property="BorderBrush"      Value="#CCCCCC"/>
-            <Setter Property="BorderThickness"  Value="0,0,1,1"/>
-            <Setter Property="Padding"          Value="6,4"/>
-            <Setter Property="FontWeight"       Value="SemiBold"/>
-        </Style>
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
-        <!-- Fila marcada para eliminar → rojo; fila nueva → verde -->
-        <Style TargetType="DataGridRow">
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding MarcarParaEliminar}" Value="True">
-                    <Setter Property="Background" Value="#FFE0E0"/>
-                    <Setter Property="Foreground" Value="#CC0000"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding EsNueva}" Value="True">
-                    <Setter Property="Background" Value="#E8F5E9"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
+            <!-- ── Estilos implícitos temáticos ── -->
+            <Style TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+            </Style>
+            <Style TargetType="TextBox">
+                <Setter Property="Background"     Value="{DynamicResource BrushControlBG}"/>
+                <Setter Property="Foreground"     Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"    Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="CaretBrush"     Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding"        Value="3,2"/>
+            </Style>
+            <Style TargetType="Button">
+                <Setter Property="Background"     Value="{DynamicResource BrushBtnBG}"/>
+                <Setter Property="Foreground"     Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"    Value="{DynamicResource BrushBtnBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding"        Value="6,3"/>
+            </Style>
+            <Style TargetType="ContextMenu">
+                <Setter Property="Background"  Value="{DynamicResource BrushMenuBG}"/>
+                <Setter Property="Foreground"  Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+            </Style>
+            <Style TargetType="MenuItem">
+                <Setter Property="Background" Value="{DynamicResource BrushMenuBG}"/>
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsHighlighted" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource BrushMenuHover}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource BrushSelectedFG}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            <Style TargetType="DataGrid">
+                <Setter Property="Background"               Value="{DynamicResource BrushPanelBG}"/>
+                <Setter Property="Foreground"               Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"              Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="RowBackground"            Value="{DynamicResource BrushControlBG}"/>
+                <Setter Property="AlternatingRowBackground" Value="{DynamicResource BrushAltRowBG}"/>
+                <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="VerticalGridLinesBrush"   Value="{DynamicResource BrushBorder}"/>
+            </Style>
+            <Style TargetType="DataGridCell">
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background"  Value="{DynamicResource BrushSelected}"/>
+                        <Setter Property="Foreground"  Value="{DynamicResource BrushSelectedFG}"/>
+                        <Setter Property="BorderBrush" Value="Transparent"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            <Style TargetType="DataGridRowHeader">
+                <Setter Property="Background" Value="{DynamicResource BrushAltRowBG}"/>
+            </Style>
+            <Style TargetType="StatusBar">
+                <Setter Property="Background" Value="{DynamicResource BrushPanelBG}"/>
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+            </Style>
 
-        <!-- Celda Column Name en negrita si es PK -->
-        <Style x:Key="CeldaNombreStyle" TargetType="TextBlock">
-            <Setter Property="Padding" Value="4,2"/>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding EsPK}" Value="True">
-                    <Setter Property="FontWeight" Value="Bold"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
+            <!-- ── Estilos con clave para el DataGrid del diseñador ── -->
+            <Style x:Key="ColHeaderStyle" TargetType="DataGridColumnHeader">
+                <Setter Property="Background"       Value="{DynamicResource BrushHeaderBG}"/>
+                <Setter Property="Foreground"       Value="{DynamicResource BrushHeaderFG}"/>
+                <Setter Property="BorderBrush"      Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="BorderThickness"  Value="0,0,1,1"/>
+                <Setter Property="Padding"          Value="6,4"/>
+                <Setter Property="FontWeight"       Value="SemiBold"/>
+            </Style>
 
-        <Style x:Key="CeldaTextoStyle" TargetType="TextBlock">
-            <Setter Property="Padding" Value="4,2"/>
-        </Style>
+            <!-- Fila marcada para eliminar → rojo semántico; fila nueva → verde semántico.
+                 Se mantienen hardcodeados porque son colores de estado, no de tema. -->
+            <Style TargetType="DataGridRow">
+                <Setter Property="Background" Value="{DynamicResource BrushControlBG}"/>
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding MarcarParaEliminar}" Value="True">
+                        <Setter Property="Background" Value="#FFE0E0"/>
+                        <Setter Property="Foreground" Value="#CC0000"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding EsNueva}" Value="True">
+                        <Setter Property="Background" Value="#E8F5E9"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
 
-        <Style x:Key="CeldaDefaultStyle" TargetType="TextBlock">
-            <Setter Property="Padding"     Value="4,2"/>
-            <Setter Property="Foreground"  Value="#666666"/>
-            <Setter Property="FontStyle"   Value="Italic"/>
-        </Style>
+            <!-- Celda Column Name en negrita si es PK -->
+            <Style x:Key="CeldaNombreStyle" TargetType="TextBlock">
+                <Setter Property="Padding"    Value="4,2"/>
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding EsPK}" Value="True">
+                        <Setter Property="FontWeight" Value="Bold"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="CeldaTextoStyle" TargetType="TextBlock">
+                <Setter Property="Padding"    Value="4,2"/>
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+            </Style>
+
+            <Style x:Key="CeldaDefaultStyle" TargetType="TextBlock">
+                <Setter Property="Padding"    Value="4,2"/>
+                <Setter Property="Foreground" Value="{DynamicResource BrushFGMuted}"/>
+                <Setter Property="FontStyle"  Value="Italic"/>
+            </Style>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Grid>
@@ -83,7 +161,7 @@
 
             <!-- ── Renombrar tabla ── -->
             <TextBlock Text="Renombrar tabla:" VerticalAlignment="Center"
-                       Margin="4,0,6,0" Foreground="#444444" FontSize="11"/>
+                       Margin="4,0,6,0" Foreground="{DynamicResource BrushFGMuted}" FontSize="11"/>
             <TextBox x:Name="txtNuevoNombre"
                      Width="140" Padding="4,2"
                      VerticalContentAlignment="Center"
@@ -107,7 +185,7 @@
                   RowHeaderWidth="24"
                   ColumnHeaderStyle="{StaticResource ColHeaderStyle}"
                   BorderThickness="0"
-                  Background="White">
+                  Background="{DynamicResource BrushPanelBG}">
 
             <!-- Header de fila: ícono de llave si es PK -->
             <DataGrid.RowHeaderTemplate>
@@ -157,12 +235,12 @@
         </DataGrid>
 
         <!-- ── Status bar ── -->
-        <StatusBar Grid.Row="2" Background="#F0F0F0">
+        <StatusBar Grid.Row="2">
             <StatusBarItem>
                 <TextBlock x:Name="txtEstado" Text="Listo" FontSize="11"/>
             </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock x:Name="txtMotor" FontSize="11" Foreground="#666666"/>
+                <TextBlock x:Name="txtMotor" FontSize="11" Foreground="{DynamicResource BrushFGMuted}"/>
             </StatusBarItem>
         </StatusBar>
     </Grid>
