@@ -1573,6 +1573,16 @@ namespace QueryAnalyzer
                                 agregarOpcion("📊 COUNT(*)", () => GenerarCount(capSchema, capTabla));
                                 agregarOpcion("⚒︎ DESIGN", () => Diseñar(capSchema, capTabla));
 
+                                // ── Documentar tabla individual ────────────────────────────────
+                                ctxMenu.Items.Add(new Separator());
+                                var menuDocTabla = new MenuItem { Header = "📝 Documentar tabla" };
+                                AplicarEstiloMenuItem(menuDocTabla);
+                                menuDocTabla.Click += async (s, ev) =>
+                                {
+                                    await DocumentarTablaAsync(capSchema, capTabla, capTipo);
+                                };
+                                ctxMenu.Items.Add(menuDocTabla);
+
                                 tablaNode.ContextMenu = ctxMenu;
                                 // ─────────────────────────────────────────────────────────
                             }
@@ -2042,14 +2052,145 @@ namespace QueryAnalyzer
                 default: return "DROP INDEX " + idxName + ";";
             }
         }
-
         private string GenerarCount(string schema, string tabla)
         {
             return "SELECT COUNT(*) FROM " + NombreCompleto(schema, tabla) + ";";
         }
 
         // ════════════════════════════════════════════════════════════════
-        // REEMPLAZAR en MainWindow.xaml.cs el método Diseñar() existente
+        // DOCUMENTACIÓN (.docx)
+        // ════════════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// Documenta todas las tablas/vistas visibles en tvSchema (respetando filtros activos).
+        /// </summary>
+        private async void btnDocumentar_Click(object sender, RoutedEventArgs e)
+        {
+            if (conexionActual == null)
+            {
+                AppendMessage("No hay conexión seleccionada.");
+                return;
+            }
+
+            // Recopilar nodos visibles del TreeView
+            var nodosVisibles = tvSchema.Items
+                .OfType<TreeViewItem>()
+                .Where(n => n.Visibility == System.Windows.Visibility.Visible)
+                .ToList();
+
+            if (nodosVisibles.Count == 0)
+            {
+                AppendMessage("No hay tablas/vistas visibles para documentar.");
+                return;
+            }
+
+            // Proponer nombre de archivo
+            string esquemaActivo = string.IsNullOrEmpty(_filtroSchema) ? "Esquema" : _filtroSchema;
+            string nombreSugerido = $"{conexionActual.Nombre}_{esquemaActivo}_{DateTime.Now:yyyyMMdd}.docx";
+
+            var sfd = new Microsoft.Win32.SaveFileDialog
+            {
+                Title            = "Guardar documentación",
+                Filter           = "Word Document (*.docx)|*.docx",
+                FileName         = nombreSugerido,
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+            };
+            if (sfd.ShowDialog() != true) return;
+
+            btnDocumentar.IsEnabled = false;
+            AppendMessage($"Documentando {nodosVisibles.Count} tabla(s)/vista(s)...");
+
+            try
+            {
+                var tablas = new List<InfoTablaDoc>();
+                int procesadas = 0;
+
+                foreach (var nodo in nodosVisibles)
+                {
+                    // El Tag del nodo contiene el nombre de la tabla (sin schema)
+                    string nombreTabla = nodo.Tag?.ToString() ?? string.Empty;
+                    if (string.IsNullOrEmpty(nombreTabla)) continue;
+
+                    // Intentar determinar el schema desde el header del nodo
+                    string headerText = ObtenerHeaderText(nodo);
+                    string schema     = string.Empty;
+                    string nombre     = nombreTabla;
+                    if (headerText.Contains("."))
+                    {
+                        schema = headerText.Substring(0, headerText.IndexOf('.'));
+                    }
+
+                    // Determinar tipo (tabla o vista) por el icono: si el header no lo indica,
+                    // usamos el filtro activo; por defecto asumimos TABLE
+                    string tipo = "TABLE"; // CargarEsquema distingue TABLE/VIEW en capTipo pero
+                                           // el Tag solo guarda el nombre. Como fallback: TABLE.
+
+                    var info = await DocumentadorService.GetInfoTablaAsync(
+                        conexionActual, schema, nombre, tipo);
+                    tablas.Add(info);
+                    procesadas++;
+
+                    if (procesadas % 20 == 0)
+                        AppendMessage($"  ... {procesadas}/{nodosVisibles.Count}");
+                }
+
+                string titulo = $"Documentación: {conexionActual.Nombre}" +
+                                (string.IsNullOrEmpty(_filtroSchema) ? string.Empty : $" — Esquema: {_filtroSchema}");
+
+                DocumentadorService.GenerarDocumento(sfd.FileName, tablas, titulo);
+                AppendMessage($"Documentación generada: {sfd.FileName}");
+                System.Diagnostics.Process.Start(sfd.FileName);
+            }
+            catch (Exception ex)
+            {
+                AppendMessage("Error generando documentación: " + ex.Message);
+            }
+            finally
+            {
+                btnDocumentar.IsEnabled = true;
+            }
+        }
+
+        /// <summary>
+        /// Documenta una única tabla/vista (llamado desde el context menu del TreeView).
+        /// </summary>
+        private async Task DocumentarTablaAsync(string schema, string tabla, string tipo)
+        {
+            if (conexionActual == null) return;
+
+            string etiqueta = (tipo == "VIEW" || tipo == "V" || tipo == "view") ? "Vista" : "Tabla";
+            string nombreSugerido = string.IsNullOrEmpty(schema)
+                ? $"{tabla}.docx"
+                : $"{schema}_{tabla}.docx";
+
+            var sfd = new Microsoft.Win32.SaveFileDialog
+            {
+                Title            = $"Guardar documentación — {etiqueta}: {tabla}",
+                Filter           = "Word Document (*.docx)|*.docx",
+                FileName         = nombreSugerido,
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+            };
+            if (sfd.ShowDialog() != true) return;
+
+            AppendMessage($"Documentando {etiqueta.ToLower()} {tabla}...");
+
+            try
+            {
+                var info = await DocumentadorService.GetInfoTablaAsync(
+                    conexionActual, schema, tabla, tipo);
+
+                string titulo = $"Documentación: {tabla}";
+                DocumentadorService.GenerarDocumento(sfd.FileName, new List<InfoTablaDoc> { info }, titulo);
+                AppendMessage($"Documentación generada: {sfd.FileName}");
+                System.Diagnostics.Process.Start(sfd.FileName);
+            }
+            catch (Exception ex)
+            {
+                AppendMessage("Error generando documentación: " + ex.Message);
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════════
         // (líneas 2037-2052 aprox.) por el siguiente bloque completo.
         // ════════════════════════════════════════════════════════════════
 

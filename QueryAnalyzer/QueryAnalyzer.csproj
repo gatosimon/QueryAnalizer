@@ -86,6 +86,7 @@
     <Compile Include="DatosConexion.xaml.cs">
       <DependentUpon>DatosConexion.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Documentadorservice.cs" />
     <Compile Include="ExcelService.cs" />
     <Compile Include="Historial.cs" />
     <Compile Include="IntelliSenseService.cs" />

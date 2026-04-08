@@ -467,7 +467,7 @@
                     <Grid x:Name="grdExplorador" Grid.Column="0">
                         <Grid.ColumnDefinitions>
                             <!-- Columna izquierda: botones de acción + controles de filtro -->
-                            <ColumnDefinition Width="68"/>
+                            <ColumnDefinition Width="80"/>
                             <!-- Columna derecha: buscador + TreeView -->
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
@@ -493,6 +493,10 @@
                                 <!-- Label "Esquema:" -->
                                 <RowDefinition Height="28"/>
                                 <!-- ComboBox schema -->
+                                <RowDefinition Height="8"/>
+                                <!-- Separador antes de Documentar -->
+                                <RowDefinition Height="Auto"/>
+                                <!-- Botón Documentar -->
                                 <RowDefinition Height="*"/>
                                 <!-- Espacio restante -->
                             </Grid.RowDefinitions>
@@ -558,6 +562,17 @@
                   ToolTip="Filtrar por esquema">
                                 <ComboBoxItem Content="(todos)" Tag=""/>
                             </ComboBox>
+
+                            <!-- Separador visual -->
+                            <Separator Grid.Row="9" Margin="2,0"/>
+
+                            <!-- Botón Documentar -->
+                            <Button x:Name="btnDocumentar"
+                    Grid.Row="10"
+                    Margin="2,4,2,0" Padding="2"
+                    Click="btnDocumentar_Click"
+                    Content="Documentar"
+                    ToolTip="Generar archivo .docx con la estructura de las tablas/vistas visibles"/>
                         </Grid>
 
                         <!-- ══ COLUMNA DERECHA: buscador arriba + TreeViews abajo ════════════ -->
