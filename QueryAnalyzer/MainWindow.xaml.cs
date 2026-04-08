@@ -27,8 +27,8 @@ namespace QueryAnalyzer
 {
     public partial class MainWindow : Window
     {
-        private const string HISTORY_FILE = "query_history.txt";
-        private const string HISTORIAL_XML = "historial.xml";
+        private static readonly string HISTORY_FILE = Path.Combine(App.AppDataFolder, "query_history.txt");
+        private static readonly string HISTORIAL_XML = Path.Combine(App.AppDataFolder, "historial.xml");
         private bool iniciarColapasado = true;
         private CancellationTokenSource _explorarCTS;
         // Filtros del explorador (persisten entre llamadas a CargarEsquema)
