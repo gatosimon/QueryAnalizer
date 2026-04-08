@@ -73,7 +73,8 @@ namespace QueryAnalyzer
 
             LoadHistory(); // mantiene compatibilidad con el archivo de texto
             //txtQuery.KeyDown += TxtQuery_KeyDown;
-            txtQuery.Text = "PUTO EL QUE LEE";
+            
+            txtQuery.Text = PhraseManager.ObtenerFraseCualquiera();
 
             CargarTipos();
 
@@ -413,6 +414,12 @@ namespace QueryAnalyzer
                 // Invalidamos y recargamos el caché de tablas para la nueva conexión
                 _cacheTablas.Clear();
                 CargarTablasEnBackground(conexion);
+
+                // Resetear filtros de esquema y tipo al cambiar de conexión,
+                // para evitar que un filtro de la conexión anterior oculte todos los nodos nuevos
+                _filtroSchema = "";
+                _filtroTipo = "BOTH";
+
                 btnExplorar_Click(sender, e);
                 if (lstHistory.Items.Count > 0)
                 {
@@ -2486,7 +2493,11 @@ namespace QueryAnalyzer
                     }
                 }
             }
-            if (!restaurado) cbSchema.SelectedIndex = 0;
+            if (!restaurado)
+            {
+                cbSchema.SelectedIndex = 0;
+                _filtroSchema = ""; // el evento está desuscrito, actualizar manualmente
+            }
 
             cbSchema.SelectionChanged += cbSchema_SelectionChanged;
 
