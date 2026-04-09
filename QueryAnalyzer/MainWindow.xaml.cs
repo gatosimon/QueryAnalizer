@@ -72,8 +72,8 @@ namespace QueryAnalyzer
             txtQuery.SyntaxHighlighting = HighlightingManager.Instance.GetDefinition("SQL");
 
             LoadHistory(); // mantiene compatibilidad con el archivo de texto
-            //txtQuery.KeyDown += TxtQuery_KeyDown;
-            
+                           //txtQuery.KeyDown += TxtQuery_KeyDown;
+
             txtQuery.Text = PhraseManager.ObtenerFraseCualquiera();
 
             CargarTipos();
@@ -94,6 +94,7 @@ namespace QueryAnalyzer
             // Ctrl+Shift+Home: corregir selección hasta el inicio del documento
             txtQuery.TextArea.PreviewKeyDown += TxtQueryArea_PreviewKeyDown;
         }
+
         /// <summary>
         /// Primera vez: extrae los .xaml de tema desde recursos embebidos a disco (carpeta Themes\ junto al .exe).
         /// Luego siempre lee desde disco, permitiendo al usuario editar los colores.
@@ -1496,7 +1497,7 @@ namespace QueryAnalyzer
                             var tablaNode = new TreeViewItem
                             {
                                 Header = tablaHeader,
-                                Tag = capTabla,
+                                Tag = new NodoTablaTag(capTabla, capTipo),
                                 //Background = currentTableBackground
                             };
                             // 🖼️ FIN DE MODIFICACIÓN
@@ -1575,7 +1576,7 @@ namespace QueryAnalyzer
 
                                 // ── Documentar tabla individual ────────────────────────────────
                                 ctxMenu.Items.Add(new Separator());
-                                var menuDocTabla = new MenuItem { Header = "📝 Documentar tabla" };
+                                var menuDocTabla = new MenuItem { Header = $"📝 Documentar {capTabla}" };
                                 AplicarEstiloMenuItem(menuDocTabla);
                                 menuDocTabla.Click += async (s, ev) =>
                                 {
@@ -2090,9 +2091,9 @@ namespace QueryAnalyzer
 
             var sfd = new Microsoft.Win32.SaveFileDialog
             {
-                Title            = "Guardar documentación",
-                Filter           = "Word Document (*.docx)|*.docx",
-                FileName         = nombreSugerido,
+                Title = "Guardar documentación",
+                Filter = "Word Document (*.docx)|*.docx",
+                FileName = nombreSugerido,
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
             };
             if (sfd.ShowDialog() != true) return;
@@ -2107,23 +2108,22 @@ namespace QueryAnalyzer
 
                 foreach (var nodo in nodosVisibles)
                 {
-                    // El Tag del nodo contiene el nombre de la tabla (sin schema)
-                    string nombreTabla = nodo.Tag?.ToString() ?? string.Empty;
+                    // El Tag del nodo contiene NodoTablaTag con nombre y tipo
+                    var nodoTag = nodo.Tag as NodoTablaTag;
+                    string nombreTabla = nodoTag?.Nombre ?? nodo.Tag?.ToString() ?? string.Empty;
                     if (string.IsNullOrEmpty(nombreTabla)) continue;
 
                     // Intentar determinar el schema desde el header del nodo
                     string headerText = ObtenerHeaderText(nodo);
-                    string schema     = string.Empty;
-                    string nombre     = nombreTabla;
+                    string schema = string.Empty;
+                    string nombre = nombreTabla;
                     if (headerText.Contains("."))
                     {
                         schema = headerText.Substring(0, headerText.IndexOf('.'));
                     }
 
-                    // Determinar tipo (tabla o vista) por el icono: si el header no lo indica,
-                    // usamos el filtro activo; por defecto asumimos TABLE
-                    string tipo = "TABLE"; // CargarEsquema distingue TABLE/VIEW en capTipo pero
-                                           // el Tag solo guarda el nombre. Como fallback: TABLE.
+                    // Determinar tipo (tabla o vista) desde el Tag del nodo
+                    string tipo = nodoTag?.Tipo ?? "TABLE";
 
                     var info = await DocumentadorService.GetInfoTablaAsync(
                         conexionActual, schema, nombre, tipo);
@@ -2165,9 +2165,9 @@ namespace QueryAnalyzer
 
             var sfd = new Microsoft.Win32.SaveFileDialog
             {
-                Title            = $"Guardar documentación — {etiqueta}: {tabla}",
-                Filter           = "Word Document (*.docx)|*.docx",
-                FileName         = nombreSugerido,
+                Title = $"Guardar documentación — {etiqueta}: {tabla}",
+                Filter = "Word Document (*.docx)|*.docx",
+                FileName = nombreSugerido,
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
             };
             if (sfd.ShowDialog() != true) return;
@@ -2228,7 +2228,7 @@ namespace QueryAnalyzer
                         ActualizarHeaderNodoTabla(nodoTabla, schema, nombreFinalTabla);
                         // Actualizar también el Tag del nodo para que futuras
                         // operaciones (doble clic, context menu) usen el nombre nuevo
-                        nodoTabla.Tag = nombreFinalTabla;
+                        nodoTabla.Tag = new NodoTablaTag(nombreFinalTabla, (nodoTabla.Tag as NodoTablaTag)?.Tipo ?? "TABLE");
                     }
 
                     // ── 4b. Recargar solo los hijos del nodo (columnas + índices) ──
@@ -2256,9 +2256,10 @@ namespace QueryAnalyzer
         {
             foreach (TreeViewItem item in tv.Items)
             {
-                // El Tag del nodo se asigna con capTabla (nombre sin schema) en Cargar()
-                if (item.Tag is string tag &&
-                    string.Equals(tag, tabla, StringComparison.OrdinalIgnoreCase))
+                // El Tag del nodo se asigna con NodoTablaTag (nombre + tipo) en Cargar()
+                string tagNombre = item.Tag is NodoTablaTag ntt ? ntt.Nombre : item.Tag as string;
+                if (tagNombre != null &&
+                    string.Equals(tagNombre, tabla, StringComparison.OrdinalIgnoreCase))
                 {
                     return item;
                 }
@@ -3108,7 +3109,7 @@ namespace QueryAnalyzer
         // INTELLISENSE
         // ════════════════════════════════════════════════════════════════
 
-        // Palabras reservadas SQL que nunca deben abrir la ventana de completion.
+        //// Palabras reservadas SQL que nunca deben abrir la ventana de completion.
         private static readonly HashSet<string> _palabrasReservadas = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "SELECT","FROM","WHERE","GROUP","ORDER","BY","HAVING","FETCH","FIRST","ROWS","ONLY",
@@ -3484,6 +3485,25 @@ namespace QueryAnalyzer
 // ════════════════════════════════════════════════════════════════
 // CLASES DE SOPORTE (fuera del namespace principal de la ventana)
 // ════════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Almacena el nombre y el tipo ("TABLE" o "VIEW") de un nodo del TreeView
+/// del explorador de esquema, para que "Documentar todo" pueda distinguir vistas.
+/// </summary>
+public class NodoTablaTag
+{
+    public string Nombre { get; }
+    public string Tipo { get; }
+
+    public NodoTablaTag(string nombre, string tipo)
+    {
+        Nombre = nombre;
+        Tipo = tipo;
+    }
+
+    // Compatibilidad con código que lee Tag.ToString() para obtener el nombre
+    public override string ToString() => Nombre;
+}
 
 public class GridLengthAnimation : AnimationTimeline
 {

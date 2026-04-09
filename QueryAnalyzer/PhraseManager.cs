@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using System.IO;
+using System.Windows;
 
 namespace QueryAnalyzer
 {
@@ -77,7 +78,7 @@ namespace QueryAnalyzer
         public static string ObtenerFraseCualquiera()
         {
             // Obtenés la ruta del XML (asumiendo que está en la carpeta del .exe)
-            string rutaXml = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "frases.xml");
+            string rutaXml = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "QueryAnalyzer", "frases.xml");
             if (File.Exists(rutaXml))
             {
                 // Inicialización estática
@@ -106,6 +107,7 @@ namespace QueryAnalyzer
             }
             else
             {
+                GarantizarArchivoEnPath("frases.xml", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "QueryAnalyzer"));
                 return "La vida es bella!";
             }
         }
@@ -120,6 +122,41 @@ namespace QueryAnalyzer
         {
             if (!_isInitialized)
                 throw new InvalidOperationException("PhraseManager no ha sido inicializado. Llamá a PhraseManager.Initialize(path) primero.");
+        }
+
+        public static void GarantizarArchivoEnPath(string nombreArchivo, string pathDestino)
+        {
+            try
+            {
+                // 1. Combinar la ruta completa
+                string fullPath = Path.Combine(pathDestino, nombreArchivo);
+
+                // 2. Si el archivo ya existe, no hacemos nada
+                if (File.Exists(fullPath)) return;
+
+                // 3. Si no existe, crear el directorio si es necesario
+                string directorio = Path.GetDirectoryName(fullPath);
+                if (!Directory.Exists(directorio))
+                {
+                    Directory.CreateDirectory(directorio);
+                }
+
+                // 4. Leer el archivo desde los Assets (Resources de WPF)
+                // La URI suele ser: "pack://application:,,,/NombreDeTuEnsamblado;component/Assets/tuarchivo.ext"
+                var uri = new Uri($"/Assets/{nombreArchivo}", UriKind.Relative);
+                var resourceStream = Application.GetResourceStream(uri);
+
+                if (resourceStream != null)
+                {
+                    using (var fileStream = File.Create(fullPath))
+                    {
+                        resourceStream.Stream.CopyTo(fileStream);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+            }
         }
     }
 }
