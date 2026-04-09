@@ -497,8 +497,6 @@
                                 <!-- Separador antes de Documentar -->
                                 <RowDefinition Height="Auto"/>
                                 <!-- Botón Documentar -->
-                                <RowDefinition Height="Auto"/>
-                                <!-- Botón Esquematizar -->
                                 <RowDefinition Height="*"/>
                                 <!-- Espacio restante -->
                             </Grid.RowDefinitions>
@@ -575,14 +573,6 @@
                     Click="btnDocumentar_Click"
                     Content="Documentar"
                     ToolTip="Generar archivo .docx con la estructura de las tablas/vistas visibles"/>
-
-                            <!-- Botón Esquematizar -->
-                            <Button x:Name="btnEsquematizar"
-                    Grid.Row="11"
-                    Margin="2,4,2,0" Padding="2"
-                    Click="btnEsquematizar_Click"
-                    Content="Esquematizar"
-                    ToolTip="Generar diagrama de relaciones en Draw.io con las tablas/vistas visibles"/>
                         </Grid>
 
                         <!-- ══ COLUMNA DERECHA: buscador arriba + TreeViews abajo ════════════ -->

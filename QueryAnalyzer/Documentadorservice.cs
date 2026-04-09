@@ -327,7 +327,7 @@ namespace QueryAnalyzer
 
             // ── Fila 2: Nombre + tipo ──────────────────────────────────────────────
             string etiquetaTipo = (info.Tipo == "V" || info.Tipo == "VIEW" ||
-                                   info.Tipo == "view") ? "Vista" : "Tabla";
+                                   info.Tipo == "view") ? "Vista 👁" : "Tabla 📊​";
             table.AppendChild(CrearFilaFusion(
                 $"Nombre: {info.Nombre}    [{etiquetaTipo}]",
                 totalAncho, anchos.Length,
