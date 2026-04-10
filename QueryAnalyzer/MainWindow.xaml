@@ -440,6 +440,15 @@
                     ToolTip="Alternar modo claro / oscuro"
                     Click="BtnToggleTema_Click"
                     DockPanel.Dock="Left"/>
+            <!-- Botón de preferencias -->
+            <Button x:Name="btnPreferencias"
+                    Content="&#x2699; Preferencias"
+                    Padding="6,2"
+                    Margin="6,0,0,0"
+                    FontSize="12"
+                    ToolTip="Configuración de la aplicación"
+                    Click="BtnPreferencias_Click"
+                    DockPanel.Dock="Left"/>
         </DockPanel>
 
         <Grid Grid.Row="1">
@@ -499,6 +508,10 @@
                                 <!-- Botón Documentar -->
                                 <RowDefinition Height="Auto"/>
                                 <!-- Botón Esquematizar -->
+                                <RowDefinition Height="8"/>
+                                <!-- Separador antes de conjuntos -->
+                                <RowDefinition Height="Auto"/>
+                                <!-- Conjuntos de tablas -->
                                 <RowDefinition Height="*"/>
                                 <!-- Espacio restante -->
                             </Grid.RowDefinitions>
@@ -583,6 +596,49 @@
                     Click="btnEsquematizar_Click"
                     Content="Esquematizar"
                     ToolTip="Generar diagrama de relaciones en Draw.io con las tablas/vistas visibles"/>
+
+                            <!-- Separador -->
+                            <Separator Grid.Row="12" Margin="2,0"/>
+
+                            <!-- ══ Conjuntos de tablas ══════════════════════════════ -->
+                            <StackPanel Grid.Row="13" Margin="2,4,2,0">
+
+                                <!-- Label -->
+                                <TextBlock Text="Conjuntos:"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource BrushFGMuted}"
+                                           Margin="0,0,0,2"/>
+
+                                <!-- Selector de conjunto activo -->
+                                <ComboBox x:Name="cbConjuntos"
+                                          FontSize="10"
+                                          Margin="0,0,0,4"
+                                          SelectionChanged="cbConjuntos_SelectionChanged"
+                                          ToolTip="Seleccionar un conjunto para filtrar el explorador"/>
+
+                                <!-- Botón: guardar conjunto desde selección actual -->
+                                <Button x:Name="btnGuardarConjunto"
+                                        Content="+ Guardar conjunto"
+                                        FontSize="10" Padding="2,2"
+                                        Margin="0,0,0,2"
+                                        Click="btnGuardarConjunto_Click"
+                                        ToolTip="Guardar las tablas marcadas con checkbox como un nuevo conjunto"/>
+
+                                <!-- Botón: quitar filtro -->
+                                <Button x:Name="btnLimpiarConjunto"
+                                        Content="✕ Quitar filtro"
+                                        FontSize="10" Padding="2,2"
+                                        Margin="0,0,0,2"
+                                        Click="btnLimpiarConjunto_Click"
+                                        ToolTip="Mostrar todas las tablas/vistas (quitar filtro de conjunto)"/>
+
+                                <!-- Botón: eliminar conjunto seleccionado -->
+                                <Button x:Name="btnEliminarConjunto"
+                                        Content="🗑 Eliminar"
+                                        FontSize="10" Padding="2,2"
+                                        Click="btnEliminarConjunto_Click"
+                                        ToolTip="Eliminar el conjunto seleccionado"/>
+                            </StackPanel>
                         </Grid>
 
                         <!-- ══ COLUMNA DERECHA: buscador arriba + TreeViews abajo ════════════ -->
@@ -590,6 +646,8 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="30"/>
                                 <!-- Buscador -->
+                                <RowDefinition Height="26"/>
+                                <!-- Barra Selección Múltiple -->
                                 <RowDefinition Height="*"/>
                                 <!-- TreeViews -->
                             </Grid.RowDefinitions>
@@ -614,14 +672,38 @@
                                 </Button>
                             </Grid>
 
+                            <!-- ── Barra de selección múltiple ───────────────────── -->
+                            <DockPanel Grid.Row="1" Margin="4,2,4,2" LastChildFill="False">
+                                <TextBlock x:Name="txtSeleccionContador"
+                                           DockPanel.Dock="Right"
+                                           VerticalAlignment="Center"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource BrushFGMuted}"
+                                           Margin="0,0,2,0"
+                                           Text="0 sel."/>
+                                <Button x:Name="btnSelTodos"
+                                        DockPanel.Dock="Left"
+                                        Content="✓ Todos"
+                                        FontSize="10" Padding="4,1"
+                                        Margin="0,0,4,0"
+                                        Click="btnSelTodos_Click"
+                                        ToolTip="Seleccionar todas las tablas/vistas visibles"/>
+                                <Button x:Name="btnDeselTodos"
+                                        DockPanel.Dock="Left"
+                                        Content="☐ Ninguno"
+                                        FontSize="10" Padding="4,1"
+                                        Click="btnDeselTodos_Click"
+                                        ToolTip="Deseleccionar todo"/>
+                            </DockPanel>
+
                             <!-- TreeViews (ocupan el resto) -->
                             <TreeView x:Name="tvSearch"
-                  Grid.Row="1"
+                  Grid.Row="2"
                   Margin="4,2,4,2"
                   Visibility="Collapsed"
                   MouseDoubleClick="tvSchema_MouseDoubleClick"/>
                             <TreeView x:Name="tvSchema"
-                  Grid.Row="1"
+                  Grid.Row="2"
                   Margin="4,2,4,2"
                   Visibility="Visible"
                   MouseDoubleClick="tvSchema_MouseDoubleClick"/>

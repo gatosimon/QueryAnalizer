@@ -81,8 +81,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App.xaml.cs" />
+    <Compile Include="AppConfig.cs" />
     <Compile Include="Conexion.cs" />
     <Compile Include="ConexionesManager.cs" />
+    <Compile Include="ConfigManager.cs" />
     <Compile Include="DatosConexion.xaml.cs">
       <DependentUpon>DatosConexion.xaml</DependentUpon>
     </Compile>
@@ -92,7 +94,11 @@
     <Compile Include="IntelliSenseService.cs" />
     <Compile Include="MainWindow.xaml.cs" />
     <Compile Include="Models\QueryParameter.cs" />
+    <Compile Include="NombreConjuntoDialog.xaml.cs">
+      <DependentUpon>NombreConjuntoDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="PhraseManager.cs" />
+    <Compile Include="PreferenciasWindow.xaml.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ScriptResultWindow.xaml.cs" />
     <Compile Include="TableDesignerService.cs" />
@@ -106,6 +112,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="MainWindow.xaml" />
+    <Page Include="NombreConjuntoDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="PreferenciasWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="ScriptResultWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

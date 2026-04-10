@@ -35,6 +35,9 @@ namespace QueryAnalyzer
         private string _filtroTipo = "BOTH";   // "BOTH" | "TABLE" | "VIEW"
         private string _filtroSchema = "";       // "" = todos
 
+        // Conjunto de tablas activo (null = sin filtro)
+        private ConjuntoTablas _conjuntoActivo = null;
+
         public Dictionary<string, OdbcType> OdbcTypes { get; set; }
         public List<QueryParameter> Parametros { get; set; }
 
@@ -57,6 +60,9 @@ namespace QueryAnalyzer
         // Caché de tablas de la base de datos activa (se carga al conectar y se invalida al cambiar conexión)
         private List<TablaInfo> _cacheTablas = new List<TablaInfo>();
         private bool _tablasEnCargaGlobal = false;
+
+        // ── Configuración de la aplicación (config.xml) ─────────────────
+        private AppConfig _configApp = new AppConfig();
 
         public MainWindow()
         {
@@ -82,6 +88,8 @@ namespace QueryAnalyzer
             Parametros = new List<QueryParameter>();
             gridParams.ItemsSource = Parametros;
             InicializarDrivers();
+            // Cargar configuración persistida antes de inicializar conexiones
+            _configApp = ConfigManager.ObtenerConfiguracion();
             InicializarConexiones();
             BloquearUI(true);
             InicializarTemas();
@@ -173,6 +181,11 @@ namespace QueryAnalyzer
         {
             _modoOscuro = !_modoOscuro;
 
+            AplicarTema();
+        }
+
+        private void AplicarTema()
+        {
             // Recargar desde disco por si el usuario modifico el archivo mientras la app estaba abierta
             if (_modoOscuro)
                 _temaOscuro = LeerTemaDesdeDisco("ThemeDark.xaml");
@@ -370,14 +383,14 @@ namespace QueryAnalyzer
 
         private void InicializarConexiones()
         {
-            var conexiones = ConexionesManager.Cargar();
+            var conexiones = ConfigManager.CargarConexiones();
             cbConnectionName.ItemsSource = conexiones.Values.ToList();
             cbConnectionName.DisplayMemberPath = "Nombre";
         }
 
         private void FiltrarConexiones(TipoMotor motor)
         {
-            var conexiones = ConexionesManager.Cargar();
+            var conexiones = ConfigManager.CargarConexiones();
             cbConnectionName.ItemsSource = conexiones.Values.ToList().Where(c => c.Motor == motor);
             cbConnectionName.DisplayMemberPath = "Nombre";
         }
@@ -416,13 +429,16 @@ namespace QueryAnalyzer
                 _cacheTablas.Clear();
                 CargarTablasEnBackground(conexion);
 
-                // Resetear filtros de esquema y tipo al cambiar de conexión,
-                // para evitar que un filtro de la conexión anterior oculte todos los nodos nuevos
+                // Resetear filtros de esquema, tipo y conjunto al cambiar de conexión
                 _filtroSchema = "";
                 _filtroTipo = "BOTH";
+                _conjuntoActivo = null;
+
+                // Cargar conjuntos guardados para esta conexión
+                CargarComboConjuntos();
 
                 btnExplorar_Click(sender, e);
-                if (lstHistory.Items.Count > 0)
+                if (_configApp.CargarUltimaConsulta && lstHistory.Items.Count > 0)
                 {
                     CargarHistoriaEnConsultas(lstHistory.Items[0]);
                 }
@@ -1485,6 +1501,18 @@ namespace QueryAnalyzer
                         {
                             // 🖼️ INICIO DE MODIFICACIÓN: nodo de tabla/vista con icono
                             var tablaHeader = new StackPanel { Orientation = Orientation.Horizontal };
+
+                            // ── CheckBox de selección múltiple ─────────────────────────────
+                            var chkNodo = new CheckBox
+                            {
+                                VerticalAlignment = VerticalAlignment.Center,
+                                Margin = new System.Windows.Thickness(0, 0, 4, 0),
+                                ToolTip = "Seleccionar para Documentar / Esquematizar"
+                            };
+                            chkNodo.Checked += (cs, ce) => ActualizarContadorSeleccion();
+                            chkNodo.Unchecked += (cs, ce) => ActualizarContadorSeleccion();
+                            tablaHeader.Children.Add(chkNodo);
+
                             tablaHeader.Children.Add(new System.Windows.Controls.Image
                             {
                                 Source = capTipo == "VIEW" ? vistaIcon : tablaIcon, // 👈 CAMBIADO
@@ -1501,6 +1529,20 @@ namespace QueryAnalyzer
                                 //Background = currentTableBackground
                             };
                             // 🖼️ FIN DE MODIFICACIÓN
+
+                            // Filtro de conjunto activo: ocultar nodos que no pertenecen al conjunto
+                            if (_conjuntoActivo != null)
+                            {
+                                string idNodo = string.IsNullOrEmpty(capSchema)
+                                    ? capTabla
+                                    : $"{capSchema}.{capTabla}";
+                                bool enConjunto = _conjuntoActivo.Tablas.Any(t =>
+                                    string.Equals(t, idNodo, StringComparison.OrdinalIgnoreCase) ||
+                                    string.Equals(t, capTabla, StringComparison.OrdinalIgnoreCase));
+                                tablaNode.Visibility = enConjunto
+                                    ? System.Windows.Visibility.Visible
+                                    : System.Windows.Visibility.Collapsed;
+                            }
 
                             if (filtrado.Length == 0 || (filtrado.Length > 0 && capTabla.ToUpper().Contains(filtrado.ToUpper())))
                             {
@@ -2059,7 +2101,236 @@ namespace QueryAnalyzer
         }
 
         // ════════════════════════════════════════════════════════════════
-        // ESQUEMATIZACIÓN (Draw.io)
+        // SELECCIÓN MÚLTIPLE DEL TREEVIEW
+        // ════════════════════════════════════════════════════════════════
+
+        /// <summary>Obtiene el CheckBox del primer hijo del StackPanel header de un nodo.</summary>
+        private CheckBox ObtenerCheckboxNodo(TreeViewItem nodo)
+        {
+            if (nodo.Header is StackPanel sp)
+                foreach (var child in sp.Children)
+                    if (child is CheckBox chk) return chk;
+            return null;
+        }
+
+        /// <summary>
+        /// Devuelve los nodos visibles que tienen el CheckBox marcado.
+        /// </summary>
+        private List<TreeViewItem> GetNodosSeleccionados()
+        {
+            return tvSchema.Items
+                .OfType<TreeViewItem>()
+                .Where(n => n.Visibility == System.Windows.Visibility.Visible &&
+                            ObtenerCheckboxNodo(n)?.IsChecked == true)
+                .ToList();
+        }
+
+        /// <summary>Actualiza el contador "N sel." en la barra de selección múltiple.</summary>
+        private void ActualizarContadorSeleccion()
+        {
+            if (txtSeleccionContador == null) return;
+            int n = tvSchema.Items
+                .OfType<TreeViewItem>()
+                .Count(nodo => nodo.Visibility == System.Windows.Visibility.Visible &&
+                               ObtenerCheckboxNodo(nodo)?.IsChecked == true);
+            txtSeleccionContador.Text = $"{n} sel.";
+        }
+
+        private void btnSelTodos_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (TreeViewItem nodo in tvSchema.Items)
+                if (nodo.Visibility == System.Windows.Visibility.Visible)
+                {
+                    var chk = ObtenerCheckboxNodo(nodo);
+                    if (chk != null) chk.IsChecked = true;
+                }
+            ActualizarContadorSeleccion();
+        }
+
+        private void btnDeselTodos_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (TreeViewItem nodo in tvSchema.Items)
+            {
+                var chk = ObtenerCheckboxNodo(nodo);
+                if (chk != null) chk.IsChecked = false;
+            }
+            ActualizarContadorSeleccion();
+        }
+
+        // ════════════════════════════════════════════════════════════════
+        // CONJUNTOS DE TABLAS
+        // ════════════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// Carga el ComboBox de conjuntos con los conjuntos guardados para la conexión activa.
+        /// </summary>
+        private void CargarComboConjuntos()
+        {
+            cbConjuntos.SelectionChanged -= cbConjuntos_SelectionChanged;
+            cbConjuntos.Items.Clear();
+            cbConjuntos.Items.Add(new ComboBoxItem { Content = "(ninguno)", Tag = null });
+
+            if (conexionActual != null)
+            {
+                var cfg = ConfigManager.Cargar();
+                var cc = cfg.ConjuntosTablas
+                    .FirstOrDefault(c => string.Equals(c.NombreConexion, conexionActual.Nombre, StringComparison.OrdinalIgnoreCase));
+
+                if (cc != null)
+                    foreach (var conj in cc.Conjuntos)
+                        cbConjuntos.Items.Add(new ComboBoxItem { Content = conj.Nombre, Tag = conj });
+            }
+
+            cbConjuntos.SelectedIndex = 0;
+            cbConjuntos.SelectionChanged += cbConjuntos_SelectionChanged;
+        }
+
+        private void cbConjuntos_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var item = cbConjuntos.SelectedItem as ComboBoxItem;
+            _conjuntoActivo = item?.Tag as ConjuntoTablas;
+
+            // Recargar el esquema para aplicar el filtro de visibilidad
+            _explorarCTS?.Cancel();
+            _explorarCTS = new CancellationTokenSource();
+            LanzarCargarEsquema();
+        }
+
+        private void btnGuardarConjunto_Click(object sender, RoutedEventArgs e)
+        {
+            if (conexionActual == null)
+            {
+                MessageBox.Show("Seleccione una conexión primero.", "Sin conexión", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var seleccionados = GetNodosSeleccionados();
+            if (seleccionados.Count == 0)
+            {
+                MessageBox.Show("Marque al menos una tabla o vista con su checkbox antes de guardar el conjunto.",
+                    "Sin selección", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            // Pedir nombre del conjunto
+            var dlg = new NombreConjuntoDialog { Owner = this };
+            if (dlg.ShowDialog() != true || string.IsNullOrWhiteSpace(dlg.NombreIngresado))
+                return;
+
+            string nombre = dlg.NombreIngresado.Trim();
+
+            // Construir lista de identificadores
+            var tablas = seleccionados
+                .Select(n =>
+                {
+                    var tag = n.Tag as NodoTablaTag;
+                    if (tag == null) return null;
+                    // Obtener el texto visible del header para incluir schema si corresponde
+                    if (n.Header is StackPanel sp)
+                    {
+                        var tb = sp.Children.OfType<System.Windows.Controls.TextBlock>().FirstOrDefault();
+                        return tb?.Text ?? tag.Nombre;
+                    }
+                    return tag.Nombre;
+                })
+                .Where(t => t != null)
+                .ToList();
+
+            // Guardar en config
+            var cfg = ConfigManager.Cargar();
+            var cc = cfg.ConjuntosTablas
+                .FirstOrDefault(c => string.Equals(c.NombreConexion, conexionActual.Nombre, StringComparison.OrdinalIgnoreCase));
+
+            if (cc == null)
+            {
+                cc = new ConjuntosConexion { NombreConexion = conexionActual.Nombre };
+                cfg.ConjuntosTablas.Add(cc);
+            }
+
+            // Si ya existe un conjunto con ese nombre, reemplazarlo
+            var existente = cc.Conjuntos.FirstOrDefault(c => string.Equals(c.Nombre, nombre, StringComparison.OrdinalIgnoreCase));
+            if (existente != null)
+            {
+                if (MessageBox.Show($"Ya existe un conjunto llamado '{nombre}'. ¿Reemplazarlo?",
+                        "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+                    return;
+                cc.Conjuntos.Remove(existente);
+            }
+
+            cc.Conjuntos.Add(new ConjuntoTablas { Nombre = nombre, Tablas = tablas });
+            ConfigManager.Guardar(cfg);
+
+            AppendMessage($"Conjunto '{nombre}' guardado con {tablas.Count} tabla(s)/vista(s).");
+            CargarComboConjuntos();
+
+            // Seleccionar el nuevo conjunto en el combo
+            for (int i = 0; i < cbConjuntos.Items.Count; i++)
+            {
+                if (cbConjuntos.Items[i] is ComboBoxItem ci && ci.Content?.ToString() == nombre)
+                {
+                    cbConjuntos.SelectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        private void btnLimpiarConjunto_Click(object sender, RoutedEventArgs e)
+        {
+            _conjuntoActivo = null;
+            cbConjuntos.SelectedIndex = 0;
+            // cbConjuntos_SelectionChanged dispara LanzarCargarEsquema
+        }
+
+        private void btnEliminarConjunto_Click(object sender, RoutedEventArgs e)
+        {
+            var item = cbConjuntos.SelectedItem as ComboBoxItem;
+            var conj = item?.Tag as ConjuntoTablas;
+            if (conj == null)
+            {
+                MessageBox.Show("Seleccione un conjunto para eliminar.", "Sin selección", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (MessageBox.Show($"¿Eliminar el conjunto '{conj.Nombre}'?",
+                    "Confirmar eliminación", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+                return;
+
+            var cfg = ConfigManager.Cargar();
+            var cc = cfg.ConjuntosTablas
+                .FirstOrDefault(c => string.Equals(c.NombreConexion, conexionActual?.Nombre, StringComparison.OrdinalIgnoreCase));
+
+            cc?.Conjuntos.RemoveAll(c => string.Equals(c.Nombre, conj.Nombre, StringComparison.OrdinalIgnoreCase));
+            ConfigManager.Guardar(cfg);
+
+            _conjuntoActivo = null;
+            AppendMessage($"Conjunto '{conj.Nombre}' eliminado.");
+            CargarComboConjuntos();
+        }
+
+        // ════════════════════════════════════════════════════════════════
+        // PREFERENCIAS
+        // ════════════════════════════════════════════════════════════════
+
+        private void BtnPreferencias_Click(object sender, RoutedEventArgs e)
+        {
+            var ventana = new PreferenciasWindow { Owner = this };
+            ventana.ConfigGuardada += cfg =>
+            {
+                _configApp = cfg;
+                // Aplicar cambio de tema si es necesario
+                bool oscuroNuevo = cfg.TemaOscuro;
+                if (oscuroNuevo != _modoOscuro)
+                {
+                    _modoOscuro = oscuroNuevo;
+                    if (_modoOscuro) _temaOscuro = LeerTemaDesdeDisco("ThemeDark.xaml");
+                    else _temaClaro = LeerTemaDesdeDisco("ThemeLight.xaml");
+                    AplicarTema(_modoOscuro ? _temaOscuro : _temaClaro);
+                    btnToggleTema.Content = _modoOscuro ? "☀" : "🌙";
+                }
+            };
+            ventana.ShowDialog();
+            AplicarTema();
+        }
         // ════════════════════════════════════════════════════════════════
 
         /// <summary>
@@ -2075,10 +2346,15 @@ namespace QueryAnalyzer
                 return;
             }
 
-            var nodosVisibles = tvSchema.Items
-                .OfType<TreeViewItem>()
-                .Where(n => n.Visibility == System.Windows.Visibility.Visible)
-                .ToList();
+            // Si hay nodos con checkbox marcado, operar solo sobre ellos.
+            // Si no hay ninguno seleccionado, usar todos los visibles (comportamiento original).
+            var seleccionadosEsq = GetNodosSeleccionados();
+            var nodosVisibles = seleccionadosEsq.Count > 0
+                ? seleccionadosEsq
+                : tvSchema.Items
+                    .OfType<TreeViewItem>()
+                    .Where(n => n.Visibility == System.Windows.Visibility.Visible)
+                    .ToList();
 
             if (nodosVisibles.Count == 0)
             {
@@ -2087,7 +2363,8 @@ namespace QueryAnalyzer
             }
 
             btnEsquematizar.IsEnabled = false;
-            AppendMessage($"Esquematizando {nodosVisibles.Count} tabla(s)/vista(s)...");
+            AppendMessage($"Esquematizando {nodosVisibles.Count} tabla(s)/vista(s)" +
+                          (seleccionadosEsq.Count > 0 ? " (seleccionadas)" : "") + "...");
 
             try
             {
@@ -2124,9 +2401,9 @@ namespace QueryAnalyzer
                         // ── Columnas de cada tabla ──────────────────────────────────
                         foreach (var t in nodosInfo)
                         {
-                            string schema    = t.Item1;
-                            string nombre    = t.Item2;
-                            string tipoObj   = t.Item3;
+                            string schema = t.Item1;
+                            string nombre = t.Item2;
+                            string tipoObj = t.Item3;
 
                             var info = new EsquemaTablaInfo { Nombre = nombre, Schema = schema, Tipo = tipoObj };
 
@@ -2135,9 +2412,9 @@ namespace QueryAnalyzer
                                 var cols = conn.GetSchema("Columns", new string[] { null, string.IsNullOrEmpty(schema) ? null : schema, nombre });
                                 foreach (DataRow col in cols.Rows)
                                 {
-                                    string colName  = col["COLUMN_NAME"].ToString();
-                                    string colTipo  = col["TYPE_NAME"].ToString();
-                                    string colSize  = col["COLUMN_SIZE"].ToString();
+                                    string colName = col["COLUMN_NAME"].ToString();
+                                    string colTipo = col["TYPE_NAME"].ToString();
+                                    string colSize = col["COLUMN_SIZE"].ToString();
                                     info.Columnas.Add(new EsquemaColumnaInfo { Nombre = colName, Tipo = colTipo, Longitud = colSize });
                                 }
                             }
@@ -2187,26 +2464,26 @@ namespace QueryAnalyzer
 
         private class EsquemaTablaInfo
         {
-            public string Nombre    { get; set; }
-            public string Schema    { get; set; }
-            public string Tipo      { get; set; }   // "TABLE" | "VIEW"
-            public List<EsquemaColumnaInfo>  Columnas   { get; } = new List<EsquemaColumnaInfo>();
+            public string Nombre { get; set; }
+            public string Schema { get; set; }
+            public string Tipo { get; set; }   // "TABLE" | "VIEW"
+            public List<EsquemaColumnaInfo> Columnas { get; } = new List<EsquemaColumnaInfo>();
             public List<EsquemaRelacionInfo> Relaciones { get; } = new List<EsquemaRelacionInfo>();
         }
 
         private class EsquemaColumnaInfo
         {
-            public string Nombre   { get; set; }
-            public string Tipo     { get; set; }
+            public string Nombre { get; set; }
+            public string Tipo { get; set; }
             public string Longitud { get; set; }
         }
 
         private class EsquemaRelacionInfo
         {
-            public string TablaOrigen   { get; set; }
+            public string TablaOrigen { get; set; }
             public string ColumnaOrigen { get; set; }
-            public string TablaDestino  { get; set; }
-            public string ColumnaDestino{ get; set; }
+            public string TablaDestino { get; set; }
+            public string ColumnaDestino { get; set; }
         }
 
         // ────────────────────────────────────────────────────────────────
@@ -2224,18 +2501,18 @@ namespace QueryAnalyzer
                 var fkSchema = conn.GetSchema("ForeignKeys");
                 foreach (DataRow row in fkSchema.Rows)
                 {
-                    string tablaOrigen    = ObtenerCampo(row, "FK_TABLE_NAME", "FKTABLE_NAME");
-                    string columnaOrigen  = ObtenerCampo(row, "FK_COLUMN_NAME", "FKCOLUMN_NAME");
-                    string tablaDestino   = ObtenerCampo(row, "PK_TABLE_NAME", "PKTABLE_NAME");
+                    string tablaOrigen = ObtenerCampo(row, "FK_TABLE_NAME", "FKTABLE_NAME");
+                    string columnaOrigen = ObtenerCampo(row, "FK_COLUMN_NAME", "FKCOLUMN_NAME");
+                    string tablaDestino = ObtenerCampo(row, "PK_TABLE_NAME", "PKTABLE_NAME");
                     string columnaDestino = ObtenerCampo(row, "PK_COLUMN_NAME", "PKCOLUMN_NAME");
 
                     if (!string.IsNullOrEmpty(tablaOrigen) && !string.IsNullOrEmpty(tablaDestino))
                     {
                         resultado.Add(new EsquemaRelacionInfo
                         {
-                            TablaOrigen    = tablaOrigen,
-                            ColumnaOrigen  = columnaOrigen,
-                            TablaDestino   = tablaDestino,
+                            TablaOrigen = tablaOrigen,
+                            ColumnaOrigen = columnaOrigen,
+                            TablaDestino = tablaDestino,
                             ColumnaDestino = columnaDestino
                         });
                     }
@@ -2303,9 +2580,9 @@ namespace QueryAnalyzer
                                     {
                                         resultado.Add(new EsquemaRelacionInfo
                                         {
-                                            TablaOrigen    = tabla,
-                                            ColumnaOrigen  = rdr["from"].ToString(),
-                                            TablaDestino   = rdr["table"].ToString(),
+                                            TablaOrigen = tabla,
+                                            ColumnaOrigen = rdr["from"].ToString(),
+                                            TablaDestino = rdr["table"].ToString(),
                                             ColumnaDestino = rdr["to"].ToString()
                                         });
                                     }
@@ -2330,9 +2607,9 @@ namespace QueryAnalyzer
                             {
                                 resultado.Add(new EsquemaRelacionInfo
                                 {
-                                    TablaOrigen    = rdr[0].ToString(),
-                                    ColumnaOrigen  = rdr[1].ToString(),
-                                    TablaDestino   = rdr[2].ToString(),
+                                    TablaOrigen = rdr[0].ToString(),
+                                    ColumnaOrigen = rdr[1].ToString(),
+                                    TablaDestino = rdr[2].ToString(),
                                     ColumnaDestino = rdr[3].ToString()
                                 });
                             }
@@ -2363,11 +2640,11 @@ namespace QueryAnalyzer
         private string GenerarXmlDrawio(Dictionary<string, EsquemaTablaInfo> tablasMeta)
         {
             // Layout automático: columnas y filas en grilla
-            const int ANCHO_TABLA   = 220;
+            const int ANCHO_TABLA = 220;
             const int ALTO_CABECERA = 30;
-            const int ALTO_FILA     = 20;
-            const int COL_GAP       = 60;
-            const int FILA_GAP      = 40;
+            const int ALTO_FILA = 20;
+            const int COL_GAP = 60;
+            const int FILA_GAP = 40;
             const int COLS_POR_FILA = 5;
 
             var sb = new System.Text.StringBuilder();
@@ -2376,9 +2653,9 @@ namespace QueryAnalyzer
             sb.AppendLine("<mxCell id=\"0\"/>");
             sb.AppendLine("<mxCell id=\"1\" parent=\"0\"/>");
 
-            int idBase  = 2;
-            int col     = 0;
-            int fila    = 0;
+            int idBase = 2;
+            int col = 0;
+            int fila = 0;
             int xOffset = 0;
             int yOffset = 0;
 
@@ -2431,7 +2708,7 @@ namespace QueryAnalyzer
                 col++;
                 if (col >= COLS_POR_FILA)
                 {
-                    col     = 0;
+                    col = 0;
                     fila++;
                     xOffset = 0;
                     // El yOffset acumula la altura del bloque más alto de la fila anterior
@@ -2459,9 +2736,9 @@ namespace QueryAnalyzer
                     string clave = $"{rel.TablaOrigen}|{rel.ColumnaOrigen}|{rel.TablaDestino}|{rel.ColumnaDestino}";
                     if (!relacionesYaVistas.Add(clave)) continue;
 
-                    int idOrigen  = idPorTabla[rel.TablaOrigen];
+                    int idOrigen = idPorTabla[rel.TablaOrigen];
                     int idDestino = idPorTabla[rel.TablaDestino];
-                    string label  = $"{rel.ColumnaOrigen} → {rel.ColumnaDestino}";
+                    string label = $"{rel.ColumnaOrigen} → {rel.ColumnaDestino}";
 
                     sb.AppendLine($"<mxCell id=\"{connId}\" value=\"{EscXml(label)}\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERone;startArrow=ERmanyToOne;exitX=1;exitY=0.5;entryX=0;entryY=0.5;\" edge=\"1\" source=\"{idOrigen}\" target=\"{idDestino}\" parent=\"1\">");
                     sb.AppendLine("  <mxGeometry relative=\"1\" as=\"geometry\"/>");
@@ -2511,11 +2788,15 @@ namespace QueryAnalyzer
                 return;
             }
 
-            // Recopilar nodos visibles del TreeView
-            var nodosVisibles = tvSchema.Items
-                .OfType<TreeViewItem>()
-                .Where(n => n.Visibility == System.Windows.Visibility.Visible)
-                .ToList();
+            // Si hay nodos con checkbox marcado, operar solo sobre ellos.
+            // Si no hay ninguno seleccionado, usar todos los visibles (comportamiento original).
+            var seleccionadosDoc = GetNodosSeleccionados();
+            var nodosVisibles = seleccionadosDoc.Count > 0
+                ? seleccionadosDoc
+                : tvSchema.Items
+                    .OfType<TreeViewItem>()
+                    .Where(n => n.Visibility == System.Windows.Visibility.Visible)
+                    .ToList();
 
             if (nodosVisibles.Count == 0)
             {
@@ -2525,7 +2806,9 @@ namespace QueryAnalyzer
 
             // Proponer nombre de archivo
             string esquemaActivo = string.IsNullOrEmpty(_filtroSchema) ? "Esquema" : _filtroSchema;
-            string nombreSugerido = $"{conexionActual.Nombre}_{esquemaActivo}_{DateTime.Now:yyyyMMdd}.docx";
+            string nombreSugerido = seleccionadosDoc.Count > 0
+                ? $"{conexionActual.Nombre}_{seleccionadosDoc.Count}tablas_{DateTime.Now:yyyyMMdd}.docx"
+                : $"{conexionActual.Nombre}_{esquemaActivo}_{DateTime.Now:yyyyMMdd}.docx";
 
             var sfd = new Microsoft.Win32.SaveFileDialog
             {
@@ -2537,7 +2820,8 @@ namespace QueryAnalyzer
             if (sfd.ShowDialog() != true) return;
 
             btnDocumentar.IsEnabled = false;
-            AppendMessage($"Documentando {nodosVisibles.Count} tabla(s)/vista(s)...");
+            AppendMessage($"Documentando {nodosVisibles.Count} tabla(s)/vista(s)" +
+                          (seleccionadosDoc.Count > 0 ? " (seleccionadas)" : "") + "...");
 
             try
             {
@@ -3700,15 +3984,9 @@ namespace QueryAnalyzer
                 // Obtener el token completo que el usuario está escribiendo
                 string tokenActual = ObtenerTokenActual(txtQuery.CaretOffset);
 
-                // No abrir intellisense si el token es (o empieza a ser) una palabra reservada SQL
-                // Para evitar falsos positivos solo ignoramos si el token completo coincide exactamente,
-                // o si ningún elemento de la lista de tablas/columnas empieza con ese token.
-                if (_palabrasReservadas.Contains(tokenActual))
-                    return;
-
                 // Determinamos si el cursor está en contexto FROM/JOIN para priorizar tablas
                 bool enContextoTabla = EstaEnContextoTabla(txtQuery.Text, txtQuery.CaretOffset);
-                // Sugerencias generales al empezar a escribir texto
+                // Sugerencias generales al empezar a escribir texto (incluye keywords filtradas)
                 AbrirIntellisense(null, enContextoTabla);
             }
         }
@@ -3841,6 +4119,9 @@ namespace QueryAnalyzer
         /// </summary>
         private void AbrirIntellisense(string prefijo, bool enContextoTabla = false)
         {
+            // Respetar la preferencia del usuario
+            if (!_configApp.IntellisenseActivo) return;
+
             _completionWindow = new CompletionWindow(txtQuery.TextArea);
 
             // ── Ajustar StartOffset para incluir el token ya escrito ──────────────
@@ -3856,6 +4137,11 @@ namespace QueryAnalyzer
                 tokenStart--;
             }
             _completionWindow.StartOffset = tokenStart;
+
+            // Token actual para filtrar las keywords en tiempo real
+            string tokenActual = tokenStart < caretOffset
+                ? txtQuery.Document.GetText(tokenStart, caretOffset - tokenStart)
+                : string.Empty;
 
             IList<ICompletionData> data = _completionWindow.CompletionList.CompletionData;
 
@@ -3903,6 +4189,18 @@ namespace QueryAnalyzer
                         // Solo agregar si no está ya en el caché de columnas (evitar duplicados)
                         if (!_cacheColumnas.ContainsKey(t.Nombre))
                             data.Add(new SqlCompletionItem(t.Nombre, t.Tipo == "V" || t.Tipo == "view" || t.Tipo == "VIEW" ? "Vista" : "Tabla", string.Empty));
+                    }
+                }
+
+                // ── Keywords SQL filtradas en tiempo real ─────────────────────────
+                // Se muestran solo las que empiezan con lo que el usuario está escribiendo.
+                // SqlKeywordCompletionItem siempre inserta en MAYÚSCULAS.
+                foreach (string kw in _palabrasReservadas.OrderBy(k => k))
+                {
+                    if (string.IsNullOrEmpty(tokenActual) ||
+                        kw.StartsWith(tokenActual, StringComparison.OrdinalIgnoreCase))
+                    {
+                        data.Add(new SqlKeywordCompletionItem(kw));
                     }
                 }
             }
@@ -4047,5 +4345,48 @@ public class SqlCompletionItem : ICSharpCode.AvalonEdit.CodeCompletion.ICompleti
     {
         // Inserta solo el nombre, sin el tipo ni la tabla
         textArea.Document.Replace(completionSegment, Text);
+    }
+}
+
+/// <summary>
+/// Item de autocompletado para palabras reservadas SQL.
+/// Se muestra en azul negrita y siempre se inserta en MAYÚSCULAS,
+/// independientemente de cómo el usuario haya empezado a escribir.
+/// </summary>
+public class SqlKeywordCompletionItem : ICSharpCode.AvalonEdit.CodeCompletion.ICompletionData
+{
+    public SqlKeywordCompletionItem(string keyword)
+    {
+        // Text en mayúsculas: la CompletionList lo usa para filtrar por prefijo
+        Text = keyword.ToUpperInvariant();
+    }
+
+    public System.Windows.Media.ImageSource Image => null;
+    public string Text { get; private set; }
+    // Priority > 0 hace que las keywords aparezcan antes en la lista cuando hay coincidencia exacta
+    public double Priority => 0.5;
+    public object Description => "Palabra reservada SQL";
+
+    public object Content
+    {
+        get
+        {
+            return new System.Windows.Controls.TextBlock
+            {
+                Text = Text,
+                FontWeight = System.Windows.FontWeights.SemiBold,
+                Foreground = new System.Windows.Media.SolidColorBrush(
+                                 System.Windows.Media.Color.FromRgb(30, 120, 220)) // azul
+            };
+        }
+    }
+
+    public void Complete(
+        ICSharpCode.AvalonEdit.Editing.TextArea textArea,
+        ICSharpCode.AvalonEdit.Document.ISegment completionSegment,
+        EventArgs insertionEventArgs)
+    {
+        // Regla estricta: insertar SIEMPRE en MAYÚSCULAS
+        textArea.Document.Replace(completionSegment, Text.ToUpperInvariant());
     }
 }
