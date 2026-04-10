@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Xml.Serialization;
-using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Win32;
 
 namespace QueryAnalyzer
 {
@@ -13,46 +9,18 @@ namespace QueryAnalyzer
     {
         public static string[] BasesDB2 = new string[] { "CONTABIL", "CONTAICD", "CONTAIMV", "CONTCBEL", "CONTIDS", "DOCUMENT", "GENERAL", "GIS", "HISTABM", "HISTORIC", "INFORMAT", "LICENCIA", "RRHH", "SISUS", "TRIBUTOS" };
 
-        private static readonly string ArchivoXml = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),"QueryAnalyzer", "conexiones.xml");
+        // La persistencia fue migrada a config.xml (ConfigManager).
+        // Estos métodos delegan en ConfigManager para mantener compatibilidad
+        // con el resto del código sin necesidad de modificarlo.
 
         public static Dictionary<string, Conexion> Cargar()
         {
-            if (!File.Exists(ArchivoXml))
-                return new Dictionary<string, Conexion>();
-
-            try
-            {
-                using (var fs = new FileStream(ArchivoXml, FileMode.Open))
-                {
-                    var serializer = new XmlSerializer(typeof(List<Conexion>));
-                    var lista = (List<Conexion>)serializer.Deserialize(fs);
-                    var dict = new Dictionary<string, Conexion>();
-                    foreach (var c in lista)
-                        dict[c.Nombre] = c;
-                    return dict;
-                }
-            }
-            catch
-            {
-                return new Dictionary<string, Conexion>();
-            }
+            return ConfigManager.CargarConexiones();
         }
 
         public static void Guardar(Dictionary<string, Conexion> conexiones)
         {
-            try
-            {
-                var lista = new List<Conexion>(conexiones.Values);
-                using (var fs = new FileStream(ArchivoXml, FileMode.Create))
-                {
-                    var serializer = new XmlSerializer(typeof(List<Conexion>));
-                    serializer.Serialize(fs, lista);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error guardando conexiones: " + ex.Message);
-            }
+            ConfigManager.GuardarConexiones(conexiones);
         }
 
         public static string GetConnectionString(Conexion conexion)
