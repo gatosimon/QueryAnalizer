@@ -58,6 +58,12 @@ namespace QueryAnalyzer
         private List<TablaInfo> _cacheTablas = new List<TablaInfo>();
         private bool _tablasEnCargaGlobal = false;
 
+        // ── Preferencias (cargadas desde config.xml al inicio) ──────────────
+        // true = el IntelliSense está activo (default)
+        private bool _intelliSenseHabilitado = true;
+        // true = al cambiar de conexión se carga la última consulta del historial (default)
+        private bool _cargarUltimaConsultaAlConectar = true;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -85,6 +91,8 @@ namespace QueryAnalyzer
             InicializarConexiones();
             BloquearUI(true);
             InicializarTemas();
+            // Cargar preferencias del usuario desde config.xml
+            CargarPreferenciasDesdeConfig();
             ConfigurarMenuContextualAvalonEdit();
 
             // Intellisense: suscripción a eventos de AvalonEdit
@@ -169,6 +177,34 @@ namespace QueryAnalyzer
             ActualizarHeadersGrillas();
         }
 
+        /// <summary>
+        /// Lee config.xml y aplica las preferencias del usuario al arrancar la app.
+        /// Aplica el tema guardado y actualiza los flags de IntelliSense y comportamiento.
+        /// </summary>
+        private void CargarPreferenciasDesdeConfig()
+        {
+            try
+            {
+                var cfg = ConfiguracionManager.Cargar();
+
+                // Tema
+                if (cfg.ModoOscuro && !_modoOscuro)
+                {
+                    _modoOscuro = true;
+                    _temaOscuro = LeerTemaDesdeDisco("ThemeDark.xaml");
+                    AplicarTema(_temaOscuro);
+                    btnToggleTema.Content = "☀";
+                }
+
+                // IntelliSense
+                _intelliSenseHabilitado = cfg.IntelliSenseHabilitado;
+
+                // Comportamiento
+                _cargarUltimaConsultaAlConectar = cfg.CargarUltimaConsultaAlConectar;
+            }
+            catch { /* No bloquear el arranque si la config está corrupta */ }
+        }
+
         private void BtnToggleTema_Click(object sender, RoutedEventArgs e)
         {
             _modoOscuro = !_modoOscuro;
@@ -181,6 +217,45 @@ namespace QueryAnalyzer
 
             AplicarTema(_modoOscuro ? _temaOscuro : _temaClaro);
             btnToggleTema.Content = _modoOscuro ? "☀" : "🌙";
+
+            // Persistir preferencia de tema en config.xml
+            try
+            {
+                var cfg = ConfiguracionManager.Cargar();
+                cfg.ModoOscuro = _modoOscuro;
+                ConfiguracionManager.Guardar(cfg);
+            }
+            catch { }
+        }
+
+        /// <summary>
+        /// Abre la ventana de Preferencias y, si el usuario guarda cambios,
+        /// aplica el tema y actualiza los flags de comportamiento en tiempo de ejecución.
+        /// </summary>
+        private void BtnPreferencias_Click(object sender, RoutedEventArgs e)
+        {
+            var ventana = new PreferenciasWindow { Owner = this };
+            bool? resultado = ventana.ShowDialog();
+
+            if (resultado == true)
+            {
+                // Recargar preferencias aplicadas
+                CargarPreferenciasDesdeConfig();
+
+                // Aplicar tema elegido en las preferencias (puede haber cambiado)
+                if (_modoOscuro)
+                {
+                    _temaOscuro = LeerTemaDesdeDisco("ThemeDark.xaml");
+                    AplicarTema(_temaOscuro);
+                    btnToggleTema.Content = "☀";
+                }
+                else
+                {
+                    _temaClaro = LeerTemaDesdeDisco("ThemeLight.xaml");
+                    AplicarTema(_temaClaro);
+                    btnToggleTema.Content = "🌙";
+                }
+            }
         }
 
         /// <summary>
@@ -422,7 +497,8 @@ namespace QueryAnalyzer
                 _filtroTipo = "BOTH";
 
                 btnExplorar_Click(sender, e);
-                if (lstHistory.Items.Count > 0)
+                // Solo cargar la última consulta si la preferencia está activa
+                if (_cargarUltimaConsultaAlConectar && lstHistory.Items.Count > 0)
                 {
                     CargarHistoriaEnConsultas(lstHistory.Items[0]);
                 }
@@ -1483,8 +1559,20 @@ namespace QueryAnalyzer
 
                         Dispatcher.Invoke(() =>
                         {
-                            // 🖼️ INICIO DE MODIFICACIÓN: nodo de tabla/vista con icono
+                            // 🖼️ INICIO DE MODIFICACIÓN: nodo de tabla/vista con checkbox + icono
                             var tablaHeader = new StackPanel { Orientation = Orientation.Horizontal };
+
+                            // CheckBox de selección múltiple (Prioridad 1)
+                            var chkSeleccion = new System.Windows.Controls.CheckBox
+                            {
+                                VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                                Margin = new System.Windows.Thickness(0, 0, 4, 0),
+                                ToolTip = "Seleccionar para Documentar / Esquematizar / Poblar"
+                            };
+                            // Detener la propagación del click para no disparar la selección del nodo
+                            chkSeleccion.PreviewMouseLeftButtonDown += (s, ev) => ev.Handled = false;
+                            tablaHeader.Children.Add(chkSeleccion);
+
                             tablaHeader.Children.Add(new System.Windows.Controls.Image
                             {
                                 Source = capTipo == "VIEW" ? vistaIcon : tablaIcon, // 👈 CAMBIADO
@@ -2075,10 +2163,8 @@ namespace QueryAnalyzer
                 return;
             }
 
-            var nodosVisibles = tvSchema.Items
-                .OfType<TreeViewItem>()
-                .Where(n => n.Visibility == System.Windows.Visibility.Visible)
-                .ToList();
+            // Usar nodos seleccionados (checkbox) o todos los visibles si ninguno está marcado
+            var nodosVisibles = ObtenerNodosEfectivos();
 
             if (nodosVisibles.Count == 0)
             {
@@ -2511,11 +2597,8 @@ namespace QueryAnalyzer
                 return;
             }
 
-            // Recopilar nodos visibles del TreeView
-            var nodosVisibles = tvSchema.Items
-                .OfType<TreeViewItem>()
-                .Where(n => n.Visibility == System.Windows.Visibility.Visible)
-                .ToList();
+            // Usar nodos seleccionados (checkbox) o todos los visibles si ninguno está marcado
+            var nodosVisibles = ObtenerNodosEfectivos();
 
             if (nodosVisibles.Count == 0)
             {
@@ -3668,11 +3751,14 @@ namespace QueryAnalyzer
         /// Reacciona a cada carácter escrito en el editor:
         ///   - Actualiza el mapa de aliases/tablas y dispara carga en background.
         ///   - Si es un punto, abre suggestions de la tabla/alias que precede al punto.
-        ///   - Si es una letra y no hay ventana abierta, y el token actual NO es una
-        ///     palabra reservada, abre suggestions generales.
+        ///   - Si es una letra y no hay ventana abierta, abre suggestions generales
+        ///     incluyendo palabras clave SQL (siempre en mayúsculas al insertar).
         /// </summary>
         private void TxtQuery_TextEntered(object sender, System.Windows.Input.TextCompositionEventArgs e)
         {
+            // Respetar la preferencia de IntelliSense
+            if (!_intelliSenseHabilitado) return;
+
             // Actualizamos alias y disparamos carga de columnas en background
             ActualizarAliasesYCargarColumnas(txtQuery.Text);
 
@@ -3697,18 +3783,9 @@ namespace QueryAnalyzer
             }
             else if (e.Text.Length == 1 && char.IsLetter(e.Text[0]) && _completionWindow == null)
             {
-                // Obtener el token completo que el usuario está escribiendo
-                string tokenActual = ObtenerTokenActual(txtQuery.CaretOffset);
-
-                // No abrir intellisense si el token es (o empieza a ser) una palabra reservada SQL
-                // Para evitar falsos positivos solo ignoramos si el token completo coincide exactamente,
-                // o si ningún elemento de la lista de tablas/columnas empieza con ese token.
-                if (_palabrasReservadas.Contains(tokenActual))
-                    return;
-
                 // Determinamos si el cursor está en contexto FROM/JOIN para priorizar tablas
                 bool enContextoTabla = EstaEnContextoTabla(txtQuery.Text, txtQuery.CaretOffset);
-                // Sugerencias generales al empezar a escribir texto
+                // Sugerencias generales: palabras SQL + tablas/columnas
                 AbrirIntellisense(null, enContextoTabla);
             }
         }
@@ -3839,6 +3916,115 @@ namespace QueryAnalyzer
         /// El StartOffset de la ventana se ajusta para reemplazar el token que ya se escribió,
         /// evitando así la duplicación del primer carácter.
         /// </summary>
+        // ════════════════════════════════════════════════════════════════
+        // SELECCIÓN MÚLTIPLE (checkboxes en TreeView) — Prioridad 1
+        // ════════════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// Obtiene el CheckBox del header de un nodo de tabla/vista del TreeView.
+        /// Devuelve null si el nodo no tiene checkbox (nodos de columna, índice, etc.).
+        /// </summary>
+        private System.Windows.Controls.CheckBox ObtenerCheckBoxDeNodo(TreeViewItem nodo)
+        {
+            if (nodo.Header is StackPanel sp)
+            {
+                foreach (var child in sp.Children)
+                {
+                    if (child is System.Windows.Controls.CheckBox chk)
+                        return chk;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Retorna la lista de nodos visibles en tvSchema que tienen su checkbox marcado.
+        /// Si ninguno está marcado, devuelve todos los nodos visibles (modo sin selección explícita).
+        /// </summary>
+        private List<TreeViewItem> ObtenerNodosEfectivos()
+        {
+            var visibles = tvSchema.Items
+                .OfType<TreeViewItem>()
+                .Where(n => n.Visibility == System.Windows.Visibility.Visible)
+                .ToList();
+
+            var seleccionados = visibles
+                .Where(n => ObtenerCheckBoxDeNodo(n)?.IsChecked == true)
+                .ToList();
+
+            // Si hay al menos uno marcado, usamos solo los marcados.
+            // Si ninguno está marcado, aplicamos la acción a todos los visibles.
+            return seleccionados.Count > 0 ? seleccionados : visibles;
+        }
+
+        /// <summary>Marca o desmarca el CheckBox de un nodo de tabla/vista.</summary>
+        private void SetNodoSeleccionado(TreeViewItem nodo, bool seleccionado)
+        {
+            var chk = ObtenerCheckBoxDeNodo(nodo);
+            if (chk != null) chk.IsChecked = seleccionado;
+        }
+
+        /// <summary>Marca todos los nodos visibles de tvSchema.</summary>
+        private void btnSelTodo_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (TreeViewItem nodo in tvSchema.Items)
+            {
+                if (nodo.Visibility == System.Windows.Visibility.Visible)
+                    SetNodoSeleccionado(nodo, true);
+            }
+        }
+
+        /// <summary>Desmarca todos los nodos de tvSchema.</summary>
+        private void btnDeselTodo_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (TreeViewItem nodo in tvSchema.Items)
+                SetNodoSeleccionado(nodo, false);
+        }
+
+        /// <summary>
+        /// Abre el diálogo de poblado para las tablas/vistas efectivamente seleccionadas.
+        /// Si ninguna está marcada con checkbox, utiliza todas las visibles.
+        /// </summary>
+        private void btnPoblar_Click(object sender, RoutedEventArgs e)
+        {
+            if (conexionActual == null)
+            {
+                AppendMessage("No hay conexión seleccionada.");
+                return;
+            }
+
+            var nodosEfectivos = ObtenerNodosEfectivos();
+            if (nodosEfectivos.Count == 0)
+            {
+                AppendMessage("No hay tablas/vistas para poblar. Explore el esquema primero.");
+                return;
+            }
+
+            // Construir la lista de tuplas (schema, nombre, tipo) para el diálogo
+            var tablas = new List<Tuple<string, string, string>>();
+            foreach (var nodo in nodosEfectivos)
+            {
+                var nodoTag = nodo.Tag as NodoTablaTag;
+                if (nodoTag == null) continue;
+
+                string headerText = ObtenerHeaderText(nodo);
+                string schema = string.Empty;
+                if (headerText.Contains("."))
+                    schema = headerText.Substring(0, headerText.IndexOf('.'));
+
+                tablas.Add(Tuple.Create(schema, nodoTag.Nombre, nodoTag.Tipo));
+            }
+
+            if (tablas.Count == 0)
+            {
+                AppendMessage("No se identificaron tablas válidas para poblar.");
+                return;
+            }
+
+            var ventanaPoblado = new PobladorWindow(conexionActual, tablas) { Owner = this };
+            ventanaPoblado.ShowDialog();
+        }
+
         private void AbrirIntellisense(string prefijo, bool enContextoTabla = false)
         {
             _completionWindow = new CompletionWindow(txtQuery.TextArea);
@@ -3874,6 +4060,9 @@ namespace QueryAnalyzer
             }
             else
             {
+                // Obtener el token actual para filtrar keywords
+                string tokenActual = ObtenerTokenActual(txtQuery.CaretOffset);
+
                 if (enContextoTabla)
                 {
                     // En contexto FROM/JOIN: las tablas de la BD van primero
@@ -3903,6 +4092,18 @@ namespace QueryAnalyzer
                         // Solo agregar si no está ya en el caché de columnas (evitar duplicados)
                         if (!_cacheColumnas.ContainsKey(t.Nombre))
                             data.Add(new SqlCompletionItem(t.Nombre, t.Tipo == "V" || t.Tipo == "view" || t.Tipo == "VIEW" ? "Vista" : "Tabla", string.Empty));
+                    }
+                }
+
+                // Palabras clave SQL: siempre se incluyen (filtradas por el token actual)
+                // La CompletionWindow filtra automáticamente, pero agregamos solo las que
+                // coinciden para no saturar la lista cuando hay pocas coincidencias.
+                foreach (var kw in _palabrasReservadas)
+                {
+                    if (string.IsNullOrEmpty(tokenActual) ||
+                        kw.StartsWith(tokenActual, StringComparison.OrdinalIgnoreCase))
+                    {
+                        data.Add(new SqlKeywordCompletionItem(kw));
                     }
                 }
             }
@@ -4047,5 +4248,46 @@ public class SqlCompletionItem : ICSharpCode.AvalonEdit.CodeCompletion.ICompleti
     {
         // Inserta solo el nombre, sin el tipo ni la tabla
         textArea.Document.Replace(completionSegment, Text);
+    }
+}
+
+/// <summary>
+/// Item de autocompletado para palabras clave SQL.
+/// SIEMPRE inserta el texto en MAYÚSCULAS al confirmar la selección,
+/// independientemente de cómo lo haya escrito el usuario.
+/// </summary>
+public class SqlKeywordCompletionItem : ICSharpCode.AvalonEdit.CodeCompletion.ICompletionData
+{
+    public SqlKeywordCompletionItem(string keyword)
+    {
+        Text = keyword.ToUpperInvariant();
+    }
+
+    public System.Windows.Media.ImageSource Image => null;
+    public string Text { get; }
+    public double Priority => 0.8;
+    public object Description => "Palabra clave SQL";
+
+    public object Content
+    {
+        get
+        {
+            return new System.Windows.Controls.TextBlock
+            {
+                Text = Text,
+                Foreground = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(0, 0, 200)),
+                FontWeight = System.Windows.FontWeights.Bold
+            };
+        }
+    }
+
+    public void Complete(
+        ICSharpCode.AvalonEdit.Editing.TextArea textArea,
+        ICSharpCode.AvalonEdit.Document.ISegment completionSegment,
+        EventArgs insertionEventArgs)
+    {
+        // SIEMPRE en MAYÚSCULAS, independientemente de cómo lo escribió el usuario
+        textArea.Document.Replace(completionSegment, Text.ToUpperInvariant());
     }
 }

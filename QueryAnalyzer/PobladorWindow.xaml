@@ -1,0 +1,162 @@
+<Window x:Class="QueryAnalyzer.PobladorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Poblar tablas con datos de prueba"
+        Height="520" Width="560"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{DynamicResource BrushWindowBG}"
+        Foreground="{DynamicResource BrushFG}">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ThemeLight.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+            </Style>
+            <Style TargetType="TextBox">
+                <Setter Property="Background"      Value="{DynamicResource BrushControlBG}"/>
+                <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"     Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding"         Value="3,2"/>
+            </Style>
+            <Style TargetType="Button">
+                <Setter Property="Background"      Value="{DynamicResource BrushBtnBG}"/>
+                <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"     Value="{DynamicResource BrushBtnBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding"         Value="6,3"/>
+                <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="3" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource BrushAccent}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="Opacity" Value="0.8"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.4"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style TargetType="GroupBox">
+                <Setter Property="Foreground"  Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="Padding"     Value="8,6,8,8"/>
+            </Style>
+            <Style TargetType="ListBox">
+                <Setter Property="Background"  Value="{DynamicResource BrushPanelBG}"/>
+                <Setter Property="Foreground"  Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Configuración -->
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="*"/>
+            <!-- Lista tablas + log -->
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="Auto"/>
+            <!-- Barra de progreso -->
+            <RowDefinition Height="6"/>
+            <RowDefinition Height="Auto"/>
+            <!-- Botones -->
+        </Grid.RowDefinitions>
+
+        <!-- ══ Configuración ════════════════════════════════════════════════ -->
+        <GroupBox Grid.Row="0" Header="Configuración de poblado">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="80"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Text="Registros por tabla:"
+                           VerticalAlignment="Center"
+                           Margin="0,0,10,0"/>
+                <TextBox x:Name="txtCantidad"
+                         Grid.Column="1"
+                         Text="100"
+                         VerticalContentAlignment="Center"
+                         ToolTip="Número de filas a insertar en cada tabla (mínimo 1)"/>
+                <TextBlock Grid.Column="2"
+                           Text="  (puede ingresar más de 100)"
+                           VerticalAlignment="Center"
+                           FontSize="10"
+                           Foreground="{DynamicResource BrushFGMuted}"/>
+            </Grid>
+        </GroupBox>
+
+        <!-- ══ Lista de tablas + log ═════════════════════════════════════════ -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Tablas a poblar -->
+            <GroupBox Grid.Column="0" Header="Tablas seleccionadas">
+                <ListBox x:Name="lstTablas"
+                         FontSize="11"
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+            </GroupBox>
+
+            <!-- Log de progreso -->
+            <GroupBox Grid.Column="2" Header="Progreso">
+                <TextBox x:Name="txtLog"
+                         IsReadOnly="True"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         FontSize="11"
+                         FontFamily="Consolas"/>
+            </GroupBox>
+        </Grid>
+
+        <!-- ══ Barra de progreso ════════════════════════════════════════════ -->
+        <ProgressBar x:Name="progressBar"
+                     Grid.Row="4"
+                     Height="12"
+                     Minimum="0"
+                     Maximum="100"
+                     Value="0"
+                     Foreground="{DynamicResource BrushAccent}"/>
+
+        <!-- ══ Botones ═══════════════════════════════════════════════════════ -->
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="btnPoblar"
+                    Content="Poblar"
+                    Width="100"
+                    Margin="0,0,8,0"
+                    Click="BtnPoblar_Click"
+                    ToolTip="Iniciar la inserción de datos de prueba en las tablas seleccionadas"/>
+            <Button x:Name="btnCancelar"
+                    Content="Cerrar"
+                    Width="80"
+                    Click="BtnCerrar_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

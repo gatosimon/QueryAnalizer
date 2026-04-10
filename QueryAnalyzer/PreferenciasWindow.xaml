@@ -1,0 +1,153 @@
+<Window x:Class="QueryAnalyzer.PreferenciasWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Preferencias — Query Analyzer"
+        Height="460" Width="500"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{DynamicResource BrushWindowBG}"
+        Foreground="{DynamicResource BrushFG}">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- El code-behind reemplaza este diccionario con el tema activo de MainWindow -->
+                <ResourceDictionary Source="ThemeLight.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+            </Style>
+            <Style TargetType="CheckBox">
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+            </Style>
+            <Style TargetType="RadioButton">
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+            </Style>
+            <Style TargetType="Button">
+                <Setter Property="Background"      Value="{DynamicResource BrushBtnBG}"/>
+                <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"     Value="{DynamicResource BrushBtnBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding"         Value="6,3"/>
+                <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="3"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource BrushAccent}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="Opacity" Value="0.8"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style TargetType="GroupBox">
+                <Setter Property="Foreground"  Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="Padding"     Value="8,6,8,8"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Tema -->
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>
+            <!-- IntelliSense -->
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>
+            <!-- Comportamiento -->
+            <RowDefinition Height="*"/>
+            <!-- Spacer -->
+            <RowDefinition Height="Auto"/>
+            <!-- Botones -->
+        </Grid.RowDefinitions>
+
+        <!-- ══ Sección: Tema ══════════════════════════════════════════════════ -->
+        <GroupBox Grid.Row="0" Header="Tema">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,4,0,6">
+                    <RadioButton x:Name="rdClaro"
+                                 Content="Tema Claro"
+                                 GroupName="GrupoTema"
+                                 Margin="0,0,20,0"
+                                 Checked="rdTema_Checked"/>
+                    <RadioButton x:Name="rdOscuro"
+                                 Content="Tema Oscuro"
+                                 GroupName="GrupoTema"
+                                 Checked="rdTema_Checked"/>
+                </StackPanel>
+                <TextBlock Text="Los archivos de tema se pueden personalizar manualmente en la carpeta:"
+                           FontSize="10"
+                           Foreground="{DynamicResource BrushFGMuted}"
+                           TextWrapping="Wrap"/>
+                <TextBlock x:Name="txtRutaTemas"
+                           FontSize="10"
+                           Foreground="{DynamicResource BrushAccent}"
+                           TextDecorations="Underline"
+                           TextWrapping="Wrap"
+                           Cursor="Hand"
+                           Margin="0,2,0,0"
+                           MouseLeftButtonDown="TxtRutaTemas_Click"
+                           ToolTip="Clic para abrir la carpeta en el explorador"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- ══ Sección: IntelliSense ══════════════════════════════════════════ -->
+        <GroupBox Grid.Row="2" Header="IntelliSense">
+            <StackPanel>
+                <CheckBox x:Name="chkIntelliSense"
+                          Content="Activar predicción y autocompletado en el editor de consultas"
+                          Margin="0,4,0,6"/>
+                <TextBlock Text="Al desactivar, el editor no mostrará sugerencias de palabras clave SQL, tablas ni columnas."
+                           FontSize="10"
+                           Foreground="{DynamicResource BrushFGMuted}"
+                           TextWrapping="Wrap"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- ══ Sección: Comportamiento ════════════════════════════════════════ -->
+        <GroupBox Grid.Row="4" Header="Comportamiento">
+            <StackPanel>
+                <CheckBox x:Name="chkCargarConsulta"
+                          Content="Cargar la última consulta al cambiar de conexión"
+                          Margin="0,4,0,6"/>
+                <TextBlock Text="Cuando está activo, al seleccionar una conexión se carga automáticamente la consulta más reciente de su historial."
+                           FontSize="10"
+                           Foreground="{DynamicResource BrushFGMuted}"
+                           TextWrapping="Wrap"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- ══ Botones ════════════════════════════════════════════════════════ -->
+        <StackPanel Grid.Row="6"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Margin="0,8,0,0">
+            <Button x:Name="btnGuardar"
+                    Content="Guardar"
+                    Width="96"
+                    Margin="0,0,8,0"
+                    Click="BtnGuardar_Click"/>
+            <Button x:Name="btnCancelar"
+                    Content="Cancelar"
+                    Width="96"
+                    Click="BtnCancelar_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
