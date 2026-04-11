@@ -1466,7 +1466,10 @@ namespace QueryAnalyzer
 
                 // Si querés seguir usando un DataTable:
                 DataTable tablasSolo = tablasFiltradas.Length > 0 ? tablasFiltradas.CopyToDataTable() : tablas.Clone();
-
+                if (_islaActiva != null)
+                {
+                    tablasSolo = tablasFiltradas.Length > 0 ? tablasFiltradas.Where(t=> _islaActiva.Tablas.Contains(t.Table.TableName)).ToArray().CopyToDataTable() : tablas.Clone();
+                }
                 bool cargarTabla = true;
                 int tablasLeidas = 0;
                 int cantidadDeTablas = tablasConsulta == null ? tablasSolo.Rows.Count : tablasConsulta.Count;
@@ -1531,18 +1534,18 @@ namespace QueryAnalyzer
                             // 🖼️ FIN DE MODIFICACIÓN
 
                             // Filtro de isla activa: ocultar nodos que no pertenecen a la isla
-                            if (_islaActiva != null)
-                            {
-                                string idNodo = string.IsNullOrEmpty(capSchema)
-                                    ? capTabla
-                                    : $"{capSchema}.{capTabla}";
-                                bool enIsla = _islaActiva.Tablas.Any(t =>
-                                    string.Equals(t, idNodo, StringComparison.OrdinalIgnoreCase) ||
-                                    string.Equals(t, capTabla, StringComparison.OrdinalIgnoreCase));
-                                tablaNode.Visibility = enIsla
-                                    ? System.Windows.Visibility.Visible
-                                    : System.Windows.Visibility.Collapsed;
-                            }
+                            //if (_islaActiva != null)
+                            //{
+                            //    string idNodo = string.IsNullOrEmpty(capSchema)
+                            //        ? capTabla
+                            //        : $"{capSchema}.{capTabla}";
+                            //    bool enIsla = _islaActiva.Tablas.Any(t =>
+                            //        string.Equals(t, idNodo, StringComparison.OrdinalIgnoreCase) ||
+                            //        string.Equals(t, capTabla, StringComparison.OrdinalIgnoreCase));
+                            //    tablaNode.Visibility = enIsla
+                            //        ? System.Windows.Visibility.Visible
+                            //        : System.Windows.Visibility.Collapsed;
+                            //}
 
                             if (filtrado.Length == 0 || (filtrado.Length > 0 && capTabla.ToUpper().Contains(filtrado.ToUpper())))
                             {
@@ -2190,8 +2193,8 @@ namespace QueryAnalyzer
             var item = cbIslas.SelectedItem as ComboBoxItem;
             _islaActiva = item?.Tag as ConjuntoTablas;
 
-            // Recargar el esquema para aplicar el filtro de visibilidad
-            LanzarCargarEsquema();
+            // El filtro de isla solo requiere un cambio de visibilidad en UI; sin recarga de BD
+            AplicarFiltroSchemaEnUI();
         }
 
         private void btnGuardarIsla_Click(object sender, RoutedEventArgs e)
@@ -2260,14 +2263,12 @@ namespace QueryAnalyzer
 
             AppendMessage($"Isla '{nombre}' guardada con {tablas.Count} tabla(s)/vista(s).");
 
-            // Recargar el combo, seleccionar la isla recién guardada y refrescar el árbol
+            // Recargar el combo y seleccionar la isla recién guardada
             CargarComboIslas();
             for (int i = 0; i < cbIslas.Items.Count; i++)
             {
                 if (cbIslas.Items[i] is ComboBoxItem ci && ci.Content?.ToString() == nombre)
                 {
-                    // Asignar _islaActiva antes de cambiar el índice para evitar que
-                    // cbIslas_SelectionChanged lo pise con un Tag incorrecto
                     _islaActiva = ci.Tag as ConjuntoTablas;
                     cbIslas.SelectionChanged -= cbIslas_SelectionChanged;
                     cbIslas.SelectedIndex = i;
@@ -2276,8 +2277,8 @@ namespace QueryAnalyzer
                 }
             }
 
-            // Recargar el árbol con el filtro de la isla recién guardada
-            LanzarCargarEsquema();
+            // Aplicar el filtro de isla sobre el árbol ya cargado (sin ir a la BD)
+            AplicarFiltroSchemaEnUI();
         }
 
         private void btnLimpiarIsla_Click(object sender, RoutedEventArgs e)
@@ -2286,7 +2287,7 @@ namespace QueryAnalyzer
             cbIslas.SelectionChanged -= cbIslas_SelectionChanged;
             cbIslas.SelectedIndex = 0;
             cbIslas.SelectionChanged += cbIslas_SelectionChanged;
-            LanzarCargarEsquema();
+            AplicarFiltroSchemaEnUI();
         }
 
         private void btnEliminarIsla_Click(object sender, RoutedEventArgs e)
@@ -2313,7 +2314,7 @@ namespace QueryAnalyzer
             _islaActiva = null;
             AppendMessage($"Isla '{conj.Nombre}' eliminada.");
             CargarComboIslas();
-            LanzarCargarEsquema();
+            AplicarFiltroSchemaEnUI();
         }
 
         // ════════════════════════════════════════════════════════════════
@@ -3325,28 +3326,51 @@ namespace QueryAnalyzer
         }
 
         /// <summary>
-        /// Muestra u oculta los nodos del TreeView según el schema seleccionado,
-        /// SIN tocar la base de datos. Es una operación puramente de UI.
+        /// Muestra u oculta los nodos del TreeView según el schema seleccionado
+        /// y la isla activa, SIN tocar la base de datos. Es una operación puramente de UI.
         /// </summary>
         private void AplicarFiltroSchemaEnUI()
         {
             // Guard: puede llamarse durante InitializeComponent antes de que tvSchema esté listo
             if (tvSchema == null) return;
 
-            bool mostrarTodos = string.IsNullOrEmpty(_filtroSchema);
+            bool mostrarTodosSchemas = string.IsNullOrEmpty(_filtroSchema);
 
             foreach (TreeViewItem nodo in tvSchema.Items)
             {
-                if (mostrarTodos)
+                string headerText = ObtenerHeaderText(nodo);
+
+                // ── Filtro de schema ──────────────────────────────────────────
+                bool visiblePorSchema = mostrarTodosSchemas
+                    || headerText.StartsWith(_filtroSchema + ".", StringComparison.OrdinalIgnoreCase);
+
+                if (!visiblePorSchema)
                 {
-                    nodo.Visibility = Visibility.Visible;
+                    nodo.Visibility = Visibility.Collapsed;
                     continue;
                 }
 
-                // El header del nodo es "schema.tabla" o solo "tabla"
-                string headerText = ObtenerHeaderText(nodo);
-                bool coincide = headerText.StartsWith(_filtroSchema + ".", StringComparison.OrdinalIgnoreCase);
-                nodo.Visibility = coincide ? Visibility.Visible : Visibility.Collapsed;
+                // ── Filtro de isla (si hay una activa) ───────────────────────
+                if (_islaActiva != null)
+                {
+                    string capTabla = headerText;
+                    string capSchema = string.Empty;
+                    int punto = headerText.IndexOf('.');
+                    if (punto >= 0)
+                    {
+                        capSchema = headerText.Substring(0, punto);
+                        capTabla  = headerText.Substring(punto + 1);
+                    }
+                    string idNodo = string.IsNullOrEmpty(capSchema) ? capTabla : $"{capSchema}.{capTabla}";
+                    bool enIsla = _islaActiva.Tablas.Any(t =>
+                        string.Equals(t, idNodo,    StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(t, capTabla,  StringComparison.OrdinalIgnoreCase));
+                    nodo.Visibility = enIsla ? Visibility.Visible : Visibility.Collapsed;
+                }
+                else
+                {
+                    nodo.Visibility = Visibility.Visible;
+                }
             }
         }
 
