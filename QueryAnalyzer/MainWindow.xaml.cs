@@ -35,8 +35,8 @@ namespace QueryAnalyzer
         private string _filtroTipo = "BOTH";   // "BOTH" | "TABLE" | "VIEW"
         private string _filtroSchema = "";       // "" = todos
 
-        // Conjunto de tablas activo (null = sin filtro)
-        private ConjuntoTablas _conjuntoActivo = null;
+        // Isla de tablas activa (null = sin filtro)
+        private ConjuntoTablas _islaActiva = null;
 
         public Dictionary<string, OdbcType> OdbcTypes { get; set; }
         public List<QueryParameter> Parametros { get; set; }
@@ -429,13 +429,13 @@ namespace QueryAnalyzer
                 _cacheTablas.Clear();
                 CargarTablasEnBackground(conexion);
 
-                // Resetear filtros de esquema, tipo y conjunto al cambiar de conexión
+                // Resetear filtros de esquema, tipo e isla al cambiar de conexión
                 _filtroSchema = "";
                 _filtroTipo = "BOTH";
-                _conjuntoActivo = null;
+                _islaActiva = null;
 
-                // Cargar conjuntos guardados para esta conexión
-                CargarComboConjuntos();
+                // Cargar islas guardadas para esta conexión
+                CargarComboIslas();
 
                 btnExplorar_Click(sender, e);
                 if (_configApp.CargarUltimaConsulta && lstHistory.Items.Count > 0)
@@ -1530,16 +1530,16 @@ namespace QueryAnalyzer
                             };
                             // 🖼️ FIN DE MODIFICACIÓN
 
-                            // Filtro de conjunto activo: ocultar nodos que no pertenecen al conjunto
-                            if (_conjuntoActivo != null)
+                            // Filtro de isla activa: ocultar nodos que no pertenecen a la isla
+                            if (_islaActiva != null)
                             {
                                 string idNodo = string.IsNullOrEmpty(capSchema)
                                     ? capTabla
                                     : $"{capSchema}.{capTabla}";
-                                bool enConjunto = _conjuntoActivo.Tablas.Any(t =>
+                                bool enIsla = _islaActiva.Tablas.Any(t =>
                                     string.Equals(t, idNodo, StringComparison.OrdinalIgnoreCase) ||
                                     string.Equals(t, capTabla, StringComparison.OrdinalIgnoreCase));
-                                tablaNode.Visibility = enConjunto
+                                tablaNode.Visibility = enIsla
                                     ? System.Windows.Visibility.Visible
                                     : System.Windows.Visibility.Collapsed;
                             }
@@ -2162,13 +2162,13 @@ namespace QueryAnalyzer
         // ════════════════════════════════════════════════════════════════
 
         /// <summary>
-        /// Carga el ComboBox de conjuntos con los conjuntos guardados para la conexión activa.
+        /// Carga el ComboBox de islas con las islas guardadas para la conexión activa.
         /// </summary>
-        private void CargarComboConjuntos()
+        private void CargarComboIslas()
         {
-            cbConjuntos.SelectionChanged -= cbConjuntos_SelectionChanged;
-            cbConjuntos.Items.Clear();
-            cbConjuntos.Items.Add(new ComboBoxItem { Content = "(ninguno)", Tag = null });
+            cbIslas.SelectionChanged -= cbIslas_SelectionChanged;
+            cbIslas.Items.Clear();
+            cbIslas.Items.Add(new ComboBoxItem { Content = "(ninguno)", Tag = null });
 
             if (conexionActual != null)
             {
@@ -2178,25 +2178,23 @@ namespace QueryAnalyzer
 
                 if (cc != null)
                     foreach (var conj in cc.Conjuntos)
-                        cbConjuntos.Items.Add(new ComboBoxItem { Content = conj.Nombre, Tag = conj });
+                        cbIslas.Items.Add(new ComboBoxItem { Content = conj.Nombre, Tag = conj });
             }
 
-            cbConjuntos.SelectedIndex = 0;
-            cbConjuntos.SelectionChanged += cbConjuntos_SelectionChanged;
+            cbIslas.SelectedIndex = 0;
+            cbIslas.SelectionChanged += cbIslas_SelectionChanged;
         }
 
-        private void cbConjuntos_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void cbIslas_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var item = cbConjuntos.SelectedItem as ComboBoxItem;
-            _conjuntoActivo = item?.Tag as ConjuntoTablas;
+            var item = cbIslas.SelectedItem as ComboBoxItem;
+            _islaActiva = item?.Tag as ConjuntoTablas;
 
             // Recargar el esquema para aplicar el filtro de visibilidad
-            _explorarCTS?.Cancel();
-            _explorarCTS = new CancellationTokenSource();
             LanzarCargarEsquema();
         }
 
-        private void btnGuardarConjunto_Click(object sender, RoutedEventArgs e)
+        private void btnGuardarIsla_Click(object sender, RoutedEventArgs e)
         {
             if (conexionActual == null)
             {
@@ -2207,12 +2205,12 @@ namespace QueryAnalyzer
             var seleccionados = GetNodosSeleccionados();
             if (seleccionados.Count == 0)
             {
-                MessageBox.Show("Marque al menos una tabla o vista con su checkbox antes de guardar el conjunto.",
+                MessageBox.Show("Marque al menos una tabla o vista con su checkbox antes de guardar la isla.",
                     "Sin selección", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
-            // Pedir nombre del conjunto
+            // Pedir nombre de la isla
             var dlg = new NombreConjuntoDialog { Owner = this };
             if (dlg.ShowDialog() != true || string.IsNullOrWhiteSpace(dlg.NombreIngresado))
                 return;
@@ -2247,11 +2245,11 @@ namespace QueryAnalyzer
                 cfg.ConjuntosTablas.Add(cc);
             }
 
-            // Si ya existe un conjunto con ese nombre, reemplazarlo
+            // Si ya existe una isla con ese nombre, reemplazarla
             var existente = cc.Conjuntos.FirstOrDefault(c => string.Equals(c.Nombre, nombre, StringComparison.OrdinalIgnoreCase));
             if (existente != null)
             {
-                if (MessageBox.Show($"Ya existe un conjunto llamado '{nombre}'. ¿Reemplazarlo?",
+                if (MessageBox.Show($"Ya existe una isla llamada '{nombre}'. ¿Reemplazarla?",
                         "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
                     return;
                 cc.Conjuntos.Remove(existente);
@@ -2260,38 +2258,48 @@ namespace QueryAnalyzer
             cc.Conjuntos.Add(new ConjuntoTablas { Nombre = nombre, Tablas = tablas });
             ConfigManager.Guardar(cfg);
 
-            AppendMessage($"Conjunto '{nombre}' guardado con {tablas.Count} tabla(s)/vista(s).");
-            CargarComboConjuntos();
+            AppendMessage($"Isla '{nombre}' guardada con {tablas.Count} tabla(s)/vista(s).");
 
-            // Seleccionar el nuevo conjunto en el combo
-            for (int i = 0; i < cbConjuntos.Items.Count; i++)
+            // Recargar el combo, seleccionar la isla recién guardada y refrescar el árbol
+            CargarComboIslas();
+            for (int i = 0; i < cbIslas.Items.Count; i++)
             {
-                if (cbConjuntos.Items[i] is ComboBoxItem ci && ci.Content?.ToString() == nombre)
+                if (cbIslas.Items[i] is ComboBoxItem ci && ci.Content?.ToString() == nombre)
                 {
-                    cbConjuntos.SelectedIndex = i;
+                    // Asignar _islaActiva antes de cambiar el índice para evitar que
+                    // cbIslas_SelectionChanged lo pise con un Tag incorrecto
+                    _islaActiva = ci.Tag as ConjuntoTablas;
+                    cbIslas.SelectionChanged -= cbIslas_SelectionChanged;
+                    cbIslas.SelectedIndex = i;
+                    cbIslas.SelectionChanged += cbIslas_SelectionChanged;
                     break;
                 }
             }
+
+            // Recargar el árbol con el filtro de la isla recién guardada
+            LanzarCargarEsquema();
         }
 
-        private void btnLimpiarConjunto_Click(object sender, RoutedEventArgs e)
+        private void btnLimpiarIsla_Click(object sender, RoutedEventArgs e)
         {
-            _conjuntoActivo = null;
-            cbConjuntos.SelectedIndex = 0;
-            // cbConjuntos_SelectionChanged dispara LanzarCargarEsquema
+            _islaActiva = null;
+            cbIslas.SelectionChanged -= cbIslas_SelectionChanged;
+            cbIslas.SelectedIndex = 0;
+            cbIslas.SelectionChanged += cbIslas_SelectionChanged;
+            LanzarCargarEsquema();
         }
 
-        private void btnEliminarConjunto_Click(object sender, RoutedEventArgs e)
+        private void btnEliminarIsla_Click(object sender, RoutedEventArgs e)
         {
-            var item = cbConjuntos.SelectedItem as ComboBoxItem;
+            var item = cbIslas.SelectedItem as ComboBoxItem;
             var conj = item?.Tag as ConjuntoTablas;
             if (conj == null)
             {
-                MessageBox.Show("Seleccione un conjunto para eliminar.", "Sin selección", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Seleccione una isla para eliminar.", "Sin selección", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
-            if (MessageBox.Show($"¿Eliminar el conjunto '{conj.Nombre}'?",
+            if (MessageBox.Show($"¿Eliminar la isla '{conj.Nombre}'?",
                     "Confirmar eliminación", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
                 return;
 
@@ -2302,9 +2310,10 @@ namespace QueryAnalyzer
             cc?.Conjuntos.RemoveAll(c => string.Equals(c.Nombre, conj.Nombre, StringComparison.OrdinalIgnoreCase));
             ConfigManager.Guardar(cfg);
 
-            _conjuntoActivo = null;
-            AppendMessage($"Conjunto '{conj.Nombre}' eliminado.");
-            CargarComboConjuntos();
+            _islaActiva = null;
+            AppendMessage($"Isla '{conj.Nombre}' eliminada.");
+            CargarComboIslas();
+            LanzarCargarEsquema();
         }
 
         // ════════════════════════════════════════════════════════════════

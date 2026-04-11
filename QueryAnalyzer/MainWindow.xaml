@@ -476,7 +476,7 @@
                     <Grid x:Name="grdExplorador" Grid.Column="0">
                         <Grid.ColumnDefinitions>
                             <!-- Columna izquierda: botones de acción + controles de filtro -->
-                            <ColumnDefinition Width="80"/>
+                            <ColumnDefinition Width="100"/>
                             <!-- Columna derecha: buscador + TreeView -->
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
@@ -509,9 +509,9 @@
                                 <RowDefinition Height="Auto"/>
                                 <!-- Botón Esquematizar -->
                                 <RowDefinition Height="8"/>
-                                <!-- Separador antes de conjuntos -->
+                                <!-- Separador antes de islas -->
                                 <RowDefinition Height="Auto"/>
-                                <!-- Conjuntos de tablas -->
+                                <!-- Islas de tablas -->
                                 <RowDefinition Height="*"/>
                                 <!-- Espacio restante -->
                             </Grid.RowDefinitions>
@@ -600,44 +600,44 @@
                             <!-- Separador -->
                             <Separator Grid.Row="12" Margin="2,0"/>
 
-                            <!-- ══ Conjuntos de tablas ══════════════════════════════ -->
+                            <!-- ══ Islas de tablas ════════════════════════════════ -->
                             <StackPanel Grid.Row="13" Margin="2,4,2,0">
 
                                 <!-- Label -->
-                                <TextBlock Text="Conjuntos:"
+                                <TextBlock Text="Islas:"
                                            FontSize="10"
                                            Foreground="{DynamicResource BrushFGMuted}"
                                            Margin="0,0,0,2"/>
 
-                                <!-- Selector de conjunto activo -->
-                                <ComboBox x:Name="cbConjuntos"
+                                <!-- Selector de isla activa -->
+                                <ComboBox x:Name="cbIslas"
                                           FontSize="10"
                                           Margin="0,0,0,4"
-                                          SelectionChanged="cbConjuntos_SelectionChanged"
-                                          ToolTip="Seleccionar un conjunto para filtrar el explorador"/>
+                                          SelectionChanged="cbIslas_SelectionChanged"
+                                          ToolTip="Seleccionar una isla para filtrar el explorador"/>
 
-                                <!-- Botón: guardar conjunto desde selección actual -->
-                                <Button x:Name="btnGuardarConjunto"
-                                        Content="+ Guardar conjunto"
+                                <!-- Botón: guardar isla desde selección actual -->
+                                <Button x:Name="btnGuardarIsla"
+                                        Content="+ Guardar isla"
                                         FontSize="10" Padding="2,2"
                                         Margin="0,0,0,2"
-                                        Click="btnGuardarConjunto_Click"
-                                        ToolTip="Guardar las tablas marcadas con checkbox como un nuevo conjunto"/>
+                                        Click="btnGuardarIsla_Click"
+                                        ToolTip="Guardar las tablas marcadas con checkbox como una nueva isla"/>
 
                                 <!-- Botón: quitar filtro -->
-                                <Button x:Name="btnLimpiarConjunto"
+                                <Button x:Name="btnLimpiarIsla"
                                         Content="✕ Quitar filtro"
                                         FontSize="10" Padding="2,2"
                                         Margin="0,0,0,2"
-                                        Click="btnLimpiarConjunto_Click"
-                                        ToolTip="Mostrar todas las tablas/vistas (quitar filtro de conjunto)"/>
+                                        Click="btnLimpiarIsla_Click"
+                                        ToolTip="Mostrar todas las tablas/vistas (quitar filtro de isla)"/>
 
-                                <!-- Botón: eliminar conjunto seleccionado -->
-                                <Button x:Name="btnEliminarConjunto"
+                                <!-- Botón: eliminar isla seleccionada -->
+                                <Button x:Name="btnEliminarIsla"
                                         Content="🗑 Eliminar"
                                         FontSize="10" Padding="2,2"
-                                        Click="btnEliminarConjunto_Click"
-                                        ToolTip="Eliminar el conjunto seleccionado"/>
+                                        Click="btnEliminarIsla_Click"
+                                        ToolTip="Eliminar la isla seleccionada"/>
                             </StackPanel>
                         </Grid>
 
