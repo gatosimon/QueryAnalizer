@@ -77,3 +77,7 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\QueryAnalyze
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\QueryAnalyzer.exe
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\QueryAnalyzer.pdb
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\QueryAnalyzer.csproj.AssemblyReference.cache
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\PreferenciasWindow.baml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\PreferenciasWindow.g.cs
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\NombreConjuntoDialog.baml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\NombreConjuntoDialog.g.cs
