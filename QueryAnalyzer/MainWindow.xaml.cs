@@ -2022,13 +2022,23 @@ namespace QueryAnalyzer
         {
             TipoMotor motor = conexionActual?.Motor ?? TipoMotor.DB2;
             string t = NombreCompleto(schema, tabla);
+
             switch (motor)
             {
-                case TipoMotor.MS_SQL: return "ALTER TABLE " + t + "\r\nADD nueva_columna VARCHAR(100) NULL;";
-                case TipoMotor.DB2: return "ALTER TABLE " + t + "\r\nADD COLUMN NUEVA_COLUMNA VARCHAR(100);";
-                case TipoMotor.POSTGRES: return "ALTER TABLE " + t + "\r\nADD COLUMN nueva_columna VARCHAR(100);";
-                case TipoMotor.SQLite: return "ALTER TABLE " + tabla + "\r\nADD COLUMN nueva_columna TEXT;";
-                default: return "ALTER TABLE " + t + " ADD COLUMN nueva_columna VARCHAR(100);";
+                case TipoMotor.MS_SQL:
+                    // En SQL Server, si agregas NOT NULL con DEFAULT, llena automáticamente las filas existentes.
+                    return $"ALTER TABLE {t}\r\nADD nueva_columna NVARCHAR(100) NOT NULL DEFAULT '';";
+                case TipoMotor.DB2:
+                    // DB2 requiere la palabra COLUMN y el DEFAULT va después del tipo.
+                    return $"ALTER TABLE {t}\r\nADD COLUMN NUEVA_COLUMNA NVARCHAR(100) DEFAULT '';";
+                case TipoMotor.POSTGRES:
+                    // Postgres es similar al estándar pero permite explícitamente ADD COLUMN.
+                    return $"ALTER TABLE {t}\r\nADD COLUMN nueva_columna NVARCHAR(100) DEFAULT '';";
+                case TipoMotor.SQLite:
+                    // SQLite usa TEXT normalmente y permite el DEFAULT en el ADD COLUMN.
+                    return $"ALTER TABLE {t}\r\nADD COLUMN nueva_columna TEXT DEFAULT '';";
+                default:
+                    return $"ALTER TABLE {t} ADD COLUMN nueva_columna NVARCHAR(100) DEFAULT '';";
             }
         }
 
