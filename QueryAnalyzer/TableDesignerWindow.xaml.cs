@@ -23,10 +23,15 @@ namespace QueryAnalyzer
         public TableDesignerWindow(Conexion conexion, string tabla)
         {
             InitializeComponent();
-            _conexion      = conexion;
-            _tabla         = tabla;
-            Title          = string.Format("Design - {0}  [{1}]", tabla, conexion.Nombre);
-            txtMotor.Text  = conexion.Motor.ToString();
+            _conexion     = conexion;
+            _tabla        = tabla;
+            Title         = string.Format("Design - {0}  [{1}]", tabla, conexion.Nombre);
+            txtMotor.Text = conexion.Motor.ToString();
+
+            // Exponer los tipos de dato del motor al DataGrid para que el ComboBox los use.
+            // Se guarda en Tag del DataGrid para que el binding dentro del DataTemplate
+            // lo resuelva sin necesidad de DataContext en la ventana.
+            dgColumnas.Tag = TableDesignerService.GetTiposDato(conexion.Motor);
         }
 
         // ── Carga inicial ─────────────────────────────────────────────────────────

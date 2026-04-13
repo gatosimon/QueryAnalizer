@@ -551,5 +551,97 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
             string resultado = sb.ToString().Trim();
             return string.IsNullOrEmpty(resultado) ? "-- Sin cambios detectados." : resultado;
         }
+
+        // ── Tipos de dato por motor ───────────────────────────────────────────────
+
+        /// <summary>
+        /// Devuelve la lista de tipos de dato más comunes para el motor indicado.
+        /// Se usa para poblar el ComboBox editable de la columna "Data Type"
+        /// en el diseñador de tablas.
+        /// </summary>
+        public static IReadOnlyList<string> GetTiposDato(TipoMotor motor)
+        {
+            switch (motor)
+            {
+                case TipoMotor.MS_SQL:
+                    return new List<string>
+                    {
+                        // Enteros
+                        "int", "bigint", "smallint", "tinyint",
+                        // Decimales / numéricos
+                        "decimal(18,2)", "decimal(10,4)", "numeric(18,2)",
+                        "float", "real", "money", "smallmoney",
+                        // Texto fijo
+                        "char(10)", "nchar(10)",
+                        // Texto variable
+                        "varchar(50)", "varchar(100)", "varchar(255)", "varchar(max)",
+                        "nvarchar(50)", "nvarchar(100)", "nvarchar(255)", "nvarchar(max)",
+                        // Texto legacy
+                        "text", "ntext",
+                        // Lógico
+                        "bit",
+                        // Fecha / hora
+                        "date", "time", "datetime", "datetime2(7)",
+                        "datetimeoffset(7)", "smalldatetime",
+                        // Identificador
+                        "uniqueidentifier",
+                        // Binario
+                        "varbinary(max)", "binary(8)",
+                        // Otros
+                        "xml", "timestamp", "rowversion",
+                    };
+
+                case TipoMotor.DB2:
+                    return new List<string>
+                    {
+                        // Enteros
+                        "INTEGER", "BIGINT", "SMALLINT",
+                        // Decimales
+                        "DECIMAL(10,2)", "DECIMAL(18,4)", "NUMERIC(10,2)",
+                        "FLOAT", "DOUBLE", "REAL", "DECFLOAT",
+                        // Texto fijo
+                        "CHAR(10)", "GRAPHIC(10)",
+                        // Texto variable
+                        "VARCHAR(50)", "VARCHAR(100)", "VARCHAR(255)",
+                        "VARGRAPHIC(50)",
+                        // LOB
+                        "CLOB", "DBCLOB", "BLOB",
+                        // Fecha / hora
+                        "DATE", "TIME", "TIMESTAMP",
+                        // Otros
+                        "XML", "BOOLEAN",
+                    };
+
+                case TipoMotor.POSTGRES:
+                    return new List<string>
+                    {
+                        // Enteros
+                        "integer", "bigint", "smallint",
+                        "serial", "bigserial", "smallserial",
+                        // Decimales
+                        "numeric(10,2)", "numeric(18,4)",
+                        "float", "double precision", "real",
+                        // Texto fijo
+                        "char(10)",
+                        // Texto variable
+                        "varchar(50)", "varchar(100)", "varchar(255)", "text",
+                        // Lógico
+                        "boolean",
+                        // Fecha / hora
+                        "date", "time", "timestamp", "timestamptz", "interval",
+                        // Identificador
+                        "uuid",
+                        // Binario / JSON
+                        "bytea", "json", "jsonb",
+                    };
+
+                case TipoMotor.SQLite:
+                default:
+                    return new List<string>
+                    {
+                        "TEXT", "INTEGER", "REAL", "BLOB", "NUMERIC",
+                    };
+            }
+        }
     }
 }

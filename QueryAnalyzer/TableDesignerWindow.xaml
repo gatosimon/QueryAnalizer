@@ -127,6 +127,23 @@
                 <Setter Property="Foreground" Value="{DynamicResource BrushFGMuted}"/>
                 <Setter Property="FontStyle"  Value="Italic"/>
             </Style>
+
+            <!-- ComboBox de tipos de dato (editable, temático) -->
+            <Style TargetType="ComboBox">
+                <Setter Property="Background"  Value="{DynamicResource BrushControlBG}"/>
+                <Setter Property="Foreground"  Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+            </Style>
+            <Style TargetType="ComboBoxItem">
+                <Setter Property="Background" Value="{DynamicResource BrushMenuBG}"/>
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsHighlighted" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource BrushMenuHover}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource BrushSelectedFG}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -204,10 +221,36 @@
                                     Binding="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}"
                                     ElementStyle="{StaticResource CeldaNombreStyle}"/>
 
-                <!-- Data Type (editable como string: nvarchar(50), decimal(10,2), etc.) -->
-                <DataGridTextColumn Header="Data Type" Width="160"
-                                    Binding="{Binding TipoDatoCompleto, UpdateSourceTrigger=LostFocus}"
-                                    ElementStyle="{StaticResource CeldaTextoStyle}"/>
+                <!-- Data Type: ComboBox editable con los tipos del motor activo.
+                     ItemsSource se lee desde Tag del DataGrid (asignado en code-behind). -->
+                <DataGridTemplateColumn Header="Data Type" Width="200">
+
+                    <!-- Vista normal (celda no editando) -->
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding TipoDatoCompleto}"
+                                       Style="{StaticResource CeldaTextoStyle}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+
+                    <!-- Vista en edición: ComboBox editable -->
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <ComboBox IsEditable="True"
+                                      IsTextSearchEnabled="True"
+                                      StaysOpenOnEdit="True"
+                                      Text="{Binding TipoDatoCompleto,
+                                             UpdateSourceTrigger=PropertyChanged}"
+                                      ItemsSource="{Binding Tag,
+                                             RelativeSource={RelativeSource
+                                             AncestorType=DataGrid}}"
+                                      BorderThickness="0"
+                                      Padding="2,0"
+                                      VerticalContentAlignment="Center"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+
+                </DataGridTemplateColumn>
 
                 <!-- Allow Nulls -->
                 <DataGridCheckBoxColumn Header="Allow Nulls" Width="80"
