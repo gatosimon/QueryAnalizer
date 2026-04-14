@@ -3455,6 +3455,76 @@ namespace QueryAnalyzer
             ExpandirColapasar();
         }
 
+        // ── Colapsar / expandir Parámetros ───────────────────────────────────────
+        private bool   _paramsColapsado        = false;
+        private double _paramsAlturaExpandida  = 0;
+
+        private void btnToggleParams_Click(object sender, RoutedEventArgs e)
+        {
+            var rowContenido  = grdDerecho.RowDefinitions[1]; // content Parámetros
+            var rowSplitter   = grdDerecho.RowDefinitions[2]; // GridSplitter
+
+            if (!_paramsColapsado)
+                _paramsAlturaExpandida = rowContenido.ActualHeight;
+
+            double to = _paramsColapsado ? _paramsAlturaExpandida : 0;
+
+            AnimarFila(rowContenido, to, () =>
+            {
+                _paramsColapsado = !_paramsColapsado;
+                btnToggleParams.Content = _paramsColapsado ? "▼" : "▲";
+                rowSplitter.Height = (_paramsColapsado || _historialColapsado)
+                    ? new GridLength(0)
+                    : new GridLength(5);
+            });
+        }
+
+        // ── Colapsar / expandir Historial ────────────────────────────────────────
+        private bool   _historialColapsado       = false;
+        private double _historialAlturaExpandida = 0;
+
+        private void btnToggleHistorial_Click(object sender, RoutedEventArgs e)
+        {
+            var rowContenido = grdDerecho.RowDefinitions[4]; // content Historial
+            var rowSplitter  = grdDerecho.RowDefinitions[2]; // GridSplitter
+
+            if (!_historialColapsado)
+                _historialAlturaExpandida = rowContenido.ActualHeight;
+
+            double to = _historialColapsado ? _historialAlturaExpandida : 0;
+
+            AnimarFila(rowContenido, to, () =>
+            {
+                _historialColapsado = !_historialColapsado;
+                btnToggleHistorial.Content = _historialColapsado ? "▼" : "▲";
+                rowSplitter.Height = (_paramsColapsado || _historialColapsado)
+                    ? new GridLength(0)
+                    : new GridLength(5);
+            });
+        }
+
+        /// <summary>
+        /// Anima el Height de una RowDefinition hacia <paramref name="to"/> píxeles
+        /// y ejecuta <paramref name="onCompleted"/> al terminar.
+        /// </summary>
+        private void AnimarFila(RowDefinition fila, double to, Action onCompleted)
+        {
+            double from = fila.ActualHeight;
+            var anim = new GridLengthAnimation
+            {
+                From         = new GridLength(from, GridUnitType.Pixel),
+                To           = new GridLength(to,   GridUnitType.Pixel),
+                Duration     = new Duration(TimeSpan.FromMilliseconds(200)),
+                FillBehavior = FillBehavior.Stop
+            };
+            anim.Completed += (s, _) =>
+            {
+                fila.Height = new GridLength(to, GridUnitType.Pixel);
+                onCompleted();
+            };
+            fila.BeginAnimation(RowDefinition.HeightProperty, anim);
+        }
+
         private void ExpandirColapasar()
         {
             if (!isCollapsed)

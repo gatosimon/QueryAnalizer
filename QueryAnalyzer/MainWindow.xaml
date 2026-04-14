@@ -764,90 +764,109 @@
             <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"
                           ResizeDirection="Columns" ShowsPreview="True"/>
 
-            <Grid Grid.Column="2">
+            <!-- ══ Panel derecho: Parámetros + Historial ══════════════════════ -->
+            <Grid x:Name="grdDerecho" Grid.Column="2">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="2*"/>
-                    <RowDefinition Height="5"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>   <!-- 0: header Parámetros  -->
+                    <RowDefinition Height="2*"/>     <!-- 1: contenido Params   -->
+                    <RowDefinition Height="5"/>      <!-- 2: GridSplitter       -->
+                    <RowDefinition Height="Auto"/>   <!-- 3: header Historial   -->
+                    <RowDefinition Height="*"/>      <!-- 4: contenido Historial-->
                 </Grid.RowDefinitions>
 
-                <StackPanel Grid.Row="0">
-                    <TextBlock Text="Parámetros" Margin="2,0,-2,4"/>
-                    <DataGrid x:Name="gridParams"
-                              AutoGenerateColumns="False"
-                              CanUserAddRows="True"
-                              CanUserDeleteRows="True"
-                              HeadersVisibility="Column"
-                              Margin="2,2,2,2">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="NOMBRE"
-                                                Binding="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}"
-                                                Width="*"/>
-                            <DataGridComboBoxColumn Header="TIPO"
-                                                    SelectedValueBinding="{Binding Tipo, UpdateSourceTrigger=PropertyChanged}"
-                                                    DisplayMemberPath="Key"
-                                                    SelectedValuePath="Value"
-                                                    Width="120">
-                                <DataGridComboBoxColumn.ElementStyle>
-                                    <Style TargetType="ComboBox">
-                                        <Setter Property="ItemsSource"
-                                                Value="{Binding DataContext.OdbcTypes, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                    </Style>
-                                </DataGridComboBoxColumn.ElementStyle>
-                                <DataGridComboBoxColumn.EditingElementStyle>
-                                    <Style TargetType="ComboBox">
-                                        <Setter Property="ItemsSource"
-                                                Value="{Binding DataContext.OdbcTypes, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                    </Style>
-                                </DataGridComboBoxColumn.EditingElementStyle>
-                            </DataGridComboBoxColumn>
-                            <DataGridTextColumn Header="VALOR"
-                                                Binding="{Binding Valor, UpdateSourceTrigger=PropertyChanged}"
-                                                Width="*"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </StackPanel>
+                <!-- ── Header Parámetros ──────────────────────────────── -->
+                <DockPanel Grid.Row="0" Margin="2,2,2,2" LastChildFill="True">
+                    <Button x:Name="btnToggleParams"
+                            DockPanel.Dock="Right"
+                            Content="▲"
+                            Width="20" Height="18" Padding="0" FontSize="10"
+                            VerticalContentAlignment="Center"
+                            Click="btnToggleParams_Click"
+                            ToolTip="Colapsar / expandir Parámetros"/>
+                    <TextBlock Text="Parámetros" VerticalAlignment="Center"/>
+                </DockPanel>
 
-                <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch"
+                <!-- ── Contenido Parámetros ───────────────────────────── -->
+                <DataGrid x:Name="gridParams"
+                          Grid.Row="1"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="True"
+                          CanUserDeleteRows="True"
+                          HeadersVisibility="Column"
+                          Margin="2,0,2,2">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="NOMBRE"
+                                            Binding="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}"
+                                            Width="*"/>
+                        <DataGridComboBoxColumn Header="TIPO"
+                                                SelectedValueBinding="{Binding Tipo, UpdateSourceTrigger=PropertyChanged}"
+                                                DisplayMemberPath="Key"
+                                                SelectedValuePath="Value"
+                                                Width="120">
+                            <DataGridComboBoxColumn.ElementStyle>
+                                <Style TargetType="ComboBox">
+                                    <Setter Property="ItemsSource"
+                                            Value="{Binding DataContext.OdbcTypes, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                </Style>
+                            </DataGridComboBoxColumn.ElementStyle>
+                            <DataGridComboBoxColumn.EditingElementStyle>
+                                <Style TargetType="ComboBox">
+                                    <Setter Property="ItemsSource"
+                                            Value="{Binding DataContext.OdbcTypes, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                </Style>
+                            </DataGridComboBoxColumn.EditingElementStyle>
+                        </DataGridComboBoxColumn>
+                        <DataGridTextColumn Header="VALOR"
+                                            Binding="{Binding Valor, UpdateSourceTrigger=PropertyChanged}"
+                                            Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- ── GridSplitter entre Parámetros e Historial ─────── -->
+                <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch"
                               ResizeDirection="Rows" ShowsPreview="True"/>
 
-                <Grid Grid.Row="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+                <!-- ── Header Historial ───────────────────────────────── -->
+                <DockPanel Grid.Row="3" Margin="2,2,2,2" LastChildFill="True">
+                    <Button x:Name="btnToggleHistorial"
+                            DockPanel.Dock="Right"
+                            Content="▲"
+                            Width="20" Height="18" Padding="0" FontSize="10"
+                            VerticalContentAlignment="Center"
+                            Click="btnToggleHistorial_Click"
+                            ToolTip="Colapsar / expandir Historial"/>
+                    <TextBlock Text="Historial" VerticalAlignment="Center" Padding="2,0"/>
+                </DockPanel>
 
-                    <TextBlock Text="Historial" Margin="0,2,0,0" Padding="2" Grid.Row="0"/>
-
-                    <ListBox x:Name="lstHistory"
-                             Grid.Row="1"
-                             SelectionChanged="LstHistory_SelectionChanged"
-                             KeyDown="lstHistory_KeyDown"
-                             AlternationCount="2"
-                             ScrollViewer.VerticalScrollBarVisibility="Auto"
-                             ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                             Margin="0,10,0,0">
-                        <ListBox.ItemContainerStyle>
-                            <Style TargetType="ListBoxItem">
-                                <Setter Property="Background" Value="{DynamicResource BrushControlBG}"/>
-                                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
-                                <Setter Property="Padding"    Value="4,2"/>
-                                <Style.Triggers>
-                                    <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                                        <Setter Property="Background" Value="{DynamicResource BrushAltRowBG}"/>
-                                    </Trigger>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource BrushHover}"/>
-                                    </Trigger>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource BrushSelected}"/>
-                                        <Setter Property="Foreground" Value="{DynamicResource BrushSelectedFG}"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ListBox.ItemContainerStyle>
-                    </ListBox>
-                </Grid>
+                <!-- ── Contenido Historial ────────────────────────────── -->
+                <ListBox x:Name="lstHistory"
+                         Grid.Row="4"
+                         SelectionChanged="LstHistory_SelectionChanged"
+                         KeyDown="lstHistory_KeyDown"
+                         AlternationCount="2"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                         Margin="2,0,2,2">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Background" Value="{DynamicResource BrushControlBG}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+                            <Setter Property="Padding"    Value="4,2"/>
+                            <Style.Triggers>
+                                <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                    <Setter Property="Background" Value="{DynamicResource BrushAltRowBG}"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource BrushHover}"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource BrushSelected}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource BrushSelectedFG}"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                </ListBox>
             </Grid>
         </Grid>
 
