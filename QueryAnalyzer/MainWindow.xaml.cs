@@ -355,6 +355,7 @@ namespace QueryAnalyzer
             if (iniciarColapasado)
             {
                 btnExpandirColapsar_Click(this, e as RoutedEventArgs);
+                btnToggleDerecho_Click(this, e as RoutedEventArgs);
                 iniciarColapasado = false;
             }
         }
@@ -3456,7 +3457,7 @@ namespace QueryAnalyzer
         }
 
         // ── Colapsar / expandir el panel derecho completo ────────────────────────
-        private bool   _derechoColapsado      = false;
+        private bool   _derechoColapsado = false;
         private double _derechoAnchoExpandido = 0;
 
         private void btnToggleDerecho_Click(object sender, RoutedEventArgs e)
