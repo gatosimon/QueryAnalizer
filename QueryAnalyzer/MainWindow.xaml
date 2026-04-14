@@ -455,7 +455,8 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="4*"/>
                 <ColumnDefinition Width="5"/>
-                <ColumnDefinition Width="1.5*"/>
+                <ColumnDefinition Width="20"/>   <!-- botón colapsar panel derecho -->
+                <ColumnDefinition Width="1.5*"/> <!-- panel derecho -->
             </Grid.ColumnDefinitions>
 
             <Grid Grid.Column="0" x:Name="grdPrincipal">
@@ -764,8 +765,15 @@
             <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"
                           ResizeDirection="Columns" ShowsPreview="True"/>
 
+            <!-- Botón colapsar/expandir panel derecho (espejo del botón de esquema) -->
+            <Button x:Name="btnToggleDerecho" Grid.Column="2"
+                    Content="&gt;&gt;"
+                    VerticalAlignment="Stretch" Margin="0,2,0,2"
+                    Click="btnToggleDerecho_Click"
+                    ToolTip="Colapsar / expandir el panel de Parámetros e Historial"/>
+
             <!-- ══ Panel derecho: Parámetros + Historial ══════════════════════ -->
-            <Grid x:Name="grdDerecho" Grid.Column="2">
+            <Grid x:Name="grdDerecho" Grid.Column="3">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>   <!-- 0: header Parámetros  -->
                     <RowDefinition Height="2*"/>     <!-- 1: contenido Params   -->

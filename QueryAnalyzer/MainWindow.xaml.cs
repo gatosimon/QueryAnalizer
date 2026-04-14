@@ -3455,6 +3455,39 @@ namespace QueryAnalyzer
             ExpandirColapasar();
         }
 
+        // ── Colapsar / expandir el panel derecho completo ────────────────────────
+        private bool   _derechoColapsado      = false;
+        private double _derechoAnchoExpandido = 0;
+
+        private void btnToggleDerecho_Click(object sender, RoutedEventArgs e)
+        {
+            // Column 3 del Grid padre = grdDerecho
+            var colDef = ((Grid)grdDerecho.Parent).ColumnDefinitions[3];
+
+            if (!_derechoColapsado)
+                _derechoAnchoExpandido = grdDerecho.ActualWidth;
+
+            double from = colDef.ActualWidth;
+            double to   = _derechoColapsado ? _derechoAnchoExpandido : 0;
+
+            var anim = new GridLengthAnimation
+            {
+                From         = new GridLength(from, GridUnitType.Pixel),
+                To           = new GridLength(to,   GridUnitType.Pixel),
+                Duration     = new Duration(TimeSpan.FromMilliseconds(250)),
+                FillBehavior = FillBehavior.Stop
+            };
+
+            anim.Completed += (s, _) =>
+            {
+                colDef.Width          = new GridLength(to, GridUnitType.Pixel);
+                _derechoColapsado     = !_derechoColapsado;
+                btnToggleDerecho.Content = _derechoColapsado ? "<<" : ">>";
+            };
+
+            colDef.BeginAnimation(ColumnDefinition.WidthProperty, anim);
+        }
+
         // ── Colapsar / expandir Parámetros ───────────────────────────────────────
         private bool   _paramsColapsado        = false;
         private double _paramsAlturaExpandida  = 0;
