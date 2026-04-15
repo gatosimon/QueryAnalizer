@@ -29,6 +29,11 @@ namespace QueryAnalyzer
         /// <summary>"TABLE" o "VIEW"</summary>
         public string Tipo { get; set; }
         public List<InfoColumnaDoc> Columnas { get; set; } = new List<InfoColumnaDoc>();
+        /// <summary>
+        /// Descripción general de la tabla/vista obtenida desde los metadatos del motor.
+        /// Vacío si el motor no soporta comentarios o no tiene ninguno definido.
+        /// </summary>
+        public string DescripcionTabla { get; set; } = string.Empty;
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -63,6 +68,13 @@ namespace QueryAnalyzer
                     var pks = GetPKs(conn, conexion.Motor, schema, tabla);
                     var fks = GetFKs(conn, conexion.Motor, schema, tabla);
 
+                    // Obtener descripciones de columnas y de la tabla/vista
+                    Dictionary<string, string> descsColumnas;
+                    string descTabla;
+                    GetDescripciones(conn, conexion.Motor, schema, tabla,
+                                     out descsColumnas, out descTabla);
+                    info.DescripcionTabla = descTabla;
+
                     // GetSchema("Columns") funciona en todos los motores vía ODBC
                     var cols = conn.GetSchema("Columns", new string[] { null, schema, tabla });
 
@@ -86,11 +98,15 @@ namespace QueryAnalyzer
                         if (pks.Contains(colName)) indicador = "Pk";
                         else if (fks.Contains(colName)) indicador = "Fk";
 
+                        string descCol;
+                        descsColumnas.TryGetValue(colName, out descCol);
+
                         info.Columnas.Add(new InfoColumnaDoc
                         {
-                            Indicador = indicador,
-                            Nombre = colName,
-                            TipoCompleto = tipoCompleto
+                            Indicador    = indicador,
+                            Nombre       = colName,
+                            TipoCompleto = tipoCompleto,
+                            Descripcion  = descCol ?? string.Empty
                         });
                     }
                 }
@@ -229,6 +245,166 @@ namespace QueryAnalyzer
             return set;
         }
 
+        // ── Descripciones / comentarios de metadatos por motor ───────────────────
+
+        /// <summary>
+        /// Obtiene las descripciones de columnas y la descripción general de la
+        /// tabla/vista desde los metadatos del motor de base de datos.
+        /// <para>
+        /// • MS SQL Server : sys.extended_properties (MS_Description)
+        /// • PostgreSQL    : pg_description
+        /// • DB2           : SYSCAT.COLUMNS y SYSCAT.TABLES (REMARKS)
+        /// • SQLite        : no soporta comentarios nativos → devuelve vacío
+        /// </para>
+        /// Opera de forma silenciosa ante errores (las descripciones son informativas).
+        /// </summary>
+        private static void GetDescripciones(
+            OdbcConnection conn,
+            TipoMotor motor,
+            string schema,
+            string tabla,
+            out Dictionary<string, string> descripsColumnas,
+            out string descripTabla)
+        {
+            descripsColumnas = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            descripTabla     = string.Empty;
+
+            try
+            {
+                switch (motor)
+                {
+                    // ── SQL Server ─────────────────────────────────────────────────
+                    case TipoMotor.MS_SQL:
+                    {
+                        // minor_id = 0  → descripción de la tabla/vista
+                        // minor_id > 0  → descripción de la columna (c.name)
+                        // sys.objects incluye tanto TABLE como VIEW
+                        string sql = $@"
+SELECT ep.minor_id,
+       c.name AS col_name,
+       CAST(ep.value AS NVARCHAR(MAX)) AS descripcion
+FROM sys.extended_properties ep
+INNER JOIN sys.objects o
+       ON ep.major_id = o.object_id
+LEFT  JOIN sys.columns c
+       ON ep.major_id = c.object_id
+      AND ep.minor_id = c.column_id
+WHERE ep.name = 'MS_Description'
+  AND o.name  = '{tabla}'
+ORDER BY ep.minor_id";
+
+                        using (var cmd = new OdbcCommand(sql, conn))
+                        using (var r = cmd.ExecuteReader())
+                        {
+                            while (r.Read())
+                            {
+                                string desc = r.IsDBNull(2) ? string.Empty : r[2].ToString().Trim();
+                                if (string.IsNullOrEmpty(desc)) continue;
+
+                                int minorId = r.IsDBNull(0) ? 0 : Convert.ToInt32(r[0]);
+                                if (minorId == 0)
+                                {
+                                    descripTabla = desc;
+                                }
+                                else
+                                {
+                                    if (!r.IsDBNull(1))
+                                        descripsColumnas[r[1].ToString().Trim()] = desc;
+                                }
+                            }
+                        }
+                        break;
+                    }
+
+                    // ── PostgreSQL ─────────────────────────────────────────────────
+                    case TipoMotor.POSTGRES:
+                    {
+                        // objsubid = 0  → descripción de tabla/vista
+                        // objsubid > 0  → descripción de columna (attname)
+                        string schemaWhere = string.IsNullOrEmpty(schema)
+                            ? string.Empty
+                            : $" AND n.nspname = '{schema.ToLower()}'";
+
+                        string sql = $@"
+SELECT pd.objsubid,
+       a.attname      AS col_name,
+       pd.description AS descripcion
+FROM pg_description pd
+INNER JOIN pg_class pc ON pd.objoid = pc.oid
+INNER JOIN pg_namespace n ON pc.relnamespace = n.oid
+LEFT  JOIN pg_attribute a
+       ON pd.objoid   = a.attrelid
+      AND pd.objsubid = a.attnum
+WHERE pc.relname = '{tabla.ToLower()}'{schemaWhere}";
+
+                        using (var cmd = new OdbcCommand(sql, conn))
+                        using (var r = cmd.ExecuteReader())
+                        {
+                            while (r.Read())
+                            {
+                                string desc = r.IsDBNull(2) ? string.Empty : r[2].ToString().Trim();
+                                if (string.IsNullOrEmpty(desc)) continue;
+
+                                int subId = r.IsDBNull(0) ? 0 : Convert.ToInt32(r[0]);
+                                if (subId == 0)
+                                {
+                                    descripTabla = desc;
+                                }
+                                else
+                                {
+                                    if (!r.IsDBNull(1))
+                                        descripsColumnas[r[1].ToString().Trim()] = desc;
+                                }
+                            }
+                        }
+                        break;
+                    }
+
+                    // ── DB2 ────────────────────────────────────────────────────────
+                    case TipoMotor.DB2:
+                    {
+                        string schemaFilter = string.IsNullOrEmpty(schema)
+                            ? string.Empty
+                            : $" AND TABSCHEMA = '{schema.ToUpper()}'";
+
+                        // Descripciones de columnas
+                        string sqlCols = $@"
+SELECT COLNAME, REMARKS FROM SYSCAT.COLUMNS
+WHERE TABNAME = '{tabla.ToUpper()}'{schemaFilter}
+  AND REMARKS IS NOT NULL AND REMARKS <> ''";
+
+                        using (var cmd = new OdbcCommand(sqlCols, conn))
+                        using (var r = cmd.ExecuteReader())
+                        {
+                            while (r.Read())
+                            {
+                                if (!r.IsDBNull(1))
+                                    descripsColumnas[r[0].ToString().Trim()] = r[1].ToString().Trim();
+                            }
+                        }
+
+                        // Descripción de la tabla/vista
+                        string sqlTab = $@"
+SELECT REMARKS FROM SYSCAT.TABLES
+WHERE TABNAME = '{tabla.ToUpper()}'{schemaFilter}";
+
+                        using (var cmd2 = new OdbcCommand(sqlTab, conn))
+                        {
+                            var val = cmd2.ExecuteScalar();
+                            if (val != null && val != DBNull.Value)
+                                descripTabla = val.ToString().Trim();
+                        }
+                        break;
+                    }
+
+                    // SQLite: no tiene sistema de comentarios nativo
+                    default:
+                        break;
+                }
+            }
+            catch { /* silencioso: las descripciones son informativas */ }
+        }
+
         // ── Generación del .docx ──────────────────────────────────────────────────
 
         /// <summary>
@@ -344,6 +520,11 @@ namespace QueryAnalyzer
                 table.AppendChild(CrearFilaColumna(info.Columnas[i], anchos, filaBG));
             }
 
+            // ── Fila de descripción general (si la hay) ────────────────────────────
+            if (!string.IsNullOrWhiteSpace(info.DescripcionTabla))
+                table.AppendChild(CrearFilaDescripcionTabla(
+                    info.DescripcionTabla, totalAncho, anchos.Length));
+
             return table;
         }
 
@@ -418,6 +599,56 @@ namespace QueryAnalyzer
                 );
                 row.AppendChild(cell);
             }
+            return row;
+        }
+
+        // ── Fila de descripción general de la tabla/vista ─────────────────────────
+
+        /// <summary>
+        /// Crea una fila fusionada con fondo ámbar que muestra la descripción general
+        /// de la tabla/vista. Se agrega al final de la tabla del docx.
+        /// </summary>
+        private static TableRow CrearFilaDescripcionTabla(
+            string descripcion, int anchoTotal, int nCols)
+        {
+            var row  = new TableRow();
+            var cell = new TableCell();
+
+            cell.AppendChild(new TableCellProperties(
+                new TableCellWidth { Width = anchoTotal.ToString(), Type = TableWidthUnitValues.Dxa },
+                new GridSpan { Val = nCols },
+                // Fondo ámbar claro para diferenciarlo de las filas de columnas
+                new Shading { Fill = "FFF2CC", Val = ShadingPatternValues.Clear },
+                new TableCellMargin(
+                    new TopMargin    { Width = "100", Type = TableWidthUnitValues.Dxa },
+                    new BottomMargin { Width = "100", Type = TableWidthUnitValues.Dxa },
+                    new LeftMargin   { Width = "120", Type = TableWidthUnitValues.Dxa },
+                    new RightMargin  { Width = "120", Type = TableWidthUnitValues.Dxa })
+            ));
+
+            var para = new Paragraph(
+                new ParagraphProperties(
+                    new SpacingBetweenLines { Before = "0", After = "0" }));
+
+            // Etiqueta "📝 Descripción:" en negrita/color ámbar oscuro
+            para.AppendChild(new Run(
+                new RunProperties(
+                    new Bold(),
+                    new Color { Val = "7F6000" },
+                    new FontSize { Val = "18" }),
+                new Text("📝 Descripción:  ") { Space = SpaceProcessingModeValues.Preserve }
+            ));
+
+            // Texto de descripción en color marrón oscuro
+            para.AppendChild(new Run(
+                new RunProperties(
+                    new Color { Val = "3D2B00" },
+                    new FontSize { Val = "18" }),
+                new Text(descripcion)
+            ));
+
+            cell.AppendChild(para);
+            row.AppendChild(cell);
             return row;
         }
 
