@@ -1638,7 +1638,11 @@ namespace QueryAnalyzer
                         tablasLeidas++;
                     }
 
-                    Dispatcher.Invoke(() => txtExplorar.Text = $"{tablasLeidas} tablas leídas de {cantidadDeTablas}");
+                    Dispatcher.Invoke(() =>
+                    {
+                        txtExplorar.Text = $"{tablasLeidas} tablas leídas de {cantidadDeTablas}";
+                        ActualizarContadorExplorador();
+                    });
                     if (tablasLeidas == cantidadDeTablas) break;
                 }
             }
@@ -3382,6 +3386,43 @@ namespace QueryAnalyzer
                 {
                     nodo.Visibility = Visibility.Visible;
                 }
+            }
+
+            ActualizarContadorExplorador();
+        }
+
+        /// <summary>
+        /// Actualiza txtExplorar con el total de nodos cargados y cuántos
+        /// son visibles según los filtros activos (schema e isla).
+        /// </summary>
+        private void ActualizarContadorExplorador()
+        {
+            if (tvSchema == null || txtExplorar == null) return;
+
+            int total   = tvSchema.Items.Count;
+            int visibles = 0;
+            foreach (TreeViewItem nodo in tvSchema.Items)
+                if (nodo.Visibility == Visibility.Visible)
+                    visibles++;
+
+            bool hayFiltroSchema = !string.IsNullOrEmpty(_filtroSchema);
+            bool hayFiltroIsla   = _islaActiva != null;
+
+            if (!hayFiltroSchema && !hayFiltroIsla)
+            {
+                // Sin filtros: texto plano
+                txtExplorar.Text = $"{total} tablas/vistas";
+            }
+            else
+            {
+                // Con filtros: indicar visibles sobre total + qué filtros están activos
+                var partes = new System.Collections.Generic.List<string>();
+                if (hayFiltroSchema) partes.Add($"esquema: {_filtroSchema}");
+                if (hayFiltroIsla)   partes.Add($"isla: {_islaActiva.Nombre}");
+
+                txtExplorar.Text =
+                    $"{visibles} de {total}" +
+                    $"\n({string.Join(" · ", partes)})";
             }
         }
 
