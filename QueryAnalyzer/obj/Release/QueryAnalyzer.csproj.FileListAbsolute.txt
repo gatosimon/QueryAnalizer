@@ -20,7 +20,6 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnaly
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.csproj.CopyComplete
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.exe
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.pdb
-C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.csproj.AssemblyReference.cache
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\ScriptResultWindow.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\TableDesignerWindow.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\ScriptResultWindow.g.cs
@@ -29,3 +28,4 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\NombreConj
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\PreferenciasWindow.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\NombreConjuntoDialog.g.cs
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\PreferenciasWindow.g.cs
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.csproj.AssemblyReference.cache
