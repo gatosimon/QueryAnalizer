@@ -38,6 +38,10 @@ namespace QueryAnalyzer
         // Isla de tablas activa (null = sin filtro)
         private ConjuntoTablas _islaActiva = null;
 
+        // Resultado de la última búsqueda profunda (null = sin búsqueda activa)
+        private List<string> _resultadoBusqueda = null;  // lista de "schema.tabla" o "tabla"
+        private string _terminoBusqueda = "";
+
         public Dictionary<string, OdbcType> OdbcTypes { get; set; }
         public List<QueryParameter> Parametros { get; set; }
 
@@ -430,10 +434,13 @@ namespace QueryAnalyzer
                 _cacheTablas.Clear();
                 CargarTablasEnBackground(conexion);
 
-                // Resetear filtros de esquema, tipo e isla al cambiar de conexión
+                // Resetear filtros de esquema, tipo, isla y búsqueda al cambiar de conexión
                 _filtroSchema = "";
                 _filtroTipo = "BOTH";
                 _islaActiva = null;
+                _resultadoBusqueda = null;
+                _terminoBusqueda = "";
+                txtBuscar.Text = "";
 
                 // Cargar islas guardadas para esta conexión
                 CargarComboIslas();
@@ -3160,6 +3167,11 @@ namespace QueryAnalyzer
 
         private void btnExplorar_Click(object sender, RoutedEventArgs e)
         {
+            // Limpiar búsqueda activa al explorar manualmente
+            _resultadoBusqueda = null;
+            _terminoBusqueda   = "";
+            txtBuscar.Text     = "";
+
             _explorarCTS?.Cancel();
             _explorarCTS = new CancellationTokenSource();
             LanzarCargarEsquema();
@@ -3249,8 +3261,9 @@ namespace QueryAnalyzer
                 {
                     token.ThrowIfCancellationRequested();
 
-                    // Usamos el Cargar() existente que ya sabe dibujar los nodos
-                    Cargar(tipos, string.Empty, null, tvSchema, connStr,
+                    // Usamos el Cargar() existente que ya sabe dibujar los nodos.
+                    // Si hay una búsqueda activa, limitamos al conjunto de tablas encontradas.
+                    Cargar(tipos, string.Empty, _resultadoBusqueda, tvSchema, connStr,
                            tablaIcon, columnaIcon, columnaClaveIcon, claveIcon, vistaIcon,
                            tamañoIconos, token);
 
@@ -3405,10 +3418,11 @@ namespace QueryAnalyzer
                 if (nodo.Visibility == Visibility.Visible)
                     visibles++;
 
-            bool hayFiltroSchema = !string.IsNullOrEmpty(_filtroSchema);
-            bool hayFiltroIsla   = _islaActiva != null;
+            bool hayFiltroSchema  = !string.IsNullOrEmpty(_filtroSchema);
+            bool hayFiltroIsla    = _islaActiva != null;
+            bool hayBusqueda      = !string.IsNullOrEmpty(_terminoBusqueda);
 
-            if (!hayFiltroSchema && !hayFiltroIsla)
+            if (!hayFiltroSchema && !hayFiltroIsla && !hayBusqueda)
             {
                 // Sin filtros: texto plano
                 txtExplorar.Text = $"{total} tablas/vistas";
@@ -3417,6 +3431,7 @@ namespace QueryAnalyzer
             {
                 // Con filtros: indicar visibles sobre total + qué filtros están activos
                 var partes = new System.Collections.Generic.List<string>();
+                if (hayBusqueda)     partes.Add($"buscar: \"{_terminoBusqueda}\"");
                 if (hayFiltroSchema) partes.Add($"esquema: {_filtroSchema}");
                 if (hayFiltroIsla)   partes.Add($"isla: {_islaActiva.Nombre}");
 
@@ -3936,23 +3951,68 @@ namespace QueryAnalyzer
             }
         }
 
-        private void btnBuscar_Click(object sender, RoutedEventArgs e)
+        private async void btnBuscar_Click(object sender, RoutedEventArgs e)
         {
-            string filtro = txtBuscar.Text.Trim().ToLower();
+            string termino = txtBuscar.Text.Trim();
 
-            if (string.IsNullOrEmpty(filtro))
+            // Siempre usamos tvSchema (tvSearch queda oculto)
+            tvSearch.Visibility  = Visibility.Collapsed;
+            tvSchema.Visibility  = Visibility.Visible;
+
+            if (string.IsNullOrEmpty(termino))
             {
-                // Si está vacío, volvemos al original
-                tvSearch.Visibility = Visibility.Collapsed;
-                tvSchema.Visibility = Visibility.Visible;
+                // Sin texto → limpiar búsqueda y recargar normalmente
+                _resultadoBusqueda = null;
+                _terminoBusqueda   = "";
+                LanzarCargarEsquema();
+                return;
             }
-            else
+
+            // ── Limpiar filtros de schema e isla antes de buscar ─────────
+            _filtroSchema = "";
+            _islaActiva   = null;
+
+            cbSchema.SelectionChanged -= cbSchema_SelectionChanged;
+            if (cbSchema.Items.Count > 0) cbSchema.SelectedIndex = 0;
+            cbSchema.SelectionChanged += cbSchema_SelectionChanged;
+
+            cbIslas.SelectionChanged -= cbIslas_SelectionChanged;
+            cbIslas.SelectedIndex = 0;
+            cbIslas.SelectionChanged += cbIslas_SelectionChanged;
+
+            // ── Buscar en la base de datos ────────────────────────────────
+            if (conexionActual == null)
             {
-                // Si hay texto, filtramos
-                CargarEsquema(filtro, null, _explorarCTS.Token);
-                tvSchema.Visibility = Visibility.Collapsed;
-                tvSearch.Visibility = Visibility.Visible;
+                AppendMessage("No hay conexión seleccionada.");
+                return;
             }
+
+            AppendMessage($"Buscando '{termino}' en tablas, columnas, índices y claves...");
+            btnBuscar.IsEnabled = false;
+            try
+            {
+                string connStr = GetConnectionString();
+                var resultado  = await Task.Run(() =>
+                    BuscarEnBaseDatos(connStr, conexionActual.Motor, termino));
+
+                _resultadoBusqueda = resultado;
+                _terminoBusqueda   = termino;
+
+                AppendMessage($"Búsqueda completada: {resultado.Count} tabla(s)/vista(s) encontradas.");
+            }
+            catch (Exception ex)
+            {
+                AppendMessage("Error en búsqueda: " + ex.Message);
+                _resultadoBusqueda = null;
+                _terminoBusqueda   = "";
+            }
+            finally
+            {
+                btnBuscar.IsEnabled = true;
+            }
+
+            // Recargar tvSchema limitado a los resultados
+            LanzarCargarEsquema();
         }
 
         private void FiltrarArbol(string filtro)
@@ -4013,6 +4073,127 @@ namespace QueryAnalyzer
             {
                 btnBuscar_Click(sender, e);
             }
+        }
+
+        /// <summary>
+        /// Busca en la base de datos activa todas las tablas/vistas que:
+        ///   - tengan el término en su nombre,
+        ///   - tengan alguna columna cuyo nombre contenga el término,
+        ///   - tengan algún índice cuyo nombre contenga el término,
+        ///   - tengan alguna clave/restricción cuyo nombre contenga el término.
+        /// Devuelve una lista de "schema.tabla" (o solo "tabla" si no hay schema).
+        /// </summary>
+        private List<string> BuscarEnBaseDatos(string connStr, TipoMotor motor, string termino)
+        {
+            var resultados = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            string t = termino.Replace("'", "''"); // escapado básico
+
+            using (var conn = new OdbcConnection(connStr))
+            {
+                conn.Open();
+
+                string sql = null;
+
+                switch (motor)
+                {
+                    case TipoMotor.MS_SQL:
+                        sql = $@"
+SELECT DISTINCT TABLE_SCHEMA, TABLE_NAME
+FROM INFORMATION_SCHEMA.TABLES
+WHERE TABLE_NAME LIKE '%{t}%'
+  AND TABLE_TYPE IN ('BASE TABLE','VIEW')
+UNION
+SELECT DISTINCT TABLE_SCHEMA, TABLE_NAME
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE COLUMN_NAME LIKE '%{t}%'
+UNION
+SELECT DISTINCT SCHEMA_NAME(o.schema_id), o.name
+FROM sys.indexes i
+INNER JOIN sys.objects o ON i.object_id = o.object_id
+WHERE i.name LIKE '%{t}%'
+  AND o.type IN ('U','V')
+UNION
+SELECT DISTINCT TABLE_SCHEMA, TABLE_NAME
+FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+WHERE CONSTRAINT_NAME LIKE '%{t}%'";
+                        break;
+
+                    case TipoMotor.POSTGRES:
+                        sql = $@"
+SELECT DISTINCT table_schema, table_name
+FROM information_schema.tables
+WHERE table_name ILIKE '%{t}%'
+  AND table_type IN ('BASE TABLE','VIEW')
+UNION
+SELECT DISTINCT table_schema, table_name
+FROM information_schema.columns
+WHERE column_name ILIKE '%{t}%'
+UNION
+SELECT DISTINCT schemaname, tablename
+FROM pg_indexes
+WHERE indexname ILIKE '%{t}%'
+UNION
+SELECT DISTINCT table_schema, table_name
+FROM information_schema.table_constraints
+WHERE constraint_name ILIKE '%{t}%'";
+                        break;
+
+                    case TipoMotor.DB2:
+                        sql = $@"
+SELECT DISTINCT TABSCHEMA, TABNAME
+FROM SYSCAT.TABLES
+WHERE TABNAME LIKE '%{t}%'
+  AND TYPE IN ('T','V')
+UNION
+SELECT DISTINCT TABSCHEMA, TABNAME
+FROM SYSCAT.COLUMNS
+WHERE COLNAME LIKE '%{t}%'
+UNION
+SELECT DISTINCT TABSCHEMA, TABNAME
+FROM SYSCAT.INDEXES
+WHERE INDNAME LIKE '%{t}%'";
+                        break;
+
+                    case TipoMotor.SQLite:
+                        // SQLite no tiene catálogo de columnas/índices sin PRAGMA por tabla;
+                        // se busca solo por nombre de objeto.
+                        sql = $@"
+SELECT NULL AS TABLE_SCHEMA, name AS TABLE_NAME
+FROM sqlite_master
+WHERE (type='table' OR type='view')
+  AND name LIKE '%{t}%'";
+                        break;
+
+                    default:
+                        return new List<string>();
+                }
+
+                try
+                {
+                    using (var cmd = new OdbcCommand(sql, conn))
+                    using (var rdr = cmd.ExecuteReader())
+                    {
+                        while (rdr.Read())
+                        {
+                            string schema = rdr.IsDBNull(0) ? null : rdr.GetString(0)?.Trim();
+                            string tabla  = rdr.IsDBNull(1) ? null : rdr.GetString(1)?.Trim();
+                            if (string.IsNullOrEmpty(tabla)) continue;
+
+                            string clave = string.IsNullOrEmpty(schema)
+                                ? tabla
+                                : $"{schema}.{tabla}";
+                            resultados.Add(clave);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Si el motor no soporta alguna vista del catálogo, lo ignoramos y devolvemos lo que haya
+                    Dispatcher.Invoke(() => AppendMessage("Advertencia en búsqueda: " + ex.Message));
+                }
+            }
+
+            return new List<string>(resultados);
         }
 
         // ════════════════════════════════════════════════════════════════
