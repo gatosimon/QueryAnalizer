@@ -2787,10 +2787,10 @@ namespace QueryAnalyzer
                     string label  = rel.ColumnaOrigen + " → " + rel.ColumnaDestino;
 
                     // Estilo auto-routing: draw.io elige el camino óptimo
+                    // Sin anclas fijas: draw.io elige el mejor punto de conexión
                     string estiloArco =
                         "edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;" +
-                        "jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" +
-                        "entryX=0.5;entryY=0;entryDx=0;entryDy=0;" +
+                        "jettySize=auto;" +
                         "endArrow=ERone;endFill=0;startArrow=ERmanyToOne;startFill=0;";
 
                     sb.AppendLine($"<mxCell id=\"{connId}\" value=\"{EscXml(label)}\" " +
@@ -3051,6 +3051,35 @@ namespace QueryAnalyzer
                     }
                     foreach (var kvp in porNivel) kvp.Value.Sort(StringComparer.OrdinalIgnoreCase);
 
+                    // ── Barycenter heuristic (un sweep top-down) ─────────────────────
+                    // Ordena las tablas dentro de cada nivel según la posición promedio
+                    // de sus padres en FK para minimizar el cruce de aristas.
+                    int maxNivLayout = porNivel.Keys.Max();
+                    for (int niv2 = 0; niv2 < maxNivLayout; niv2++)
+                    {
+                        if (!porNivel.ContainsKey(niv2) || !porNivel.ContainsKey(niv2 + 1)) continue;
+                        var nivActual = porNivel[niv2];
+                        var nivHijos  = porNivel[niv2 + 1];
+
+                        // Índice posicional de cada tabla en el nivel actual
+                        var idxPadre = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                        for (int ki = 0; ki < nivActual.Count; ki++) idxPadre[nivActual[ki]] = ki;
+
+                        // Baricentro de cada hijo = promedio del índice de sus padres
+                        var bary = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+                        for (int ki = 0; ki < nivHijos.Count; ki++)
+                        {
+                            string hijo = nivHijos[ki];
+                            var padresEnNivel = outEdges[hijo]
+                                .Where(p => idxPadre.ContainsKey(p))
+                                .ToList();
+                            bary[hijo] = padresEnNivel.Count > 0
+                                ? padresEnNivel.Average(p => (double)idxPadre[p])
+                                : (double)ki; // sin padres en este nivel: mantener posición
+                        }
+                        nivHijos.Sort((a, b) => bary[a].CompareTo(bary[b]));
+                    }
+
                     // Ancho del componente = nivel más ancho
                     int maxCols   = porNivel.Values.Max(lst => lst.Count);
                     int anchoComp = maxCols * (ANCHO + H_GAP) - H_GAP;
@@ -3140,7 +3169,7 @@ namespace QueryAnalyzer
                     ? t.Nombre
                     : t.Schema + "." + t.Nombre;
                 if (t.Tipo == "VIEW") titulo = "⬡ " + titulo;
-                sbTxt.Append(titulo);
+                sbTxt.Append(EscJson(titulo));
                 if (t.Columnas.Count > 0)
                 {
                     sbTxt.Append("\\n");
@@ -3214,10 +3243,10 @@ namespace QueryAnalyzer
                         "  \"props\":{\n" +
                         "    \"dash\":\"solid\",\"size\":\"s\",\"fill\":\"none\",\"color\":\"black\",\n" +
                         $"    \"labelColor\":\"black\",\"bend\":0,\n" +
-                        $"    \"start\":{{\"type\":\"point\",\"x\":{startX:0.##},\"y\":{startY:0.##}}},\n" +
-                        $"    \"end\":{{\"type\":\"point\",\"x\":{endX:0.##},\"y\":{endY:0.##}}},\n" +
+                        $"    \"start\":{{\"x\":{startX:0.##},\"y\":{startY:0.##}}},\n" +
+                        $"    \"end\":{{\"x\":{endX:0.##},\"y\":{endY:0.##}}},\n" +
                         $"    \"arrowheadStart\":\"none\",\"arrowheadEnd\":\"arrow\",\n" +
-                        $"    \"text\":\"{label}\",\"font\":\"sans\"\n" +
+                        $"    \"text\":\"{label}\",\"font\":\"sans\",\"labelPosition\":0.5\n" +
                         "  },\n" +
                         $"  \"parentId\":\"page:page\",\"index\":\"{idx}\",\"typeName\":\"shape\"\n" +
                         "}"
