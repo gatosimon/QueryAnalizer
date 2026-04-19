@@ -2470,13 +2470,14 @@ namespace QueryAnalyzer
                 });
 
                 // ── 2. Preguntar plataforma ───────────────────────────────────────
-                PlataformaEsquema? plataforma = null;
-                Dispatcher.Invoke(() => plataforma = ElegirPlataformaEsquema());
-                if (plataforma == null)
-                {
-                    Dispatcher.Invoke(() => AppendMessage("Esquematización cancelada."));
-                    return;
-                }
+                PlataformaEsquema plataforma = PlataformaEsquema.DrawIO;
+                //PlataformaEsquema? plataforma = null;
+                //Dispatcher.Invoke(() => plataforma = ElegirPlataformaEsquema());
+                //if (plataforma == null)
+                //{
+                //    Dispatcher.Invoke(() => AppendMessage("Esquematización cancelada."));
+                //    return;
+                //}
 
                 // ── 3. Generar y abrir según plataforma ──────────────────────────
                 if (plataforma == PlataformaEsquema.DrawIO)
@@ -2489,23 +2490,23 @@ namespace QueryAnalyzer
                     Dispatcher.Invoke(() => System.Diagnostics.Process.Start(url));
                     Dispatcher.Invoke(() => AppendMessage("Diagrama generado y abierto en Draw.io."));
                 }
-                else
-                {
-                    // Tldraw: mismo layout jerárquico que Draw.io, abierto como HTML local
-                    var posicionesTld   = CalcularLayoutER(tablasMeta);
-                    string htmlContent  = GenerarHtmlTldraw(tablasMeta, posicionesTld, conexionActual.Nombre);
-                    string tempPath     = System.IO.Path.Combine(
-                        System.IO.Path.GetTempPath(),
-                        "ERD_" + conexionActual.Nombre + "_" +
-                        DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".html");
-                    System.IO.File.WriteAllText(tempPath, htmlContent, System.Text.Encoding.UTF8);
+                //else
+                //{
+                //    // Tldraw: mismo layout jerárquico que Draw.io, abierto como HTML local
+                //    var posicionesTld   = CalcularLayoutER(tablasMeta);
+                //    string htmlContent  = GenerarHtmlTldraw(tablasMeta, posicionesTld, conexionActual.Nombre);
+                //    string tempPath     = System.IO.Path.Combine(
+                //        System.IO.Path.GetTempPath(),
+                //        "ERD_" + conexionActual.Nombre + "_" +
+                //        DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".html");
+                //    System.IO.File.WriteAllText(tempPath, htmlContent, System.Text.Encoding.UTF8);
 
-                    Dispatcher.Invoke(() =>
-                    {
-                        System.Diagnostics.Process.Start(tempPath);
-                        AppendMessage("Diagrama Tldraw abierto en el navegador.\nArchivo: " + tempPath);
-                    });
-                }
+                //    Dispatcher.Invoke(() =>
+                //    {
+                //        System.Diagnostics.Process.Start(tempPath);
+                //        AppendMessage("Diagrama Tldraw abierto en el navegador.\nArchivo: " + tempPath);
+                //    });
+                //}
             }
             catch (Exception ex)
             {
