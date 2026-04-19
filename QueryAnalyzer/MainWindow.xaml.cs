@@ -2469,16 +2469,45 @@ namespace QueryAnalyzer
                     }
                 });
 
-                // ── 2. Generar XML Draw.io ────────────────────────────────────────
-                string xmlDrawio = GenerarXmlDrawio(tablasMeta);
+                // ── 2. Preguntar plataforma ───────────────────────────────────────
+                PlataformaEsquema? plataforma = null;
+                Dispatcher.Invoke(() => plataforma = ElegirPlataformaEsquema());
+                if (plataforma == null)
+                {
+                    Dispatcher.Invoke(() => AppendMessage("Esquematización cancelada."));
+                    return;
+                }
 
-                // ── 3. Comprimir con Deflate + Base64 (formato que acepta draw.io) ─
-                string encoded = ComprimirDrawio(xmlDrawio);
+                // ── 3. Calcular layout jerárquico (compartido) ────────────────────
+                var posiciones = CalcularLayoutER(tablasMeta);
 
-                // ── 4. Abrir en el navegador ──────────────────────────────────────
-                string url = "https://app.diagrams.net/?src=about#R" + Uri.EscapeDataString(encoded);
-                System.Diagnostics.Process.Start(url);
-                AppendMessage("Diagrama generado y abierto en el navegador.");
+                // ── 4. Generar y abrir según plataforma ───────────────────────────
+                if (plataforma == PlataformaEsquema.DrawIO)
+                {
+                    string xmlDrawio = GenerarXmlDrawio(tablasMeta, posiciones);
+                    string encoded   = ComprimirDrawio(xmlDrawio);
+                    string url       = "https://app.diagrams.net/?src=about#R" + Uri.EscapeDataString(encoded);
+                    Dispatcher.Invoke(() => System.Diagnostics.Process.Start(url));
+                    Dispatcher.Invoke(() => AppendMessage("Diagrama generado y abierto en Draw.io."));
+                }
+                else
+                {
+                    string jsonTldraw = GenerarJsonTldraw(tablasMeta, posiciones);
+                    string tempPath   = System.IO.Path.Combine(
+                        System.IO.Path.GetTempPath(),
+                        $"ERD_{conexionActual.Nombre}_{DateTime.Now:yyyyMMdd_HHmmss}.tldr");
+                    System.IO.File.WriteAllText(tempPath, jsonTldraw, System.Text.Encoding.UTF8);
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        System.Diagnostics.Process.Start("https://www.tldraw.com/");
+                        System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{tempPath}\"");
+                        AppendMessage(
+                            $"Diagrama guardado en:\n{tempPath}\n" +
+                            "Tldraw abierto en el navegador. " +
+                            "Arrastrá el archivo .tldr a la ventana del navegador para cargarlo.");
+                    });
+                }
             }
             catch (Exception ex)
             {
@@ -2669,29 +2698,24 @@ namespace QueryAnalyzer
         // Generador de XML Draw.io
         // ────────────────────────────────────────────────────────────────
 
-        private string GenerarXmlDrawio(Dictionary<string, EsquemaTablaInfo> tablasMeta)
+        private string GenerarXmlDrawio(
+            Dictionary<string, EsquemaTablaInfo> tablasMeta,
+            Dictionary<string, Tuple<int, int>> posiciones)
         {
-            // Layout automático: columnas y filas en grilla
-            const int ANCHO_TABLA = 220;
-            const int ALTO_CABECERA = 30;
-            const int ALTO_FILA = 20;
-            const int COL_GAP = 60;
-            const int FILA_GAP = 40;
-            const int COLS_POR_FILA = 5;
+            const int ANCHO_TABLA   = 260;
+            const int ALTO_CABECERA = 32;
+            const int ALTO_FILA     = 22;
 
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-            sb.AppendLine("<mxGraphModel><root>");
+            sb.AppendLine("<mxGraphModel dx=\"1422\" dy=\"762\" grid=\"0\" gridSize=\"10\" guides=\"1\" " +
+                          "tooltips=\"1\" connect=\"1\" arrows=\"1\" fold=\"1\" page=\"0\" pageScale=\"1\" " +
+                          "pageWidth=\"1169\" pageHeight=\"827\" math=\"0\" shadow=\"0\">");
+            sb.AppendLine("<root>");
             sb.AppendLine("<mxCell id=\"0\"/>");
             sb.AppendLine("<mxCell id=\"1\" parent=\"0\"/>");
 
             int idBase = 2;
-            int col = 0;
-            int fila = 0;
-            int xOffset = 0;
-            int yOffset = 0;
-
-            // Diccionario: nombreTabla → id base del nodo en Draw.io (para conectores)
             var idPorTabla = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var kvp in tablasMeta)
@@ -2700,24 +2724,27 @@ namespace QueryAnalyzer
                 int id = idBase;
                 idPorTabla[t.Nombre] = id;
 
-                int altoTotal = ALTO_CABECERA + t.Columnas.Count * ALTO_FILA;
-                int x = xOffset;
-                int y = yOffset;
+                int altoTotal = ALTO_CABECERA + Math.Max(1, t.Columnas.Count) * ALTO_FILA;
+                Tuple<int, int> pos;
+                if (!posiciones.TryGetValue(t.Nombre, out pos)) pos = Tuple.Create(0, 0);
+                int x = pos.Item1;
+                int y = pos.Item2;
 
                 bool esVista = t.Tipo == "VIEW";
 
-                // Nodo contenedor (tabla completa)
                 string estiloContenedor = esVista
-                    ? "swimlane;fontStyle=2;align=center;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;"
-                    : "swimlane;fontStyle=1;align=center;startSize=30;fillColor=#fff2cc;strokeColor=#d6b656;";
+                    ? "swimlane;fontStyle=2;align=center;startSize=32;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;arcSize=4;"
+                    : "swimlane;fontStyle=1;align=center;startSize=32;fillColor=#fff2cc;strokeColor=#d6b656;rounded=1;arcSize=4;";
 
                 string etiqueta = string.IsNullOrEmpty(t.Schema)
                     ? t.Nombre
                     : $"{t.Schema}.{t.Nombre}";
-                if (esVista) etiqueta = "«view»\n" + etiqueta;
+                if (esVista) etiqueta = "«view» " + etiqueta;
 
-                sb.AppendLine($"<mxCell id=\"{id}\" value=\"{EscXml(etiqueta)}\" style=\"{estiloContenedor}\" vertex=\"1\" parent=\"1\">");
-                sb.AppendLine($"  <mxGeometry x=\"{x}\" y=\"{y}\" width=\"{ANCHO_TABLA}\" height=\"{altoTotal}\" as=\"geometry\"/>");
+                sb.AppendLine($"<mxCell id=\"{id}\" value=\"{EscXml(etiqueta)}\" " +
+                              $"style=\"{estiloContenedor}\" vertex=\"1\" parent=\"1\">");
+                sb.AppendLine($"  <mxGeometry x=\"{x}\" y=\"{y}\" width=\"{ANCHO_TABLA}\" " +
+                              $"height=\"{altoTotal}\" as=\"geometry\"/>");
                 sb.AppendLine("</mxCell>");
 
                 // Filas de columnas
@@ -2725,34 +2752,22 @@ namespace QueryAnalyzer
                 {
                     var col2 = t.Columnas[i];
                     int childId = id + 1 + i;
-                    string label = $"{col2.Nombre}  : {col2.Tipo}";
+                    string label = col2.Nombre + "  :  " + col2.Tipo;
                     if (!string.IsNullOrEmpty(col2.Longitud) && col2.Longitud != "0")
-                        label += $"({col2.Longitud})";
+                        label += "(" + col2.Longitud + ")";
 
-                    sb.AppendLine($"<mxCell id=\"{childId}\" value=\"{EscXml(label)}\" style=\"text;align=left;spacingLeft=6;\" vertex=\"1\" parent=\"{id}\">");
-                    sb.AppendLine($"  <mxGeometry x=\"0\" y=\"{ALTO_CABECERA + i * ALTO_FILA}\" width=\"{ANCHO_TABLA}\" height=\"{ALTO_FILA}\" as=\"geometry\"/>");
+                    sb.AppendLine($"<mxCell id=\"{childId}\" value=\"{EscXml(label)}\" " +
+                                  "style=\"text;align=left;spacingLeft=8;fontSize=11;fontFamily=Courier New;\" " +
+                                  $"vertex=\"1\" parent=\"{id}\">");
+                    sb.AppendLine($"  <mxGeometry x=\"0\" y=\"{ALTO_CABECERA + i * ALTO_FILA}\" " +
+                                  $"width=\"{ANCHO_TABLA}\" height=\"{ALTO_FILA}\" as=\"geometry\"/>");
                     sb.AppendLine("</mxCell>");
                 }
 
                 idBase += 1 + t.Columnas.Count;
-
-                // Avanzar posición en grilla
-                col++;
-                if (col >= COLS_POR_FILA)
-                {
-                    col = 0;
-                    fila++;
-                    xOffset = 0;
-                    // El yOffset acumula la altura del bloque más alto de la fila anterior
-                    yOffset += altoTotal + FILA_GAP;
-                }
-                else
-                {
-                    xOffset += ANCHO_TABLA + COL_GAP;
-                }
             }
 
-            // ── Conectores FK ────────────────────────────────────────────────────
+            // ── Conectores FK (auto-routing, sin puntos de anclaje fijos) ────────
             int connId = idBase;
             var relacionesYaVistas = new HashSet<string>();
 
@@ -2760,19 +2775,27 @@ namespace QueryAnalyzer
             {
                 foreach (var rel in kvp.Value.Relaciones)
                 {
-                    // Filtrar: solo dibujar relaciones donde ambas tablas estén en el esquema visible
-                    if (!idPorTabla.ContainsKey(rel.TablaOrigen) || !idPorTabla.ContainsKey(rel.TablaDestino))
-                        continue;
+                    if (!idPorTabla.ContainsKey(rel.TablaOrigen) ||
+                        !idPorTabla.ContainsKey(rel.TablaDestino)) continue;
 
-                    // Evitar duplicados (puede aparecer la misma FK desde ambas direcciones)
-                    string clave = $"{rel.TablaOrigen}|{rel.ColumnaOrigen}|{rel.TablaDestino}|{rel.ColumnaDestino}";
+                    string clave = rel.TablaOrigen + "|" + rel.ColumnaOrigen + "|" +
+                                   rel.TablaDestino + "|" + rel.ColumnaDestino;
                     if (!relacionesYaVistas.Add(clave)) continue;
 
-                    int idOrigen = idPorTabla[rel.TablaOrigen];
+                    int idOrigen  = idPorTabla[rel.TablaOrigen];
                     int idDestino = idPorTabla[rel.TablaDestino];
-                    string label = $"{rel.ColumnaOrigen} → {rel.ColumnaDestino}";
+                    string label  = rel.ColumnaOrigen + " → " + rel.ColumnaDestino;
 
-                    sb.AppendLine($"<mxCell id=\"{connId}\" value=\"{EscXml(label)}\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERone;startArrow=ERmanyToOne;exitX=1;exitY=0.5;entryX=0;entryY=0.5;\" edge=\"1\" source=\"{idOrigen}\" target=\"{idDestino}\" parent=\"1\">");
+                    // Estilo auto-routing: draw.io elige el camino óptimo
+                    string estiloArco =
+                        "edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;" +
+                        "jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" +
+                        "entryX=0.5;entryY=0;entryDx=0;entryDy=0;" +
+                        "endArrow=ERone;endFill=0;startArrow=ERmanyToOne;startFill=0;";
+
+                    sb.AppendLine($"<mxCell id=\"{connId}\" value=\"{EscXml(label)}\" " +
+                                  $"style=\"{estiloArco}\" " +
+                                  $"edge=\"1\" source=\"{idOrigen}\" target=\"{idDestino}\" parent=\"1\">");
                     sb.AppendLine("  <mxGeometry relative=\"1\" as=\"geometry\"/>");
                     sb.AppendLine("</mxCell>");
                     connId++;
@@ -2807,7 +2830,454 @@ namespace QueryAnalyzer
             }
         }
 
+        // ────────────────────────────────────────────────────────────────
+        // Selección de plataforma de diagramación
+        // ────────────────────────────────────────────────────────────────
 
+        private enum PlataformaEsquema { DrawIO, Tldraw }
+
+        /// <summary>
+        /// Muestra un diálogo modal para elegir entre Draw.io y Tldraw.
+        /// Devuelve null si el usuario cancela.
+        /// </summary>
+        private PlataformaEsquema? ElegirPlataformaEsquema()
+        {
+            PlataformaEsquema? resultado = null;
+
+            var dlg = new Window
+            {
+                Title                 = "Abrir diagrama en…",
+                Width                 = 360,
+                Height                = 170,
+                ResizeMode            = ResizeMode.NoResize,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner                 = this,
+                Background            = (System.Windows.Media.Brush)Resources["BrushWindowBG"]
+            };
+
+            var root = new Grid { Margin = new Thickness(24, 20, 24, 20) };
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            var lbl = new TextBlock
+            {
+                Text        = "¿En qué plataforma querés abrir el esquema?",
+                TextWrapping = TextWrapping.Wrap,
+                Foreground  = (System.Windows.Media.Brush)Resources["BrushFG"],
+                Margin      = new Thickness(0, 0, 0, 18)
+            };
+            Grid.SetRow(lbl, 0);
+
+            var btnRow = new StackPanel
+            {
+                Orientation         = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Center
+            };
+            Grid.SetRow(btnRow, 2);
+
+            var mkBtn = new Func<string, Button>(txt =>
+                new Button { Content = txt, Width = 96, Margin = new Thickness(8, 0, 8, 0), Padding = new Thickness(4, 6, 4, 6) });
+
+            var btnDrawio   = mkBtn("Draw.io");
+            var btnTldraw   = mkBtn("Tldraw");
+            var btnCancelar = mkBtn("Cancelar");
+
+            btnDrawio.Click   += (s, ev) => { resultado = PlataformaEsquema.DrawIO;  dlg.Close(); };
+            btnTldraw.Click   += (s, ev) => { resultado = PlataformaEsquema.Tldraw;  dlg.Close(); };
+            btnCancelar.Click += (s, ev) => dlg.Close();
+
+            btnRow.Children.Add(btnDrawio);
+            btnRow.Children.Add(btnTldraw);
+            btnRow.Children.Add(btnCancelar);
+
+            root.Children.Add(lbl);
+            root.Children.Add(btnRow);
+            dlg.Content = root;
+            dlg.ShowDialog();
+            return resultado;
+        }
+
+        // ────────────────────────────────────────────────────────────────
+        // Layout jerárquico para diagramas ER
+        // ────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Calcula las posiciones (x, y) de cada tabla usando un layout jerárquico
+        /// guiado por las relaciones FK.<br/>
+        /// • Las tablas padre (referenciadas) se colocan arriba.<br/>
+        /// • Las tablas hijo (con FK columns) se colocan debajo, con separación generosa.<br/>
+        /// • Las tablas sin FK se agrupan en una grilla al final.
+        /// </summary>
+        private Dictionary<string, Tuple<int, int>> CalcularLayoutER(
+            Dictionary<string, EsquemaTablaInfo> tablasMeta)
+        {
+            const int ANCHO     = 260;
+            const int ALTO_CAB  = 32;
+            const int ALTO_FILA = 22;
+            const int H_GAP     = 200;   // espacio horizontal entre tablas del mismo nivel
+            const int V_GAP     = 200;   // espacio vertical entre niveles
+            const int COMP_GAP  = 380;   // espacio entre componentes desconectados
+            const int COLS_MAX  = 4;     // máx columnas para grilla sin FK
+
+            var posiciones = new Dictionary<string, Tuple<int, int>>(StringComparer.OrdinalIgnoreCase);
+            var tablas = tablasMeta.Keys.ToList();
+            if (tablas.Count == 0) return posiciones;
+
+            // ── 1. Construir grafo de adyacencia ─────────────────────────────────
+            var inEdges  = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            var outEdges = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            var adjUnd   = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var t in tablas)
+            {
+                inEdges[t]  = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                outEdges[t] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                adjUnd[t]   = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            foreach (var kvp in tablasMeta)
+            {
+                foreach (var rel in kvp.Value.Relaciones)
+                {
+                    // src = tabla con FK column (hijo), dst = tabla referenciada (padre)
+                    string src = rel.TablaOrigen;
+                    string dst = rel.TablaDestino;
+                    if (!tablasMeta.ContainsKey(src) || !tablasMeta.ContainsKey(dst)) continue;
+                    outEdges[src].Add(dst);
+                    inEdges[dst].Add(src);
+                    adjUnd[src].Add(dst);
+                    adjUnd[dst].Add(src);
+                }
+            }
+
+            // ── 2. Componentes conectados (BFS no dirigido) ──────────────────────
+            var visitados   = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var componentes = new List<List<string>>();
+
+            foreach (var t in tablas)
+            {
+                if (visitados.Contains(t)) continue;
+                var comp = new List<string>();
+                var cola = new Queue<string>();
+                cola.Enqueue(t); visitados.Add(t);
+                while (cola.Count > 0)
+                {
+                    var cur = cola.Dequeue();
+                    comp.Add(cur);
+                    foreach (var v in adjUnd[cur])
+                        if (!visitados.Contains(v)) { visitados.Add(v); cola.Enqueue(v); }
+                }
+                componentes.Add(comp);
+            }
+
+            // Ordenar: componentes más grandes primero para que queden a la izquierda
+            componentes.Sort((a, b) => b.Count.CompareTo(a.Count));
+
+            // ── 3. Posicionar cada componente ────────────────────────────────────
+            int xGlobal = 0;
+
+            foreach (var comp in componentes)
+            {
+                var tablasComp = new HashSet<string>(comp, StringComparer.OrdinalIgnoreCase);
+                bool tieneFKs  = comp.Any(t =>
+                    outEdges[t].Any(d => tablasComp.Contains(d)) ||
+                    inEdges[t].Any(s => tablasComp.Contains(s)));
+
+                if (!tieneFKs)
+                {
+                    // ── Grilla simple para componentes sin FKs ──────────────────
+                    int cols = Math.Min(COLS_MAX, comp.Count);
+                    comp.Sort(StringComparer.OrdinalIgnoreCase);
+                    int c = 0, yOff = 0, xOff = 0;
+                    int maxAltoFila = 0;
+
+                    for (int i = 0; i < comp.Count; i++)
+                    {
+                        posiciones[comp[i]] = Tuple.Create(xGlobal + xOff, yOff);
+                        int altoT = ALTO_CAB + tablasMeta[comp[i]].Columnas.Count * ALTO_FILA;
+                        if (altoT > maxAltoFila) maxAltoFila = altoT;
+
+                        c++;
+                        if (c >= cols) { c = 0; xOff = 0; yOff += maxAltoFila + V_GAP; maxAltoFila = 0; }
+                        else           { xOff += ANCHO + H_GAP; }
+                    }
+
+                    int anchoComp = Math.Min(comp.Count, cols) * (ANCHO + H_GAP) - H_GAP;
+                    xGlobal += anchoComp + COMP_GAP;
+                }
+                else
+                {
+                    // ── Layout jerárquico guiado por FK ─────────────────────────
+
+                    // Raíces de layout = tablas padre puras (sin outEdges dentro del comp)
+                    var raices = comp
+                        .Where(t => !outEdges[t].Any(d => tablasComp.Contains(d)))
+                        .ToList();
+                    // Fallback: tabla con más hijos (en ciclos)
+                    if (raices.Count == 0)
+                        raices = new List<string>
+                        {
+                            comp.OrderByDescending(t => inEdges[t].Count(s => tablasComp.Contains(s))).First()
+                        };
+
+                    // BFS desde raíces siguiendo inEdges (hijos en layout = nivel+1)
+                    var nivel = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                    var colaL = new Queue<string>();
+                    foreach (var r in raices) { nivel[r] = 0; colaL.Enqueue(r); }
+
+                    while (colaL.Count > 0)
+                    {
+                        var cur = colaL.Dequeue();
+                        foreach (var hijo in inEdges[cur])
+                        {
+                            if (!tablasComp.Contains(hijo)) continue;
+                            int nNivel = nivel[cur] + 1;
+                            if (!nivel.ContainsKey(hijo) || nivel[hijo] < nNivel)
+                            {
+                                nivel[hijo] = nNivel;
+                                colaL.Enqueue(hijo);
+                            }
+                        }
+                    }
+                    foreach (var t in comp) if (!nivel.ContainsKey(t)) nivel[t] = 0;
+
+                    // Agrupar por nivel y ordenar cada nivel por nombre
+                    var porNivel = new SortedDictionary<int, List<string>>();
+                    foreach (var kvp in nivel)
+                    {
+                        if (!porNivel.ContainsKey(kvp.Value)) porNivel[kvp.Value] = new List<string>();
+                        porNivel[kvp.Value].Add(kvp.Key);
+                    }
+                    foreach (var kvp in porNivel) kvp.Value.Sort(StringComparer.OrdinalIgnoreCase);
+
+                    // Ancho del componente = nivel más ancho
+                    int maxCols   = porNivel.Values.Max(lst => lst.Count);
+                    int anchoComp = maxCols * (ANCHO + H_GAP) - H_GAP;
+
+                    // Acumular yOffset por nivel según la altura máxima de cada nivel
+                    int yOff = 0;
+                    var yPorNivel = new Dictionary<int, int>();
+                    foreach (var kvp in porNivel)
+                    {
+                        yPorNivel[kvp.Key] = yOff;
+                        int maxAlto = kvp.Value.Max(t => ALTO_CAB + tablasMeta[t].Columnas.Count * ALTO_FILA);
+                        yOff += maxAlto + V_GAP;
+                    }
+
+                    // Asignar posiciones centradas dentro del ancho del componente
+                    foreach (var kvp in porNivel)
+                    {
+                        var lst       = kvp.Value;
+                        int anchoNiv  = lst.Count * (ANCHO + H_GAP) - H_GAP;
+                        int xStart    = xGlobal + (anchoComp - anchoNiv) / 2;
+
+                        for (int i = 0; i < lst.Count; i++)
+                            posiciones[lst[i]] = Tuple.Create(xStart + i * (ANCHO + H_GAP), yPorNivel[kvp.Key]);
+                    }
+
+                    xGlobal += anchoComp + COMP_GAP;
+                }
+            }
+
+            return posiciones;
+        }
+
+        // ────────────────────────────────────────────────────────────────
+        // Generador de JSON Tldraw (.tldr)
+        // ────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Genera un archivo .tldr (JSON) compatible con Tldraw v2.
+        /// Cada tabla/vista es un rectángulo geo con el listado de columnas como texto.
+        /// Las FKs se representan como flechas punto-a-punto.
+        /// </summary>
+        private string GenerarJsonTldraw(
+            Dictionary<string, EsquemaTablaInfo> tablasMeta,
+            Dictionary<string, Tuple<int, int>> posiciones)
+        {
+            const int ANCHO     = 260;
+            const int ALTO_CAB  = 32;
+            const int ALTO_FILA = 22;
+            const int ALTO_MIN  = 60;
+
+            var sbRec = new System.Text.StringBuilder();
+            bool primero = true;
+
+            // Helper: append JSON record
+            Action<string> appRec = rec =>
+            {
+                if (!primero) sbRec.Append(",\n");
+                sbRec.Append(rec);
+                primero = false;
+            };
+
+            // ── Registros de documento y página ──────────────────────────────────
+            appRec("{\"gridSize\":10,\"name\":\"\",\"meta\":{}," +
+                   "\"id\":\"document:document\",\"typeName\":\"document\"}");
+            appRec("{\"meta\":{},\"id\":\"page:page\",\"name\":\"Page 1\"," +
+                   "\"index\":\"a1\",\"typeName\":\"page\"}");
+
+            // ── Shapes de tablas ──────────────────────────────────────────────────
+            var idPorTabla = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            int shapeIdx   = 0;
+
+            foreach (var kvp in tablasMeta)
+            {
+                EsquemaTablaInfo t = kvp.Value;
+                string shapeId = "shape:tbl_" + SanitizarIdTld(t.Nombre);
+                idPorTabla[t.Nombre] = shapeId;
+
+                Tuple<int, int> pos;
+                if (!posiciones.TryGetValue(t.Nombre, out pos)) pos = Tuple.Create(0, 0);
+                int x = pos.Item1;
+                int y = pos.Item2;
+                int h = Math.Max(ALTO_MIN, ALTO_CAB + t.Columnas.Count * ALTO_FILA + 8);
+
+                // Texto de la forma: "NOMBRE\n─────\ncol: tipo\n..."
+                var sbTxt = new System.Text.StringBuilder();
+                string titulo = string.IsNullOrEmpty(t.Schema)
+                    ? t.Nombre
+                    : t.Schema + "." + t.Nombre;
+                if (t.Tipo == "VIEW") titulo = "⬡ " + titulo;
+                sbTxt.Append(titulo);
+                if (t.Columnas.Count > 0)
+                {
+                    sbTxt.Append("\\n");
+                    sbTxt.Append(new string('─', 28));
+                    foreach (var col2 in t.Columnas)
+                    {
+                        string linea = col2.Nombre + " : " + col2.Tipo;
+                        if (!string.IsNullOrEmpty(col2.Longitud) && col2.Longitud != "0")
+                            linea += "(" + col2.Longitud + ")";
+                        sbTxt.Append("\\n" + EscJson(linea));
+                    }
+                }
+
+                string color = t.Tipo == "VIEW" ? "blue" : "orange";
+                string idx   = TldIndex(shapeIdx++);
+
+                appRec(
+                    "{\n" +
+                    $"  \"x\":{x},\"y\":{y},\"rotation\":0,\"isLocked\":false,\"opacity\":1,\n" +
+                    $"  \"meta\":{{}},\"id\":\"{shapeId}\",\"type\":\"geo\",\n" +
+                    $"  \"props\":{{\"w\":{ANCHO},\"h\":{h},\"geo\":\"rectangle\",\n" +
+                    $"    \"color\":\"{color}\",\"labelColor\":\"black\",\"fill\":\"semi\",\n" +
+                    $"    \"dash\":\"solid\",\"size\":\"s\",\"font\":\"mono\",\n" +
+                    $"    \"text\":\"{sbTxt}\",\n" +
+                    $"    \"align\":\"start\",\"verticalAlign\":\"start\",\"growY\":0,\"url\":\"\"\n" +
+                    $"  }},\n" +
+                    $"  \"parentId\":\"page:page\",\"index\":\"{idx}\",\"typeName\":\"shape\"\n" +
+                    "}"
+                );
+            }
+
+            // ── Flechas FK (point-based) ──────────────────────────────────────────
+            var yaVistas = new HashSet<string>();
+
+            foreach (var kvp in tablasMeta)
+            {
+                foreach (var rel in kvp.Value.Relaciones)
+                {
+                    if (!idPorTabla.ContainsKey(rel.TablaOrigen) ||
+                        !idPorTabla.ContainsKey(rel.TablaDestino)) continue;
+
+                    string clave = rel.TablaOrigen + "|" + rel.ColumnaOrigen + "|" +
+                                   rel.TablaDestino + "|" + rel.ColumnaDestino;
+                    if (!yaVistas.Add(clave)) continue;
+
+                    EsquemaTablaInfo tSrc, tDst;
+                    if (!tablasMeta.TryGetValue(rel.TablaOrigen, out tSrc)) continue;
+                    if (!tablasMeta.TryGetValue(rel.TablaDestino, out tDst)) continue;
+
+                    Tuple<int, int> posSrc, posDst;
+                    if (!posiciones.TryGetValue(rel.TablaOrigen, out posSrc)) continue;
+                    if (!posiciones.TryGetValue(rel.TablaDestino, out posDst)) continue;
+
+                    int hSrc = Math.Max(ALTO_MIN, ALTO_CAB + tSrc.Columnas.Count * ALTO_FILA + 8);
+                    int hDst = Math.Max(ALTO_MIN, ALTO_CAB + tDst.Columnas.Count * ALTO_FILA + 8);
+
+                    // Arrow: salida desde borde inferior-centro del hijo, entrada por borde superior-centro del padre
+                    double startX = posSrc.Item1 + ANCHO / 2.0;
+                    double startY = posSrc.Item2 + hSrc;
+                    double endX   = posDst.Item1 + ANCHO / 2.0;
+                    double endY   = posDst.Item2;
+
+                    string arrowId = "shape:fk_" + (yaVistas.Count);
+                    string label   = EscJson(rel.ColumnaOrigen + " → " + rel.ColumnaDestino);
+                    string idx     = TldIndex(shapeIdx++);
+
+                    appRec(
+                        "{\n" +
+                        "  \"x\":0,\"y\":0,\"rotation\":0,\"isLocked\":false,\"opacity\":1,\n" +
+                        $"  \"meta\":{{}},\"id\":\"{arrowId}\",\"type\":\"arrow\",\n" +
+                        "  \"props\":{\n" +
+                        "    \"dash\":\"solid\",\"size\":\"s\",\"fill\":\"none\",\"color\":\"black\",\n" +
+                        $"    \"labelColor\":\"black\",\"bend\":0,\n" +
+                        $"    \"start\":{{\"type\":\"point\",\"x\":{startX:0.##},\"y\":{startY:0.##}}},\n" +
+                        $"    \"end\":{{\"type\":\"point\",\"x\":{endX:0.##},\"y\":{endY:0.##}}},\n" +
+                        $"    \"arrowheadStart\":\"none\",\"arrowheadEnd\":\"arrow\",\n" +
+                        $"    \"text\":\"{label}\",\"font\":\"sans\"\n" +
+                        "  },\n" +
+                        $"  \"parentId\":\"page:page\",\"index\":\"{idx}\",\"typeName\":\"shape\"\n" +
+                        "}"
+                    );
+                }
+            }
+
+            // ── Ensamblar el archivo .tldr ────────────────────────────────────────
+            return
+                "{\n" +
+                "  \"tldrawFileFormatVersion\":1,\n" +
+                "  \"schema\":{\n" +
+                "    \"schemaVersion\":2,\n" +
+                "    \"sequences\":{\n" +
+                "      \"com.tldraw.store\":4,\"com.tldraw.asset\":1,\n" +
+                "      \"com.tldraw.binding\":0,\"com.tldraw.shape\":5,\n" +
+                "      \"com.tldraw.shape.group\":0,\"com.tldraw.shape.text\":1,\n" +
+                "      \"com.tldraw.shape.bookmark\":2,\"com.tldraw.shape.draw\":1,\n" +
+                "      \"com.tldraw.shape.geo\":9,\"com.tldraw.shape.note\":7,\n" +
+                "      \"com.tldraw.shape.line\":0,\"com.tldraw.shape.frame\":0,\n" +
+                "      \"com.tldraw.shape.arrow\":3,\"com.tldraw.shape.highlight\":0,\n" +
+                "      \"com.tldraw.shape.embed\":4,\"com.tldraw.shape.image\":4,\n" +
+                "      \"com.tldraw.shape.video\":2,\"com.tldraw.instance\":0,\n" +
+                "      \"com.tldraw.instance_presence\":0,\"com.tldraw.page\":1,\n" +
+                "      \"com.tldraw.camera\":1,\"com.tldraw.document\":2,\n" +
+                "      \"com.tldraw.instance_page_state\":5,\"com.tldraw.pointer\":1,\n" +
+                "      \"com.tldraw.user_document\":0\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"records\":[\n" + sbRec + "\n  ]\n" +
+                "}";
+        }
+
+        /// <summary>Genera un índice fraccionario simple y único para tldraw (ej: "a1","a2","b1"…)</summary>
+        private static string TldIndex(int i)
+        {
+            // 62 chars per prefix letter: 0-9, A-Z, a-z
+            const string chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+            char prefix = (char)('a' + i / chars.Length);
+            return prefix + chars[i % chars.Length].ToString();
+        }
+
+        /// <summary>Sanitiza un nombre de tabla para usarlo como ID de shape en Tldraw.</summary>
+        private static string SanitizarIdTld(string nombre)
+        {
+            var sb = new System.Text.StringBuilder();
+            foreach (char c in nombre)
+                sb.Append(char.IsLetterOrDigit(c) ? c : '_');
+            return sb.ToString();
+        }
+
+        /// <summary>Escapa caracteres especiales para JSON inline.</summary>
+        private static string EscJson(string s)
+        {
+            return s
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"")
+                .Replace("\n", "\\n")
+                .Replace("\r", "");
+        }
 
         /// <summary>
         /// Documenta todas las tablas/vistas visibles en tvSchema (respetando filtros activos).
