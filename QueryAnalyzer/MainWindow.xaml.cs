@@ -3229,9 +3229,14 @@ namespace QueryAnalyzer
 "<body>\n" +
 "  <div id=\"root\"></div>\n" +
 "  <script type=\"module\">\n" +
+"    // ?deps=react@18,react-dom@18 fuerza a tldraw Y a todas sus sub-dependencias\n" +
+"    // (radix-ui, etc.) a usar la misma instancia de React que importamos abajo.\n" +
+"    // Sin esto, esm.sh puede resolver react@19-canary para algunas deps,\n" +
+"    // creando dos instancias de React y el error 'Cannot read useState of null'.\n" +
 "    import { createElement } from 'https://esm.sh/react@18';\n" +
 "    import { createRoot }    from 'https://esm.sh/react-dom@18/client';\n" +
-"    import { Tldraw, createShapeId } from 'https://esm.sh/@tldraw/tldraw@2';\n" +
+"    import { Tldraw, createShapeId }\n" +
+"        from 'https://esm.sh/@tldraw/tldraw@2?deps=react@18,react-dom@18';\n" +
 "\n" +
 "    // ── Datos del ERD (generados por QueryAnalyzer " + fecha + ") ──────────\n" +
 "    const TABLAS     = " + sbTablas.ToString() + ";\n" +
