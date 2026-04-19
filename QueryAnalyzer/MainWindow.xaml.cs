@@ -2491,9 +2491,10 @@ namespace QueryAnalyzer
                 }
                 else
                 {
-                    // Generar HTML con Mermaid.js — se abre directo en el navegador
-                    string htmlContent = GenerarHtmlMermaid(tablasMeta, conexionActual.Nombre);
-                    string tempPath    = System.IO.Path.Combine(
+                    // Tldraw: mismo layout jerárquico que Draw.io, abierto como HTML local
+                    var posicionesTld   = CalcularLayoutER(tablasMeta);
+                    string htmlContent  = GenerarHtmlTldraw(tablasMeta, posicionesTld, conexionActual.Nombre);
+                    string tempPath     = System.IO.Path.Combine(
                         System.IO.Path.GetTempPath(),
                         "ERD_" + conexionActual.Nombre + "_" +
                         DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".html");
@@ -2502,7 +2503,7 @@ namespace QueryAnalyzer
                     Dispatcher.Invoke(() =>
                     {
                         System.Diagnostics.Process.Start(tempPath);
-                        AppendMessage("Diagrama Mermaid abierto en el navegador.\nArchivo: " + tempPath);
+                        AppendMessage("Diagrama Tldraw abierto en el navegador.\nArchivo: " + tempPath);
                     });
                 }
             }
@@ -2841,6 +2842,14 @@ namespace QueryAnalyzer
         {
             PlataformaEsquema? resultado = null;
 
+            // Leer colores reales del tema activo para aplicarlos a los controles
+            // creados en código (los estilos implícitos no se propagan a ventanas
+            // instanciadas programáticamente sin ResourceDictionary propio).
+            var bgBrush   = (System.Windows.Media.Brush)this.FindResource("BrushWindowBG");
+            var fgBrush   = (System.Windows.Media.Brush)this.FindResource("BrushFG");
+            var btnBG     = (System.Windows.Media.Brush)this.FindResource("BrushBtnBG");
+            var btnBorder = (System.Windows.Media.Brush)this.FindResource("BrushBtnBorder");
+
             var dlg = new Window
             {
                 Title                 = "Abrir diagrama en…",
@@ -2849,7 +2858,7 @@ namespace QueryAnalyzer
                 ResizeMode            = ResizeMode.NoResize,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner                 = this,
-                Background            = (System.Windows.Media.Brush)Resources["BrushWindowBG"]
+                Background            = bgBrush
             };
 
             var root = new Grid { Margin = new Thickness(24, 20, 24, 20) };
@@ -2859,10 +2868,10 @@ namespace QueryAnalyzer
 
             var lbl = new TextBlock
             {
-                Text        = "¿En qué plataforma querés abrir el esquema?",
+                Text         = "¿En qué plataforma querés abrir el esquema?",
                 TextWrapping = TextWrapping.Wrap,
-                Foreground  = (System.Windows.Media.Brush)Resources["BrushFG"],
-                Margin      = new Thickness(0, 0, 0, 18)
+                Foreground   = fgBrush,
+                Margin       = new Thickness(0, 0, 0, 18)
             };
             Grid.SetRow(lbl, 0);
 
@@ -2873,19 +2882,28 @@ namespace QueryAnalyzer
             };
             Grid.SetRow(btnRow, 2);
 
-            var mkBtn = new Func<string, Button>(txt =>
-                new Button { Content = txt, Width = 96, Margin = new Thickness(8, 0, 8, 0), Padding = new Thickness(4, 6, 4, 6) });
+            var mkBtn = new Func<string, Button>(txt => new Button
+            {
+                Content         = txt,
+                Width           = 96,
+                Margin          = new Thickness(8, 0, 8, 0),
+                Padding         = new Thickness(4, 6, 4, 6),
+                Background      = btnBG,
+                Foreground      = fgBrush,
+                BorderBrush     = btnBorder,
+                BorderThickness = new Thickness(1)
+            });
 
             var btnDrawio   = mkBtn("Draw.io");
-            var btnMermaid  = mkBtn("Mermaid");
+            var btnTldraw   = mkBtn("Tldraw");
             var btnCancelar = mkBtn("Cancelar");
 
-            btnDrawio.Click   += (s, ev) => { resultado = PlataformaEsquema.DrawIO;  dlg.Close(); };
-            btnMermaid.Click  += (s, ev) => { resultado = PlataformaEsquema.Tldraw;  dlg.Close(); };
+            btnDrawio.Click   += (s, ev) => { resultado = PlataformaEsquema.DrawIO; dlg.Close(); };
+            btnTldraw.Click   += (s, ev) => { resultado = PlataformaEsquema.Tldraw; dlg.Close(); };
             btnCancelar.Click += (s, ev) => dlg.Close();
 
             btnRow.Children.Add(btnDrawio);
-            btnRow.Children.Add(btnMermaid);
+            btnRow.Children.Add(btnTldraw);
             btnRow.Children.Add(btnCancelar);
 
             root.Children.Add(lbl);
@@ -3110,157 +3128,206 @@ namespace QueryAnalyzer
         }
 
         // ────────────────────────────────────────────────────────────────
-        // Generador de HTML con Mermaid.js (ERD interactivo en el navegador)
+        // Generador de HTML con Tldraw (ERD editable en el navegador)
         // ────────────────────────────────────────────────────────────────
 
         /// <summary>
-        /// Genera un archivo HTML autocontenido con el ERD renderizado por Mermaid.js.
-        /// Se abre directamente en el navegador predeterminado sin pasos de importación.
+        /// Genera un archivo HTML autocontenido con el ERD cargado en Tldraw vía CDN.
+        /// Las formas se crean programáticamente con editor.createShapes(), evitando
+        /// por completo el paso de importar un archivo .tldr (y sus problemas de versión).
+        /// Se abre directamente en el navegador predeterminado; el diagrama es totalmente editable.
         /// </summary>
-        private string GenerarHtmlMermaid(
+        private string GenerarHtmlTldraw(
             Dictionary<string, EsquemaTablaInfo> tablasMeta,
+            Dictionary<string, Tuple<int, int>> posiciones,
             string nombreConexion)
         {
-            var sbErd = new System.Text.StringBuilder();
+            const int ANCHO     = 260;
+            const int ALTO_CAB  = 32;
+            const int ALTO_FILA = 22;
+            const int ALTO_MIN  = 80;
 
-            // ── Mapa nombre original → nombre sanitizado Mermaid ─────────────────
-            var nombres = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            var usados  = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var t in tablasMeta.Values)
-            {
-                string raw       = string.IsNullOrEmpty(t.Schema) ? t.Nombre : t.Schema + "_" + t.Nombre;
-                string sanitized = SanitizarNombreMermaid(raw);
-                string candidato = sanitized;
-                int sfx = 2;
-                while (usados.Contains(candidato)) candidato = sanitized + "_" + sfx++;
-                nombres[t.Nombre] = candidato;
-                usados.Add(candidato);
-            }
-
-            // ── Bloques de entidades ──────────────────────────────────────────────
-            sbErd.AppendLine("erDiagram");
+            // ── Serializar tablas + relaciones como JSON embebido ─────────────────
+            var sbTablas = new System.Text.StringBuilder();
+            sbTablas.Append("[\n");
+            bool pt = true;
             foreach (var kvp in tablasMeta)
             {
                 EsquemaTablaInfo t = kvp.Value;
-                string entidad = nombres[t.Nombre];
-                sbErd.AppendLine("  " + entidad + " {");
+                if (!pt) sbTablas.Append(",\n");
+                pt = false;
 
-                if (t.Columnas.Count == 0)
+                string display = string.IsNullOrEmpty(t.Schema)
+                    ? t.Nombre
+                    : t.Schema + "." + t.Nombre;
+
+                sbTablas.Append("  {");
+                sbTablas.Append("\"name\":"    + TldrJsStr(t.Nombre)  + ",");
+                sbTablas.Append("\"display\":" + TldrJsStr(display)   + ",");
+                sbTablas.Append("\"tipo\":"    + TldrJsStr(t.Tipo)    + ",");
+                sbTablas.Append("\"cols\":[");
+                bool pc = true;
+                foreach (var col in t.Columnas)
                 {
-                    sbErd.AppendLine("    string _");   // Mermaid no acepta bloques vacíos
+                    if (!pc) sbTablas.Append(",");
+                    pc = false;
+                    string tipoCom = col.Tipo +
+                        (string.IsNullOrEmpty(col.Longitud) || col.Longitud == "0"
+                            ? "" : "(" + col.Longitud + ")");
+                    sbTablas.Append("{\"n\":" + TldrJsStr(col.Nombre) +
+                                    ",\"t\":" + TldrJsStr(tipoCom)    + "}");
                 }
-                else
+                sbTablas.Append("],\"rels\":[");
+                bool pr = true;
+                foreach (var rel in t.Relaciones)
                 {
-                    foreach (var col in t.Columnas)
-                    {
-                        string tipo  = SanitizarTipoMermaid(col.Tipo, col.Longitud);
-                        string colNm = Regex.Replace(col.Nombre, @"[^a-zA-Z0-9_]", "_");
-                        if (string.IsNullOrEmpty(colNm)) colNm = "col";
-                        // Primer char debe ser letra si no lo es
-                        if (!char.IsLetter(colNm[0])) colNm = "c_" + colNm;
-                        sbErd.AppendLine("    " + tipo + " " + colNm);
-                    }
+                    if (!pr) sbTablas.Append(",");
+                    pr = false;
+                    sbTablas.Append("{\"from\":" + TldrJsStr(rel.TablaOrigen)  +
+                                    ",\"col\":"  + TldrJsStr(rel.ColumnaOrigen) +
+                                    ",\"to\":"   + TldrJsStr(rel.TablaDestino)  + "}");
                 }
-                sbErd.AppendLine("  }");
+                sbTablas.Append("]}");
             }
+            sbTablas.Append("\n]");
 
-            // ── Relaciones FK ─────────────────────────────────────────────────────
-            var yaVistasErd = new HashSet<string>();
-            foreach (var kvp in tablasMeta)
+            // ── Serializar posiciones como JSON embebido ──────────────────────────
+            var sbPos = new System.Text.StringBuilder();
+            sbPos.Append("{\n");
+            bool pp = true;
+            foreach (var kvp in posiciones)
             {
-                foreach (var rel in kvp.Value.Relaciones)
-                {
-                    if (!nombres.ContainsKey(rel.TablaOrigen) ||
-                        !nombres.ContainsKey(rel.TablaDestino)) continue;
-
-                    // Un registro por par de tablas (puede haber varias FK entre las mismas)
-                    string clave = rel.TablaOrigen + "|" + rel.TablaDestino;
-                    if (!yaVistasErd.Add(clave)) continue;
-
-                    string padre  = nombres[rel.TablaDestino]; // tabla referenciada (1)
-                    string hijo   = nombres[rel.TablaOrigen];  // tabla con FK (N)
-                    string label  = SanitizarNombreMermaid(rel.ColumnaOrigen);
-
-                    // PADRE ||--o{ HIJO : "columna_fk"
-                    sbErd.AppendLine("  " + padre + " ||--o{ " + hijo + " : \"" + label + "\"");
-                }
+                if (!pp) sbPos.Append(",\n");
+                pp = false;
+                sbPos.Append("  " + TldrJsStr(kvp.Key) +
+                             ":{\"x\":" + kvp.Value.Item1 +
+                             ",\"y\":"  + kvp.Value.Item2 + "}");
             }
+            sbPos.Append("\n}");
 
-            // ── Metadata para el HTML ─────────────────────────────────────────────
-            string fecha    = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
-            int    nTablas  = tablasMeta.Count;
-            int    nRels    = yaVistasErd.Count;
-
-            // Escapar contenido Mermaid para embeberlo en template literal JS
-            string erdJs = sbErd.ToString()
-                .Replace("\\", "\\\\")
-                .Replace("`", "\\`")
-                .Replace("$", "\\$");
-
-            string titulo = System.Security.SecurityElement.Escape(nombreConexion);
+            string titulo = (nombreConexion ?? "")
+                .Replace("&", "&amp;").Replace("<", "&lt;").Replace("\"", "&quot;");
+            string fecha  = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
 
             // ── HTML final ────────────────────────────────────────────────────────
+            // Las formas se crean con editor.createShapes() en el callback onMount,
+            // usando la API de la versión de tldraw que sirve esm.sh en ese momento.
+            // Esto garantiza compatibilidad total sin depender de versiones de schema.
             return
 "<!DOCTYPE html>\n" +
 "<html lang=\"es\">\n" +
 "<head>\n" +
 "  <meta charset=\"UTF-8\"/>\n" +
-"  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>\n" +
+"  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"/>\n" +
 "  <title>ERD \u2014 " + titulo + "</title>\n" +
-"  <script src=\"https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js\"></script>\n" +
+"  <link rel=\"stylesheet\" href=\"https://unpkg.com/@tldraw/tldraw/tldraw.css\"/>\n" +
 "  <style>\n" +
-"    * { box-sizing: border-box; margin: 0; padding: 0; }\n" +
-"    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;\n" +
-"           background: #f0f2f5; min-height: 100vh; }\n" +
-"    header { background: #1a1a2e; color: #eee;\n" +
-"             padding: 14px 24px; display: flex; align-items: baseline; gap: 16px; }\n" +
-"    header h1 { font-size: 18px; font-weight: 600; }\n" +
-"    header span { font-size: 13px; color: #aaa; }\n" +
-"    #wrap { padding: 28px; display: flex; justify-content: center; }\n" +
-"    #card { background: #fff; border-radius: 10px;\n" +
-"            box-shadow: 0 4px 20px rgba(0,0,0,.1);\n" +
-"            padding: 32px; overflow: auto; max-width: 100%; }\n" +
-"    .mermaid svg { max-width: none !important; height: auto; }\n" +
-"    footer { text-align: center; padding: 10px;\n" +
-"             font-size: 12px; color: #999; }\n" +
+"    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}\n" +
+"    html,body,#root{width:100%;height:100%;overflow:hidden}\n" +
 "  </style>\n" +
 "</head>\n" +
 "<body>\n" +
-"  <header>\n" +
-"    <h1>ERD \u2014 " + titulo + "</h1>\n" +
-"    <span>" + nTablas + " entidad(es) \u00b7 " + nRels + " relaci\u00f3n(es) \u00b7 " + fecha + "</span>\n" +
-"  </header>\n" +
-"  <div id=\"wrap\"><div id=\"card\"><div class=\"mermaid\" id=\"erd\"></div></div></div>\n" +
-"  <footer>Generado por QueryAnalyzer \u00b7 Mermaid.js v10</footer>\n" +
-"  <script>\n" +
-"    document.getElementById('erd').textContent = `" + erdJs + "`;\n" +
-"    mermaid.initialize({\n" +
-"      startOnLoad: true,\n" +
-"      theme: 'default',\n" +
-"      er: { diagramPadding: 60, layoutDirection: 'TB',\n" +
-"            minEntityWidth: 100, minEntityHeight: 75,\n" +
-"            entityPadding: 15, useMaxWidth: false }\n" +
-"    });\n" +
+"  <div id=\"root\"></div>\n" +
+"  <script type=\"module\">\n" +
+"    import { createElement } from 'https://esm.sh/react@18';\n" +
+"    import { createRoot }    from 'https://esm.sh/react-dom@18/client';\n" +
+"    import { Tldraw, createShapeId } from 'https://esm.sh/@tldraw/tldraw@2';\n" +
+"\n" +
+"    // ── Datos del ERD (generados por QueryAnalyzer " + fecha + ") ──────────\n" +
+"    const TABLAS     = " + sbTablas.ToString() + ";\n" +
+"    const POSICIONES = " + sbPos.ToString()    + ";\n" +
+"    const ANCHO      = " + ANCHO     + ";\n" +
+"    const ALTO_CAB   = " + ALTO_CAB  + ";\n" +
+"    const ALTO_FILA  = " + ALTO_FILA + ";\n" +
+"    const ALTO_MIN   = " + ALTO_MIN  + ";\n" +
+"\n" +
+"    function altoTabla(cols) {\n" +
+"      return Math.max(ALTO_MIN, ALTO_CAB + cols.length * ALTO_FILA + 8);\n" +
+"    }\n" +
+"\n" +
+"    function App() {\n" +
+"      function handleMount(editor) {\n" +
+"        const tableShapes = [];\n" +
+"        const arrowShapes = [];\n" +
+"\n" +
+"        // 1. Shapes de tablas\n" +
+"        TABLAS.forEach(t => {\n" +
+"          const id  = createShapeId('tbl_' + t.name.replace(/[^a-zA-Z0-9]/g, '_'));\n" +
+"          t._shapeId = id;   // guardar para flechas\n" +
+"          const pos = POSICIONES[t.name] || { x: 0, y: 0 };\n" +
+"          const h   = altoTabla(t.cols);\n" +
+"          const hdr = (t.tipo === 'VIEW' ? '\\u2B21 ' : '') + t.display;\n" +
+"          const sep = '\\u2500'.repeat(26);\n" +
+"          const body = t.cols.map(c => '  ' + c.n + '  ' + c.t).join('\\n');\n" +
+"          const text  = t.cols.length ? hdr + '\\n' + sep + '\\n' + body : hdr;\n" +
+"          tableShapes.push({\n" +
+"            id, type: 'geo', x: pos.x, y: pos.y,\n" +
+"            props: {\n" +
+"              geo: 'rectangle', w: ANCHO, h, text,\n" +
+"              color: t.tipo === 'VIEW' ? 'blue' : 'orange',\n" +
+"              fill: 'semi', font: 'mono', size: 's',\n" +
+"              align: 'start', verticalAlign: 'start',\n" +
+"              growY: 0, url: ''\n" +
+"            }\n" +
+"          });\n" +
+"        });\n" +
+"\n" +
+"        editor.createShapes(tableShapes);\n" +
+"\n" +
+"        // 2. Flechas FK  (point-based: sin binding, sin dependencia de schema)\n" +
+"        const yaVistas = new Set();\n" +
+"        let fkIdx = 0;\n" +
+"        TABLAS.forEach(t => {\n" +
+"          (t.rels || []).forEach(rel => {\n" +
+"            const key = rel.from + '\\x00' + rel.col + '\\x00' + rel.to;\n" +
+"            if (yaVistas.has(key)) return;\n" +
+"            yaVistas.add(key);\n" +
+"            const pf = POSICIONES[rel.from];\n" +
+"            const pd = POSICIONES[rel.to];\n" +
+"            if (!pf || !pd) return;\n" +
+"            const tFrom = TABLAS.find(x => x.name === rel.from);\n" +
+"            const hFrom = tFrom ? altoTabla(tFrom.cols) : ALTO_MIN;\n" +
+"            // salida: borde inferior-centro del hijo; llegada: borde superior-centro del padre\n" +
+"            const sx = pf.x + ANCHO / 2,  sy = pf.y + hFrom;\n" +
+"            const ex = pd.x + ANCHO / 2,  ey = pd.y;\n" +
+"            arrowShapes.push({\n" +
+"              id: createShapeId('fk_' + (fkIdx++)),\n" +
+"              type: 'arrow', x: 0, y: 0,\n" +
+"              props: {\n" +
+"                start: { x: sx, y: sy },\n" +
+"                end:   { x: ex, y: ey },\n" +
+"                arrowheadStart: 'none', arrowheadEnd: 'arrow',\n" +
+"                text: rel.col,\n" +
+"                size: 's', color: 'black', fill: 'none',\n" +
+"                font: 'draw', dash: 'solid',\n" +
+"                labelPosition: 0.5, bend: 0, labelColor: 'black'\n" +
+"              }\n" +
+"            });\n" +
+"          });\n" +
+"        });\n" +
+"\n" +
+"        if (arrowShapes.length) editor.createShapes(arrowShapes);\n" +
+"        editor.zoomToFit();\n" +
+"      }\n" +
+"      return createElement(Tldraw, { onMount: handleMount });\n" +
+"    }\n" +
+"\n" +
+"    createRoot(document.getElementById('root')).render(createElement(App));\n" +
 "  </script>\n" +
 "</body>\n" +
 "</html>";
         }
 
-        private static string SanitizarNombreMermaid(string s)
+        /// <summary>Convierte un string C# en un literal de cadena JSON válido para embeber en JS.</summary>
+        private static string TldrJsStr(string s)
         {
-            if (string.IsNullOrEmpty(s)) return "T";
-            string r = Regex.Replace(s, @"[^a-zA-Z0-9_]", "_").Trim('_');
-            if (string.IsNullOrEmpty(r)) return "T";
-            if (!char.IsLetter(r[0])) r = "T_" + r;
-            return r;
-        }
-
-        private static string SanitizarTipoMermaid(string tipo, string longitud)
-        {
-            // Quitar paréntesis de tamaño y sanitizar a identificador válido
-            string t = Regex.Replace(tipo ?? "unknown", @"\(.*?\)", "");
-            t = Regex.Replace(t, @"[^a-zA-Z0-9_]", "_").Trim('_');
-            return string.IsNullOrEmpty(t) ? "unknown" : t;
+            if (s == null) return "\"\"";
+            return "\""
+                + s.Replace("\\", "\\\\")
+                   .Replace("\"", "\\\"")
+                   .Replace("\n", "\\n")
+                   .Replace("\r", "")
+                + "\"";
         }
 
         /// <summary>
