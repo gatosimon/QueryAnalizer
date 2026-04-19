@@ -2478,12 +2478,11 @@ namespace QueryAnalyzer
                     return;
                 }
 
-                // ── 3. Calcular layout jerárquico (compartido) ────────────────────
-                var posiciones = CalcularLayoutER(tablasMeta);
-
-                // ── 4. Generar y abrir según plataforma ───────────────────────────
+                // ── 3. Generar y abrir según plataforma ──────────────────────────
                 if (plataforma == PlataformaEsquema.DrawIO)
                 {
+                    // Layout jerárquico solo para Draw.io (Mermaid lo hace automáticamente)
+                    var posiciones = CalcularLayoutER(tablasMeta);
                     string xmlDrawio = GenerarXmlDrawio(tablasMeta, posiciones);
                     string encoded   = ComprimirDrawio(xmlDrawio);
                     string url       = "https://app.diagrams.net/?src=about#R" + Uri.EscapeDataString(encoded);
@@ -2492,20 +2491,18 @@ namespace QueryAnalyzer
                 }
                 else
                 {
-                    string jsonTldraw = GenerarJsonTldraw(tablasMeta, posiciones);
-                    string tempPath   = System.IO.Path.Combine(
+                    // Generar HTML con Mermaid.js — se abre directo en el navegador
+                    string htmlContent = GenerarHtmlMermaid(tablasMeta, conexionActual.Nombre);
+                    string tempPath    = System.IO.Path.Combine(
                         System.IO.Path.GetTempPath(),
-                        $"ERD_{conexionActual.Nombre}_{DateTime.Now:yyyyMMdd_HHmmss}.tldr");
-                    System.IO.File.WriteAllText(tempPath, jsonTldraw, System.Text.Encoding.UTF8);
+                        "ERD_" + conexionActual.Nombre + "_" +
+                        DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".html");
+                    System.IO.File.WriteAllText(tempPath, htmlContent, System.Text.Encoding.UTF8);
 
                     Dispatcher.Invoke(() =>
                     {
-                        System.Diagnostics.Process.Start("https://www.tldraw.com/");
-                        System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{tempPath}\"");
-                        AppendMessage(
-                            $"Diagrama guardado en:\n{tempPath}\n" +
-                            "Tldraw abierto en el navegador. " +
-                            "Arrastrá el archivo .tldr a la ventana del navegador para cargarlo.");
+                        System.Diagnostics.Process.Start(tempPath);
+                        AppendMessage("Diagrama Mermaid abierto en el navegador.\nArchivo: " + tempPath);
                     });
                 }
             }
@@ -2847,7 +2844,7 @@ namespace QueryAnalyzer
             var dlg = new Window
             {
                 Title                 = "Abrir diagrama en…",
-                Width                 = 360,
+                Width                 = 400,
                 Height                = 170,
                 ResizeMode            = ResizeMode.NoResize,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
@@ -2880,15 +2877,15 @@ namespace QueryAnalyzer
                 new Button { Content = txt, Width = 96, Margin = new Thickness(8, 0, 8, 0), Padding = new Thickness(4, 6, 4, 6) });
 
             var btnDrawio   = mkBtn("Draw.io");
-            var btnTldraw   = mkBtn("Tldraw");
+            var btnMermaid  = mkBtn("Mermaid");
             var btnCancelar = mkBtn("Cancelar");
 
             btnDrawio.Click   += (s, ev) => { resultado = PlataformaEsquema.DrawIO;  dlg.Close(); };
-            btnTldraw.Click   += (s, ev) => { resultado = PlataformaEsquema.Tldraw;  dlg.Close(); };
+            btnMermaid.Click  += (s, ev) => { resultado = PlataformaEsquema.Tldraw;  dlg.Close(); };
             btnCancelar.Click += (s, ev) => dlg.Close();
 
             btnRow.Children.Add(btnDrawio);
-            btnRow.Children.Add(btnTldraw);
+            btnRow.Children.Add(btnMermaid);
             btnRow.Children.Add(btnCancelar);
 
             root.Children.Add(lbl);
@@ -3113,199 +3110,157 @@ namespace QueryAnalyzer
         }
 
         // ────────────────────────────────────────────────────────────────
-        // Generador de JSON Tldraw (.tldr)
+        // Generador de HTML con Mermaid.js (ERD interactivo en el navegador)
         // ────────────────────────────────────────────────────────────────
 
         /// <summary>
-        /// Genera un archivo .tldr (JSON) compatible con Tldraw v2.
-        /// Cada tabla/vista es un rectángulo geo con el listado de columnas como texto.
-        /// Las FKs se representan como flechas punto-a-punto.
+        /// Genera un archivo HTML autocontenido con el ERD renderizado por Mermaid.js.
+        /// Se abre directamente en el navegador predeterminado sin pasos de importación.
         /// </summary>
-        private string GenerarJsonTldraw(
+        private string GenerarHtmlMermaid(
             Dictionary<string, EsquemaTablaInfo> tablasMeta,
-            Dictionary<string, Tuple<int, int>> posiciones)
+            string nombreConexion)
         {
-            const int ANCHO     = 260;
-            const int ALTO_CAB  = 32;
-            const int ALTO_FILA = 22;
-            const int ALTO_MIN  = 60;
+            var sbErd = new System.Text.StringBuilder();
 
-            var sbRec = new System.Text.StringBuilder();
-            bool primero = true;
-
-            // Helper: append JSON record
-            Action<string> appRec = rec =>
+            // ── Mapa nombre original → nombre sanitizado Mermaid ─────────────────
+            var nombres = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var usados  = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var t in tablasMeta.Values)
             {
-                if (!primero) sbRec.Append(",\n");
-                sbRec.Append(rec);
-                primero = false;
-            };
+                string raw       = string.IsNullOrEmpty(t.Schema) ? t.Nombre : t.Schema + "_" + t.Nombre;
+                string sanitized = SanitizarNombreMermaid(raw);
+                string candidato = sanitized;
+                int sfx = 2;
+                while (usados.Contains(candidato)) candidato = sanitized + "_" + sfx++;
+                nombres[t.Nombre] = candidato;
+                usados.Add(candidato);
+            }
 
-            // ── Registros de documento y página ──────────────────────────────────
-            appRec("{\"gridSize\":10,\"name\":\"\",\"meta\":{}," +
-                   "\"id\":\"document:document\",\"typeName\":\"document\"}");
-            appRec("{\"meta\":{},\"id\":\"page:page\",\"name\":\"Page 1\"," +
-                   "\"index\":\"a1\",\"typeName\":\"page\"}");
-
-            // ── Shapes de tablas ──────────────────────────────────────────────────
-            var idPorTabla = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            int shapeIdx   = 0;
-
+            // ── Bloques de entidades ──────────────────────────────────────────────
+            sbErd.AppendLine("erDiagram");
             foreach (var kvp in tablasMeta)
             {
                 EsquemaTablaInfo t = kvp.Value;
-                string shapeId = "shape:tbl_" + SanitizarIdTld(t.Nombre);
-                idPorTabla[t.Nombre] = shapeId;
+                string entidad = nombres[t.Nombre];
+                sbErd.AppendLine("  " + entidad + " {");
 
-                Tuple<int, int> pos;
-                if (!posiciones.TryGetValue(t.Nombre, out pos)) pos = Tuple.Create(0, 0);
-                int x = pos.Item1;
-                int y = pos.Item2;
-                int h = Math.Max(ALTO_MIN, ALTO_CAB + t.Columnas.Count * ALTO_FILA + 8);
-
-                // Texto de la forma: "NOMBRE\n─────\ncol: tipo\n..."
-                var sbTxt = new System.Text.StringBuilder();
-                string titulo = string.IsNullOrEmpty(t.Schema)
-                    ? t.Nombre
-                    : t.Schema + "." + t.Nombre;
-                if (t.Tipo == "VIEW") titulo = "⬡ " + titulo;
-                sbTxt.Append(EscJson(titulo));
-                if (t.Columnas.Count > 0)
+                if (t.Columnas.Count == 0)
                 {
-                    sbTxt.Append("\\n");
-                    sbTxt.Append(new string('─', 28));
-                    foreach (var col2 in t.Columnas)
+                    sbErd.AppendLine("    string _");   // Mermaid no acepta bloques vacíos
+                }
+                else
+                {
+                    foreach (var col in t.Columnas)
                     {
-                        string linea = col2.Nombre + " : " + col2.Tipo;
-                        if (!string.IsNullOrEmpty(col2.Longitud) && col2.Longitud != "0")
-                            linea += "(" + col2.Longitud + ")";
-                        sbTxt.Append("\\n" + EscJson(linea));
+                        string tipo  = SanitizarTipoMermaid(col.Tipo, col.Longitud);
+                        string colNm = Regex.Replace(col.Nombre, @"[^a-zA-Z0-9_]", "_");
+                        if (string.IsNullOrEmpty(colNm)) colNm = "col";
+                        // Primer char debe ser letra si no lo es
+                        if (!char.IsLetter(colNm[0])) colNm = "c_" + colNm;
+                        sbErd.AppendLine("    " + tipo + " " + colNm);
                     }
                 }
-
-                string color = t.Tipo == "VIEW" ? "blue" : "orange";
-                string idx   = TldIndex(shapeIdx++);
-
-                appRec(
-                    "{\n" +
-                    $"  \"x\":{x},\"y\":{y},\"rotation\":0,\"isLocked\":false,\"opacity\":1,\n" +
-                    $"  \"meta\":{{}},\"id\":\"{shapeId}\",\"type\":\"geo\",\n" +
-                    $"  \"props\":{{\"w\":{ANCHO},\"h\":{h},\"geo\":\"rectangle\",\n" +
-                    $"    \"color\":\"{color}\",\"labelColor\":\"black\",\"fill\":\"semi\",\n" +
-                    $"    \"dash\":\"solid\",\"size\":\"s\",\"font\":\"mono\",\n" +
-                    $"    \"text\":\"{sbTxt}\",\n" +
-                    $"    \"align\":\"start\",\"verticalAlign\":\"start\",\"growY\":0,\"url\":\"\"\n" +
-                    $"  }},\n" +
-                    $"  \"parentId\":\"page:page\",\"index\":\"{idx}\",\"typeName\":\"shape\"\n" +
-                    "}"
-                );
+                sbErd.AppendLine("  }");
             }
 
-            // ── Flechas FK (point-based) ──────────────────────────────────────────
-            var yaVistas = new HashSet<string>();
-
+            // ── Relaciones FK ─────────────────────────────────────────────────────
+            var yaVistasErd = new HashSet<string>();
             foreach (var kvp in tablasMeta)
             {
                 foreach (var rel in kvp.Value.Relaciones)
                 {
-                    if (!idPorTabla.ContainsKey(rel.TablaOrigen) ||
-                        !idPorTabla.ContainsKey(rel.TablaDestino)) continue;
+                    if (!nombres.ContainsKey(rel.TablaOrigen) ||
+                        !nombres.ContainsKey(rel.TablaDestino)) continue;
 
-                    string clave = rel.TablaOrigen + "|" + rel.ColumnaOrigen + "|" +
-                                   rel.TablaDestino + "|" + rel.ColumnaDestino;
-                    if (!yaVistas.Add(clave)) continue;
+                    // Un registro por par de tablas (puede haber varias FK entre las mismas)
+                    string clave = rel.TablaOrigen + "|" + rel.TablaDestino;
+                    if (!yaVistasErd.Add(clave)) continue;
 
-                    EsquemaTablaInfo tSrc, tDst;
-                    if (!tablasMeta.TryGetValue(rel.TablaOrigen, out tSrc)) continue;
-                    if (!tablasMeta.TryGetValue(rel.TablaDestino, out tDst)) continue;
+                    string padre  = nombres[rel.TablaDestino]; // tabla referenciada (1)
+                    string hijo   = nombres[rel.TablaOrigen];  // tabla con FK (N)
+                    string label  = SanitizarNombreMermaid(rel.ColumnaOrigen);
 
-                    Tuple<int, int> posSrc, posDst;
-                    if (!posiciones.TryGetValue(rel.TablaOrigen, out posSrc)) continue;
-                    if (!posiciones.TryGetValue(rel.TablaDestino, out posDst)) continue;
-
-                    int hSrc = Math.Max(ALTO_MIN, ALTO_CAB + tSrc.Columnas.Count * ALTO_FILA + 8);
-                    int hDst = Math.Max(ALTO_MIN, ALTO_CAB + tDst.Columnas.Count * ALTO_FILA + 8);
-
-                    // Arrow: salida desde borde inferior-centro del hijo, entrada por borde superior-centro del padre
-                    double startX = posSrc.Item1 + ANCHO / 2.0;
-                    double startY = posSrc.Item2 + hSrc;
-                    double endX   = posDst.Item1 + ANCHO / 2.0;
-                    double endY   = posDst.Item2;
-
-                    string arrowId = "shape:fk_" + (yaVistas.Count);
-                    string label   = EscJson(rel.ColumnaOrigen + " → " + rel.ColumnaDestino);
-                    string idx     = TldIndex(shapeIdx++);
-
-                    appRec(
-                        "{\n" +
-                        "  \"x\":0,\"y\":0,\"rotation\":0,\"isLocked\":false,\"opacity\":1,\n" +
-                        $"  \"meta\":{{}},\"id\":\"{arrowId}\",\"type\":\"arrow\",\n" +
-                        "  \"props\":{\n" +
-                        "    \"dash\":\"solid\",\"size\":\"s\",\"fill\":\"none\",\"color\":\"black\",\n" +
-                        $"    \"labelColor\":\"black\",\"bend\":0,\n" +
-                        $"    \"start\":{{\"x\":{startX:0.##},\"y\":{startY:0.##}}},\n" +
-                        $"    \"end\":{{\"x\":{endX:0.##},\"y\":{endY:0.##}}},\n" +
-                        $"    \"arrowheadStart\":\"none\",\"arrowheadEnd\":\"arrow\",\n" +
-                        $"    \"text\":\"{label}\",\"font\":\"sans\",\"labelPosition\":0.5\n" +
-                        "  },\n" +
-                        $"  \"parentId\":\"page:page\",\"index\":\"{idx}\",\"typeName\":\"shape\"\n" +
-                        "}"
-                    );
+                    // PADRE ||--o{ HIJO : "columna_fk"
+                    sbErd.AppendLine("  " + padre + " ||--o{ " + hijo + " : \"" + label + "\"");
                 }
             }
 
-            // ── Ensamblar el archivo .tldr ────────────────────────────────────────
-            return
-                "{\n" +
-                "  \"tldrawFileFormatVersion\":1,\n" +
-                "  \"schema\":{\n" +
-                "    \"schemaVersion\":2,\n" +
-                "    \"sequences\":{\n" +
-                "      \"com.tldraw.store\":4,\"com.tldraw.asset\":1,\n" +
-                "      \"com.tldraw.binding\":0,\"com.tldraw.shape\":5,\n" +
-                "      \"com.tldraw.shape.group\":0,\"com.tldraw.shape.text\":1,\n" +
-                "      \"com.tldraw.shape.bookmark\":2,\"com.tldraw.shape.draw\":1,\n" +
-                "      \"com.tldraw.shape.geo\":9,\"com.tldraw.shape.note\":7,\n" +
-                "      \"com.tldraw.shape.line\":0,\"com.tldraw.shape.frame\":0,\n" +
-                "      \"com.tldraw.shape.arrow\":3,\"com.tldraw.shape.highlight\":0,\n" +
-                "      \"com.tldraw.shape.embed\":4,\"com.tldraw.shape.image\":4,\n" +
-                "      \"com.tldraw.shape.video\":2,\"com.tldraw.instance\":0,\n" +
-                "      \"com.tldraw.instance_presence\":0,\"com.tldraw.page\":1,\n" +
-                "      \"com.tldraw.camera\":1,\"com.tldraw.document\":2,\n" +
-                "      \"com.tldraw.instance_page_state\":5,\"com.tldraw.pointer\":1,\n" +
-                "      \"com.tldraw.user_document\":0\n" +
-                "    }\n" +
-                "  },\n" +
-                "  \"records\":[\n" + sbRec + "\n  ]\n" +
-                "}";
-        }
+            // ── Metadata para el HTML ─────────────────────────────────────────────
+            string fecha    = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+            int    nTablas  = tablasMeta.Count;
+            int    nRels    = yaVistasErd.Count;
 
-        /// <summary>Genera un índice fraccionario simple y único para tldraw (ej: "a1","a2","b1"…)</summary>
-        private static string TldIndex(int i)
-        {
-            // 62 chars per prefix letter: 0-9, A-Z, a-z
-            const string chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-            char prefix = (char)('a' + i / chars.Length);
-            return prefix + chars[i % chars.Length].ToString();
-        }
-
-        /// <summary>Sanitiza un nombre de tabla para usarlo como ID de shape en Tldraw.</summary>
-        private static string SanitizarIdTld(string nombre)
-        {
-            var sb = new System.Text.StringBuilder();
-            foreach (char c in nombre)
-                sb.Append(char.IsLetterOrDigit(c) ? c : '_');
-            return sb.ToString();
-        }
-
-        /// <summary>Escapa caracteres especiales para JSON inline.</summary>
-        private static string EscJson(string s)
-        {
-            return s
+            // Escapar contenido Mermaid para embeberlo en template literal JS
+            string erdJs = sbErd.ToString()
                 .Replace("\\", "\\\\")
-                .Replace("\"", "\\\"")
-                .Replace("\n", "\\n")
-                .Replace("\r", "");
+                .Replace("`", "\\`")
+                .Replace("$", "\\$");
+
+            string titulo = System.Security.SecurityElement.Escape(nombreConexion);
+
+            // ── HTML final ────────────────────────────────────────────────────────
+            return
+"<!DOCTYPE html>\n" +
+"<html lang=\"es\">\n" +
+"<head>\n" +
+"  <meta charset=\"UTF-8\"/>\n" +
+"  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>\n" +
+"  <title>ERD \u2014 " + titulo + "</title>\n" +
+"  <script src=\"https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js\"></script>\n" +
+"  <style>\n" +
+"    * { box-sizing: border-box; margin: 0; padding: 0; }\n" +
+"    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;\n" +
+"           background: #f0f2f5; min-height: 100vh; }\n" +
+"    header { background: #1a1a2e; color: #eee;\n" +
+"             padding: 14px 24px; display: flex; align-items: baseline; gap: 16px; }\n" +
+"    header h1 { font-size: 18px; font-weight: 600; }\n" +
+"    header span { font-size: 13px; color: #aaa; }\n" +
+"    #wrap { padding: 28px; display: flex; justify-content: center; }\n" +
+"    #card { background: #fff; border-radius: 10px;\n" +
+"            box-shadow: 0 4px 20px rgba(0,0,0,.1);\n" +
+"            padding: 32px; overflow: auto; max-width: 100%; }\n" +
+"    .mermaid svg { max-width: none !important; height: auto; }\n" +
+"    footer { text-align: center; padding: 10px;\n" +
+"             font-size: 12px; color: #999; }\n" +
+"  </style>\n" +
+"</head>\n" +
+"<body>\n" +
+"  <header>\n" +
+"    <h1>ERD \u2014 " + titulo + "</h1>\n" +
+"    <span>" + nTablas + " entidad(es) \u00b7 " + nRels + " relaci\u00f3n(es) \u00b7 " + fecha + "</span>\n" +
+"  </header>\n" +
+"  <div id=\"wrap\"><div id=\"card\"><div class=\"mermaid\" id=\"erd\"></div></div></div>\n" +
+"  <footer>Generado por QueryAnalyzer \u00b7 Mermaid.js v10</footer>\n" +
+"  <script>\n" +
+"    document.getElementById('erd').textContent = `" + erdJs + "`;\n" +
+"    mermaid.initialize({\n" +
+"      startOnLoad: true,\n" +
+"      theme: 'default',\n" +
+"      er: { diagramPadding: 60, layoutDirection: 'TB',\n" +
+"            minEntityWidth: 100, minEntityHeight: 75,\n" +
+"            entityPadding: 15, useMaxWidth: false }\n" +
+"    });\n" +
+"  </script>\n" +
+"</body>\n" +
+"</html>";
+        }
+
+        private static string SanitizarNombreMermaid(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return "T";
+            string r = Regex.Replace(s, @"[^a-zA-Z0-9_]", "_").Trim('_');
+            if (string.IsNullOrEmpty(r)) return "T";
+            if (!char.IsLetter(r[0])) r = "T_" + r;
+            return r;
+        }
+
+        private static string SanitizarTipoMermaid(string tipo, string longitud)
+        {
+            // Quitar paréntesis de tamaño y sanitizar a identificador válido
+            string t = Regex.Replace(tipo ?? "unknown", @"\(.*?\)", "");
+            t = Regex.Replace(t, @"[^a-zA-Z0-9_]", "_").Trim('_');
+            return string.IsNullOrEmpty(t) ? "unknown" : t;
         }
 
         /// <summary>
