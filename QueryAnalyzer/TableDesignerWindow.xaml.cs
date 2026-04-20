@@ -164,6 +164,10 @@ namespace QueryAnalyzer
         {
             if (_columnas == null || _columnas.Count == 0) return;
 
+            // Confirmar la edición de cualquier celda que esté activa en el DataGrid
+            // (LostFocus puede no haber propagado el binding si el foco va directo al botón)
+            dgColumnas.CommitEdit(DataGridEditingUnit.Row, true);
+
             if (txtNuevoNombre.Text.Trim().Length > 0)
             {
                 string nn = txtNuevoNombre.Text.Trim();

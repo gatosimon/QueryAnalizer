@@ -231,6 +231,33 @@ namespace QueryAnalyzer
             {
                 case TipoMotor.MS_SQL:
                 {
+                    // Paso 1: cargar descripciones de columnas en un diccionario
+                    // (mismo patrón que DocumentadorService, evita subconsulta correlacionada
+                    //  que puede fallar con sql_variant via ODBC)
+                    var descripciones = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    try
+                    {
+                        string sqlDesc = string.Format(@"
+SELECT sc.name AS col_name, CAST(ep.value AS NVARCHAR(4000)) AS descripcion
+FROM sys.extended_properties ep
+INNER JOIN sys.objects o  ON ep.major_id = o.object_id
+INNER JOIN sys.columns sc ON ep.major_id = sc.object_id AND ep.minor_id = sc.column_id
+WHERE ep.name = 'MS_Description' AND o.name = '{0}'", t);
+                        using (var cmdD = new OdbcCommand(sqlDesc, conn))
+                        using (var rd = cmdD.ExecuteReader())
+                        {
+                            while (rd.Read())
+                            {
+                                string colName = rd[0].ToString().Trim();
+                                string desc    = rd.IsDBNull(1) ? null : rd[1].ToString().Trim();
+                                if (!string.IsNullOrEmpty(colName))
+                                    descripciones[colName] = desc;
+                            }
+                        }
+                    }
+                    catch { /* continuar sin descripciones si falla */ }
+
+                    // Paso 2: cargar columnas (sin subconsulta correlacionada)
                     string sql = string.Format(@"
 SELECT
     c.COLUMN_NAME,
@@ -240,12 +267,7 @@ SELECT
     c.NUMERIC_SCALE,
     c.IS_NULLABLE,
     c.COLUMN_DEFAULT,
-    CASE WHEN pk.COLUMN_NAME IS NOT NULL THEN 1 ELSE 0 END AS IS_PK,
-    (SELECT TOP 1 CAST(ep2.value AS nvarchar(4000))
-     FROM sys.extended_properties ep2
-     INNER JOIN sys.objects o2 ON ep2.major_id = o2.object_id
-     INNER JOIN sys.columns sc ON ep2.major_id = sc.object_id AND ep2.minor_id = sc.column_id
-     WHERE ep2.name = 'MS_Description' AND o2.name = c.TABLE_NAME AND sc.name = c.COLUMN_NAME) AS DESCRIPTION
+    CASE WHEN pk.COLUMN_NAME IS NOT NULL THEN 1 ELSE 0 END AS IS_PK
 FROM INFORMATION_SCHEMA.COLUMNS c
 LEFT JOIN (
     SELECT ku.TABLE_NAME, ku.COLUMN_NAME
@@ -261,9 +283,10 @@ ORDER BY c.ORDINAL_POSITION", t);
                     {
                         while (r.Read())
                         {
+                            string colName = r[0].ToString().Trim();
                             var col = new ColumnDesignInfo
                             {
-                                Nombre       = r[0].ToString().Trim(),
+                                Nombre       = colName,
                                 TipoDato     = r[1].ToString().Trim(),
                                 Longitud     = r.IsDBNull(2) ? (int?)null : Convert.ToInt32(r[2]),
                                 Precision    = r.IsDBNull(3) ? (int?)null : Convert.ToInt32(r[3]),
@@ -271,7 +294,7 @@ ORDER BY c.ORDINAL_POSITION", t);
                                 EsNulable    = r[5].ToString().Trim().ToUpperInvariant() == "YES",
                                 ValorDefault = r.IsDBNull(6) ? null : r[6].ToString().Trim(),
                                 EsPK         = Convert.ToInt32(r[7]) == 1,
-                                Descripcion  = r.IsDBNull(8) ? null : r[8].ToString().Trim()
+                                Descripcion  = descripciones.TryGetValue(colName, out string d) ? d : null
                             };
                             col.MarcarComoOriginal();
                             lista.Add(col);
