@@ -642,14 +642,20 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
                         if (!string.IsNullOrWhiteSpace(col.Descripcion))
                         {
                             sb.AppendLine(string.Format("IF EXISTS (SELECT 1 FROM sys.extended_properties WHERE major_id = OBJECT_ID(N'{0}') AND name = N'MS_Description' AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'{0}'), N'{1}', 'ColumnId'))", tabla, colNom));
-                            sb.AppendLine(string.Format("    EXEC sp_updateextendedproperty N'MS_Description', N'{0}', N'SCHEMA', N'{1}', N'TABLE', N'{2}', N'COLUMN', N'{3}';", desc, schemaSql, tableOnly, colNom));
+                            sb.AppendLine("BEGIN");
+                            sb.AppendLine(string.Format("    EXEC sp_updateextendedproperty N'MS_Description', N'{0}', N'SCHEMA', N'{1}', N'TABLE', N'{2}', N'COLUMN', N'{3}'", desc, schemaSql, tableOnly, colNom));
+                            sb.AppendLine("END");
                             sb.AppendLine("ELSE");
-                            sb.AppendLine(string.Format("    EXEC sp_addextendedproperty N'MS_Description', N'{0}', N'SCHEMA', N'{1}', N'TABLE', N'{2}', N'COLUMN', N'{3}';", desc, schemaSql, tableOnly, colNom));
+                            sb.AppendLine("BEGIN");
+                            sb.AppendLine(string.Format("    EXEC sp_addextendedproperty N'MS_Description', N'{0}', N'SCHEMA', N'{1}', N'TABLE', N'{2}', N'COLUMN', N'{3}'", desc, schemaSql, tableOnly, colNom));
+                            sb.AppendLine("END");
                         }
                         else
                         {
                             sb.AppendLine(string.Format("IF EXISTS (SELECT 1 FROM sys.extended_properties WHERE major_id = OBJECT_ID(N'{0}') AND name = N'MS_Description' AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'{0}'), N'{1}', 'ColumnId'))", tabla, colNom));
-                            sb.AppendLine(string.Format("    EXEC sp_dropextendedproperty N'MS_Description', N'SCHEMA', N'{0}', N'TABLE', N'{1}', N'COLUMN', N'{2}';", schemaSql, tableOnly, colNom));
+                            sb.AppendLine("BEGIN");
+                            sb.AppendLine(string.Format("    EXEC sp_dropextendedproperty N'MS_Description', N'SCHEMA', N'{0}', N'TABLE', N'{1}', N'COLUMN', N'{2}'", schemaSql, tableOnly, colNom));
+                            sb.AppendLine("END");
                         }
                         break;
                     case TipoMotor.POSTGRES:
@@ -678,14 +684,20 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
                         if (!string.IsNullOrWhiteSpace(descripcionTabla))
                         {
                             sb.AppendLine(string.Format("IF EXISTS (SELECT 1 FROM sys.extended_properties WHERE major_id = OBJECT_ID(N'{0}') AND name = N'MS_Description' AND minor_id = 0)", tabla));
-                            sb.AppendLine(string.Format("    EXEC sp_updateextendedproperty N'MS_Description', N'{0}', N'SCHEMA', N'{1}', N'TABLE', N'{2}';", dt, schemaSql, tableOnly));
+                            sb.AppendLine("BEGIN");
+                            sb.AppendLine(string.Format("    EXEC sp_updateextendedproperty N'MS_Description', N'{0}', N'SCHEMA', N'{1}', N'TABLE', N'{2}'", dt, schemaSql, tableOnly));
+                            sb.AppendLine("END");
                             sb.AppendLine("ELSE");
-                            sb.AppendLine(string.Format("    EXEC sp_addextendedproperty N'MS_Description', N'{0}', N'SCHEMA', N'{1}', N'TABLE', N'{2}';", dt, schemaSql, tableOnly));
+                            sb.AppendLine("BEGIN");
+                            sb.AppendLine(string.Format("    EXEC sp_addextendedproperty N'MS_Description', N'{0}', N'SCHEMA', N'{1}', N'TABLE', N'{2}'", dt, schemaSql, tableOnly));
+                            sb.AppendLine("END");
                         }
                         else
                         {
                             sb.AppendLine(string.Format("IF EXISTS (SELECT 1 FROM sys.extended_properties WHERE major_id = OBJECT_ID(N'{0}') AND name = N'MS_Description' AND minor_id = 0)", tabla));
-                            sb.AppendLine(string.Format("    EXEC sp_dropextendedproperty N'MS_Description', N'SCHEMA', N'{0}', N'TABLE', N'{1}';", schemaSql, tableOnly));
+                            sb.AppendLine("BEGIN");
+                            sb.AppendLine(string.Format("    EXEC sp_dropextendedproperty N'MS_Description', N'SCHEMA', N'{0}', N'TABLE', N'{1}'", schemaSql, tableOnly));
+                            sb.AppendLine("END");
                         }
                         break;
                     case TipoMotor.POSTGRES:
