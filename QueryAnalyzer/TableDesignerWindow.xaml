@@ -150,6 +150,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -167,7 +168,7 @@
             <Separator/>
             <Button x:Name="btnScript" Click="GenerarScript_Click"
                     ToolTip="Generar script DDL con los cambios detectados" Padding="6,2">
-                <TextBlock Text="Generar script y Ejecutar"/>
+                <TextBlock Text="Aplicar"/>
             </Button>
             <Separator/>
             <Button x:Name="btnRecargar" Click="Recargar_Click"
@@ -190,8 +191,58 @@
             </Button>
         </ToolBar>
 
+        <!-- ── Panel: Descripción de tabla + Modo de aplicación ── -->
+        <Border Grid.Row="1"
+                BorderThickness="0,0,0,1"
+                BorderBrush="{DynamicResource BrushBorder}"
+                Background="{DynamicResource BrushPanelBG}"
+                Padding="10,6,10,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Fila 0: Descripción de la tabla -->
+                <TextBlock Grid.Row="0" Grid.Column="0"
+                           Text="Descripción:" VerticalAlignment="Center"
+                           FontSize="11" Margin="0,0,8,4"
+                           Foreground="{DynamicResource BrushFGMuted}"/>
+                <TextBox   Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3"
+                           x:Name="txtDescripcionTabla"
+                           FontSize="11" Margin="0,0,0,4" MaxLength="500"
+                           ToolTip="Descripción de la tabla (MS_Description / COMMENT ON TABLE)"/>
+
+                <!-- Fila 1: Modo de aplicación -->
+                <TextBlock Grid.Row="1" Grid.Column="0"
+                           Text="Al aplicar:" VerticalAlignment="Center"
+                           FontSize="11" Margin="0,0,8,0"
+                           Foreground="{DynamicResource BrushFGMuted}"/>
+                <RadioButton Grid.Row="1" Grid.Column="1"
+                             x:Name="rbRevisarScript"
+                             Content="Generar script para revisión"
+                             IsChecked="True" GroupName="ModoAplicar"
+                             VerticalAlignment="Center" FontSize="11"
+                             Foreground="{DynamicResource BrushFG}"
+                             ToolTip="El script se cargará en el editor para que lo revises y ejecutes manualmente."/>
+                <RadioButton Grid.Row="1" Grid.Column="2"
+                             x:Name="rbAplicarDirecto"
+                             Content="Aplicar directamente"
+                             GroupName="ModoAplicar"
+                             VerticalAlignment="Center" FontSize="11" Margin="16,0,0,0"
+                             Foreground="{DynamicResource BrushFG}"
+                             ToolTip="Los cambios se aplicarán automáticamente contra la base de datos al cerrar."/>
+            </Grid>
+        </Border>
+
         <!-- ── DataGrid principal ── -->
-        <DataGrid Grid.Row="1" x:Name="dgColumnas"
+        <DataGrid Grid.Row="2" x:Name="dgColumnas"
                   AutoGenerateColumns="False"
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"
@@ -267,6 +318,11 @@
                                     Binding="{Binding ValorDefault, UpdateSourceTrigger=LostFocus}"
                                     ElementStyle="{StaticResource CeldaDefaultStyle}"/>
 
+                <!-- Descripción -->
+                <DataGridTextColumn Header="Descripción" Width="220"
+                                    Binding="{Binding Descripcion, UpdateSourceTrigger=LostFocus}"
+                                    ElementStyle="{StaticResource CeldaDefaultStyle}"/>
+
             </DataGrid.Columns>
 
             <DataGrid.ContextMenu>
@@ -278,7 +334,7 @@
         </DataGrid>
 
         <!-- ── Status bar ── -->
-        <StatusBar Grid.Row="2">
+        <StatusBar Grid.Row="3">
             <StatusBarItem>
                 <TextBlock x:Name="txtEstado" Text="Listo" FontSize="11"/>
             </StatusBarItem>

@@ -20,6 +20,7 @@ namespace QueryAnalyzer
         private string _valorDefault;
         private bool   _esNueva;
         private bool   _marcarParaEliminar;
+        private string _descripcion;
         #endregion
 
         #region Snapshot (valores originales para detectar cambios)
@@ -27,6 +28,7 @@ namespace QueryAnalyzer
         private string _tipoDatoCompletoOrig;
         private bool   _esNulableOrig;
         private string _valorDefaultOrig;
+        private string _descripcionOrig;
         #endregion
 
         public bool EsPK
@@ -87,6 +89,12 @@ namespace QueryAnalyzer
         {
             get => _marcarParaEliminar;
             set { _marcarParaEliminar = value; OnPropertyChanged("MarcarParaEliminar"); }
+        }
+
+        public string Descripcion
+        {
+            get => _descripcion;
+            set { _descripcion = value; OnPropertyChanged("Descripcion"); }
         }
 
         /// <summary>
@@ -154,12 +162,14 @@ namespace QueryAnalyzer
         public string TipoDatoCompletoOriginal => _tipoDatoCompletoOrig;
         public bool   EsNulableOriginal        => _esNulableOrig;
         public string ValorDefaultOriginal     => _valorDefaultOrig;
+        public string DescripcionOriginal      => _descripcionOrig;
 
         public bool Modificado =>
             _nombre       != _nombreOrig           ||
             TipoDatoCompleto != _tipoDatoCompletoOrig ||
             _esNulable    != _esNulableOrig         ||
-            _valorDefault != _valorDefaultOrig;
+            _valorDefault != _valorDefaultOrig      ||
+            _descripcion  != _descripcionOrig;
 
         /// <summary>Guarda el estado actual como snapshot "original" (llamar después de cargar desde BD).</summary>
         public void MarcarComoOriginal()
@@ -168,6 +178,7 @@ namespace QueryAnalyzer
             _tipoDatoCompletoOrig  = TipoDatoCompleto;
             _esNulableOrig         = _esNulable;
             _valorDefaultOrig      = _valorDefault;
+            _descripcionOrig       = _descripcion;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -229,7 +240,8 @@ SELECT
     c.NUMERIC_SCALE,
     c.IS_NULLABLE,
     c.COLUMN_DEFAULT,
-    CASE WHEN pk.COLUMN_NAME IS NOT NULL THEN 1 ELSE 0 END AS IS_PK
+    CASE WHEN pk.COLUMN_NAME IS NOT NULL THEN 1 ELSE 0 END AS IS_PK,
+    CAST(ep.value AS nvarchar(max)) AS DESCRIPTION
 FROM INFORMATION_SCHEMA.COLUMNS c
 LEFT JOIN (
     SELECT ku.TABLE_NAME, ku.COLUMN_NAME
@@ -238,6 +250,10 @@ LEFT JOIN (
         ON tc.CONSTRAINT_NAME = ku.CONSTRAINT_NAME
     WHERE tc.CONSTRAINT_TYPE = 'PRIMARY KEY'
 ) pk ON pk.TABLE_NAME = c.TABLE_NAME AND pk.COLUMN_NAME = c.COLUMN_NAME
+LEFT JOIN sys.extended_properties ep
+    ON ep.major_id = OBJECT_ID(c.TABLE_NAME)
+    AND ep.minor_id = COLUMNPROPERTY(OBJECT_ID(c.TABLE_NAME), c.COLUMN_NAME, 'ColumnId')
+    AND ep.name = 'MS_Description'
 WHERE c.TABLE_NAME = '{0}'
 ORDER BY c.ORDINAL_POSITION", t);
                     using (var cmd = new OdbcCommand(sql, conn))
@@ -254,7 +270,8 @@ ORDER BY c.ORDINAL_POSITION", t);
                                 Escala       = r.IsDBNull(4) ? (int?)null : Convert.ToInt32(r[4]),
                                 EsNulable    = r[5].ToString().Trim().ToUpperInvariant() == "YES",
                                 ValorDefault = r.IsDBNull(6) ? null : r[6].ToString().Trim(),
-                                EsPK         = Convert.ToInt32(r[7]) == 1
+                                EsPK         = Convert.ToInt32(r[7]) == 1,
+                                Descripcion  = r.IsDBNull(8) ? null : r[8].ToString().Trim()
                             };
                             col.MarcarComoOriginal();
                             lista.Add(col);
@@ -266,7 +283,7 @@ ORDER BY c.ORDINAL_POSITION", t);
                 case TipoMotor.DB2:
                 {
                     string sql = string.Format(@"
-SELECT NAME, COLTYPE, LENGTH, SCALE, NULLS, DEFAULT, KEYSEQ
+SELECT NAME, COLTYPE, LENGTH, SCALE, NULLS, DEFAULT, KEYSEQ, REMARKS
 FROM SYSIBM.SYSCOLUMNS
 WHERE TBNAME = '{0}'
 ORDER BY COLNO", t.ToUpperInvariant());
@@ -286,7 +303,8 @@ ORDER BY COLNO", t.ToUpperInvariant());
                                 Escala       = scale > 0 ? scale : (int?)null,
                                 EsNulable    = r[4].ToString().Trim().ToUpperInvariant() == "Y",
                                 ValorDefault = r.IsDBNull(5) ? null : r[5].ToString().Trim(),
-                                EsPK         = isPK
+                                EsPK         = isPK,
+                                Descripcion  = r.IsDBNull(7) ? null : r[7].ToString().Trim()
                             };
                             col.MarcarComoOriginal();
                             lista.Add(col);
@@ -306,7 +324,8 @@ SELECT
     c.numeric_scale,
     c.is_nullable,
     c.column_default,
-    CASE WHEN pk.column_name IS NOT NULL THEN 1 ELSE 0 END AS is_pk
+    CASE WHEN pk.column_name IS NOT NULL THEN 1 ELSE 0 END AS is_pk,
+    pg_catalog.col_description(pgc.oid, c.ordinal_position) AS description
 FROM information_schema.columns c
 LEFT JOIN (
     SELECT ku.column_name
@@ -317,6 +336,7 @@ LEFT JOIN (
     WHERE tc.constraint_type = 'PRIMARY KEY'
       AND ku.table_name = '{0}'
 ) pk ON pk.column_name = c.column_name
+LEFT JOIN pg_class pgc ON pgc.relname = c.table_name
 WHERE c.table_name = '{0}'
 ORDER BY c.ordinal_position", t.ToLowerInvariant());
                     using (var cmd = new OdbcCommand(sql, conn))
@@ -333,7 +353,8 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
                                 Escala       = r.IsDBNull(4) ? (int?)null : Convert.ToInt32(r[4]),
                                 EsNulable    = r[5].ToString().Trim().ToUpperInvariant() == "YES",
                                 ValorDefault = r.IsDBNull(6) ? null : r[6].ToString().Trim(),
-                                EsPK         = Convert.ToInt32(r[7]) == 1
+                                EsPK         = Convert.ToInt32(r[7]) == 1,
+                                Descripcion  = r.IsDBNull(8) ? null : r[8].ToString().Trim()
                             };
                             col.MarcarComoOriginal();
                             lista.Add(col);
@@ -384,6 +405,51 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
         }
 
         // ─────────────────────────────────────────────────────────────────────────
+        // Descripción de tabla
+        // ─────────────────────────────────────────────────────────────────────────
+
+        public static async Task<string> GetDescripcionTablaAsync(Conexion conexion, string tabla)
+        {
+            return await Task.Run(() => GetDescripcionTabla(conexion, tabla));
+        }
+
+        private static string GetDescripcionTabla(Conexion conexion, string tabla)
+        {
+            if (conexion == null) return null;
+            string nombreTabla = tabla.Contains(".") ? tabla.Substring(tabla.LastIndexOf('.') + 1) : tabla;
+            string t = nombreTabla.Replace("'", "''");
+            try
+            {
+                string connStr = ConexionesManager.GetConnectionString(conexion);
+                using (var conn = new OdbcConnection(connStr))
+                {
+                    conn.Open();
+                    string sql = null;
+                    switch (conexion.Motor)
+                    {
+                        case TipoMotor.MS_SQL:
+                            sql = string.Format("SELECT CAST(ep.value AS nvarchar(max)) FROM sys.extended_properties ep WHERE ep.major_id = OBJECT_ID('{0}') AND ep.minor_id = 0 AND ep.name = 'MS_Description'", t);
+                            break;
+                        case TipoMotor.POSTGRES:
+                            sql = string.Format("SELECT pg_catalog.obj_description(oid, 'pg_class') FROM pg_class WHERE relname = '{0}'", t.ToLowerInvariant());
+                            break;
+                        case TipoMotor.DB2:
+                            sql = string.Format("SELECT REMARKS FROM SYSCAT.TABLES WHERE TABNAME = '{0}'", t.ToUpperInvariant());
+                            break;
+                        default:
+                            return null;
+                    }
+                    using (var cmd = new OdbcCommand(sql, conn))
+                    {
+                        var result = cmd.ExecuteScalar();
+                        return result == null || result == DBNull.Value ? null : result.ToString().Trim();
+                    }
+                }
+            }
+            catch { return null; }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────
         // Generación de script DDL
         // ─────────────────────────────────────────────────────────────────────────
 
@@ -402,9 +468,20 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
             TipoMotor motor,
             string tabla,
             List<ColumnDesignInfo> columnas,
-            string nuevoNombreTabla = null)
+            string nuevoNombreTabla = null,
+            string descripcionTabla = null,
+            string descripcionTablaOriginal = null)
         {
             var sb = new StringBuilder();
+
+            string schemaSql = "dbo";
+            string tableOnly = tabla;
+            if (tabla.Contains("."))
+            {
+                var partes = tabla.Split(new[] { '.' }, 2);
+                schemaSql = partes[0].Trim('[', ']');
+                tableOnly  = partes[1].Trim('[', ']');
+            }
 
             // ── Cambios en columnas ───────────────────────────────────────────────
             foreach (var col in columnas)
@@ -523,6 +600,84 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
 
                     sb.AppendLine();
                 }
+            }
+
+            // ── DESCRIPCIONES DE COLUMNAS ─────────────────────────────────────────
+            foreach (var col in columnas)
+            {
+                if (col.MarcarParaEliminar && !col.EsNueva) continue;
+                bool esNuevaConDesc = col.EsNueva && !string.IsNullOrWhiteSpace(col.Descripcion);
+                bool descCambio = !col.EsNueva && (col.Descripcion ?? "") != (col.DescripcionOriginal ?? "");
+                if (!esNuevaConDesc && !descCambio) continue;
+
+                string colNom = col.Nombre;
+                string desc   = (col.Descripcion ?? "").Replace("'", "''");
+
+                switch (motor)
+                {
+                    case TipoMotor.MS_SQL:
+                        if (!string.IsNullOrWhiteSpace(col.Descripcion))
+                        {
+                            sb.AppendLine(string.Format("IF EXISTS (SELECT 1 FROM sys.extended_properties WHERE major_id = OBJECT_ID(N'{0}') AND name = N'MS_Description' AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'{0}'), N'{1}', 'ColumnId'))", tabla, colNom));
+                            sb.AppendLine(string.Format("    EXEC sp_updateextendedproperty N'MS_Description', N'{0}', N'SCHEMA', N'{1}', N'TABLE', N'{2}', N'COLUMN', N'{3}';", desc, schemaSql, tableOnly, colNom));
+                            sb.AppendLine("ELSE");
+                            sb.AppendLine(string.Format("    EXEC sp_addextendedproperty N'MS_Description', N'{0}', N'SCHEMA', N'{1}', N'TABLE', N'{2}', N'COLUMN', N'{3}';", desc, schemaSql, tableOnly, colNom));
+                        }
+                        else
+                        {
+                            sb.AppendLine(string.Format("IF EXISTS (SELECT 1 FROM sys.extended_properties WHERE major_id = OBJECT_ID(N'{0}') AND name = N'MS_Description' AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'{0}'), N'{1}', 'ColumnId'))", tabla, colNom));
+                            sb.AppendLine(string.Format("    EXEC sp_dropextendedproperty N'MS_Description', N'SCHEMA', N'{0}', N'TABLE', N'{1}', N'COLUMN', N'{2}';", schemaSql, tableOnly, colNom));
+                        }
+                        break;
+                    case TipoMotor.POSTGRES:
+                        sb.AppendLine(string.IsNullOrWhiteSpace(col.Descripcion)
+                            ? string.Format("COMMENT ON COLUMN {0}.{1} IS NULL;", tabla, colNom)
+                            : string.Format("COMMENT ON COLUMN {0}.{1} IS '{2}';", tabla, colNom, desc));
+                        break;
+                    case TipoMotor.DB2:
+                        sb.AppendLine(string.Format("COMMENT ON COLUMN {0}.{1} IS '{2}';", tabla, colNom, desc));
+                        break;
+                    case TipoMotor.SQLite:
+                        sb.AppendLine(string.Format("-- SQLite no admite descripciones de columna a nivel de catálogo (columna '{0}').", colNom));
+                        break;
+                }
+                sb.AppendLine();
+            }
+
+            // ── DESCRIPCIÓN DE TABLA ──────────────────────────────────────────────
+            bool descTablaCambio = (descripcionTabla ?? "") != (descripcionTablaOriginal ?? "");
+            if (descTablaCambio)
+            {
+                string dt = (descripcionTabla ?? "").Replace("'", "''");
+                switch (motor)
+                {
+                    case TipoMotor.MS_SQL:
+                        if (!string.IsNullOrWhiteSpace(descripcionTabla))
+                        {
+                            sb.AppendLine(string.Format("IF EXISTS (SELECT 1 FROM sys.extended_properties WHERE major_id = OBJECT_ID(N'{0}') AND name = N'MS_Description' AND minor_id = 0)", tabla));
+                            sb.AppendLine(string.Format("    EXEC sp_updateextendedproperty N'MS_Description', N'{0}', N'SCHEMA', N'{1}', N'TABLE', N'{2}';", dt, schemaSql, tableOnly));
+                            sb.AppendLine("ELSE");
+                            sb.AppendLine(string.Format("    EXEC sp_addextendedproperty N'MS_Description', N'{0}', N'SCHEMA', N'{1}', N'TABLE', N'{2}';", dt, schemaSql, tableOnly));
+                        }
+                        else
+                        {
+                            sb.AppendLine(string.Format("IF EXISTS (SELECT 1 FROM sys.extended_properties WHERE major_id = OBJECT_ID(N'{0}') AND name = N'MS_Description' AND minor_id = 0)", tabla));
+                            sb.AppendLine(string.Format("    EXEC sp_dropextendedproperty N'MS_Description', N'SCHEMA', N'{0}', N'TABLE', N'{1}';", schemaSql, tableOnly));
+                        }
+                        break;
+                    case TipoMotor.POSTGRES:
+                        sb.AppendLine(string.IsNullOrWhiteSpace(descripcionTabla)
+                            ? string.Format("COMMENT ON TABLE {0} IS NULL;", tabla)
+                            : string.Format("COMMENT ON TABLE {0} IS '{1}';", tabla, dt));
+                        break;
+                    case TipoMotor.DB2:
+                        sb.AppendLine(string.Format("COMMENT ON TABLE {0} IS '{1}';", tabla, dt));
+                        break;
+                    case TipoMotor.SQLite:
+                        sb.AppendLine("-- SQLite no admite descripciones de tabla a nivel de catálogo.");
+                        break;
+                }
+                sb.AppendLine();
             }
 
             // ── RENOMBRAR TABLA (al final, después de todos los ALTER) ────────────

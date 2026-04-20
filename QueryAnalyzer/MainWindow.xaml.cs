@@ -3486,39 +3486,36 @@ namespace QueryAnalyzer
 
             if (scriptDiseño.Length > 0)
             {
-                // ── 1. Cargar el script en el editor y ejecutarlo ────────────────
                 txtQuery.Text = scriptDiseño;
-                BtnExecute_Click(this, new RoutedEventArgs());
 
-                // ── 2. Determinar el nombre definitivo de la tabla tras el renombre ──
-                //    Si el usuario renombró la tabla, el nodo en el tvSchema aún
-                //    tiene el nombre viejo; usamos ese para buscarlo y luego
-                //    actualizamos su header con el nombre nuevo.
-                string nuevoNombre = w.NuevoNombreTabla;          // null si no renombró
-                bool huboRenombre = !string.IsNullOrEmpty(nuevoNombre);
-                string nombreFinalTabla = huboRenombre ? nuevoNombre : tabla;
-
-                // ── 3. Localizar el nodo de la tabla en tvSchema ─────────────────
-                TreeViewItem nodoTabla = EncontrarNodoTabla(tvSchema, tabla, schema);
-
-                if (nodoTabla != null)
+                if (!w.SoloGenerarScript)
                 {
-                    // ── 4a. Si hubo renombre, actualizar el texto del header del nodo ──
-                    if (huboRenombre)
-                    {
-                        ActualizarHeaderNodoTabla(nodoTabla, schema, nombreFinalTabla);
-                        // Actualizar también el Tag del nodo para que futuras
-                        // operaciones (doble clic, context menu) usen el nombre nuevo
-                        nodoTabla.Tag = new NodoTablaTag(nombreFinalTabla, (nodoTabla.Tag as NodoTablaTag)?.Tipo ?? "TABLE");
-                    }
+                    // Aplicar directamente: ejecutar y refrescar árbol
+                    BtnExecute_Click(this, new RoutedEventArgs());
 
-                    // ── 4b. Recargar solo los hijos del nodo (columnas + índices) ──
-                    RecargarNodoTabla(nodoTabla, schema, nombreFinalTabla);
+                    string nuevoNombre = w.NuevoNombreTabla;
+                    bool huboRenombre = !string.IsNullOrEmpty(nuevoNombre);
+                    string nombreFinalTabla = huboRenombre ? nuevoNombre : tabla;
+
+                    TreeViewItem nodoTabla = EncontrarNodoTabla(tvSchema, tabla, schema);
+                    if (nodoTabla != null)
+                    {
+                        if (huboRenombre)
+                        {
+                            ActualizarHeaderNodoTabla(nodoTabla, schema, nombreFinalTabla);
+                            nodoTabla.Tag = new NodoTablaTag(nombreFinalTabla, (nodoTabla.Tag as NodoTablaTag)?.Tipo ?? "TABLE");
+                        }
+                        RecargarNodoTabla(nodoTabla, schema, nombreFinalTabla);
+                    }
+                    else
+                    {
+                        CargarEsquema();
+                    }
                 }
                 else
                 {
-                    // Fallback: si no se encontró el nodo (caso raro), recargar todo
-                    CargarEsquema();
+                    // Solo generar script: cargar en editor, el usuario lo ejecuta manualmente
+                    AppendMessage("Script cargado en el editor. Revisalo, editalo si es necesario y ejecutalo cuando estés listo.");
                 }
             }
 

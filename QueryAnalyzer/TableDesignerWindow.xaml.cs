@@ -13,12 +13,20 @@ namespace QueryAnalyzer
 
         private ObservableCollection<ColumnDesignInfo> _columnas;
 
+        private string _descripcionTablaOriginal = null;
+
         // ── Resultado expuesto a MainWindow ──────────────────────────────────────
         /// <summary>
         /// Nombre al que se quiere renombrar la tabla.
         /// Null o vacío = sin renombre.
         /// </summary>
         public string NuevoNombreTabla { get; private set; }
+
+        /// <summary>
+        /// True = el usuario eligió revisar el script antes de ejecutar (default).
+        /// False = aplicar directamente.
+        /// </summary>
+        public bool SoloGenerarScript { get; private set; } = true;
 
         public TableDesignerWindow(Conexion conexion, string tabla)
         {
@@ -73,6 +81,10 @@ namespace QueryAnalyzer
                 _columnas  = new ObservableCollection<ColumnDesignInfo>(lista);
                 dgColumnas.ItemsSource = _columnas;
                 txtEstado.Text = string.Format("{0} columna(s) cargada(s).", _columnas.Count);
+
+                string desc = await TableDesignerService.GetDescripcionTablaAsync(_conexion, _tabla);
+                _descripcionTablaOriginal = desc;
+                txtDescripcionTabla.Text  = desc ?? string.Empty;
             }
             catch (Exception ex)
             {
@@ -154,17 +166,22 @@ namespace QueryAnalyzer
 
             if (txtNuevoNombre.Text.Trim().Length > 0)
             {
-                string nuevoNombre = txtNuevoNombre.Text.Trim();
-
-                if (!string.IsNullOrEmpty(nuevoNombre) && !nuevoNombre.Equals(_tabla, StringComparison.OrdinalIgnoreCase))
-                {
-                    NuevoNombreTabla = nuevoNombre;
-                }
+                string nn = txtNuevoNombre.Text.Trim();
+                if (!string.IsNullOrEmpty(nn) && !nn.Equals(_tabla, StringComparison.OrdinalIgnoreCase))
+                    NuevoNombreTabla = nn;
             }
 
-            MainWindow.scriptDiseño = TableDesignerService.GenerarScript(
-                _conexion.Motor, _tabla, _columnas.ToList(), NuevoNombreTabla);
+            string descActual = txtDescripcionTabla.Text.Trim();
 
+            MainWindow.scriptDiseño = TableDesignerService.GenerarScript(
+                _conexion.Motor,
+                _tabla,
+                _columnas.ToList(),
+                NuevoNombreTabla,
+                string.IsNullOrEmpty(descActual) ? null : descActual,
+                _descripcionTablaOriginal);
+
+            SoloGenerarScript = rbRevisarScript.IsChecked == true;
             this.Close();
         }
 
