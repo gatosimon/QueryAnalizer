@@ -121,8 +121,7 @@ namespace QueryAnalyzer
 
         // ── PKs por motor ─────────────────────────────────────────────────────────
 
-        private static HashSet<string> GetPKs(
-            OdbcConnection conn, TipoMotor motor, string schema, string tabla)
+        private static HashSet<string> GetPKs(OdbcConnection conn, TipoMotor motor, string schema, string tabla)
         {
             var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             try
@@ -181,8 +180,7 @@ namespace QueryAnalyzer
 
         // ── FKs por motor ─────────────────────────────────────────────────────────
 
-        private static HashSet<string> GetFKs(
-            OdbcConnection conn, TipoMotor motor, string schema, string tabla)
+        private static HashSet<string> GetFKs(OdbcConnection conn, TipoMotor motor, string schema, string tabla)
         {
             var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             try
@@ -282,7 +280,7 @@ namespace QueryAnalyzer
                         string sql = $@"
 SELECT ep.minor_id,
        c.name AS col_name,
-       CAST(ep.value AS NVARCHAR(MAX)) AS descripcion
+       CAST(ep.value AS NVARCHAR(4000)) AS descripcion
 FROM sys.extended_properties ep
 INNER JOIN sys.objects o
        ON ep.major_id = o.object_id
