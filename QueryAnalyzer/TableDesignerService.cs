@@ -241,7 +241,11 @@ SELECT
     c.IS_NULLABLE,
     c.COLUMN_DEFAULT,
     CASE WHEN pk.COLUMN_NAME IS NOT NULL THEN 1 ELSE 0 END AS IS_PK,
-    CAST(ep.value AS nvarchar(max)) AS DESCRIPTION
+    (SELECT TOP 1 CAST(ep2.value AS nvarchar(4000))
+     FROM sys.extended_properties ep2
+     INNER JOIN sys.objects o2 ON ep2.major_id = o2.object_id
+     INNER JOIN sys.columns sc ON ep2.major_id = sc.object_id AND ep2.minor_id = sc.column_id
+     WHERE ep2.name = 'MS_Description' AND o2.name = c.TABLE_NAME AND sc.name = c.COLUMN_NAME) AS DESCRIPTION
 FROM INFORMATION_SCHEMA.COLUMNS c
 LEFT JOIN (
     SELECT ku.TABLE_NAME, ku.COLUMN_NAME
@@ -250,10 +254,6 @@ LEFT JOIN (
         ON tc.CONSTRAINT_NAME = ku.CONSTRAINT_NAME
     WHERE tc.CONSTRAINT_TYPE = 'PRIMARY KEY'
 ) pk ON pk.TABLE_NAME = c.TABLE_NAME AND pk.COLUMN_NAME = c.COLUMN_NAME
-LEFT JOIN sys.extended_properties ep
-    ON ep.major_id = OBJECT_ID(c.TABLE_NAME)
-    AND ep.minor_id = COLUMNPROPERTY(OBJECT_ID(c.TABLE_NAME), c.COLUMN_NAME, 'ColumnId')
-    AND ep.name = 'MS_Description'
 WHERE c.TABLE_NAME = '{0}'
 ORDER BY c.ORDINAL_POSITION", t);
                     using (var cmd = new OdbcCommand(sql, conn))
@@ -428,7 +428,7 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
                     switch (conexion.Motor)
                     {
                         case TipoMotor.MS_SQL:
-                            sql = string.Format("SELECT CAST(ep.value AS nvarchar(max)) FROM sys.extended_properties ep WHERE ep.major_id = OBJECT_ID('{0}') AND ep.minor_id = 0 AND ep.name = 'MS_Description'", t);
+                            sql = string.Format("SELECT TOP 1 CAST(ep.value AS nvarchar(4000)) FROM sys.extended_properties ep INNER JOIN sys.objects o ON ep.major_id = o.object_id WHERE ep.name = 'MS_Description' AND ep.minor_id = 0 AND o.name = '{0}'", t);
                             break;
                         case TipoMotor.POSTGRES:
                             sql = string.Format("SELECT pg_catalog.obj_description(oid, 'pg_class') FROM pg_class WHERE relname = '{0}'", t.ToLowerInvariant());
