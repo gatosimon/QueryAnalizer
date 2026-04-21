@@ -277,6 +277,13 @@ namespace QueryAnalyzer
                         // minor_id = 0  → descripción de la tabla/vista
                         // minor_id > 0  → descripción de la columna (c.name)
                         // sys.objects incluye tanto TABLE como VIEW
+                        // Filtramos por nombre de tabla (o.name no incluye esquema)
+                        // y, si se conoce el esquema, también por sys.schemas para
+                        // evitar colisiones entre tablas homónimas de distintos esquemas.
+                        string schemaFilter = !string.IsNullOrEmpty(schema)
+                            ? $"\n  AND s.name  = '{schema.Replace("'", "''")}'"
+                            : string.Empty;
+
                         string sql = $@"
 SELECT ep.minor_id,
        c.name AS col_name,
@@ -284,11 +291,13 @@ SELECT ep.minor_id,
 FROM sys.extended_properties ep
 INNER JOIN sys.objects o
        ON ep.major_id = o.object_id
+INNER JOIN sys.schemas s
+       ON o.schema_id = s.schema_id
 LEFT  JOIN sys.columns c
        ON ep.major_id = c.object_id
       AND ep.minor_id = c.column_id
 WHERE ep.name = 'MS_Description'
-  AND o.name  = '{tabla}'
+  AND o.name  = '{tabla}'{schemaFilter}
 ORDER BY ep.minor_id";
 
                         using (var cmd = new OdbcCommand(sql, conn))
