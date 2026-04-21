@@ -10,7 +10,7 @@ namespace QueryAnalyzer
             InitializeComponent();
             // Aplicar el tema activo de MainWindow antes de mostrar contenido
             AplicarTemaActual();
-            Title          = string.Format("Script generado  [{0}]", motor);
+            Title          = $"Script generado  [{motor}]";
             txtScript.Text = script;
         }
 

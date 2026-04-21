@@ -4,3 +4,4 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzerCustomActions\obj\Debug
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzerCustomActions\obj\Debug\QueryAnalyzerCustomActions.csproj.CoreCompileInputs.cache
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzerCustomActions\obj\Debug\QueryAnalyzerCustomActions.dll
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzerCustomActions\obj\Debug\QueryAnalyzerCustomActions.pdb
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzerCustomActions\obj\Debug\QueryAnalyzerCustomActions.csprojResolveAssemblyReference.cache

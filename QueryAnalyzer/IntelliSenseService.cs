@@ -73,30 +73,30 @@ namespace QueryAnalyzer
             switch (motor)
             {
                 case TipoMotor.MS_SQL:
-                    return string.Format(
-                        "SELECT COLUMN_NAME, DATA_TYPE " +
-                        "FROM INFORMATION_SCHEMA.COLUMNS " +
-                        "WHERE TABLE_NAME = '{0}' " +
-                        "ORDER BY ORDINAL_POSITION", t);
+                    return 
+                        $@"SELECT COLUMN_NAME, DATA_TYPE 
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_NAME = '{t}' 
+                        ORDER BY ORDINAL_POSITION";
 
                 case TipoMotor.DB2:
                     // DB2 v7 usa SYSIBM.SYSCOLUMNS. COLTYPE es CHAR(8) → tipo truncado, normal para v7
-                    return string.Format(
-                        "SELECT NAME, COLTYPE " +
-                        "FROM SYSIBM.SYSCOLUMNS " +
-                        "WHERE TBNAME = '{0}' " +
-                        "ORDER BY COLNO", t.ToUpper());
+                    return 
+                        $@"SELECT NAME, COLTYPE 
+                        FROM SYSIBM.SYSCOLUMNS 
+                        WHERE TBNAME = '{t.ToUpper()}' 
+                        ORDER BY COLNO";
 
                 case TipoMotor.POSTGRES:
-                    return string.Format(
-                        "SELECT column_name, data_type " +
-                        "FROM information_schema.columns " +
-                        "WHERE table_name = '{0}' " +
-                        "ORDER BY ordinal_position", t.ToLower());
+                    return 
+                        $@"SELECT column_name, data_type 
+                        FROM information_schema.columns 
+                        WHERE table_name = '{t.ToLower()}' 
+                        ORDER BY ordinal_position";
 
                 case TipoMotor.SQLite:
                     // PRAGMA devuelve: cid | name | type | notnull | dflt_value | pk
-                    return string.Format("PRAGMA table_info({0})", tabla);
+                    return $"PRAGMA table_info({tabla})";
 
                 default:
                     return string.Empty;

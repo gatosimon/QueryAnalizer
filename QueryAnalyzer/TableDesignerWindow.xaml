@@ -227,17 +227,18 @@
                 <RadioButton Grid.Row="1" Grid.Column="1"
                              x:Name="rbRevisarScript"
                              Content="Generar script para revisión"
-                             IsChecked="True" GroupName="ModoAplicar"
+                             IsChecked="False" GroupName="ModoAplicar"
                              VerticalAlignment="Center" FontSize="11"
                              Foreground="{DynamicResource BrushFG}"
-                             ToolTip="El script se cargará en el editor para que lo revises y ejecutes manualmente."/>
-                <RadioButton Grid.Row="1" Grid.Column="2"
+                             ToolTip="El script se cargará en el editor para que lo revises y ejecutes manualmente." Margin="0,1,403,0"/>
+                <RadioButton Grid.Row="1" Grid.Column="1"
                              x:Name="rbAplicarDirecto"
                              Content="Aplicar directamente"
                              GroupName="ModoAplicar"
-                             VerticalAlignment="Center" FontSize="11" Margin="16,0,0,0"
+                             IsChecked="True"
+                             VerticalAlignment="Center" FontSize="11" Margin="223,1,326,0"
                              Foreground="{DynamicResource BrushFG}"
-                             ToolTip="Los cambios se aplicarán automáticamente contra la base de datos al cerrar."/>
+                             ToolTip="Los cambios se aplicarán automáticamente contra la base de datos al cerrar." Height="14"/>
             </Grid>
         </Border>
 

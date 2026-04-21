@@ -33,7 +33,7 @@ namespace QueryAnalyzer
             InitializeComponent();
             _conexion     = conexion;
             _tabla        = tabla;
-            Title         = string.Format("Design - {0}  [{1}]", tabla, conexion.Nombre);
+            Title         = $"Design - {tabla}  [{conexion.Nombre}]";
             txtMotor.Text = conexion.Motor.ToString();
 
             // Exponer los tipos de dato del motor al DataGrid para que el ComboBox los use.
@@ -80,7 +80,7 @@ namespace QueryAnalyzer
                 var lista  = await TableDesignerService.GetColumnasDesignAsync(_conexion, _tabla);
                 _columnas  = new ObservableCollection<ColumnDesignInfo>(lista);
                 dgColumnas.ItemsSource = _columnas;
-                txtEstado.Text = string.Format("{0} columna(s) cargada(s).", _columnas.Count);
+                txtEstado.Text = $"{_columnas.Count} columna(s) cargada(s).";
 
                 string desc = await TableDesignerService.GetDescripcionTablaAsync(_conexion, _tabla);
                 _descripcionTablaOriginal = desc;
@@ -147,13 +147,13 @@ namespace QueryAnalyzer
 
             // Confirmar para evitar clicks accidentales
             var r = MessageBox.Show(
-                string.Format("¿Renombrar la tabla '{0}' a '{1}'?\n\nSe agregará la sentencia RENAME al script.", _tabla, nuevoNombre),
+                $"¿Renombrar la tabla '{_tabla}' a '{nuevoNombre}'?\n\nSe agregará la sentencia RENAME al script.",
                 Title, MessageBoxButton.YesNo, MessageBoxImage.Question);
 
             if (r != MessageBoxResult.Yes) return;
 
             NuevoNombreTabla = nuevoNombre;
-            txtEstado.Text   = string.Format("Tabla marcada para renombrar → '{0}'.", nuevoNombre);
+            txtEstado.Text   = $"Tabla marcada para renombrar → '{nuevoNombre}'.";
             btnRenombrar.IsEnabled = false;   // una sola vez por sesión
             txtNuevoNombre.IsEnabled = false;
         }
@@ -221,7 +221,7 @@ namespace QueryAnalyzer
             else
             {
                 col.MarcarParaEliminar = true;
-                txtEstado.Text = string.Format("Columna '{0}' marcada para eliminar.", col.NombreOriginal);
+                txtEstado.Text = $"Columna '{col.NombreOriginal}' marcada para eliminar.";
             }
         }
 
@@ -230,7 +230,7 @@ namespace QueryAnalyzer
             if (!(dgColumnas.SelectedItem is ColumnDesignInfo col)) return;
 
             col.MarcarParaEliminar = false;
-            txtEstado.Text = string.Format("Columna '{0}' desmarcada.", col.NombreOriginal);
+            txtEstado.Text = $"Columna '{col.NombreOriginal}' desmarcada.";
         }
     }
 }
