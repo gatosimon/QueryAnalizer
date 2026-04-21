@@ -3480,7 +3480,12 @@ namespace QueryAnalyzer
         // En el handler del ContextMenu del TreeView (o donde ya tenés el click derecho):
         private string Diseñar(string schema, string tabla)
         {
-            var w = new TableDesignerWindow(conexionActual, tabla) { Owner = this };
+            // Pasar nombre calificado "esquema.tabla" para que GenerarScript
+            // conozca el esquema real y no asuma dbo por defecto.
+            string tablaCalificada = !string.IsNullOrEmpty(schema)
+                ? schema + "." + tabla
+                : tabla;
+            var w = new TableDesignerWindow(conexionActual, tablaCalificada) { Owner = this };
             scriptDiseño = string.Empty;
             w.ShowDialog();
 
@@ -3555,7 +3560,7 @@ namespace QueryAnalyzer
 
             string nuevoHeaderText = string.IsNullOrEmpty(schema)
                 ? nuevoNombre
-                : string.Format("{0}.{1}", schema, nuevoNombre);
+                : $"{schema}.{nuevoNombre}";
 
             foreach (var child in sp.Children)
             {
@@ -4225,7 +4230,7 @@ namespace QueryAnalyzer
                 {
                     conn.Open();
                     // 2. Pedimos solo el esquema de la tabla para no traer datos
-                    string schemaQuery = string.Format("SELECT {0} FROM {1} WHERE 1=0", nombreColumna, tabla);
+                    string schemaQuery = $"SELECT {nombreColumna} FROM {tabla} WHERE 1=0";
                     using (OdbcCommand cmd = new OdbcCommand(schemaQuery, conn))
                     {
                         using (OdbcDataReader reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly))

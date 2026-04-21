@@ -107,11 +107,11 @@ namespace QueryAnalyzer
             {
                 string t = _tipoDato ?? string.Empty;
                 if (_longitud.HasValue)
-                    return _longitud == -1 ? string.Format("{0}(MAX)", t) : string.Format("{0}({1})", t, _longitud);
+                    return _longitud == -1 ? $"{t}(MAX)" : $"{t}({_longitud})";
                 if (_precision.HasValue && _precision > 0)
                     return (_escala.HasValue && _escala > 0)
-                        ? string.Format("{0}({1},{2})", t, _precision, _escala)
-                        : string.Format("{0}({1})", t, _precision);
+                        ? $"{t}({_precision},{_escala})"
+                        : $"{t}({_precision})";
                 return t;
             }
             set
@@ -237,12 +237,12 @@ namespace QueryAnalyzer
                     var descripciones = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                     try
                     {
-                        string sqlDesc = string.Format(@"
+                        string sqlDesc = $@"
 SELECT sc.name AS col_name, CAST(ep.value AS NVARCHAR(4000)) AS descripcion
 FROM sys.extended_properties ep
 INNER JOIN sys.objects o  ON ep.major_id = o.object_id
 INNER JOIN sys.columns sc ON ep.major_id = sc.object_id AND ep.minor_id = sc.column_id
-WHERE ep.name = 'MS_Description' AND o.name = '{0}'", t);
+WHERE ep.name = 'MS_Description' AND o.name = '{t}'";
                         using (var cmdD = new OdbcCommand(sqlDesc, conn))
                         using (var rd = cmdD.ExecuteReader())
                         {
@@ -258,7 +258,7 @@ WHERE ep.name = 'MS_Description' AND o.name = '{0}'", t);
                     catch { /* continuar sin descripciones si falla */ }
 
                     // Paso 2: cargar columnas (sin subconsulta correlacionada)
-                    string sql = string.Format(@"
+                    string sql = $@"
 SELECT
     c.COLUMN_NAME,
     c.DATA_TYPE,
@@ -276,8 +276,8 @@ LEFT JOIN (
         ON tc.CONSTRAINT_NAME = ku.CONSTRAINT_NAME
     WHERE tc.CONSTRAINT_TYPE = 'PRIMARY KEY'
 ) pk ON pk.TABLE_NAME = c.TABLE_NAME AND pk.COLUMN_NAME = c.COLUMN_NAME
-WHERE c.TABLE_NAME = '{0}'
-ORDER BY c.ORDINAL_POSITION", t);
+WHERE c.TABLE_NAME = '{t}'
+ORDER BY c.ORDINAL_POSITION";
                     using (var cmd = new OdbcCommand(sql, conn))
                     using (var r = cmd.ExecuteReader())
                     {
@@ -305,11 +305,11 @@ ORDER BY c.ORDINAL_POSITION", t);
 
                 case TipoMotor.DB2:
                 {
-                    string sql = string.Format(@"
+                    string sql = $@"
 SELECT NAME, COLTYPE, LENGTH, SCALE, NULLS, DEFAULT, KEYSEQ, REMARKS
 FROM SYSIBM.SYSCOLUMNS
-WHERE TBNAME = '{0}'
-ORDER BY COLNO", t.ToUpperInvariant());
+WHERE TBNAME = '{t.ToUpperInvariant()}'
+ORDER BY COLNO";
                     using (var cmd = new OdbcCommand(sql, conn))
                     using (var r = cmd.ExecuteReader())
                     {
@@ -338,7 +338,7 @@ ORDER BY COLNO", t.ToUpperInvariant());
 
                 case TipoMotor.POSTGRES:
                 {
-                    string sql = string.Format(@"
+                    string sql = $@"
 SELECT
     c.column_name,
     c.data_type,
@@ -357,11 +357,11 @@ LEFT JOIN (
         ON tc.constraint_name = ku.constraint_name
         AND tc.table_name = ku.table_name
     WHERE tc.constraint_type = 'PRIMARY KEY'
-      AND ku.table_name = '{0}'
+      AND ku.table_name = '{t.ToLowerInvariant()}'
 ) pk ON pk.column_name = c.column_name
 LEFT JOIN pg_class pgc ON pgc.relname = c.table_name
-WHERE c.table_name = '{0}'
-ORDER BY c.ordinal_position", t.ToLowerInvariant());
+WHERE c.table_name = '{t.ToLowerInvariant()}'
+ORDER BY c.ordinal_position";
                     using (var cmd = new OdbcCommand(sql, conn))
                     using (var r = cmd.ExecuteReader())
                     {
@@ -451,13 +451,13 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
                     switch (conexion.Motor)
                     {
                         case TipoMotor.MS_SQL:
-                            sql = string.Format("SELECT TOP 1 CAST(ep.value AS nvarchar(4000)) FROM sys.extended_properties ep INNER JOIN sys.objects o ON ep.major_id = o.object_id WHERE ep.name = 'MS_Description' AND ep.minor_id = 0 AND o.name = '{0}'", t);
+                            sql = $"SELECT TOP 1 CAST(ep.value AS nvarchar(4000)) FROM sys.extended_properties ep INNER JOIN sys.objects o ON ep.major_id = o.object_id WHERE ep.name = 'MS_Description' AND ep.minor_id = 0 AND o.name = '{t}'";
                             break;
                         case TipoMotor.POSTGRES:
-                            sql = string.Format("SELECT pg_catalog.obj_description(oid, 'pg_class') FROM pg_class WHERE relname = '{0}'", t.ToLowerInvariant());
+                            sql = $"SELECT pg_catalog.obj_description(oid, 'pg_class') FROM pg_class WHERE relname = '{t.ToLowerInvariant()}'";
                             break;
                         case TipoMotor.DB2:
-                            sql = string.Format("SELECT REMARKS FROM SYSCAT.TABLES WHERE TABNAME = '{0}'", t.ToUpperInvariant());
+                            sql = $"SELECT REMARKS FROM SYSCAT.TABLES WHERE TABNAME = '{t.ToUpperInvariant()}'";
                             break;
                         default:
                             return null;
@@ -515,11 +515,11 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
                     switch (motor)
                     {
                         case TipoMotor.DB2:
-                            sb.AppendLine(string.Format("ALTER TABLE {0} DROP COLUMN {1};", tabla, col.NombreOriginal));
-                            sb.AppendLine(string.Format("CALL SYSPROC.ADMIN_CMD('REORG TABLE {0}');", tabla));
+                            sb.AppendLine($"ALTER TABLE {tabla} DROP COLUMN {col.NombreOriginal};");
+                            sb.AppendLine($"CALL SYSPROC.ADMIN_CMD('REORG TABLE {tabla}');");
                             break;
                         default:
-                            sb.AppendLine(string.Format("ALTER TABLE {0} DROP COLUMN {1};", tabla, col.NombreOriginal));
+                            sb.AppendLine($"ALTER TABLE {tabla} DROP COLUMN {col.NombreOriginal};");
                             break;
                     }
                     sb.AppendLine();
@@ -531,23 +531,23 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
                 {
                     string nullable = col.EsNulable ? "NULL" : "NOT NULL";
                     string def      = string.IsNullOrWhiteSpace(col.ValorDefault) ? string.Empty
-                                      : string.Format(" DEFAULT {0}", col.ValorDefault);
+                                      : $" DEFAULT {col.ValorDefault}";
                     string tipo     = col.TipoDatoCompleto;
 
                     switch (motor)
                     {
                         case TipoMotor.MS_SQL:
-                            sb.AppendLine(string.Format("ALTER TABLE {0} ADD {1} {2} {3}{4};", tabla, col.Nombre, tipo, nullable, def));
+                            sb.AppendLine($"ALTER TABLE {tabla} ADD {col.Nombre} {tipo} {nullable}{def};");
                             break;
                         case TipoMotor.POSTGRES:
-                            sb.AppendLine(string.Format("ALTER TABLE {0} ADD COLUMN {1} {2} {3}{4};", tabla, col.Nombre, tipo, nullable, def));
+                            sb.AppendLine($"ALTER TABLE {tabla} ADD COLUMN {col.Nombre} {tipo} {nullable}{def};");
                             break;
                         case TipoMotor.DB2:
-                            sb.AppendLine(string.Format("ALTER TABLE {0} ADD COLUMN {1} {2} {3}{4};", tabla, col.Nombre, tipo, nullable, def));
-                            sb.AppendLine(string.Format("CALL SYSPROC.ADMIN_CMD('REORG TABLE {0}');", tabla));
+                            sb.AppendLine($"ALTER TABLE {tabla} ADD COLUMN {col.Nombre} {tipo} {nullable}{def};");
+                            sb.AppendLine($"CALL SYSPROC.ADMIN_CMD('REORG TABLE {tabla}');");
                             break;
                         case TipoMotor.SQLite:
-                            sb.AppendLine(string.Format("ALTER TABLE {0} ADD COLUMN {1} {2}{3};", tabla, col.Nombre, tipo, def));
+                            sb.AppendLine($"ALTER TABLE {tabla} ADD COLUMN {col.Nombre} {tipo}{def};");
                             break;
                     }
                     sb.AppendLine();
@@ -564,14 +564,12 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
                         switch (motor)
                         {
                             case TipoMotor.MS_SQL:
-                                sb.AppendLine(string.Format("EXEC sp_rename '{0}.{1}', '{2}', 'COLUMN';",
-                                    tabla, col.NombreOriginal, col.Nombre));
+                                sb.AppendLine($"EXEC sp_rename '{tabla}.{col.NombreOriginal}', '{col.Nombre}', 'COLUMN';");
                                 break;
                             case TipoMotor.POSTGRES:
                             case TipoMotor.DB2:
                             case TipoMotor.SQLite:
-                                sb.AppendLine(string.Format("ALTER TABLE {0} RENAME COLUMN {1} TO {2};",
-                                    tabla, col.NombreOriginal, col.Nombre));
+                                sb.AppendLine($"ALTER TABLE {tabla} RENAME COLUMN {col.NombreOriginal} TO {col.Nombre};");
                                 break;
                         }
                     }
@@ -589,34 +587,30 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
                         switch (motor)
                         {
                             case TipoMotor.MS_SQL:
-                                sb.AppendLine(string.Format("ALTER TABLE {0} ALTER COLUMN {1} {2} {3};",
-                                    tabla, colActual, tipoActual, nullableAct));
+                                sb.AppendLine($"ALTER TABLE {tabla} ALTER COLUMN {colActual} {tipoActual} {nullableAct};");
                                 break;
 
                             case TipoMotor.POSTGRES:
                                 if (tipoModificado)
-                                    sb.AppendLine(string.Format("ALTER TABLE {0} ALTER COLUMN {1} TYPE {2};",
-                                        tabla, colActual, tipoActual));
+                                    sb.AppendLine($"ALTER TABLE {tabla} ALTER COLUMN {colActual} TYPE {tipoActual};");
                                 if (nullableModificado)
                                     sb.AppendLine(col.EsNulable
-                                        ? string.Format("ALTER TABLE {0} ALTER COLUMN {1} DROP NOT NULL;", tabla, colActual)
-                                        : string.Format("ALTER TABLE {0} ALTER COLUMN {1} SET NOT NULL;",  tabla, colActual));
+                                        ? $"ALTER TABLE {tabla} ALTER COLUMN {colActual} DROP NOT NULL;"
+                                        : $"ALTER TABLE {tabla} ALTER COLUMN {colActual} SET NOT NULL;");
                                 break;
 
                             case TipoMotor.DB2:
                                 if (tipoModificado)
-                                    sb.AppendLine(string.Format("ALTER TABLE {0} ALTER COLUMN {1} SET DATA TYPE {2};",
-                                        tabla, colActual, tipoActual));
+                                    sb.AppendLine($"ALTER TABLE {tabla} ALTER COLUMN {colActual} SET DATA TYPE {tipoActual};");
                                 if (nullableModificado)
                                     sb.AppendLine(col.EsNulable
-                                        ? string.Format("ALTER TABLE {0} ALTER COLUMN {1} DROP NOT NULL;", tabla, colActual)
-                                        : string.Format("ALTER TABLE {0} ALTER COLUMN {1} SET NOT NULL;",  tabla, colActual));
-                                sb.AppendLine(string.Format("CALL SYSPROC.ADMIN_CMD('REORG TABLE {0}');", tabla));
+                                        ? $"ALTER TABLE {tabla} ALTER COLUMN {colActual} DROP NOT NULL;"
+                                        : $"ALTER TABLE {tabla} ALTER COLUMN {colActual} SET NOT NULL;");
+                                sb.AppendLine($"CALL SYSPROC.ADMIN_CMD('REORG TABLE {tabla}');");
                                 break;
 
                             case TipoMotor.SQLite:
-                                sb.AppendLine(string.Format(
-                                    "-- SQLite no soporta ALTER COLUMN. Para modificar '{0}' es necesario recrear la tabla.", colActual));
+                                sb.AppendLine($"-- SQLite no soporta ALTER COLUMN. Para modificar '{colActual}' es necesario recrear la tabla.");
                                 break;
                         }
                     }
@@ -639,35 +633,37 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
                 switch (motor)
                 {
                     case TipoMotor.MS_SQL:
+                        // IF EXISTS sin OBJECT_ID(): usa sys.objects+sys.schemas+sys.columns
+                        // para que funcione con cualquier esquema, no solo dbo.
                         if (!string.IsNullOrWhiteSpace(col.Descripcion))
                         {
-                            sb.AppendLine(string.Format("IF EXISTS (SELECT 1 FROM sys.extended_properties WHERE major_id = OBJECT_ID(N'{0}') AND name = N'MS_Description' AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'{0}'), N'{1}', 'ColumnId'))", tabla, colNom));
+                            sb.AppendLine($"IF EXISTS (SELECT 1 FROM sys.extended_properties ep INNER JOIN sys.objects o ON ep.major_id = o.object_id INNER JOIN sys.schemas s ON o.schema_id = s.schema_id INNER JOIN sys.columns c ON ep.major_id = c.object_id AND ep.minor_id = c.column_id WHERE ep.name = N'MS_Description' AND o.name = N'{tableOnly}' AND s.name = N'{schemaSql}' AND c.name = N'{colNom}')");
                             sb.AppendLine("BEGIN");
-                            sb.AppendLine(string.Format("    EXEC sp_updateextendedproperty N'MS_Description', N'{0}', N'SCHEMA', N'{1}', N'TABLE', N'{2}', N'COLUMN', N'{3}'", desc, schemaSql, tableOnly, colNom));
+                            sb.AppendLine($"    EXEC sp_updateextendedproperty N'MS_Description', N'{desc}', N'SCHEMA', N'{schemaSql}', N'TABLE', N'{tableOnly}', N'COLUMN', N'{colNom}'");
                             sb.AppendLine("END");
                             sb.AppendLine("ELSE");
                             sb.AppendLine("BEGIN");
-                            sb.AppendLine(string.Format("    EXEC sp_addextendedproperty N'MS_Description', N'{0}', N'SCHEMA', N'{1}', N'TABLE', N'{2}', N'COLUMN', N'{3}'", desc, schemaSql, tableOnly, colNom));
+                            sb.AppendLine($"    EXEC sp_addextendedproperty N'MS_Description', N'{desc}', N'SCHEMA', N'{schemaSql}', N'TABLE', N'{tableOnly}', N'COLUMN', N'{colNom}'");
                             sb.AppendLine("END");
                         }
                         else
                         {
-                            sb.AppendLine(string.Format("IF EXISTS (SELECT 1 FROM sys.extended_properties WHERE major_id = OBJECT_ID(N'{0}') AND name = N'MS_Description' AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'{0}'), N'{1}', 'ColumnId'))", tabla, colNom));
+                            sb.AppendLine($"IF EXISTS (SELECT 1 FROM sys.extended_properties ep INNER JOIN sys.objects o ON ep.major_id = o.object_id INNER JOIN sys.schemas s ON o.schema_id = s.schema_id INNER JOIN sys.columns c ON ep.major_id = c.object_id AND ep.minor_id = c.column_id WHERE ep.name = N'MS_Description' AND o.name = N'{tableOnly}' AND s.name = N'{schemaSql}' AND c.name = N'{colNom}')");
                             sb.AppendLine("BEGIN");
-                            sb.AppendLine(string.Format("    EXEC sp_dropextendedproperty N'MS_Description', N'SCHEMA', N'{0}', N'TABLE', N'{1}', N'COLUMN', N'{2}'", schemaSql, tableOnly, colNom));
+                            sb.AppendLine($"    EXEC sp_dropextendedproperty N'MS_Description', N'SCHEMA', N'{schemaSql}', N'TABLE', N'{tableOnly}', N'COLUMN', N'{colNom}'");
                             sb.AppendLine("END");
                         }
                         break;
                     case TipoMotor.POSTGRES:
                         sb.AppendLine(string.IsNullOrWhiteSpace(col.Descripcion)
-                            ? string.Format("COMMENT ON COLUMN {0}.{1} IS NULL;", tabla, colNom)
-                            : string.Format("COMMENT ON COLUMN {0}.{1} IS '{2}';", tabla, colNom, desc));
+                            ? $"COMMENT ON COLUMN {tabla}.{colNom} IS NULL;"
+                            : $"COMMENT ON COLUMN {tabla}.{colNom} IS '{desc}';");
                         break;
                     case TipoMotor.DB2:
-                        sb.AppendLine(string.Format("COMMENT ON COLUMN {0}.{1} IS '{2}';", tabla, colNom, desc));
+                        sb.AppendLine($"COMMENT ON COLUMN {tabla}.{colNom} IS '{desc}';");
                         break;
                     case TipoMotor.SQLite:
-                        sb.AppendLine(string.Format("-- SQLite no admite descripciones de columna a nivel de catálogo (columna '{0}').", colNom));
+                        sb.AppendLine($"-- SQLite no admite descripciones de columna a nivel de catálogo (columna '{colNom}').");
                         break;
                 }
                 sb.AppendLine();
@@ -681,32 +677,34 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
                 switch (motor)
                 {
                     case TipoMotor.MS_SQL:
+                        // IF EXISTS sin OBJECT_ID(): usa sys.objects+sys.schemas
+                        // para que funcione con cualquier esquema, no solo dbo.
                         if (!string.IsNullOrWhiteSpace(descripcionTabla))
                         {
-                            sb.AppendLine(string.Format("IF EXISTS (SELECT 1 FROM sys.extended_properties WHERE major_id = OBJECT_ID(N'{0}') AND name = N'MS_Description' AND minor_id = 0)", tabla));
+                            sb.AppendLine($"IF EXISTS (SELECT 1 FROM sys.extended_properties ep INNER JOIN sys.objects o ON ep.major_id = o.object_id INNER JOIN sys.schemas s ON o.schema_id = s.schema_id WHERE ep.name = N'MS_Description' AND ep.minor_id = 0 AND o.name = N'{tableOnly}' AND s.name = N'{schemaSql}')");
                             sb.AppendLine("BEGIN");
-                            sb.AppendLine(string.Format("    EXEC sp_updateextendedproperty N'MS_Description', N'{0}', N'SCHEMA', N'{1}', N'TABLE', N'{2}'", dt, schemaSql, tableOnly));
+                            sb.AppendLine($"    EXEC sp_updateextendedproperty N'MS_Description', N'{dt}', N'SCHEMA', N'{schemaSql}', N'TABLE', N'{tableOnly}'");
                             sb.AppendLine("END");
                             sb.AppendLine("ELSE");
                             sb.AppendLine("BEGIN");
-                            sb.AppendLine(string.Format("    EXEC sp_addextendedproperty N'MS_Description', N'{0}', N'SCHEMA', N'{1}', N'TABLE', N'{2}'", dt, schemaSql, tableOnly));
+                            sb.AppendLine($"    EXEC sp_addextendedproperty N'MS_Description', N'{dt}', N'SCHEMA', N'{schemaSql}', N'TABLE', N'{tableOnly}'");
                             sb.AppendLine("END");
                         }
                         else
                         {
-                            sb.AppendLine(string.Format("IF EXISTS (SELECT 1 FROM sys.extended_properties WHERE major_id = OBJECT_ID(N'{0}') AND name = N'MS_Description' AND minor_id = 0)", tabla));
+                            sb.AppendLine($"IF EXISTS (SELECT 1 FROM sys.extended_properties ep INNER JOIN sys.objects o ON ep.major_id = o.object_id INNER JOIN sys.schemas s ON o.schema_id = s.schema_id WHERE ep.name = N'MS_Description' AND ep.minor_id = 0 AND o.name = N'{tableOnly}' AND s.name = N'{schemaSql}')");
                             sb.AppendLine("BEGIN");
-                            sb.AppendLine(string.Format("    EXEC sp_dropextendedproperty N'MS_Description', N'SCHEMA', N'{0}', N'TABLE', N'{1}'", schemaSql, tableOnly));
+                            sb.AppendLine($"    EXEC sp_dropextendedproperty N'MS_Description', N'SCHEMA', N'{schemaSql}', N'TABLE', N'{tableOnly}'");
                             sb.AppendLine("END");
                         }
                         break;
                     case TipoMotor.POSTGRES:
                         sb.AppendLine(string.IsNullOrWhiteSpace(descripcionTabla)
-                            ? string.Format("COMMENT ON TABLE {0} IS NULL;", tabla)
-                            : string.Format("COMMENT ON TABLE {0} IS '{1}';", tabla, dt));
+                            ? $"COMMENT ON TABLE {tabla} IS NULL;"
+                            : $"COMMENT ON TABLE {tabla} IS '{dt}';");
                         break;
                     case TipoMotor.DB2:
-                        sb.AppendLine(string.Format("COMMENT ON TABLE {0} IS '{1}';", tabla, dt));
+                        sb.AppendLine($"COMMENT ON TABLE {tabla} IS '{dt}';");
                         break;
                     case TipoMotor.SQLite:
                         sb.AppendLine("-- SQLite no admite descripciones de tabla a nivel de catálogo.");
@@ -723,16 +721,16 @@ ORDER BY c.ordinal_position", t.ToLowerInvariant());
                 {
                     case TipoMotor.MS_SQL:
                         // sp_rename funciona tanto para tabla como para columna; sin tercer parámetro = tabla
-                        sb.AppendLine(string.Format("EXEC sp_rename '{0}', '{1}';", tabla, nuevoNombreTabla));
+                        sb.AppendLine($"EXEC sp_rename '{tabla}', '{nuevoNombreTabla}';");
                         break;
                     case TipoMotor.POSTGRES:
-                        sb.AppendLine(string.Format("ALTER TABLE {0} RENAME TO {1};", tabla, nuevoNombreTabla));
+                        sb.AppendLine($"ALTER TABLE {tabla} RENAME TO {nuevoNombreTabla};");
                         break;
                     case TipoMotor.DB2:
-                        sb.AppendLine(string.Format("RENAME TABLE {0} TO {1};", tabla, nuevoNombreTabla));
+                        sb.AppendLine($"RENAME TABLE {tabla} TO {nuevoNombreTabla};");
                         break;
                     case TipoMotor.SQLite:
-                        sb.AppendLine(string.Format("ALTER TABLE {0} RENAME TO {1};", tabla, nuevoNombreTabla));
+                        sb.AppendLine($"ALTER TABLE {tabla} RENAME TO {nuevoNombreTabla};");
                         break;
                 }
                 sb.AppendLine();
