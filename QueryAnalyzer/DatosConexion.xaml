@@ -11,11 +11,8 @@
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- Reemplazado en runtime por AplicarTemaActual() con el tema activo de MainWindow -->
                 <ResourceDictionary Source="ThemeLight.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-
-            <!-- Estilos implícitos que usan la paleta via DynamicResource -->
 
             <Style TargetType="TextBlock">
                 <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
@@ -35,6 +32,7 @@
                 <Setter Property="Background"  Value="{DynamicResource BrushControlBG}"/>
                 <Setter Property="Foreground"  Value="{DynamicResource BrushFG}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="Padding"     Value="3,2"/>
             </Style>
 
             <Style TargetType="Button">
@@ -128,7 +126,7 @@
                                           MinWidth="{TemplateBinding ActualWidth}"
                                           MaxHeight="{TemplateBinding MaxDropDownHeight}">
                                         <Border x:Name="DropDownBorder"
-                                                Background="{DynamicResource BrushControlBG}"
+                                                Background="{DynamicResource DynamicResource BrushControlBG}"
                                                 BorderBrush="{DynamicResource BrushBorder}"
                                                 BorderThickness="1"/>
                                         <ScrollViewer Margin="4,6" SnapsToDevicePixels="True">
@@ -181,17 +179,14 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- NOMBRE -->
         <TextBlock Grid.Row="0" Grid.Column="0" Text="Nombre:" Margin="5" VerticalAlignment="Center"/>
         <TextBox x:Name="txtNombre" Grid.Row="0" Grid.Column="1" Margin="5"/>
 
-        <!-- MOTOR -->
         <TextBlock Grid.Row="1" Grid.Column="0" Text="Motor:" Margin="5" VerticalAlignment="Center"/>
         <ComboBox x:Name="cmbMotor" Grid.Row="1" Grid.Column="1" Margin="5"
                   DisplayMemberPath="Value" SelectedValuePath="Key"
                   SelectionChanged="cmbMotor_SelectionChanged"/>
 
-        <!-- SERVIDOR -->
         <TextBlock Grid.Row="2" Grid.Column="0" Text="Servidor:" Margin="5" VerticalAlignment="Center"/>
         <Grid Grid.Row="2" Grid.Column="1" Margin="5">
             <Grid.ColumnDefinitions>
@@ -203,7 +198,6 @@
                     HorizontalAlignment="Right" IsEnabled="False" Click="btnBuscarBase_Click"/>
         </Grid>
 
-        <!-- PUERTO -->
         <TextBlock Grid.Row="3" Grid.Column="0" Text="Puerto:" Margin="5" VerticalAlignment="Center"/>
         <Grid Grid.Row="3" Grid.Column="1" Margin="5">
             <Grid.ColumnDefinitions>
@@ -215,21 +209,28 @@
                       Foreground="{DynamicResource BrushFG}"/>
         </Grid>
 
-        <!-- USUARIO -->
         <TextBlock x:Name="lblUsuario" Grid.Row="4" Grid.Column="0" Text="Usuario:" Margin="5" VerticalAlignment="Center"/>
         <TextBox x:Name="txtUsuario" Grid.Row="4" Grid.Column="1" Margin="5"/>
 
-        <!-- CONTRASEÑA -->
         <TextBlock x:Name="lblContrasena" Grid.Row="5" Grid.Column="0" Text="Contraseña:" Margin="5" VerticalAlignment="Center"/>
-        <PasswordBox x:Name="txtContrasena" Grid.Row="5" Grid.Column="1" Margin="5"
-                     LostFocus="txtContrasena_LostFocus"/>
+        <Grid Grid.Row="5" Grid.Column="1" Margin="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="35"/>
+            </Grid.ColumnDefinitions>
 
-        <!-- BASE DE DATOS -->
+            <PasswordBox x:Name="txtContrasena" Grid.Column="0" LostFocus="txtContrasena_LostFocus"/>
+
+            <TextBox x:Name="txtContrasenaRevelada" Grid.Column="0" Visibility="Collapsed" />
+
+            <Button x:Name="btnTogglePass" Grid.Column="1" Content="👁" Margin="5,0,0,0" 
+                    Click="btnTogglePass_Click" FontSize="14" Padding="0"/>
+        </Grid>
+
         <TextBlock x:Name="lblBaseDatos" Grid.Row="6" Grid.Column="0" Text="Base de datos:" Margin="5" VerticalAlignment="Center"/>
         <TextBox x:Name="txtBaseDatos" Grid.Row="6" Grid.Column="1" Margin="5"/>
         <ComboBox x:Name="cmbBaseDatos" Visibility="Hidden" Grid.Row="6" Grid.Column="1" Margin="5"/>
 
-        <!-- BOTONES -->
         <Button x:Name="btnGuardar" Grid.Row="7" Grid.Column="1" Margin="0,6,5,2"
                 Content="Guardar Conexión" Width="113" HorizontalAlignment="Right"
                 Click="btnGuardar_Click"/>
