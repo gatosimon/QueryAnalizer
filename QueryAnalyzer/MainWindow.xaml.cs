@@ -599,15 +599,12 @@ namespace QueryAnalyzer
                             if (res.resuelto)
                             {
                                 dt = res.dt;
-                                string sqlFinal = res.sqlCorregido;
+                                // Aplicar las correcciones de esquema directamente sobre el texto
+                                // completo del editor (evita el IndexOf frágil sobre SQL limpiado).
+                                var reemplazos = res.reemplazos;
                                 await Dispatcher.InvokeAsync(() =>
                                 {
-                                    // Reemplazar la consulta original por la corregida en el editor
-                                    string texto = txtQuery.Text;
-                                    int idx = texto.IndexOf(sqlIndividual, StringComparison.Ordinal);
-                                    if (idx >= 0)
-                                        txtQuery.Text = texto.Substring(0, idx) + sqlFinal
-                                                      + texto.Substring(idx + sqlIndividual.Length);
+                                    txtQuery.Text = AgregarEsquemasAlSQL(txtQuery.Text, reemplazos);
                                 });
                             }
                             else
@@ -5249,20 +5246,23 @@ WHERE (type='table' OR type='view')
         /// Intenta resolver tablas sin esquema en el SQL:
         /// - Si una tabla existe en UN solo esquema → la corrige automáticamente y re-ejecuta.
         /// - Si existe en VARIOS → informa en el log los esquemas disponibles.
-        /// Devuelve (resuelto, sqlCorregido, dt con resultados del reintento).
+        /// Devuelve (resuelto, sqlCorregido, dt, reemplazos) donde reemplazos es el mapa
+        /// tabla→esquema usado para la corrección (necesario para actualizar el editor).
         /// </summary>
-        private async Task<(bool resuelto, string sqlCorregido, DataTable dt)>
+        private async Task<(bool resuelto, string sqlCorregido, DataTable dt, Dictionary<string, string> reemplazos)>
             IntentarResolverEsquemasAsync(
                 string sql, string connStr,
                 List<QueryParameter> parametros, string mensajeError)
         {
+            var empty = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
             var tablasNoCalif = ExtraerTablasNoCalificadas(sql);
             if (tablasNoCalif.Count == 0)
-                return (false, sql, new DataTable());
+                return (false, sql, new DataTable(), empty);
 
             var mapaEsquemas = await BuscarEsquemasDeTablas(connStr, tablasNoCalif);
             if (mapaEsquemas.Count == 0)
-                return (false, sql, new DataTable());
+                return (false, sql, new DataTable(), empty);
 
             var unicos    = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             bool hayInfo  = false;
@@ -5284,7 +5284,7 @@ WHERE (type='table' OR type='view')
 
             // Si solo hay tablas en múltiples esquemas (sin unicidad) no podemos auto-corregir
             if (unicos.Count == 0)
-                return (false, sql, new DataTable());
+                return (false, sql, new DataTable(), empty);
 
             string sqlCorregido = AgregarEsquemasAlSQL(sql, unicos);
 
@@ -5295,10 +5295,10 @@ WHERE (type='table' OR type='view')
             if (exRetry != null)
             {
                 AppendMessage($"Error en re-ejecución con esquema corregido: {exRetry.Message}");
-                return (false, sqlCorregido, new DataTable());
+                return (false, sqlCorregido, new DataTable(), empty);
             }
 
-            return (true, sqlCorregido, dtRetry);
+            return (true, sqlCorregido, dtRetry, unicos);
         }
     }
 }
