@@ -4958,7 +4958,9 @@ WHERE (type='table' OR type='view')
         {
             _mapaAliases.Clear();
 
-            string pattern = @"(?i)\b(?:FROM|JOIN)\s+([a-zA-Z0-9_.]+)(?:\s+(?:AS\s+)?([a-zA-Z0-9_]+))?";
+            // Captura tablas en: FROM t, JOIN t, UPDATE t y DELETE FROM t
+            // así las columnas quedan disponibles en el WHERE de UPDATE/DELETE.
+            string pattern = @"(?i)\b(?:FROM|JOIN|UPDATE|(?:DELETE\s+FROM))\s+([a-zA-Z0-9_.]+)(?:\s+(?:AS\s+)?([a-zA-Z0-9_]+))?";
             var matches = Regex.Matches(sql, pattern);
 
             // Palabras reservadas SQL que pueden confundirse con alias
@@ -5269,13 +5271,39 @@ public class SqlKeywordCompletionItem : ICSharpCode.AvalonEdit.CodeCompletion.IC
     {
         get
         {
-            return new System.Windows.Controls.TextBlock
+            var tb = new System.Windows.Controls.TextBlock
             {
-                Text = Text,
-                FontWeight = System.Windows.FontWeights.SemiBold,
-                Foreground = new System.Windows.Media.SolidColorBrush(
-                                 System.Windows.Media.Color.FromRgb(30, 120, 220)) // azul
+                Text       = Text,
+                FontWeight = System.Windows.FontWeights.SemiBold
             };
+
+            // Color por defecto: azul para distinguir keywords de columnas/tablas.
+            // Cuando el ListBoxItem padre está seleccionado se usa el color de texto
+            // del sistema (HighlightTextBrush, normalmente blanco) para evitar que
+            // el azul se pierda contra el fondo de selección en tema claro.
+            var style = new System.Windows.Style(typeof(System.Windows.Controls.TextBlock));
+            style.Setters.Add(new System.Windows.Setter(
+                System.Windows.Controls.TextBlock.ForegroundProperty,
+                new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(30, 120, 220))));
+
+            var trigger = new System.Windows.DataTrigger
+            {
+                Binding = new System.Windows.Data.Binding("IsSelected")
+                {
+                    RelativeSource = new System.Windows.Data.RelativeSource(
+                        System.Windows.Data.RelativeSourceMode.FindAncestor,
+                        typeof(System.Windows.Controls.ListBoxItem), 1)
+                },
+                Value = true
+            };
+            trigger.Setters.Add(new System.Windows.Setter(
+                System.Windows.Controls.TextBlock.ForegroundProperty,
+                System.Windows.SystemColors.HighlightTextBrush));
+
+            style.Triggers.Add(trigger);
+            tb.Style = style;
+            return tb;
         }
     }
 
