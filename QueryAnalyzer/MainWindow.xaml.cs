@@ -584,7 +584,44 @@ namespace QueryAnalyzer
                     // 🔹 Extraemos los parámetros de esta consulta según la pila
                     var parametrosConsulta = ExtraerParametrosParaConsulta(sqlIndividual, parametrosTotales, ref posicionParametro);
 
-                    var dt = await ExecuteQueryAsync(connStr, sqlIndividual, parametrosConsulta);
+                    var (dt, queryEx) = await ExecuteQueryAsync(connStr, sqlIndividual, parametrosConsulta);
+
+                    if (queryEx != null)
+                    {
+                        AppendMessage($"Ocurrió un error al ejecutar la consulta: {queryEx.Message}");
+
+                        // ── Resolución automática de esquemas (solo MS SQL) ─────────────
+                        if (conexionActual?.Motor == TipoMotor.MS_SQL)
+                        {
+                            var res = await IntentarResolverEsquemasAsync(
+                                sqlIndividual, connStr, parametrosConsulta, queryEx.Message);
+
+                            if (res.resuelto)
+                            {
+                                dt = res.dt;
+                                string sqlFinal = res.sqlCorregido;
+                                await Dispatcher.InvokeAsync(() =>
+                                {
+                                    // Reemplazar la consulta original por la corregida en el editor
+                                    string texto = txtQuery.Text;
+                                    int idx = texto.IndexOf(sqlIndividual, StringComparison.Ordinal);
+                                    if (idx >= 0)
+                                        txtQuery.Text = texto.Substring(0, idx) + sqlFinal
+                                                      + texto.Substring(idx + sqlIndividual.Length);
+                                });
+                            }
+                            else
+                            {
+                                swQuery.Stop();
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            swQuery.Stop();
+                            continue;
+                        }
+                    }
 
                     swQuery.Stop();
                     double elapsedMicroseconds = swQuery.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
@@ -965,7 +1002,7 @@ namespace QueryAnalyzer
             return lista;
         }
 
-        private async Task<DataTable> ExecuteQueryAsync(string connStr, string sql, List<QueryParameter> parametros)
+        private async Task<(DataTable dt, Exception error)> ExecuteQueryAsync(string connStr, string sql, List<QueryParameter> parametros)
         {
             return await Task.Run(() =>
             {
@@ -1051,10 +1088,10 @@ namespace QueryAnalyzer
                 }
                 catch (Exception err)
                 {
-                    AppendMessage($"Ocurrió un error al ejecutar la consulta: {err.Message}");
+                    return (dt, err);
                 }
 
-                return dt;
+                return (dt, null);
             });
         }
 
@@ -5114,6 +5151,154 @@ WHERE (type='table' OR type='view')
             {
                 _completionWindow = null;
             }
+        }
+
+        // ── Resolución automática de esquemas ─────────────────────────────────────
+
+        /// <summary>
+        /// Extrae los nombres de tabla referenciados en el SQL que NO tienen
+        /// prefijo de esquema (sin punto). Preserva la capitalización original.
+        /// </summary>
+        private List<string> ExtraerTablasNoCalificadas(string sql)
+        {
+            var patrones = new[]
+            {
+                @"\bFROM\s+([\[\]a-zA-Z0-9_]+)",
+                @"\bJOIN\s+([\[\]a-zA-Z0-9_]+)",
+                @"\bUPDATE\s+([\[\]a-zA-Z0-9_]+)",
+                @"\bINTO\s+([\[\]a-zA-Z0-9_]+)",
+                @"\bDELETE\s+FROM\s+([\[\]a-zA-Z0-9_]+)",
+            };
+
+            var resultado = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var patron in patrones)
+            {
+                foreach (Match m in Regex.Matches(sql, patron, RegexOptions.IgnoreCase))
+                {
+                    // Quitar corchetes si los tiene
+                    string nombre = m.Groups[1].Value.Trim().Trim('[', ']');
+                    // Solo sin punto (no calificado) y no vacío
+                    if (!nombre.Contains('.') && !string.IsNullOrWhiteSpace(nombre))
+                        resultado.Add(nombre);
+                }
+            }
+            return resultado.ToList();
+        }
+
+        /// <summary>
+        /// Consulta INFORMATION_SCHEMA.TABLES para saber en qué esquemas existe
+        /// cada tabla de la lista. Devuelve tabla → lista de esquemas.
+        /// </summary>
+        private async Task<Dictionary<string, List<string>>> BuscarEsquemasDeTablas(
+            string connStr, List<string> tablas)
+        {
+            var resultado = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            if (tablas.Count == 0) return resultado;
+
+            string inList = string.Join(",", tablas.Select(t => $"'{t.Replace("'", "''")}'"));
+            string sql = $"SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES " +
+                         $"WHERE TABLE_NAME IN ({inList}) ORDER BY TABLE_NAME, TABLE_SCHEMA";
+
+            return await Task.Run(() =>
+            {
+                try
+                {
+                    using (var conn = new OdbcConnection(connStr))
+                    {
+                        conn.Open();
+                        using (var cmd = new OdbcCommand(sql, conn))
+                        using (var r = cmd.ExecuteReader())
+                        {
+                            while (r.Read())
+                            {
+                                string schema = r[0].ToString().Trim();
+                                string tabla  = r[1].ToString().Trim();
+                                if (!resultado.ContainsKey(tabla))
+                                    resultado[tabla] = new List<string>();
+                                resultado[tabla].Add(schema);
+                            }
+                        }
+                    }
+                }
+                catch { /* silencioso */ }
+                return resultado;
+            });
+        }
+
+        /// <summary>
+        /// En el SQL reemplaza cada tabla (sin esquema) por [esquema].[tabla]
+        /// solo en los contextos FROM/JOIN/UPDATE/INTO/DELETE FROM,
+        /// y solo cuando no ya tiene un prefijo de esquema.
+        /// </summary>
+        private string AgregarEsquemasAlSQL(string sql, Dictionary<string, string> reemplazos)
+        {
+            foreach (var kvp in reemplazos)
+            {
+                string tablaEsc  = Regex.Escape(kvp.Key);
+                string calificado = $"[{kvp.Value}].[{kvp.Key}]";
+
+                // Contexto: después de FROM/JOIN/UPDATE/INTO/DELETE FROM,
+                // el nombre sin punto delante (no ya calificado) ni punto detrás.
+                string patron = $@"(?<=\b(?:FROM|JOIN|UPDATE|INTO|(?:DELETE\s+FROM))\s+)\[?{tablaEsc}\]?(?!\s*\.)";
+                sql = Regex.Replace(sql, patron, calificado, RegexOptions.IgnoreCase);
+            }
+            return sql;
+        }
+
+        /// <summary>
+        /// Intenta resolver tablas sin esquema en el SQL:
+        /// - Si una tabla existe en UN solo esquema → la corrige automáticamente y re-ejecuta.
+        /// - Si existe en VARIOS → informa en el log los esquemas disponibles.
+        /// Devuelve (resuelto, sqlCorregido, dt con resultados del reintento).
+        /// </summary>
+        private async Task<(bool resuelto, string sqlCorregido, DataTable dt)>
+            IntentarResolverEsquemasAsync(
+                string sql, string connStr,
+                List<QueryParameter> parametros, string mensajeError)
+        {
+            var tablasNoCalif = ExtraerTablasNoCalificadas(sql);
+            if (tablasNoCalif.Count == 0)
+                return (false, sql, new DataTable());
+
+            var mapaEsquemas = await BuscarEsquemasDeTablas(connStr, tablasNoCalif);
+            if (mapaEsquemas.Count == 0)
+                return (false, sql, new DataTable());
+
+            var unicos    = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            bool hayInfo  = false;
+
+            foreach (var kvp in mapaEsquemas)
+            {
+                if (kvp.Value.Count == 1)
+                {
+                    unicos[kvp.Key] = kvp.Value[0];
+                }
+                else if (kvp.Value.Count > 1)
+                {
+                    hayInfo = true;
+                    string listaEsquemas = string.Join(", ", kvp.Value.Select(s => $"[{s}]"));
+                    AppendMessage($"ℹ️  La tabla '{kvp.Key}' existe en varios esquemas: {listaEsquemas}. " +
+                                  $"Agregá el prefijo de esquema deseado a la consulta.");
+                }
+            }
+
+            // Si solo hay tablas en múltiples esquemas (sin unicidad) no podemos auto-corregir
+            if (unicos.Count == 0)
+                return (false, sql, new DataTable());
+
+            string sqlCorregido = AgregarEsquemasAlSQL(sql, unicos);
+
+            foreach (var kvp in unicos)
+                AppendMessage($"✅ Tabla '{kvp.Key}' → [{kvp.Value}].[{kvp.Key}]  (corrección automática). Re-ejecutando...");
+
+            var (dtRetry, exRetry) = await ExecuteQueryAsync(connStr, sqlCorregido, parametros);
+            if (exRetry != null)
+            {
+                AppendMessage($"Error en re-ejecución con esquema corregido: {exRetry.Message}");
+                return (false, sqlCorregido, new DataTable());
+            }
+
+            return (true, sqlCorregido, dtRetry);
         }
     }
 }
