@@ -1632,36 +1632,59 @@ namespace QueryAnalyzer
                                     ctxMenu.Items.Add(menuItem);
                                 };
 
+                                bool esVista = capTipo == "VIEW";
+                                TipoMotor motorCtx = conexionActual?.Motor ?? TipoMotor.MS_SQL;
+
+                                // ── SELECT: disponible para tablas y vistas ─────────────
                                 agregarOpcion("📋 SELECT TOP 10", () => GenerarSelectTop10(capSchema, capTabla));
-                                // 🔹 CARGA DIFERIDA: los scripts que necesitan columnas las obtienen en el momento del click
                                 agregarOpcion("📋 SELECT (todas las cols)", () =>
                                 {
                                     using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarSelectAllCols(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
                                 });
                                 ctxMenu.Items.Add(new Separator());
-                                agregarOpcion("📄 CREATE TABLE", () =>
-                                {
-                                    using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarCreateTable(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
-                                });
-                                agregarOpcion("✏️  ALTER TABLE (add col)", () => GenerarAlterTableAddColumn(capSchema, capTabla));
-                                agregarOpcion("🗑️  DROP TABLE", () => GenerarDropTable(capSchema, capTabla));
-                                ctxMenu.Items.Add(new Separator());
-                                agregarOpcion("➕ INSERT INTO", () =>
-                                {
-                                    using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarInsert(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
-                                });
-                                agregarOpcion("✏️  UPDATE ... SET", () =>
-                                {
-                                    using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarUpdate(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
-                                });
-                                agregarOpcion("🗑️  DELETE FROM", () => GenerarDelete(capSchema, capTabla));
-                                ctxMenu.Items.Add(new Separator());
-                                agregarOpcion("🔑 CREATE INDEX", () => GenerarCreateIndex(capSchema, capTabla));
-                                agregarOpcion("🔑 DROP INDEX", () => GenerarDropIndex(capSchema, capTabla));
-                                agregarOpcion("📊 COUNT(*)", () => GenerarCount(capSchema, capTabla));
-                                agregarOpcion("⚒︎ DESIGN", () => Diseñar(capSchema, capTabla));
 
-                                // ── Documentar tabla individual ────────────────────────────────
+                                if (!esVista)
+                                {
+                                    // ── Opciones exclusivas de TABLA ───────────────────
+                                    agregarOpcion("📄 CREATE TABLE", () =>
+                                    {
+                                        using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarCreateTable(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
+                                    });
+                                    agregarOpcion("✏️  ALTER TABLE (add col)", () => GenerarAlterTableAddColumn(capSchema, capTabla));
+                                    agregarOpcion("🗑️  DROP TABLE", () => GenerarDropTable(capSchema, capTabla));
+                                    ctxMenu.Items.Add(new Separator());
+                                    agregarOpcion("➕ INSERT INTO", () =>
+                                    {
+                                        using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarInsert(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
+                                    });
+                                    agregarOpcion("✏️  UPDATE ... SET", () =>
+                                    {
+                                        using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarUpdate(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
+                                    });
+                                    agregarOpcion("🗑️  DELETE FROM", () => GenerarDelete(capSchema, capTabla));
+                                    ctxMenu.Items.Add(new Separator());
+                                    agregarOpcion("🔑 CREATE INDEX", () => GenerarCreateIndex(capSchema, capTabla));
+                                    agregarOpcion("🔑 DROP INDEX", () => GenerarDropIndex(capSchema, capTabla));
+                                    agregarOpcion("📊 COUNT(*)", () => GenerarCount(capSchema, capTabla));
+                                    agregarOpcion("⚒︎ DESIGN", () => Diseñar(capSchema, capTabla));
+                                }
+                                else
+                                {
+                                    // ── Opciones de VISTA según motor ──────────────────
+                                    // CREATE VIEW: todos los motores
+                                    agregarOpcion("📄 CREATE VIEW", () => GenerarCreateView(capSchema, capTabla));
+
+                                    // ALTER VIEW: solo MS SQL y PostgreSQL (DB2 y SQLite requieren DROP+CREATE)
+                                    if (motorCtx == TipoMotor.MS_SQL || motorCtx == TipoMotor.POSTGRES)
+                                        agregarOpcion("✏️  ALTER VIEW", () => GenerarAlterView(capSchema, capTabla));
+
+                                    // DROP VIEW: todos los motores
+                                    agregarOpcion("🗑️  DROP VIEW", () => GenerarDropView(capSchema, capTabla));
+                                    ctxMenu.Items.Add(new Separator());
+                                    agregarOpcion("📊 COUNT(*)", () => GenerarCount(capSchema, capTabla));
+                                }
+
+                                // ── Documentar tabla / vista ────────────────────────────
                                 ctxMenu.Items.Add(new Separator());
                                 var menuDocTabla = new MenuItem { Header = $"📝 Documentar {capTabla}" };
                                 AplicarEstiloMenuItem(menuDocTabla);
@@ -1854,8 +1877,140 @@ namespace QueryAnalyzer
                     }
                 });
 
-                // 🔹 Carga de índices (sin UI pesada)
-                if (tipo == "TABLE") // 👈 NUEVO: las vistas no tienen índices
+                // ── Carga de claves foráneas (solo tablas) ───────────────────────────
+                if (tipo == "TABLE")
+                {
+                    try
+                    {
+                        string sqlFK = null;
+                        switch (conexionActual.Motor)
+                        {
+                            case TipoMotor.MS_SQL:
+                                sqlFK = $@"SELECT
+                                    fk.name           AS FKName,
+                                    c_fk.name         AS LocalCol,
+                                    s_ref.name        AS RefSchema,
+                                    t_ref.name        AS RefTable,
+                                    c_ref.name        AS RefCol
+                                FROM sys.foreign_keys fk
+                                JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id
+                                JOIN sys.tables t     ON fk.parent_object_id = t.object_id
+                                JOIN sys.columns c_fk ON fkc.parent_object_id = c_fk.object_id AND fkc.parent_column_id = c_fk.column_id
+                                JOIN sys.tables t_ref ON fkc.referenced_object_id = t_ref.object_id
+                                JOIN sys.schemas s_ref ON t_ref.schema_id = s_ref.schema_id
+                                JOIN sys.columns c_ref ON fkc.referenced_object_id = c_ref.object_id AND fkc.referenced_column_id = c_ref.column_id
+                                WHERE t.name = '{nombreTabla}'
+                                ORDER BY fk.name, fkc.constraint_column_id";
+                                break;
+                            case TipoMotor.POSTGRES:
+                                sqlFK = $@"SELECT
+                                    tc.constraint_name  AS FKName,
+                                    kcu.column_name     AS LocalCol,
+                                    ccu.table_schema    AS RefSchema,
+                                    ccu.table_name      AS RefTable,
+                                    ccu.column_name     AS RefCol
+                                FROM information_schema.table_constraints tc
+                                JOIN information_schema.key_column_usage kcu
+                                    ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
+                                JOIN information_schema.constraint_column_usage ccu
+                                    ON tc.constraint_name = ccu.constraint_name
+                                WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name = '{nombreTabla}'
+                                ORDER BY tc.constraint_name, kcu.ordinal_position";
+                                break;
+                            case TipoMotor.DB2:
+                                sqlFK = $@"SELECT
+                                    r.CONSTNAME   AS FKName,
+                                    k.COLNAME     AS LocalCol,
+                                    r.REFTABSCHEMA AS RefSchema,
+                                    r.REFTABNAME  AS RefTable,
+                                    '' AS RefCol
+                                FROM SYSCAT.REFERENCES r
+                                JOIN SYSCAT.KEYCOLUSE k ON r.CONSTNAME = k.CONSTNAME AND r.TABNAME = k.TABNAME AND r.TABSCHEMA = k.TABSCHEMA
+                                WHERE r.TABNAME = UPPER('{nombreTabla}')
+                                ORDER BY r.CONSTNAME, k.COLSEQ";
+                                break;
+                            case TipoMotor.SQLite:
+                                sqlFK = $"PRAGMA foreign_key_list('{nombreTabla}')";
+                                break;
+                        }
+
+                        if (!string.IsNullOrEmpty(sqlFK))
+                        {
+                            using (var cmdFK = conn.CreateCommand())
+                            {
+                                cmdFK.CommandText = sqlFK;
+                                using (var adFK = new OdbcDataAdapter(cmdFK))
+                                {
+                                    var dtFK = new DataTable();
+                                    adFK.Fill(dtFK);
+
+                                    if (dtFK.Rows.Count > 0)
+                                    {
+                                        Dispatcher.Invoke(() =>
+                                        {
+                                            var fkRaiz = new TreeViewItem { Header = "🔗 Claves foráneas" };
+
+                                            if (conexionActual.Motor == TipoMotor.SQLite)
+                                            {
+                                                // PRAGMA foreign_key_list: id, seq, table, from, to
+                                                var grupos = dtFK.AsEnumerable()
+                                                    .GroupBy(r => r["id"].ToString())
+                                                    .OrderBy(g => g.Key);
+                                                foreach (var g in grupos)
+                                                {
+                                                    string refTab = g.First()["table"].ToString();
+                                                    var cols = g.Select(r => $"{r["from"]} → {r["to"]}");
+                                                    fkRaiz.Items.Add(new TreeViewItem
+                                                    {
+                                                        Header = $"FK → {refTab}  ({string.Join(", ", cols)})"
+                                                    });
+                                                }
+                                            }
+                                            else
+                                            {
+                                                var grupos = dtFK.AsEnumerable()
+                                                    .GroupBy(r => r["FKName"].ToString())
+                                                    .OrderBy(g => g.Key);
+                                                foreach (var g in grupos)
+                                                {
+                                                    string fkNom = g.Key;
+                                                    var filas = g.ToList();
+                                                    string refSchema = filas[0]["RefSchema"].ToString();
+                                                    string refTab    = filas[0]["RefTable"].ToString();
+                                                    string refTabFull = string.IsNullOrEmpty(refSchema)
+                                                        ? refTab : $"{refSchema}.{refTab}";
+                                                    var cols = filas.Select(r =>
+                                                    {
+                                                        string rc = r["RefCol"].ToString();
+                                                        return string.IsNullOrEmpty(rc)
+                                                            ? r["LocalCol"].ToString()
+                                                            : $"{r["LocalCol"]} → {rc}";
+                                                    });
+                                                    fkRaiz.Items.Add(new TreeViewItem
+                                                    {
+                                                        Header = $"{fkNom}  ⟶  {refTabFull}  ({string.Join(", ", cols)})"
+                                                    });
+                                                }
+                                            }
+
+                                            if (fkRaiz.Items.Count > 0)
+                                                tablaNode.Items.Add(fkRaiz);
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch { /* Motor sin soporte de FK en catálogo */ }
+                }
+
+                // ── Carga de índices ─────────────────────────────────────────────────
+                // Tablas: todos los motores.
+                // Vistas: solo MS SQL admite vistas indexadas; los demás las omiten.
+                bool mostrarIndices = tipo == "TABLE"
+                    || (tipo == "VIEW" && conexionActual.Motor == TipoMotor.MS_SQL);
+
+                if (mostrarIndices)
                 {
                     try
                     {
@@ -1864,49 +2019,43 @@ namespace QueryAnalyzer
                             switch (conexionActual.Motor)
                             {
                                 case TipoMotor.MS_SQL:
+                                    // sys.objects cubre tablas (U) y vistas (V) con índices
                                     cmd.CommandText = $@"SELECT
-                                        s.name AS SchemaName,
-                                        t.name AS TableName,
-                                        i.name AS IndexName,
-                                        i.type_desc AS IndexType,
-                                        c.name AS ColumnName,
-                                        ic.key_ordinal AS ColumnOrder,
-                                        i.is_primary_key AS IsPrimaryKey,
-                                        i.is_unique AS IsUnique
+                                        i.name                  AS IndexName,
+                                        i.type_desc             AS IndexType,
+                                        c.name                  AS ColumnName,
+                                        ic.key_ordinal          AS ColumnOrder,
+                                        ic.is_descending_key    AS IsDesc,
+                                        i.is_primary_key        AS IsPrimaryKey,
+                                        i.is_unique             AS IsUnique
                                     FROM sys.indexes i
                                     INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
                                     INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
-                                    INNER JOIN sys.tables t ON i.object_id = t.object_id
-                                    INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
-                                    WHERE t.name = '{nombreTabla}'
-                                    ORDER BY i.name, ic.key_ordinal;";
+                                    INNER JOIN sys.objects o ON i.object_id = o.object_id
+                                    WHERE o.name = '{nombreTabla}' AND o.type IN ('U','V')
+                                    ORDER BY i.is_primary_key DESC, i.name, ic.key_ordinal;";
                                     break;
                                 case TipoMotor.DB2:
                                     cmd.CommandText = $@"SELECT
-                                        i.TABSCHEMA AS SchemaName,
-                                        i.TABNAME AS TableName,
-                                        i.INDNAME AS IndexName,
+                                        i.INDNAME   AS IndexName,
                                         i.UNIQUERULE AS UniqueRule,
-                                        c.COLNAME AS ColumnName,
-                                        c.COLSEQ AS ColumnOrder,
-                                        i.INDEXTYPE AS IndexType
+                                        c.COLNAME   AS ColumnName,
+                                        c.COLSEQ    AS ColumnOrder,
+                                        c.COLORDER  AS ColOrder
                                     FROM SYSCAT.INDEXES i
-                                    JOIN SYSCAT.INDEXCOLUSE c
-                                        ON i.INDNAME = c.INDNAME AND i.INDSCHEMA = c.INDSCHEMA
+                                    JOIN SYSCAT.INDEXCOLUSE c ON i.INDNAME = c.INDNAME AND i.INDSCHEMA = c.INDSCHEMA
                                     WHERE i.TABNAME = UPPER('{nombreTabla}')
                                     ORDER BY i.INDNAME, c.COLSEQ;";
                                     break;
                                 case TipoMotor.POSTGRES:
                                     cmd.CommandText = $@"SELECT
-                                        n.nspname AS SchemaName,
-                                        t.relname AS TableName,
-                                        i.relname AS IndexName,
-                                        a.attname AS ColumnName,
-                                        ix.indisunique AS IsUnique,
+                                        i.relname       AS IndexName,
+                                        a.attname       AS ColumnName,
+                                        ix.indisunique  AS IsUnique,
                                         ix.indisprimary AS IsPrimary
                                     FROM pg_class t
                                     JOIN pg_index ix ON t.oid = ix.indrelid
-                                    JOIN pg_class i ON i.oid = ix.indexrelid
+                                    JOIN pg_class i  ON i.oid = ix.indexrelid
                                     JOIN pg_namespace n ON n.oid = t.relnamespace
                                     JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
                                     WHERE t.relname = '{nombreTabla}'
@@ -1924,50 +2073,143 @@ namespace QueryAnalyzer
                                 var dtIndices = new DataTable();
                                 adapter.Fill(dtIndices);
 
+                                // Para SQLite: PRAGMA index_list no da columnas;
+                                // hacemos una segunda consulta por índice.
+                                if (conexionActual.Motor == TipoMotor.SQLite && dtIndices.Rows.Count > 0)
+                                {
+                                    var indexNames = dtIndices.AsEnumerable()
+                                        .Select(r => r["NAME"].ToString()).ToList();
+                                    dtIndices.Columns.Add("ColumnName", typeof(string));
+                                    dtIndices.Columns.Add("UNIQUE_RULE", typeof(string));
+                                    var rowsConCol = new DataTable();
+                                    rowsConCol.Columns.Add("IndexName", typeof(string));
+                                    rowsConCol.Columns.Add("ColumnName", typeof(string));
+                                    rowsConCol.Columns.Add("IsUnique", typeof(string));
+                                    foreach (DataRow idxRow in dtIndices.Rows)
+                                    {
+                                        string idxNom = idxRow["NAME"].ToString();
+                                        string unique = idxRow["UNIQUE"].ToString();
+                                        using (var cmdInfo = conn.CreateCommand())
+                                        {
+                                            cmdInfo.CommandText = $"PRAGMA index_info('{idxNom}')";
+                                            using (var rdrInfo = cmdInfo.ExecuteReader())
+                                            {
+                                                bool tieneCols = false;
+                                                while (rdrInfo.Read())
+                                                {
+                                                    tieneCols = true;
+                                                    var nr = rowsConCol.NewRow();
+                                                    nr["IndexName"]  = idxNom;
+                                                    nr["ColumnName"] = rdrInfo["name"].ToString();
+                                                    nr["IsUnique"]   = unique;
+                                                    rowsConCol.Rows.Add(nr);
+                                                }
+                                                if (!tieneCols)
+                                                {
+                                                    var nr = rowsConCol.NewRow();
+                                                    nr["IndexName"]  = idxNom;
+                                                    nr["ColumnName"] = "";
+                                                    nr["IsUnique"]   = unique;
+                                                    rowsConCol.Rows.Add(nr);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    dtIndices = rowsConCol;
+                                }
+
                                 if (dtIndices.Rows.Count > 0)
                                 {
                                     Dispatcher.Invoke(() =>
                                     {
-                                        var indiceRaiz = new TreeViewItem
-                                        {
-                                            Header = "Índices",
-                                        };
+                                        var indiceRaiz = new TreeViewItem { Header = "📇 Índices" };
 
-                                        string indexNameColumn = conexionActual.Motor == TipoMotor.SQLite ? "NAME" : "INDEXNAME";
+                                        // Columna de nombre de índice según motor
+                                        string idxCol = conexionActual.Motor == TipoMotor.SQLite
+                                            ? "IndexName" : "INDEXNAME";
 
                                         var indicesAgrupados = dtIndices.AsEnumerable()
-                                            .GroupBy(row => row.Field<string>(indexNameColumn))
+                                            .GroupBy(r => r.Field<string>(idxCol))
                                             .OrderBy(g => g.Key);
 
                                         foreach (var grupoIndice in indicesAgrupados)
                                         {
                                             string nombreIndice = grupoIndice.Key;
+                                            var filas = grupoIndice.ToList();
 
-                                            // 🖼️ INICIO DE MODIFICACIÓN: nodo de índice con icono
+                                            // ── Determinar tipo de índice ─────────────
+                                            bool esPK = false, esUnique = false;
+                                            string tipoDesc = "";
+                                            switch (conexionActual.Motor)
+                                            {
+                                                case TipoMotor.MS_SQL:
+                                                    esPK      = Convert.ToBoolean(filas[0]["IsPrimaryKey"]);
+                                                    esUnique  = Convert.ToBoolean(filas[0]["IsUnique"]);
+                                                    tipoDesc  = filas[0]["IndexType"]?.ToString() ?? "";
+                                                    break;
+                                                case TipoMotor.DB2:
+                                                    string ur = filas[0]["UniqueRule"]?.ToString() ?? "";
+                                                    esPK     = ur == "P";
+                                                    esUnique = ur == "U" || ur == "P";
+                                                    break;
+                                                case TipoMotor.POSTGRES:
+                                                    esPK     = Convert.ToBoolean(filas[0]["IsPrimary"]);
+                                                    esUnique = Convert.ToBoolean(filas[0]["IsUnique"]);
+                                                    break;
+                                                case TipoMotor.SQLite:
+                                                    esUnique = filas[0]["IsUnique"]?.ToString() == "1";
+                                                    break;
+                                            }
+
+                                            string icono = esPK ? "🗝️" : esUnique ? "🔒" : "📇";
+                                            string etiq  = esPK ? " [PK]"
+                                                         : esUnique ? " [UNIQUE]"
+                                                         : (!string.IsNullOrEmpty(tipoDesc) ? $" [{tipoDesc}]" : "");
+
                                             var indiceHeader = new StackPanel { Orientation = Orientation.Horizontal };
                                             indiceHeader.Children.Add(new System.Windows.Controls.Image
                                             {
                                                 Source = claveIcon,
-                                                Width = tamañoIconos,
+                                                Width  = tamañoIconos,
                                                 Height = tamañoIconos,
                                                 Margin = new System.Windows.Thickness(0, 0, 5, 0)
                                             });
-                                            indiceHeader.Children.Add(new System.Windows.Controls.TextBlock { Text = nombreIndice });
-
+                                            indiceHeader.Children.Add(new System.Windows.Controls.TextBlock
+                                            {
+                                                Text = $"{icono} {nombreIndice}{etiq}"
+                                            });
                                             var nodoIndice = new TreeViewItem { Header = indiceHeader };
-                                            // 🖼️ FIN DE MODIFICACIÓN
+
+                                            // ── Columnas del índice como hijos ────────
+                                            foreach (var fila in filas)
+                                            {
+                                                string colNom = fila["ColumnName"]?.ToString() ?? "";
+                                                if (string.IsNullOrEmpty(colNom)) continue;
+
+                                                bool desc = false;
+                                                if (fila.Table.Columns.Contains("IsDesc"))
+                                                    desc = Convert.ToBoolean(fila["IsDesc"]);
+                                                else if (fila.Table.Columns.Contains("ColOrder"))
+                                                    desc = fila["ColOrder"]?.ToString() == "D";
+
+                                                nodoIndice.Items.Add(new TreeViewItem
+                                                {
+                                                    Header = $"  {colNom}  {(desc ? "DESC" : "ASC")}"
+                                                });
+                                            }
 
                                             indiceRaiz.Items.Add(nodoIndice);
                                         }
 
-                                        tablaNode.Items.Add(indiceRaiz);
+                                        if (indiceRaiz.Items.Count > 0)
+                                            tablaNode.Items.Add(indiceRaiz);
                                     });
                                 }
                             }
                         }
                     }
                     catch { /* Algunos motores no exponen esa vista */ }
-                } // 👈 NUEVO: fin del if (tipo == "TABLE") para índices
+                }
             }
         }
 
@@ -2157,6 +2399,68 @@ namespace QueryAnalyzer
         private string GenerarCount(string schema, string tabla)
         {
             return "SELECT COUNT(*) FROM " + NombreCompleto(schema, tabla) + ";";
+        }
+
+        // ── Generadores de scripts para VISTAS ──────────────────────────────────
+
+        /// <summary>CREATE VIEW esqueleto con SELECT de ejemplo.</summary>
+        private string GenerarCreateView(string schema, string vista)
+        {
+            TipoMotor motor = conexionActual?.Motor ?? TipoMotor.MS_SQL;
+            string v = NombreCompleto(schema, vista);
+            switch (motor)
+            {
+                case TipoMotor.MS_SQL:
+                    return $"CREATE VIEW {v}\r\nAS\r\nSELECT\r\n    -- columnas\r\nFROM <tabla_origen>;";
+                case TipoMotor.POSTGRES:
+                    // PostgreSQL recomienda CREATE OR REPLACE para poder re-ejecutar sin DROP
+                    return $"CREATE OR REPLACE VIEW {v} AS\r\nSELECT\r\n    -- columnas\r\nFROM <tabla_origen>;";
+                case TipoMotor.DB2:
+                    return $"CREATE VIEW {v} AS\r\nSELECT\r\n    -- columnas\r\nFROM <tabla_origen>;";
+                case TipoMotor.SQLite:
+                    return $"CREATE VIEW IF NOT EXISTS {vista} AS\r\nSELECT\r\n    -- columnas\r\nFROM <tabla_origen>;";
+                default:
+                    return $"CREATE VIEW {v} AS SELECT * FROM <tabla_origen>;";
+            }
+        }
+
+        /// <summary>
+        /// ALTER VIEW (solo MS SQL y PostgreSQL; DB2 y SQLite requieren DROP + CREATE).
+        /// </summary>
+        private string GenerarAlterView(string schema, string vista)
+        {
+            TipoMotor motor = conexionActual?.Motor ?? TipoMotor.MS_SQL;
+            string v = NombreCompleto(schema, vista);
+            switch (motor)
+            {
+                case TipoMotor.MS_SQL:
+                    return $"ALTER VIEW {v}\r\nAS\r\nSELECT\r\n    -- columnas actualizadas\r\nFROM <tabla_origen>;";
+                case TipoMotor.POSTGRES:
+                    // PostgreSQL no tiene ALTER VIEW ... AS; se usa CREATE OR REPLACE
+                    return $"CREATE OR REPLACE VIEW {v} AS\r\nSELECT\r\n    -- columnas actualizadas\r\nFROM <tabla_origen>;";
+                default:
+                    return $"-- ALTER VIEW no está soportado en {motor}.\r\n-- Usá DROP VIEW + CREATE VIEW para redefinirla.";
+            }
+        }
+
+        /// <summary>DROP VIEW con guarda de existencia cuando el motor lo admite.</summary>
+        private string GenerarDropView(string schema, string vista)
+        {
+            TipoMotor motor = conexionActual?.Motor ?? TipoMotor.MS_SQL;
+            string v = NombreCompleto(schema, vista);
+            switch (motor)
+            {
+                case TipoMotor.MS_SQL:
+                    return $"IF OBJECT_ID(N'{v}', N'V') IS NOT NULL\r\n    DROP VIEW {v};";
+                case TipoMotor.DB2:
+                    return $"DROP VIEW {v};";
+                case TipoMotor.POSTGRES:
+                    return $"DROP VIEW IF EXISTS {v};";
+                case TipoMotor.SQLite:
+                    return $"DROP VIEW IF EXISTS {vista};";
+                default:
+                    return $"DROP VIEW {v};";
+            }
         }
 
         // ════════════════════════════════════════════════════════════════
