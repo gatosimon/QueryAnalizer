@@ -3058,23 +3058,39 @@ namespace QueryAnalyzer
                 }
                 else
                 {
-                    // ── Layout jerárquico guiado por FK ─────────────────────────
+                    // ── Layout jerárquico guiado por FK — orden topológico de Kahn ──
+                    //
+                    // "Padre de layout" de t  = tablas que t referencia (outEdges[t] ∩ comp)
+                    // "Hijo  de layout" de t  = tablas que referencian a t (inEdges[t] ∩ comp)
+                    //
+                    // Kahn encola cada nodo exactamente UNA vez, cuando todos sus padres ya
+                    // fueron procesados, por lo que el nivel asignado es siempre el máximo
+                    // posible y el algoritmo termina en O(V+E) incluso con ciclos.
+                    // Los nodos que forman ciclos (in-degree nunca llega a 0) quedan sin nivel
+                    // y se les asigna 0 en el fallback final.
 
-                    // Raíces de layout = tablas padre puras (sin outEdges dentro del comp)
-                    var raices = comp
-                        .Where(t => !outEdges[t].Any(d => tablasComp.Contains(d)))
-                        .ToList();
-                    // Fallback: tabla con más hijos (en ciclos)
-                    if (raices.Count == 0)
-                        raices = new List<string>
-                        {
-                            comp.OrderByDescending(t => inEdges[t].Count(s => tablasComp.Contains(s))).First()
-                        };
+                    // in-degree de Kahn = cantidad de padres de layout dentro del componente
+                    var inDeg = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var t in comp)
+                        inDeg[t] = outEdges[t].Count(d => tablasComp.Contains(d));
 
-                    // BFS desde raíces siguiendo inEdges (hijos en layout = nivel+1)
                     var nivel = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
                     var colaL = new Queue<string>();
-                    foreach (var r in raices) { nivel[r] = 0; colaL.Enqueue(r); }
+
+                    // Semilla: nodos sin padres (tablas "raíz" puras)
+                    foreach (var t in comp)
+                        if (inDeg[t] == 0) { nivel[t] = 0; colaL.Enqueue(t); }
+
+                    // Ciclo puro (todos tienen padres): elegir el más referenciado como raíz
+                    if (colaL.Count == 0)
+                    {
+                        var root = comp
+                            .OrderByDescending(t => inEdges[t].Count(s => tablasComp.Contains(s)))
+                            .First();
+                        nivel[root] = 0;
+                        inDeg[root] = 0;
+                        colaL.Enqueue(root);
+                    }
 
                     while (colaL.Count > 0)
                     {
@@ -3082,14 +3098,20 @@ namespace QueryAnalyzer
                         foreach (var hijo in inEdges[cur])
                         {
                             if (!tablasComp.Contains(hijo)) continue;
+
+                            // Propagar nivel máximo
                             int nNivel = nivel[cur] + 1;
                             if (!nivel.ContainsKey(hijo) || nivel[hijo] < nNivel)
-                            {
                                 nivel[hijo] = nNivel;
+
+                            // Cuando todos los padres del hijo ya se procesaron, encolar
+                            inDeg[hijo]--;
+                            if (inDeg[hijo] == 0)
                                 colaL.Enqueue(hijo);
-                            }
                         }
                     }
+
+                    // Fallback: nodos que quedaron en ciclos sin asignar → nivel 0
                     foreach (var t in comp) if (!nivel.ContainsKey(t)) nivel[t] = 0;
 
                     // Agrupar por nivel y ordenar cada nivel por nombre
