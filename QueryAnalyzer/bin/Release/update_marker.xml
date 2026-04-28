@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <VersionMarker xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <AppName>QueryAnalyzer</AppName>
-  <InstalledVersion>1.1.0.8</InstalledVersion>
-  <InstallDate>2026-04-22T08:50:42.4255084-03:00</InstallDate>
+  <InstalledVersion>1.1.0.9</InstalledVersion>
+  <InstallDate>2026-04-28T10:17:49.0089991-03:00</InstallDate>
 </VersionMarker>

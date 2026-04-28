@@ -474,16 +474,16 @@ namespace QueryAnalyzer
                         switch (conexionActual.Motor)
                         {
                             case TipoMotor.MS_SQL:
-                                txtQuery.Text = "SELECT TOP 10 * FROM INFORMATION_SCHEMA.COLUMNS;";
+                                txtQuery.Text = "SELECT TOP 10 * FROM INFORMATION_SCHEMA.COLUMNS;\r\n";
                                 break;
                             case TipoMotor.DB2:
-                                txtQuery.Text = "SELECT * FROM SYSIBM.SYSCOLUMNS FETCH FIRST 10 ROWS ONLY;";
+                                txtQuery.Text = "SELECT * FROM SYSIBM.SYSCOLUMNS FETCH FIRST 10 ROWS ONLY;\r\n";
                                 break;
                             case TipoMotor.POSTGRES:
-                                txtQuery.Text = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS LIMIT 10;";
+                                txtQuery.Text = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS LIMIT 10;\r\n";
                                 break;
                             case TipoMotor.SQLite:
-                                txtQuery.Text = "SELECT * FROM pragma_table_list AS l JOIN pragma_table_info(l.name) LIMIT 10;";
+                                txtQuery.Text = "SELECT * FROM pragma_table_list AS l JOIN pragma_table_info(l.name) LIMIT 10;\r\n";
                                 break;
                             default:
                                 break;
@@ -1636,8 +1636,8 @@ namespace QueryAnalyzer
                                 TipoMotor motorCtx = conexionActual?.Motor ?? TipoMotor.MS_SQL;
 
                                 // ── SELECT: disponible para tablas y vistas ─────────────
-                                agregarOpcion("📋 SELECT TOP 10", () => GenerarSelectTop10(capSchema, capTabla));
-                                agregarOpcion("📋 SELECT (todas las cols)", () =>
+                                agregarOpcion("🔟 SELECT TOP 10", () => GenerarSelectTop10(capSchema, capTabla));
+                                agregarOpcion("✔ SELECT (todas las cols)", () =>
                                 {
                                     using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarSelectAllCols(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
                                 });
@@ -1646,40 +1646,43 @@ namespace QueryAnalyzer
                                 if (!esVista)
                                 {
                                     // ── Opciones exclusivas de TABLA ───────────────────
-                                    agregarOpcion("📄 CREATE TABLE", () =>
+                                    agregarOpcion("🧱 CREATE TABLE", () =>
                                     {
                                         using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarCreateTable(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
                                     });
-                                    agregarOpcion("✏️  ALTER TABLE (add col)", () => GenerarAlterTableAddColumn(capSchema, capTabla));
-                                    agregarOpcion("🗑️  DROP TABLE", () => GenerarDropTable(capSchema, capTabla));
+                                    agregarOpcion("✏️ ALTER TABLE (add col)", () => GenerarAlterTableAddColumn(capSchema, capTabla));
+                                    agregarOpcion("⚰ DROP TABLE", () => GenerarDropTable(capSchema, capTabla));
                                     ctxMenu.Items.Add(new Separator());
                                     agregarOpcion("➕ INSERT INTO", () =>
                                     {
                                         using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarInsert(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
                                     });
-                                    agregarOpcion("✏️  UPDATE ... SET", () =>
+                                    agregarOpcion("✏️ UPDATE ... SET", () =>
                                     {
                                         using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarUpdate(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
                                     });
-                                    agregarOpcion("🗑️  DELETE FROM", () => GenerarDelete(capSchema, capTabla));
+                                    agregarOpcion("🗑 DELETE FROM", () => GenerarDelete(capSchema, capTabla));
                                     ctxMenu.Items.Add(new Separator());
                                     agregarOpcion("🔑 CREATE INDEX", () => GenerarCreateIndex(capSchema, capTabla));
-                                    agregarOpcion("🔑 DROP INDEX", () => GenerarDropIndex(capSchema, capTabla));
+                                    agregarOpcion("💣 DROP INDEX", () => GenerarDropIndex(capSchema, capTabla));
                                     agregarOpcion("📊 COUNT(*)", () => GenerarCount(capSchema, capTabla));
-                                    agregarOpcion("⚒︎ DESIGN", () => Diseñar(capSchema, capTabla));
+                                    agregarOpcion("⚙ DESIGN", () => Diseñar(capSchema, capTabla));
                                 }
                                 else
                                 {
                                     // ── Opciones de VISTA según motor ──────────────────
                                     // CREATE VIEW: todos los motores
-                                    agregarOpcion("📄 CREATE VIEW", () => GenerarCreateView(capSchema, capTabla));
+                                    agregarOpcion("🧱 CREATE VIEW", () => GenerarCreateView(capSchema, capTabla));
+
+                                    // VIEW DEFINITION: todos los motores
+                                    agregarOpcion("🔍 VIEW DEFINITION", () => GenerarViewDefinition(capSchema, capTabla));
 
                                     // ALTER VIEW: solo MS SQL y PostgreSQL (DB2 y SQLite requieren DROP+CREATE)
                                     if (motorCtx == TipoMotor.MS_SQL || motorCtx == TipoMotor.POSTGRES)
-                                        agregarOpcion("✏️  ALTER VIEW", () => GenerarAlterView(capSchema, capTabla));
+                                        agregarOpcion("✏️ ALTER VIEW", () => GenerarAlterView(capSchema, capTabla));
 
                                     // DROP VIEW: todos los motores
-                                    agregarOpcion("🗑️  DROP VIEW", () => GenerarDropView(capSchema, capTabla));
+                                    agregarOpcion("🗑 DROP VIEW", () => GenerarDropView(capSchema, capTabla));
                                     ctxMenu.Items.Add(new Separator());
                                     agregarOpcion("📊 COUNT(*)", () => GenerarCount(capSchema, capTabla));
                                 }
@@ -2033,7 +2036,7 @@ namespace QueryAnalyzer
                                     INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
                                     INNER JOIN sys.objects o ON i.object_id = o.object_id
                                     WHERE o.name = '{nombreTabla}' AND o.type IN ('U','V')
-                                    ORDER BY i.is_primary_key DESC, i.name, ic.key_ordinal;";
+                                    ORDER BY i.is_primary_key DESC, i.name, ic.key_ordinal;\r\n";
                                     break;
                                 case TipoMotor.DB2:
                                     cmd.CommandText = $@"SELECT
@@ -2045,7 +2048,7 @@ namespace QueryAnalyzer
                                     FROM SYSCAT.INDEXES i
                                     JOIN SYSCAT.INDEXCOLUSE c ON i.INDNAME = c.INDNAME AND i.INDSCHEMA = c.INDSCHEMA
                                     WHERE i.TABNAME = UPPER('{nombreTabla}')
-                                    ORDER BY i.INDNAME, c.COLSEQ;";
+                                    ORDER BY i.INDNAME, c.COLSEQ;\r\n";
                                     break;
                                 case TipoMotor.POSTGRES:
                                     cmd.CommandText = $@"SELECT
@@ -2059,10 +2062,10 @@ namespace QueryAnalyzer
                                     JOIN pg_namespace n ON n.oid = t.relnamespace
                                     JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
                                     WHERE t.relname = '{nombreTabla}'
-                                    ORDER BY i.relname, a.attnum;";
+                                    ORDER BY i.relname, a.attnum;\r\n";
                                     break;
                                 case TipoMotor.SQLite:
-                                    cmd.CommandText = $"PRAGMA index_list('{nombreTabla}');";
+                                    cmd.CommandText = $"PRAGMA index_list('{nombreTabla}');\r\n";
                                     break;
                                 default:
                                     break;
@@ -2246,11 +2249,11 @@ namespace QueryAnalyzer
             string t = NombreCompleto(schema, tabla);
             switch (motor)
             {
-                case TipoMotor.MS_SQL: return "SELECT TOP 10 *\r\nFROM " + t + ";";
-                case TipoMotor.DB2: return "SELECT *\r\nFROM " + t + "\r\nFETCH FIRST 10 ROWS ONLY;";
-                case TipoMotor.POSTGRES: return "SELECT *\r\nFROM " + t + "\r\nLIMIT 10;";
-                case TipoMotor.SQLite: return "SELECT *\r\nFROM " + tabla + "\r\nLIMIT 10;";
-                default: return "SELECT *\r\nFROM " + t + ";";
+                case TipoMotor.MS_SQL: return $"SELECT TOP 10 *\r\nFROM {t};\r\n";
+                case TipoMotor.DB2: return $"SELECT *\r\nFROM {t}\r\nFETCH FIRST 10 ROWS ONLY;\r\n";
+                case TipoMotor.POSTGRES: return $"SELECT *\r\nFROM {t}\r\nLIMIT 10;\r\n";
+                case TipoMotor.SQLite: return $"SELECT *\r\nFROM {tabla}\r\nLIMIT 10;\r\n";
+                default: return $"SELECT *\r\nFROM {t};\r\n";
             }
         }
 
@@ -2264,7 +2267,7 @@ namespace QueryAnalyzer
                 cols.Append("    " + Q(rows[i]["COLUMN_NAME"].ToString()));
                 if (i < rows.Count - 1) cols.Append(",\r\n");
             }
-            return "SELECT\r\n" + cols.ToString() + "\r\nFROM " + t + ";";
+            return $"SELECT\r\n{cols.ToString()}\r\nFROM {t};\r\n";
         }
 
         private string GenerarCreateTable(string schema, string tabla, DataTable columnas)
@@ -2315,18 +2318,18 @@ namespace QueryAnalyzer
             {
                 case TipoMotor.MS_SQL:
                     // En SQL Server, si agregas NOT NULL con DEFAULT, llena automáticamente las filas existentes.
-                    return $"ALTER TABLE {t}\r\nADD nueva_columna NVARCHAR(100) NOT NULL DEFAULT '';";
+                    return $"ALTER TABLE {t}\r\nADD nueva_columna NVARCHAR(100) NOT NULL DEFAULT '';\r\n";
                 case TipoMotor.DB2:
                     // DB2 requiere la palabra COLUMN y el DEFAULT va después del tipo.
-                    return $"ALTER TABLE {t}\r\nADD COLUMN NUEVA_COLUMNA NVARCHAR(100) DEFAULT '';";
+                    return $"ALTER TABLE {t}\r\nADD COLUMN NUEVA_COLUMNA NVARCHAR(100) DEFAULT '';\r\n";
                 case TipoMotor.POSTGRES:
                     // Postgres es similar al estándar pero permite explícitamente ADD COLUMN.
-                    return $"ALTER TABLE {t}\r\nADD COLUMN nueva_columna NVARCHAR(100) DEFAULT '';";
+                    return $"ALTER TABLE {t}\r\nADD COLUMN nueva_columna NVARCHAR(100) DEFAULT '';\r\n";
                 case TipoMotor.SQLite:
                     // SQLite usa TEXT normalmente y permite el DEFAULT en el ADD COLUMN.
-                    return $"ALTER TABLE {t}\r\nADD COLUMN nueva_columna TEXT DEFAULT '';";
+                    return $"ALTER TABLE {t}\r\nADD COLUMN nueva_columna TEXT DEFAULT '';\r\n";
                 default:
-                    return $"ALTER TABLE {t} ADD COLUMN nueva_columna NVARCHAR(100) DEFAULT '';";
+                    return $"ALTER TABLE {t} ADD COLUMN nueva_columna NVARCHAR(100) DEFAULT '';\r\n";
             }
         }
 
@@ -2336,11 +2339,11 @@ namespace QueryAnalyzer
             string t = NombreCompleto(schema, tabla);
             switch (motor)
             {
-                case TipoMotor.MS_SQL: return "IF OBJECT_ID(N'" + t + "', N'U') IS NOT NULL\r\n    DROP TABLE " + t + ";";
-                case TipoMotor.DB2: return "DROP TABLE " + t + ";";
-                case TipoMotor.POSTGRES: return "DROP TABLE IF EXISTS " + t + ";";
-                case TipoMotor.SQLite: return "DROP TABLE IF EXISTS " + tabla + ";";
-                default: return "DROP TABLE " + t + ";";
+                case TipoMotor.MS_SQL: return $"IF OBJECT_ID(N'{t}', N'U') IS NOT NULL\r\n    DROP TABLE {t};\r\n";
+                case TipoMotor.DB2: return $"DROP TABLE {t};\r\n";
+                case TipoMotor.POSTGRES: return $"DROP TABLE IF EXISTS {t};\r\n";
+                case TipoMotor.SQLite: return $"DROP TABLE IF EXISTS {tabla};\r\n";
+                default: return $"DROP TABLE {t};\r\n";
             }
         }
 
@@ -2349,7 +2352,7 @@ namespace QueryAnalyzer
             string t = NombreCompleto(schema, tabla);
             var colNames = columnas.Rows.Cast<DataRow>().Select(r => Q(r["COLUMN_NAME"].ToString())).ToList();
             var vals = columnas.Rows.Cast<DataRow>().Select(r => "?").ToList();
-            return "INSERT INTO " + t + "\r\n    (" + string.Join(", ", colNames) + ")\r\nVALUES\r\n    (" + string.Join(", ", vals) + ");";
+            return $"INSERT INTO {t}\r\n    ({string.Join(", ", colNames)})\r\nVALUES\r\n    ({string.Join(", ", vals)});\r\n";
         }
 
         private string GenerarUpdate(string schema, string tabla, DataTable columnas)
@@ -2358,13 +2361,13 @@ namespace QueryAnalyzer
             var sets = columnas.Rows.Cast<DataRow>()
                 .Select(r => "    " + Q(r["COLUMN_NAME"].ToString()) + " = ?")
                 .ToList();
-            return "UPDATE " + t + "\r\nSET\r\n" + string.Join(",\r\n", sets) + "\r\nWHERE <condicion>;";
+            return $"UPDATE {t}\r\nSET\r\n{string.Join(",\r\n", sets)}\r\nWHERE <condicion>;\r\n";
         }
 
         private string GenerarDelete(string schema, string tabla)
         {
             string t = NombreCompleto(schema, tabla);
-            return "DELETE FROM " + t + "\r\nWHERE <condicion>;";
+            return $"DELETE FROM {t}\r\nWHERE <condicion>;\r\n";
         }
 
         private string GenerarCreateIndex(string schema, string tabla)
@@ -2374,11 +2377,11 @@ namespace QueryAnalyzer
             string idxName = "IDX_" + tabla + "_COL";
             switch (motor)
             {
-                case TipoMotor.MS_SQL: return "CREATE INDEX " + idxName + "\r\nON " + t + " (columna ASC);";
-                case TipoMotor.DB2: return "CREATE INDEX " + idxName + "\r\nON " + t + " (COLUMNA ASC);";
-                case TipoMotor.POSTGRES: return "CREATE INDEX " + idxName.ToLower() + "\r\nON " + t + " (columna ASC);";
-                case TipoMotor.SQLite: return "CREATE INDEX " + idxName.ToLower() + "\r\nON " + tabla + " (columna ASC);";
-                default: return "CREATE INDEX " + idxName + " ON " + t + " (columna);";
+                case TipoMotor.MS_SQL: return $"CREATE INDEX {idxName}\r\nON {t} (columna ASC);\r\n";
+                case TipoMotor.DB2: return $"CREATE INDEX {idxName}\r\nON {t} (COLUMNA ASC);\r\n";
+                case TipoMotor.POSTGRES: return $"CREATE INDEX {idxName.ToLower()}\r\nON {t} (columna ASC);\r\n";
+                case TipoMotor.SQLite: return $"CREATE INDEX {idxName.ToLower()}\r\nON {tabla} (columna ASC);\r\n";
+                default: return $"CREATE INDEX {idxName} ON {t} (columna);\r\n";
             }
         }
 
@@ -2389,16 +2392,16 @@ namespace QueryAnalyzer
             string t = NombreCompleto(schema, tabla);
             switch (motor)
             {
-                case TipoMotor.MS_SQL: return "DROP INDEX " + t + "." + idxName + ";";
-                case TipoMotor.DB2: return "DROP INDEX " + idxName + ";";
-                case TipoMotor.POSTGRES: return "DROP INDEX IF EXISTS " + idxName.ToLower() + ";";
-                case TipoMotor.SQLite: return "DROP INDEX IF EXISTS " + idxName.ToLower() + ";";
-                default: return "DROP INDEX " + idxName + ";";
+                case TipoMotor.MS_SQL: return $"DROP INDEX {t}.{idxName};\r\n";
+                case TipoMotor.DB2: return $"DROP INDEX {idxName};\r\n";
+                case TipoMotor.POSTGRES: return $"DROP INDEX IF EXISTS {idxName.ToLower()};\r\n";
+                case TipoMotor.SQLite: return $"DROP INDEX IF EXISTS {idxName.ToLower()};\r\n";
+                default: return $"DROP INDEX {idxName};\r\n";
             }
         }
         private string GenerarCount(string schema, string tabla)
         {
-            return "SELECT COUNT(*) FROM " + NombreCompleto(schema, tabla) + ";";
+            return $"SELECT COUNT(*) FROM {NombreCompleto(schema, tabla)};\r\n";
         }
 
         // ── Generadores de scripts para VISTAS ──────────────────────────────────
@@ -2411,16 +2414,38 @@ namespace QueryAnalyzer
             switch (motor)
             {
                 case TipoMotor.MS_SQL:
-                    return $"CREATE VIEW {v}\r\nAS\r\nSELECT\r\n    -- columnas\r\nFROM <tabla_origen>;";
+                    return $"CREATE VIEW {v}\r\nAS\r\nSELECT\r\n    -- columnas\r\nFROM <tabla_origen>;\r\n";
                 case TipoMotor.POSTGRES:
                     // PostgreSQL recomienda CREATE OR REPLACE para poder re-ejecutar sin DROP
-                    return $"CREATE OR REPLACE VIEW {v} AS\r\nSELECT\r\n    -- columnas\r\nFROM <tabla_origen>;";
+                    return $"CREATE OR REPLACE VIEW {v} AS\r\nSELECT\r\n    -- columnas\r\nFROM <tabla_origen>;\r\n";
                 case TipoMotor.DB2:
-                    return $"CREATE VIEW {v} AS\r\nSELECT\r\n    -- columnas\r\nFROM <tabla_origen>;";
+                    return $"CREATE VIEW {v} AS\r\nSELECT\r\n    -- columnas\r\nFROM <tabla_origen>;\r\n";
                 case TipoMotor.SQLite:
-                    return $"CREATE VIEW IF NOT EXISTS {vista} AS\r\nSELECT\r\n    -- columnas\r\nFROM <tabla_origen>;";
+                    return $"CREATE VIEW IF NOT EXISTS {vista} AS\r\nSELECT\r\n    -- columnas\r\nFROM <tabla_origen>;\r\n";
                 default:
-                    return $"CREATE VIEW {v} AS SELECT * FROM <tabla_origen>;";
+                    return $"CREATE VIEW {v} AS SELECT * FROM <tabla_origen>;\r\n";
+            }
+        }
+
+        /// <summary>
+        /// VIEW DEFINITION.
+        /// </summary>
+        private string GenerarViewDefinition(string schema, string vista)
+        {
+            TipoMotor motor = conexionActual?.Motor ?? TipoMotor.MS_SQL;
+            string v = NombreCompleto(schema, vista);
+            switch (motor)
+            {
+                case TipoMotor.MS_SQL:
+                    return $"SELECT DEFINITION\r\nFROM sys.sql_modules\r\nWHERE object_id = OBJECT_ID('{schema}.{vista}');\r\n";
+                case TipoMotor.POSTGRES:
+                    return $"SELECT pg_get_viewdef('{schema}.{vista}', true);\r\n";
+                case TipoMotor.DB2:
+                    return $"SELECT TEXT\r\nFROM SYSCAT.VIEWS\r\nWHERE VIEWSCHEMA = '{schema}'\r\n AND VIEWNAME = '{vista}';\r\n";
+                case TipoMotor.SQLite:
+                    return $"SELECT sql\r\nFROM sqlite_master\r\nWHERE type = 'view'\r\n  AND name = '{vista}';\r\n";
+                default:
+                    return string.Empty;
             }
         }
 
@@ -2434,10 +2459,10 @@ namespace QueryAnalyzer
             switch (motor)
             {
                 case TipoMotor.MS_SQL:
-                    return $"ALTER VIEW {v}\r\nAS\r\nSELECT\r\n    -- columnas actualizadas\r\nFROM <tabla_origen>;";
+                    return $"ALTER VIEW {v}\r\nAS\r\nSELECT\r\n    -- columnas actualizadas\r\nFROM <tabla_origen>;\r\n";
                 case TipoMotor.POSTGRES:
                     // PostgreSQL no tiene ALTER VIEW ... AS; se usa CREATE OR REPLACE
-                    return $"CREATE OR REPLACE VIEW {v} AS\r\nSELECT\r\n    -- columnas actualizadas\r\nFROM <tabla_origen>;";
+                    return $"CREATE OR REPLACE VIEW {v} AS\r\nSELECT\r\n    -- columnas actualizadas\r\nFROM <tabla_origen>;\r\n";
                 default:
                     return $"-- ALTER VIEW no está soportado en {motor}.\r\n-- Usá DROP VIEW + CREATE VIEW para redefinirla.";
             }
@@ -2451,15 +2476,15 @@ namespace QueryAnalyzer
             switch (motor)
             {
                 case TipoMotor.MS_SQL:
-                    return $"IF OBJECT_ID(N'{v}', N'V') IS NOT NULL\r\n    DROP VIEW {v};";
+                    return $"IF OBJECT_ID(N'{v}', N'V') IS NOT NULL\r\n    DROP VIEW {v};\r\n";
                 case TipoMotor.DB2:
-                    return $"DROP VIEW {v};";
+                    return $"DROP VIEW {v};\r\n";
                 case TipoMotor.POSTGRES:
-                    return $"DROP VIEW IF EXISTS {v};";
+                    return $"DROP VIEW IF EXISTS {v};\r\n";
                 case TipoMotor.SQLite:
-                    return $"DROP VIEW IF EXISTS {vista};";
+                    return $"DROP VIEW IF EXISTS {vista};\r\n";
                 default:
-                    return $"DROP VIEW {v};";
+                    return $"DROP VIEW {v};\r\n";
             }
         }
 
