@@ -92,6 +92,10 @@
                             <CheckBox x:Name="chkCargarUltConsulta"
                                       Content="Al cambiar de conexión, cargar la última consulta del historial"
                                       Margin="0,0,0,4"/>
+                            <CheckBox x:Name="chkEjecutarSelectDirecto"
+                                      Content="Al elegir 'SELECT TOP 10' o 'SELECT (todas las cols)', insertar y ejecutar directamente"
+                                      Margin="0,0,0,4"
+                                      ToolTip="El script se selecciona y ejecuta de inmediato, ignorando el resto del contenido del editor."/>
                         </StackPanel>
                     </GroupBox>
 

@@ -18,6 +18,13 @@ namespace QueryAnalyzer
 
         /// <summary>Al cambiar de conexión, carga la última consulta del historial de esa conexión.</summary>
         public bool CargarUltimaConsulta { get; set; } = true;
+
+        /// <summary>
+        /// Cuando está activo, "SELECT TOP 10" y "SELECT (todas las cols)" insertan
+        /// el script, lo seleccionan automáticamente y lo ejecutan de inmediato,
+        /// ignorando el resto del contenido del editor.
+        /// </summary>
+        public bool EjecutarSelectDirecto { get; set; } = false;
     }
 
     /// <summary>

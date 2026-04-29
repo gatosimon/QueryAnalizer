@@ -529,6 +529,11 @@ namespace QueryAnalyzer
 
         private async void BtnExecute_Click(object sender, RoutedEventArgs e)
         {
+            await Ejecutar();
+        }
+
+        private async Task Ejecutar()
+        {
             Stopwatch swTotal = Stopwatch.StartNew();
 
             string connStr = GetConnectionString();
@@ -1635,9 +1640,23 @@ namespace QueryAnalyzer
                                 bool esVista = capTipo == "VIEW";
                                 TipoMotor motorCtx = conexionActual?.Motor ?? TipoMotor.MS_SQL;
 
+                                // Helper para SELECT TOP / SELECT ALL: respeta la preferencia
+                                // EjecutarSelectDirecto — inserta, selecciona y ejecuta de inmediato.
+                                Action<string, Func<string>> agregarSelect = (hdr, gen) =>
+                                {
+                                    var mi = new MenuItem { Header = hdr };
+                                    AplicarEstiloMenuItem(mi);
+                                    mi.Click += (s, ev) =>
+                                    {
+                                        try { InsertarEnQuery(gen(), _configApp.EjecutarSelectDirecto); }
+                                        catch (Exception ex) { AppendMessage("Error generando script: " + ex.Message); }
+                                    };
+                                    ctxMenu.Items.Add(mi);
+                                };
+
                                 // ── SELECT: disponible para tablas y vistas ─────────────
-                                agregarOpcion("🔟 SELECT TOP 10", () => GenerarSelectTop10(capSchema, capTabla));
-                                agregarOpcion("✔ SELECT (todas las cols)", () =>
+                                agregarSelect("🔟 SELECT TOP 10", () => GenerarSelectTop10(capSchema, capTabla));
+                                agregarSelect("✔ SELECT (todas las cols)", () =>
                                 {
                                     using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarSelectAllCols(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
                                 });
@@ -4058,7 +4077,7 @@ namespace QueryAnalyzer
             return null;
         }
 
-        private void InsertarEnQuery(string texto)
+        private void InsertarEnQuery(string texto, bool ejecutar = false)
         {
             if (string.IsNullOrEmpty(texto)) return;
 
@@ -4074,8 +4093,21 @@ namespace QueryAnalyzer
             {
                 MessageBox.Show(err.Message);
             }
-            // Reposicionar el cursor al final de lo insertado y dar foco
-            txtQuery.CaretOffset = offset + texto.Length;
+
+            if (ejecutar)
+            {
+                // Seleccionar exactamente el texto recién insertado y ejecutarlo.
+                // BtnExecute_Click usa SelectedText cuando hay selección, así que
+                // esto garantiza que solo se ejecuta el script insertado, ignorando
+                // cualquier otro contenido del editor.
+                txtQuery.Select(offset, texto.Length);
+                Ejecutar();
+            }
+            else
+            {
+                // Reposicionar el cursor al final de lo insertado y dar foco
+                txtQuery.CaretOffset = offset + texto.Length;
+            }
             txtQuery.Focus();
         }
 
