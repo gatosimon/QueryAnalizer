@@ -695,6 +695,14 @@
                                         FontSize="10" Padding="4,1"
                                         Click="btnDeselTodos_Click"
                                         ToolTip="Deseleccionar todo"/>
+                                <Button x:Name="btnGenerarJoin"
+                                        DockPanel.Dock="Left"
+                                        Content="🔗 JOIN"
+                                        FontSize="10" Padding="4,1"
+                                        Margin="4,0,0,0"
+                                        IsEnabled="False"
+                                        Click="btnGenerarJoin_Click"
+                                        ToolTip="Generar SELECT JOIN o CREATE VIEW con las tablas/vistas seleccionadas (mínimo 2)"/>
                             </DockPanel>
 
                             <!-- TreeViews (ocupan el resto) -->

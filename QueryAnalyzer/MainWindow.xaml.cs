@@ -324,6 +324,7 @@ namespace QueryAnalyzer
                                         <Word>SUM</Word><Word>COUNT</Word><Word>UPDATE</Word><Word>CAST</Word><Word>CONVERT</Word>
                                         <Word>COALESCE</Word><Word>NULLIF</Word><Word>ISNULL</Word><Word>ROW_NUMBER</Word>
                                         <Word>RANK</Word><Word>DENSE_RANK</Word><Word>LAG</Word><Word>LEAD</Word><Word>MAX</Word><Word>MIN</Word>
+                                        <Word>UPPER</Word><Word>LOWER</Word>
                                     </Keywords>
                                     <Keywords color='Connector'>
                                         <Word>JOIN</Word><Word>LIMIT</Word><Word>OFFSET</Word><Word>ONLY</Word>
@@ -1684,7 +1685,7 @@ namespace QueryAnalyzer
                                     ctxMenu.Items.Add(new Separator());
                                     agregarOpcion("🔑 CREATE INDEX", () => GenerarCreateIndex(capSchema, capTabla));
                                     agregarOpcion("💣 DROP INDEX", () => GenerarDropIndex(capSchema, capTabla));
-                                    agregarOpcion("📊 COUNT(*)", () => GenerarCount(capSchema, capTabla));
+                                    agregarSelect("📊 COUNT(*)", () => GenerarCount(capSchema, capTabla));
                                     agregarOpcion("⚙ DESIGN", () => Diseñar(capSchema, capTabla));
                                 }
                                 else
@@ -2508,6 +2509,740 @@ namespace QueryAnalyzer
         }
 
         // ════════════════════════════════════════════════════════════════
+        // GENERADOR DE JOIN (selección múltiple)
+        // ════════════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// Representa una relación FK entre dos tablas de la selección actual.
+        /// Un FK compuesto (varias columnas) genera varias instancias con el mismo FKName.
+        /// </summary>
+        private struct FKRelacion
+        {
+            public string FKName;
+            public string LocalSchema, LocalTabla, LocalCol;
+            public string RefSchema,   RefTabla,   RefCol;
+        }
+
+        private async void btnGenerarJoin_Click(object sender, RoutedEventArgs e)
+        {
+            // ── 1. Recopilar tablas seleccionadas ────────────────────────
+            var nodos = GetNodosSeleccionados();
+            if (nodos.Count < 2)
+            {
+                MessageBox.Show("Seleccioná al menos 2 tablas/vistas para generar el JOIN.",
+                    "JOIN", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            // (schema, nombre, tipo)
+            var tablas = new List<(string Schema, string Nombre, string Tipo)>();
+            foreach (var nodo in nodos)
+            {
+                var tag      = nodo.Tag as NodoTablaTag;
+                string nombre = tag?.Nombre ?? nodo.Tag?.ToString() ?? string.Empty;
+                if (string.IsNullOrEmpty(nombre)) continue;
+
+                string header = ObtenerHeaderText(nodo);
+                string schema = string.Empty;
+                if (header.Contains("."))
+                    schema = header.Substring(0, header.IndexOf('.'));
+
+                string tipo = tag?.Tipo ?? "TABLE";
+                tablas.Add((schema, nombre, tipo));
+            }
+
+            if (tablas.Count < 2)
+            {
+                MessageBox.Show("No se pudieron leer los datos de las tablas seleccionadas.",
+                    "JOIN", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // ── 2. Consultar FKs entre las tablas seleccionadas ──────────
+            List<FKRelacion> relaciones = new List<FKRelacion>();
+            string connStr = GetConnectionString();
+            try
+            {
+                relaciones = await Task.Run(() =>
+                    ObtenerRelacionesEntreTablas(connStr, tablas));
+            }
+            catch (Exception ex)
+            {
+                AppendMessage("Advertencia al consultar FKs: " + ex.Message);
+                // Continuamos sin FKs: el join tendrá condiciones vacías
+            }
+
+            // ── 3. Mostrar diálogo ────────────────────────────────────────
+            MostrarDialogoJoin(tablas, relaciones);
+        }
+
+        /// <summary>
+        /// Consulta las FKs entre las tablas del conjunto (ambos extremos deben estar en él).
+        /// </summary>
+        private List<FKRelacion> ObtenerRelacionesEntreTablas(
+            string connStr,
+            List<(string Schema, string Nombre, string Tipo)> tablas)
+        {
+            var resultado = new List<FKRelacion>();
+            TipoMotor motor = conexionActual?.Motor ?? TipoMotor.MS_SQL;
+
+            // Conjunto de nombres en minúsculas para filtrado rápido
+            var setNombres = new HashSet<string>(
+                tablas.Select(t => t.Nombre), StringComparer.OrdinalIgnoreCase);
+
+            using (var conn = new OdbcConnection(connStr))
+            {
+                conn.Open();
+
+                switch (motor)
+                {
+                    // ── MS SQL ────────────────────────────────────────────
+                    case TipoMotor.MS_SQL:
+                    {
+                        string sql = @"
+SELECT
+    fk.name                                    AS FKName,
+    SCHEMA_NAME(tp.schema_id)                  AS LocalSchema,
+    tp.name                                    AS LocalTabla,
+    lc.name                                    AS LocalCol,
+    SCHEMA_NAME(tr.schema_id)                  AS RefSchema,
+    tr.name                                    AS RefTabla,
+    rc.name                                    AS RefCol
+FROM sys.foreign_keys fk
+JOIN sys.foreign_key_columns fkc
+    ON fkc.constraint_object_id = fk.object_id
+JOIN sys.objects tp ON tp.object_id = fk.parent_object_id
+JOIN sys.objects tr ON tr.object_id = fk.referenced_object_id
+JOIN sys.columns lc ON lc.object_id = fk.parent_object_id     AND lc.column_id = fkc.parent_column_id
+JOIN sys.columns rc ON rc.object_id = fk.referenced_object_id AND rc.column_id = fkc.referenced_column_id
+ORDER BY fk.name, fkc.constraint_column_id";
+                        using (var cmd = new OdbcCommand(sql, conn))
+                        using (var dr = cmd.ExecuteReader())
+                        {
+                            while (dr.Read())
+                            {
+                                string localT = dr["LocalTabla"].ToString();
+                                string refT   = dr["RefTabla"].ToString();
+                                if (!setNombres.Contains(localT) || !setNombres.Contains(refT)) continue;
+
+                                resultado.Add(new FKRelacion
+                                {
+                                    FKName      = dr["FKName"].ToString(),
+                                    LocalSchema = dr["LocalSchema"].ToString(),
+                                    LocalTabla  = localT,
+                                    LocalCol    = dr["LocalCol"].ToString(),
+                                    RefSchema   = dr["RefSchema"].ToString(),
+                                    RefTabla    = refT,
+                                    RefCol      = dr["RefCol"].ToString(),
+                                });
+                            }
+                        }
+                        break;
+                    }
+
+                    // ── PostgreSQL ────────────────────────────────────────
+                    case TipoMotor.POSTGRES:
+                    {
+                        string sql = @"
+SELECT
+    tc.constraint_name                          AS FKName,
+    tc.table_schema                             AS LocalSchema,
+    tc.table_name                               AS LocalTabla,
+    kcu.column_name                             AS LocalCol,
+    ccu.table_schema                            AS RefSchema,
+    ccu.table_name                              AS RefTabla,
+    ccu.column_name                             AS RefCol
+FROM information_schema.table_constraints tc
+JOIN information_schema.key_column_usage kcu
+    ON kcu.constraint_name   = tc.constraint_name
+   AND kcu.table_schema      = tc.table_schema
+JOIN information_schema.referential_constraints rc
+    ON rc.constraint_name    = tc.constraint_name
+   AND rc.constraint_schema  = tc.table_schema
+JOIN information_schema.constraint_column_usage ccu
+    ON ccu.constraint_name   = rc.unique_constraint_name
+   AND ccu.table_schema      = rc.unique_constraint_schema
+WHERE tc.constraint_type = 'FOREIGN KEY'
+ORDER BY tc.constraint_name, kcu.ordinal_position";
+                        using (var cmd = new OdbcCommand(sql, conn))
+                        using (var dr = cmd.ExecuteReader())
+                        {
+                            while (dr.Read())
+                            {
+                                string localT = dr["LocalTabla"].ToString();
+                                string refT   = dr["RefTabla"].ToString();
+                                if (!setNombres.Contains(localT) || !setNombres.Contains(refT)) continue;
+
+                                resultado.Add(new FKRelacion
+                                {
+                                    FKName      = dr["FKName"].ToString(),
+                                    LocalSchema = dr["LocalSchema"].ToString(),
+                                    LocalTabla  = localT,
+                                    LocalCol    = dr["LocalCol"].ToString(),
+                                    RefSchema   = dr["RefSchema"].ToString(),
+                                    RefTabla    = refT,
+                                    RefCol      = dr["RefCol"].ToString(),
+                                });
+                            }
+                        }
+                        break;
+                    }
+
+                    // ── DB2 ───────────────────────────────────────────────
+                    case TipoMotor.DB2:
+                    {
+                        string sql = @"
+SELECT
+    R.CONSTNAME                                 AS FKName,
+    R.TABSCHEMA                                 AS LocalSchema,
+                                                R.TABNAME   AS LocalTabla,
+    KC.COLNAME                                  AS LocalCol,
+    R.REFTABSCHEMA                              AS RefSchema,
+    R.REFTABNAME                                AS RefTabla,
+    KR.COLNAME                                  AS RefCol
+FROM SYSCAT.REFERENCES R
+JOIN SYSCAT.KEYCOLUSE KC
+    ON KC.CONSTNAME = R.CONSTNAME AND KC.TABSCHEMA = R.TABSCHEMA AND KC.TABNAME = R.TABNAME
+JOIN SYSCAT.KEYCOLUSE KR
+    ON KR.CONSTNAME = R.REFKEYNAME AND KR.TABSCHEMA = R.REFTABSCHEMA AND KR.TABNAME = R.REFTABNAME
+    AND KR.COLSEQ = KC.COLSEQ
+ORDER BY R.CONSTNAME, KC.COLSEQ";
+                        using (var cmd = new OdbcCommand(sql, conn))
+                        using (var dr = cmd.ExecuteReader())
+                        {
+                            while (dr.Read())
+                            {
+                                string localT = dr["LocalTabla"].ToString().Trim();
+                                string refT   = dr["RefTabla"].ToString().Trim();
+                                if (!setNombres.Contains(localT) || !setNombres.Contains(refT)) continue;
+
+                                resultado.Add(new FKRelacion
+                                {
+                                    FKName      = dr["FKName"].ToString().Trim(),
+                                    LocalSchema = dr["LocalSchema"].ToString().Trim(),
+                                    LocalTabla  = localT,
+                                    LocalCol    = dr["LocalCol"].ToString().Trim(),
+                                    RefSchema   = dr["RefSchema"].ToString().Trim(),
+                                    RefTabla    = refT,
+                                    RefCol      = dr["RefCol"].ToString().Trim(),
+                                });
+                            }
+                        }
+                        break;
+                    }
+
+                    // ── SQLite ────────────────────────────────────────────
+                    case TipoMotor.SQLite:
+                    {
+                        // SQLite no tiene vistas de catálogo globales: hay que
+                        // iterar PRAGMA foreign_key_list por cada tabla seleccionada.
+                        foreach (var t in tablas)
+                        {
+                            try
+                            {
+                                string sqlPragma = $"PRAGMA foreign_key_list({t.Nombre})";
+                                using (var cmd = new OdbcCommand(sqlPragma, conn))
+                                using (var dr = cmd.ExecuteReader())
+                                {
+                                    while (dr.Read())
+                                    {
+                                        string refT = dr["table"].ToString();
+                                        if (!setNombres.Contains(refT)) continue;
+                                        int    id  = Convert.ToInt32(dr["id"]);
+
+                                        resultado.Add(new FKRelacion
+                                        {
+                                            FKName      = $"fk_{t.Nombre}_{id}",
+                                            LocalSchema = string.Empty,
+                                            LocalTabla  = t.Nombre,
+                                            LocalCol    = dr["from"].ToString(),
+                                            RefSchema   = string.Empty,
+                                            RefTabla    = refT,
+                                            RefCol      = dr["to"].ToString(),
+                                        });
+                                    }
+                                }
+                            }
+                            catch { /* tabla sin FKs o pragma no disponible */ }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            return resultado;
+        }
+
+        /// <summary>
+        /// Construye el SQL del JOIN ordenando las tablas (padres antes que hijos)
+        /// mediante la ordenación topológica de Kahn.
+        /// </summary>
+        private string GenerarSqlJoin(
+            List<(string Schema, string Nombre, string Tipo)> tablas,
+            List<FKRelacion> relaciones,
+            string nombreVista = null)
+        {
+            TipoMotor motor = conexionActual?.Motor ?? TipoMotor.MS_SQL;
+
+            // ── Ordenación topológica de Kahn (padres antes que hijos) ───
+            // "padre" = tabla referenciada (RefTabla); "hijo" = tabla con FK (LocalTabla)
+            var nombres = tablas.Select(t => t.Nombre).ToList();
+
+            // Grafo: hijo → lista de padres (para ordenar padres primero)
+            var padresDe = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            var hijosDe  = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var n in nombres) { padresDe[n] = new HashSet<string>(StringComparer.OrdinalIgnoreCase); }
+            foreach (var n in nombres) { hijosDe[n]  = new HashSet<string>(StringComparer.OrdinalIgnoreCase); }
+
+            // Un FK LocalTabla → RefTabla significa que RefTabla es "padre"
+            foreach (var fk in relaciones)
+            {
+                if (padresDe.ContainsKey(fk.LocalTabla) && padresDe.ContainsKey(fk.RefTabla))
+                {
+                    padresDe[fk.LocalTabla].Add(fk.RefTabla);
+                    hijosDe[fk.RefTabla].Add(fk.LocalTabla);
+                }
+            }
+
+            var inDeg   = nombres.ToDictionary(n => n, n => padresDe[n].Count, StringComparer.OrdinalIgnoreCase);
+            var cola    = new Queue<string>(nombres.Where(n => inDeg[n] == 0).OrderBy(n => n));
+            var ordenado = new List<string>();
+
+            while (cola.Count > 0)
+            {
+                string cur = cola.Dequeue();
+                ordenado.Add(cur);
+                foreach (string hijo in hijosDe[cur].Where(h => inDeg.ContainsKey(h)))
+                {
+                    inDeg[hijo]--;
+                    if (inDeg[hijo] == 0) cola.Enqueue(hijo);
+                }
+            }
+
+            // Agregar los que quedaron fuera del grafo (ciclos o desconectados)
+            foreach (var n in nombres)
+                if (!ordenado.Contains(n, StringComparer.OrdinalIgnoreCase))
+                    ordenado.Add(n);
+
+            // ── Construir SQL ─────────────────────────────────────────────
+            var usedAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var aliasOf     = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var nombre in ordenado)
+            {
+                string alias = GenerarAlias(nombre, usedAliases);
+                aliasOf[nombre] = alias;
+            }
+
+            // Mapa de tablas para obtener schema rápido
+            var schemaOf = tablas.ToDictionary(
+                t => t.Nombre,
+                t => t.Schema,
+                StringComparer.OrdinalIgnoreCase);
+
+            var sb = new System.Text.StringBuilder();
+
+            if (!string.IsNullOrWhiteSpace(nombreVista))
+            {
+                // Cabecera CREATE VIEW
+                string vSchema = schemaOf.Values.FirstOrDefault(s => !string.IsNullOrEmpty(s)) ?? string.Empty;
+                string vNombre = NombreCompleto(vSchema, nombreVista);
+                switch (motor)
+                {
+                    case TipoMotor.POSTGRES:
+                        sb.AppendLine($"CREATE OR REPLACE VIEW {vNombre} AS");
+                        break;
+                    case TipoMotor.SQLite:
+                        sb.AppendLine($"CREATE VIEW IF NOT EXISTS {nombreVista} AS");
+                        break;
+                    default:
+                        sb.AppendLine($"CREATE VIEW {vNombre} AS");
+                        break;
+                }
+            }
+
+            sb.AppendLine("SELECT");
+
+            // Columnas: alias.*  para cada tabla
+            var colLines = ordenado.Select(n => $"    {aliasOf[n]}.*").ToList();
+            for (int i = 0; i < colLines.Count; i++)
+                sb.AppendLine(colLines[i] + (i < colLines.Count - 1 ? "," : ""));
+
+            // FROM primera tabla
+            string primera = ordenado[0];
+            string nomCompleto0 = NombreCompleto(schemaOf.ContainsKey(primera) ? schemaOf[primera] : "", primera);
+            sb.AppendLine($"FROM {nomCompleto0} {aliasOf[primera]}");
+
+            // JOINs para el resto
+            for (int i = 1; i < ordenado.Count; i++)
+            {
+                string t = ordenado[i];
+                string nomCompletoT = NombreCompleto(schemaOf.ContainsKey(t) ? schemaOf[t] : "", t);
+                string aliasT       = aliasOf[t];
+
+                // Buscar todas las FKs que conecten t con alguna tabla ya agregada (ordenado[0..i-1])
+                var yaAgregadas = new HashSet<string>(
+                    ordenado.Take(i), StringComparer.OrdinalIgnoreCase);
+
+                // Agrupar por FKName para soportar FKs compuestas
+                var fksRelevantes = relaciones
+                    .Where(fk =>
+                        (StringComparer.OrdinalIgnoreCase.Equals(fk.LocalTabla, t) && yaAgregadas.Contains(fk.RefTabla)) ||
+                        (StringComparer.OrdinalIgnoreCase.Equals(fk.RefTabla, t)   && yaAgregadas.Contains(fk.LocalTabla)))
+                    .GroupBy(fk => fk.FKName)
+                    .ToList();
+
+                sb.Append($"INNER JOIN {nomCompletoT} {aliasT}");
+
+                if (fksRelevantes.Count == 0)
+                {
+                    sb.AppendLine($" ON /* agregar condición de unión */");
+                }
+                else
+                {
+                    // Construir ON con AND para cada columna del FK compuesto
+                    var condiciones = new List<string>();
+                    foreach (var grupo in fksRelevantes)
+                    {
+                        foreach (var col in grupo)
+                        {
+                            string aLocal = aliasOf.ContainsKey(col.LocalTabla) ? aliasOf[col.LocalTabla] : col.LocalTabla;
+                            string aRef   = aliasOf.ContainsKey(col.RefTabla)   ? aliasOf[col.RefTabla]   : col.RefTabla;
+                            condiciones.Add($"{aLocal}.{col.LocalCol} = {aRef}.{col.RefCol}");
+                        }
+                    }
+
+                    if (condiciones.Count == 1)
+                    {
+                        sb.AppendLine($" ON {condiciones[0]}");
+                    }
+                    else
+                    {
+                        sb.AppendLine();
+                        sb.AppendLine($"    ON {condiciones[0]}");
+                        for (int c = 1; c < condiciones.Count; c++)
+                            sb.AppendLine($"   AND {condiciones[c]}");
+                    }
+                }
+            }
+
+            sb.Append(";");
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Genera un alias corto para una tabla (iniciales en mayúsculas de cada palabra CamelCase/snake_case).
+        /// Si hay colisión agrega un número.
+        /// </summary>
+        private string GenerarAlias(string tabla, Dictionary<string, string> usados)
+        {
+            // Dividir por '_', '-', espacios y transiciones minúscula→mayúscula
+            var partes = Regex.Split(tabla, @"[_\-\s]+|(?<=[a-z])(?=[A-Z])");
+            string alias = string.Concat(partes.Where(p => p.Length > 0).Select(p => p[0])).ToLowerInvariant();
+            if (alias.Length == 0) alias = tabla.Substring(0, Math.Min(2, tabla.Length)).ToLowerInvariant();
+
+            string candidato = alias;
+            int n = 2;
+            while (usados.ContainsValue(candidato))
+                candidato = alias + n++;
+
+            usados[tabla] = candidato;
+            return candidato;
+        }
+
+        /// <summary>
+        /// Muestra el diálogo JOIN completamente en código (sin XAML).
+        /// </summary>
+        private void MostrarDialogoJoin(
+            List<(string Schema, string Nombre, string Tipo)> tablas,
+            List<FKRelacion> relaciones)
+        {
+            TipoMotor motor = conexionActual?.Motor ?? TipoMotor.MS_SQL;
+
+            // ── Ventana ──────────────────────────────────────────────────
+            var dlg = new Window
+            {
+                Title                 = "Generar JOIN",
+                Width                 = 820,
+                Height                = 580,
+                MinWidth              = 600,
+                MinHeight             = 400,
+                ResizeMode            = ResizeMode.CanResizeWithGrip,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner                 = this,
+            };
+            dlg.SetResourceReference(Window.BackgroundProperty, "BrushWindowBG");
+            dlg.SetResourceReference(Window.ForegroundProperty, "BrushFG");
+
+            // Copiar el diccionario de recursos de la ventana principal
+            var tema = Resources.MergedDictionaries.FirstOrDefault();
+            if (tema != null)
+            {
+                var rd = new ResourceDictionary();
+                foreach (var key in tema.Keys) rd[key] = tema[key];
+                dlg.Resources.MergedDictionaries.Add(rd);
+            }
+
+            // ── Layout principal ─────────────────────────────────────────
+            var grid = new Grid { Margin = new Thickness(10) };
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            dlg.Content = grid;
+
+            // Panel dividido: info izq. | preview der.
+            var splitter = new Grid();
+            splitter.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(220) });
+            splitter.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            splitter.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            Grid.SetRow(splitter, 0);
+            grid.Children.Add(splitter);
+
+            // ── Panel izquierdo ──────────────────────────────────────────
+            var panelIzq = new StackPanel { Margin = new Thickness(0, 0, 6, 0) };
+            Grid.SetColumn(panelIzq, 0);
+            splitter.Children.Add(panelIzq);
+
+            var lblTablas = new TextBlock
+            {
+                Text       = "Tablas / Vistas seleccionadas:",
+                FontWeight = FontWeights.SemiBold,
+                Margin     = new Thickness(0, 0, 0, 4),
+            };
+            lblTablas.SetResourceReference(TextBlock.ForegroundProperty, "BrushFG");
+            panelIzq.Children.Add(lblTablas);
+
+            var lbTablas = new ListBox
+            {
+                Height  = 130,
+                Margin  = new Thickness(0, 0, 0, 10),
+                IsEnabled = false,
+            };
+            lbTablas.SetResourceReference(ListBox.BackgroundProperty,  "BrushControlBG");
+            lbTablas.SetResourceReference(ListBox.ForegroundProperty,  "BrushFG");
+            lbTablas.SetResourceReference(ListBox.BorderBrushProperty, "BrushBorder");
+            foreach (var t in tablas)
+            {
+                string icono = t.Tipo == "VIEW" ? "👁 " : "🗂 ";
+                string nombre = string.IsNullOrEmpty(t.Schema) ? t.Nombre : $"{t.Schema}.{t.Nombre}";
+                lbTablas.Items.Add(new ListBoxItem { Content = icono + nombre });
+            }
+            panelIzq.Children.Add(lbTablas);
+
+            var lblRels = new TextBlock
+            {
+                Text       = "Relaciones FK detectadas:",
+                FontWeight = FontWeights.SemiBold,
+                Margin     = new Thickness(0, 0, 0, 4),
+            };
+            lblRels.SetResourceReference(TextBlock.ForegroundProperty, "BrushFG");
+            panelIzq.Children.Add(lblRels);
+
+            var lbRels = new ListBox
+            {
+                Height    = 130,
+                Margin    = new Thickness(0, 0, 0, 10),
+                IsEnabled = false,
+            };
+            lbRels.SetResourceReference(ListBox.BackgroundProperty,  "BrushControlBG");
+            lbRels.SetResourceReference(ListBox.ForegroundProperty,  "BrushFG");
+            lbRels.SetResourceReference(ListBox.BorderBrushProperty, "BrushBorder");
+
+            var gruposFk = relaciones.GroupBy(r => r.FKName).ToList();
+            if (gruposFk.Count == 0)
+            {
+                lbRels.Items.Add(new ListBoxItem
+                {
+                    Content    = "(sin FKs detectadas)",
+                    Foreground = Brushes.Gray,
+                    FontStyle  = FontStyles.Italic,
+                });
+            }
+            else
+            {
+                foreach (var g in gruposFk)
+                {
+                    var primer = g.First();
+                    string cols = string.Join(", ", g.Select(r => $"{r.LocalCol}={r.RefCol}"));
+                    lbRels.Items.Add(new ListBoxItem
+                    {
+                        Content = $"🔗 {primer.LocalTabla} → {primer.RefTabla} ({cols})",
+                        ToolTip = g.Key,
+                    });
+                }
+            }
+            panelIzq.Children.Add(lbRels);
+
+            // ── Opciones tipo ────────────────────────────────────────────
+            var lblTipo = new TextBlock
+            {
+                Text       = "Tipo de script:",
+                FontWeight = FontWeights.SemiBold,
+                Margin     = new Thickness(0, 0, 0, 4),
+            };
+            lblTipo.SetResourceReference(TextBlock.ForegroundProperty, "BrushFG");
+            panelIzq.Children.Add(lblTipo);
+
+            var rbSelect = new RadioButton
+            {
+                Content   = "SELECT JOIN",
+                IsChecked = true,
+                Margin    = new Thickness(0, 0, 0, 4),
+                GroupName = "TipoJoin",
+            };
+            rbSelect.SetResourceReference(RadioButton.ForegroundProperty, "BrushFG");
+            panelIzq.Children.Add(rbSelect);
+
+            // Solo MS SQL, PostgreSQL, DB2 y SQLite admiten CREATE VIEW
+            var rbView = new RadioButton
+            {
+                Content   = "CREATE VIEW",
+                Margin    = new Thickness(0, 0, 0, 4),
+                GroupName = "TipoJoin",
+            };
+            rbView.SetResourceReference(RadioButton.ForegroundProperty, "BrushFG");
+            panelIzq.Children.Add(rbView);
+
+            // Nombre de la vista (solo visible con CREATE VIEW)
+            var pnlNombreVista = new StackPanel
+            {
+                Margin     = new Thickness(0, 4, 0, 0),
+                Visibility = Visibility.Collapsed,
+            };
+            var lblNombreVista = new TextBlock
+            {
+                Text   = "Nombre de la vista:",
+                Margin = new Thickness(0, 0, 0, 2),
+            };
+            lblNombreVista.SetResourceReference(TextBlock.ForegroundProperty, "BrushFG");
+            pnlNombreVista.Children.Add(lblNombreVista);
+
+            string defaultViewName = "vw_" + string.Join("_",
+                tablas.Take(3).Select(t => t.Nombre.Length > 6
+                    ? t.Nombre.Substring(0, 6)
+                    : t.Nombre)).ToLowerInvariant();
+
+            var txtNombreVista = new System.Windows.Controls.TextBox
+            {
+                Text    = defaultViewName,
+                Padding = new Thickness(4, 2, 4, 2),
+            };
+            txtNombreVista.SetResourceReference(System.Windows.Controls.TextBox.BackgroundProperty, "BrushControlBG");
+            txtNombreVista.SetResourceReference(System.Windows.Controls.TextBox.ForegroundProperty, "BrushFG");
+            txtNombreVista.SetResourceReference(System.Windows.Controls.TextBox.BorderBrushProperty, "BrushBorder");
+            pnlNombreVista.Children.Add(txtNombreVista);
+            panelIzq.Children.Add(pnlNombreVista);
+
+            // ── Separador vertical ────────────────────────────────────────
+            var sep = new GridSplitter
+            {
+                Width               = 5,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment   = VerticalAlignment.Stretch,
+                ShowsPreview        = true,
+            };
+            sep.SetResourceReference(GridSplitter.BackgroundProperty, "BrushSplitter");
+            Grid.SetColumn(sep, 1);
+            splitter.Children.Add(sep);
+
+            // ── Panel derecho: preview ────────────────────────────────────
+            var panelDer = new Grid { Margin = new Thickness(6, 0, 0, 0) };
+            panelDer.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            panelDer.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            Grid.SetColumn(panelDer, 2);
+            splitter.Children.Add(panelDer);
+
+            var lblPreview = new TextBlock
+            {
+                Text       = "Vista previa (editable):",
+                FontWeight = FontWeights.SemiBold,
+                Margin     = new Thickness(0, 0, 0, 4),
+            };
+            lblPreview.SetResourceReference(TextBlock.ForegroundProperty, "BrushFG");
+            Grid.SetRow(lblPreview, 0);
+            panelDer.Children.Add(lblPreview);
+
+            var txtPreview = new System.Windows.Controls.TextBox
+            {
+                AcceptsReturn      = true,
+                AcceptsTab         = true,
+                VerticalScrollBarVisibility   = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+                FontFamily         = new System.Windows.Media.FontFamily("Consolas"),
+                FontSize           = 12,
+                Padding            = new Thickness(4),
+            };
+            txtPreview.SetResourceReference(System.Windows.Controls.TextBox.BackgroundProperty, "BrushEditor");
+            txtPreview.SetResourceReference(System.Windows.Controls.TextBox.ForegroundProperty, "BrushEditorFG");
+            txtPreview.SetResourceReference(System.Windows.Controls.TextBox.BorderBrushProperty, "BrushBorder");
+            Grid.SetRow(txtPreview, 1);
+            panelDer.Children.Add(txtPreview);
+
+            // ── Regenerar preview ─────────────────────────────────────────
+            Action regenerar = () =>
+            {
+                string vista = rbView.IsChecked == true ? txtNombreVista.Text.Trim() : null;
+                txtPreview.Text = GenerarSqlJoin(tablas, relaciones, vista);
+            };
+
+            // Preview inicial
+            regenerar();
+
+            // Eventos de cambio
+            rbSelect.Checked += (s, ev) =>
+            {
+                pnlNombreVista.Visibility = Visibility.Collapsed;
+                regenerar();
+            };
+            rbView.Checked += (s, ev) =>
+            {
+                pnlNombreVista.Visibility = Visibility.Visible;
+                regenerar();
+            };
+            txtNombreVista.TextChanged += (s, ev) => { if (rbView.IsChecked == true) regenerar(); };
+
+            // ── Botones ───────────────────────────────────────────────────
+            var pnlBotones = new StackPanel
+            {
+                Orientation         = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Margin              = new Thickness(0, 10, 0, 0),
+            };
+            Grid.SetRow(pnlBotones, 1);
+            grid.Children.Add(pnlBotones);
+
+            var btnInsertar = new Button
+            {
+                Content = "Insertar en editor",
+                Padding = new Thickness(12, 4, 12, 4),
+                Margin  = new Thickness(0, 0, 8, 0),
+                Cursor  = Cursors.Hand,
+            };
+            btnInsertar.SetResourceReference(Button.BackgroundProperty, "BrushBtnBG");
+            btnInsertar.SetResourceReference(Button.ForegroundProperty, "BrushFG");
+            btnInsertar.SetResourceReference(Button.BorderBrushProperty, "BrushBtnBorder");
+            btnInsertar.Click += (s, ev) =>
+            {
+                InsertarEnQuery(txtPreview.Text);
+                dlg.Close();
+            };
+            pnlBotones.Children.Add(btnInsertar);
+
+            var btnCancelar = new Button
+            {
+                Content   = "Cancelar",
+                Padding   = new Thickness(12, 4, 12, 4),
+                IsCancel  = true,
+                Cursor    = Cursors.Hand,
+            };
+            btnCancelar.SetResourceReference(Button.BackgroundProperty, "BrushBtnBG");
+            btnCancelar.SetResourceReference(Button.ForegroundProperty, "BrushFG");
+            btnCancelar.SetResourceReference(Button.BorderBrushProperty, "BrushBtnBorder");
+            btnCancelar.Click += (s, ev) => dlg.Close();
+            pnlBotones.Children.Add(btnCancelar);
+
+            dlg.ShowDialog();
+        }
+
+        // ════════════════════════════════════════════════════════════════
         // SELECCIÓN MÚLTIPLE DEL TREEVIEW
         // ════════════════════════════════════════════════════════════════
 
@@ -2541,6 +3276,7 @@ namespace QueryAnalyzer
                 .Count(nodo => nodo.Visibility == System.Windows.Visibility.Visible &&
                                ObtenerCheckboxNodo(nodo)?.IsChecked == true);
             txtSeleccionContador.Text = $"{n} sel.";
+            if (btnGenerarJoin != null) btnGenerarJoin.IsEnabled = n >= 2;
         }
 
         private void btnSelTodos_Click(object sender, RoutedEventArgs e)
@@ -5088,16 +5824,16 @@ WHERE constraint_name ILIKE '%{t}%'";
                         sql = $@"
 SELECT DISTINCT TABSCHEMA, TABNAME
 FROM SYSCAT.TABLES
-WHERE TABNAME LIKE '%{t}%'
+WHERE UPPER(TABNAME) LIKE UPPER('%{t}%')
   AND TYPE IN ('T','V')
 UNION
 SELECT DISTINCT TABSCHEMA, TABNAME
 FROM SYSCAT.COLUMNS
-WHERE COLNAME LIKE '%{t}%'
+WHERE UPPER(COLNAME) LIKE UPPER('%{t}%')
 UNION
 SELECT DISTINCT TABSCHEMA, TABNAME
 FROM SYSCAT.INDEXES
-WHERE INDNAME LIKE '%{t}%'";
+WHERE UPPER(INDNAME) LIKE UPPER('%{t}%')";
                         break;
 
                     case TipoMotor.SQLite:
@@ -5154,7 +5890,7 @@ WHERE (type='table' OR type='view')
             "ELSE","END","AS","DISTINCT","UNION","CREATE","TABLE","DROP","ALTER","VIEW",
             "PROCEDURE","TRIGGER","ASC","DESC","SCHEMA","JOIN","LEFT","RIGHT","INNER","OUTER",
             "CROSS","FULL","LIMIT","OFFSET","AND","OR","NOT","NULL","IS","IN","BETWEEN","LIKE",
-            "EXISTS","ALL","SUM","COUNT","CAST","CONVERT","COALESCE","NULLIF","ISNULL",
+            "EXISTS","ALL","SUM","COUNT","CAST","CONVERT","COALESCE","NULLIF","ISNULL","UPPER","LOWER",
             "ROW_NUMBER","RANK","DENSE_RANK","LAG","LEAD","MAX","MIN"
         };
 
