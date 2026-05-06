@@ -147,14 +147,6 @@ namespace QueryAnalyzer
             if (vm == null) return;
             var driver = vm.Info;
 
-            // Verificar que el instalador esté presente en disco en este momento
-            if (!driver.InstaladorDisponible)
-            {
-                txtEstado.Text = $"⚠ No se encontró el instalador en: {driver.InstaladorRuta ?? "(ruta no definida)"}. " +
-                                 "Asegúrese de que la carpeta Drivers\\ esté junto al ejecutable.";
-                return;
-            }
-
             _instalandoEnCurso = true;
             txtEstado.Text = $"⏳ Instalando {driver.Nombre}... aguarde.";
             SetBotonesHabilitados(false);

@@ -162,13 +162,14 @@
     <Resource Include="Assets\frases.xml" />
     <Content Include="Logo.ico" />
     <Content Include="Logo.png" />
-    <!-- Instaladores de drivers ODBC bundleados -->
-    <Content Include="Drivers\sqliteodbc.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Drivers\psqlodbc-setup.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <!-- Instaladores de drivers ODBC: embebidos en el exe para garantizar disponibilidad
+         sin importar cómo se desplegó la aplicación. Se extraen a %TEMP% al instalar. -->
+    <EmbeddedResource Include="Drivers\sqliteodbc.exe">
+      <LogicalName>QueryAnalyzer.Drivers.sqliteodbc.exe</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Drivers\psqlodbc-setup.exe">
+      <LogicalName>QueryAnalyzer.Drivers.psqlodbc-setup.exe</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">

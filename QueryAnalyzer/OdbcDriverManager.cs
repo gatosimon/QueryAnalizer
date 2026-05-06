@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace QueryAnalyzer
@@ -18,7 +19,7 @@ namespace QueryAnalyzer
     // ── Fuente del instalador ────────────────────────────────────────────────────
     public enum FuenteInstalar
     {
-        /// <summary>Incluido en la carpeta Drivers\ junto al exe.</summary>
+        /// <summary>Embebido en el exe; se extrae a %TEMP% al instalar.</summary>
         Bundle,
         /// <summary>Forma parte del sistema operativo; no requiere instalar.</summary>
         SistemaOperativo,
@@ -40,7 +41,7 @@ namespace QueryAnalyzer
 
         public FuenteInstalar Fuente { get; set; }
 
-        /// <summary>Nombre del archivo instalador dentro de la carpeta Drivers\.</summary>
+        /// <summary>Nombre del archivo instalador (embebido como recurso en el exe).</summary>
         public string InstaladorArchivo { get; set; }
 
         /// <summary>Argumentos de línea de comandos para instalación silenciosa.</summary>
@@ -57,13 +58,13 @@ namespace QueryAnalyzer
 
         public bool EstaInstalado => Estado == EstadoDriver.Instalado;
 
-        /// <summary>Ruta absoluta al instalador (calculada al leer la carpeta Drivers).</summary>
-        public string InstaladorRuta { get; set; }
-
+        /// <summary>
+        /// True si el instalador está disponible: es de tipo Bundle y tiene
+        /// un nombre de archivo definido (el exe real está embebido en el ensamblado).
+        /// </summary>
         public bool InstaladorDisponible =>
             Fuente == FuenteInstalar.Bundle &&
-            !string.IsNullOrEmpty(InstaladorRuta) &&
-            File.Exists(InstaladorRuta);
+            !string.IsNullOrEmpty(InstaladorArchivo);
 
         public bool PuedaDescargar =>
             Fuente == FuenteInstalar.DescargaExterna &&
@@ -73,81 +74,76 @@ namespace QueryAnalyzer
     // ── Manager principal ────────────────────────────────────────────────────────
     public static class OdbcDriverManager
     {
-        // Carpeta de instaladores junto al ejecutable
-        private static readonly string DriversFolder =
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Drivers");
+        // Prefijo de los recursos embebidos (definido por LogicalName en el .csproj)
+        private const string ResourcePrefix = "QueryAnalyzer.Drivers.";
+
+        // Carpeta temporal donde se extraen los instaladores
+        private static readonly string TempDriversFolder =
+            Path.Combine(Path.GetTempPath(), "QueryAnalyzer_Drivers");
 
         // ── Catálogo de drivers soportados ────────────────────────────────────
         public static List<DriverInfo> ObtenerCatalogo()
         {
-            var lista = new List<DriverInfo>
+            return new List<DriverInfo>
             {
                 new DriverInfo
                 {
-                    Nombre        = "SQLite ODBC Driver",
-                    Descripcion   = "Conectividad ODBC para bases de datos SQLite (.db, .sqlite)",
-                    NombresOdbc   = new[] { "SQLite3 ODBC Driver", "SQLite ODBC Driver", "SQLite ODBC (UTF-8) Driver" },
-                    Fuente        = FuenteInstalar.Bundle,
+                    Nombre            = "SQLite ODBC Driver",
+                    Descripcion       = "Conectividad ODBC para bases de datos SQLite (.db, .sqlite)",
+                    NombresOdbc       = new[] { "SQLite3 ODBC Driver", "SQLite ODBC Driver", "SQLite ODBC (UTF-8) Driver" },
+                    Fuente            = FuenteInstalar.Bundle,
                     InstaladorArchivo = "sqliteodbc.exe",
-                    InstaladorArgs    = "/S",           // NSIS silent
-                    Nota          = "Instalador incluido con la aplicación."
+                    InstaladorArgs    = "/S",        // NSIS silent
+                    Nota              = "Instalador embebido en la aplicación."
                 },
                 new DriverInfo
                 {
-                    Nombre        = "PostgreSQL ODBC Driver",
-                    Descripcion   = "Conectividad ODBC para PostgreSQL (psqlodbc 16.x)",
-                    NombresOdbc   = new[]
+                    Nombre            = "PostgreSQL ODBC Driver",
+                    Descripcion       = "Conectividad ODBC para PostgreSQL (psqlodbc 16.x)",
+                    NombresOdbc       = new[]
                     {
                         "PostgreSQL Unicode", "PostgreSQL ANSI",
                         "PostgreSQL Unicode(x86)", "PostgreSQL ANSI(x86)",
                         "PostgreSQL ODBC Driver(UNICODE)", "PostgreSQL ODBC Driver(ANSI)"
                     },
-                    Fuente        = FuenteInstalar.Bundle,
+                    Fuente            = FuenteInstalar.Bundle,
                     InstaladorArchivo = "psqlodbc-setup.exe",
-                    InstaladorArgs    = "/quiet",       // WiX bootstrapper silent
-                    Nota          = "Instalador incluido con la aplicación."
+                    InstaladorArgs    = "/quiet",    // WiX bootstrapper silent
+                    Nota              = "Instalador embebido en la aplicación."
                 },
                 new DriverInfo
                 {
-                    Nombre        = "SQL Server ODBC Driver",
-                    Descripcion   = "Driver nativo de Windows para Microsoft SQL Server",
-                    NombresOdbc   = new[]
+                    Nombre      = "SQL Server ODBC Driver",
+                    Descripcion = "Driver nativo de Windows para Microsoft SQL Server",
+                    NombresOdbc = new[]
                     {
                         "SQL Server",
                         "ODBC Driver 17 for SQL Server",
                         "ODBC Driver 18 for SQL Server"
                     },
-                    Fuente        = FuenteInstalar.DescargaExterna,
-                    UrlDescarga   = "https://learn.microsoft.com/sql/connect/odbc/download-odbc-driver-for-sql-server",
-                    Nota          = "El driver \"SQL Server\" viene preinstalado en Windows. " +
-                                   "Si necesita el moderno \"ODBC Driver 17/18 for SQL Server\" " +
-                                   "puede descargarlo gratis desde Microsoft."
+                    Fuente      = FuenteInstalar.DescargaExterna,
+                    UrlDescarga = "https://learn.microsoft.com/sql/connect/odbc/download-odbc-driver-for-sql-server",
+                    Nota        = "El driver \"SQL Server\" viene preinstalado en Windows. " +
+                                  "Si necesita el moderno \"ODBC Driver 17/18 for SQL Server\" " +
+                                  "puede descargarlo gratis desde Microsoft."
                 },
                 new DriverInfo
                 {
-                    Nombre        = "IBM DB2 ODBC Driver",
-                    Descripcion   = "Driver ODBC del cliente IBM DB2 (DB2CLI.DLL)",
-                    NombresOdbc   = new[] { "IBM DB2 ODBC DRIVER", "IBM DB2 ODBC DRIVER - DB2COPY1" },
-                    Fuente        = FuenteInstalar.DescargaExterna,
-                    UrlDescarga   = "https://www.ibm.com/support/pages/ibm-data-server-driver-odbc-and-cli",
-                    Nota          = "El driver IBM DB2 viene incluido con el IBM Data Server Client. " +
-                                   "Requiere cuenta IBM para descargarlo desde IBM Fix Central."
+                    Nombre      = "IBM DB2 ODBC Driver",
+                    Descripcion = "Driver ODBC del cliente IBM DB2 (DB2CLI.DLL)",
+                    NombresOdbc = new[] { "IBM DB2 ODBC DRIVER", "IBM DB2 ODBC DRIVER - DB2COPY1" },
+                    Fuente      = FuenteInstalar.DescargaExterna,
+                    UrlDescarga = "https://www.ibm.com/support/pages/db2-odbc-cli-driver-download-and-installation-information",
+                    Nota        = "El driver IBM DB2 viene incluido con el IBM Data Server Client. " +
+                                  "Descargue el \"IBM Data Server Driver for ODBC and CLI\" desde la página de IBM."
                 }
             };
-
-            // Resolver rutas de instaladores bundleados
-            foreach (var d in lista.Where(x => x.Fuente == FuenteInstalar.Bundle))
-                d.InstaladorRuta = Path.Combine(DriversFolder, d.InstaladorArchivo);
-
-            return lista;
         }
 
         // ── Detección de drivers instalados ──────────────────────────────────
         /// <summary>
         /// Detecta qué drivers están instalados leyendo el registro ODBC de 32 bits.
-        /// La app es x86, por lo que necesita los drivers de 32 bits
-        /// (HKLM\SOFTWARE\WOW6432Node\ODBC\ODBCINST.INI en un proceso 64-bit,
-        ///  o HKLM\SOFTWARE\ODBC\ODBCINST.INI desde un proceso 32-bit — .NET redirige automáticamente).
+        /// La app es x86: necesita los drivers 32-bit (WOW6432Node).
         /// </summary>
         public static void ActualizarEstados(List<DriverInfo> catalogo)
         {
@@ -168,7 +164,7 @@ namespace QueryAnalyzer
         {
             var resultado = new List<string>();
 
-            // Intentar leer explícitamente desde WOW6432Node (cubre procesos de 32 y 64 bits)
+            // Leer explícitamente desde WOW6432Node (cubre procesos de 32 y 64 bits)
             try
             {
                 using (var hive = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32))
@@ -180,7 +176,7 @@ namespace QueryAnalyzer
             }
             catch { /* acceso denegado u otro error — continuar */ }
 
-            // Fallback: leer hive nativo del proceso (ya es 32-bit para esta app)
+            // Fallback: hive nativo del proceso (ya es 32-bit en esta app)
             if (resultado.Count == 0)
             {
                 try
@@ -198,29 +194,85 @@ namespace QueryAnalyzer
             return resultado;
         }
 
+        // ── Extracción de recursos embebidos ──────────────────────────────────
+        /// <summary>
+        /// Extrae el instalador desde el recurso embebido en el exe hacia una
+        /// carpeta temporal. Devuelve la ruta del archivo extraído, o null si falla.
+        /// Si el archivo temporal ya existe y no está bloqueado, lo reutiliza.
+        /// </summary>
+        private static string ExtraerInstaladorATemporal(DriverInfo driver)
+        {
+            var resourceName = ResourcePrefix + driver.InstaladorArchivo;
+            var assembly = Assembly.GetExecutingAssembly();
+
+            // Verificar que el recurso existe en el ensamblado
+            var recursos = assembly.GetManifestResourceNames();
+            if (!recursos.Contains(resourceName, StringComparer.OrdinalIgnoreCase))
+                return null;
+
+            try
+            {
+                Directory.CreateDirectory(TempDriversFolder);
+                var destino = Path.Combine(TempDriversFolder, driver.InstaladorArchivo);
+
+                using (var stream = assembly.GetManifestResourceStream(resourceName))
+                {
+                    if (stream == null) return null;
+
+                    // Solo reescribir si el tamaño difiere (evita reescribir en cada clic)
+                    bool necesitaEscribir = true;
+                    if (File.Exists(destino))
+                    {
+                        var info = new FileInfo(destino);
+                        necesitaEscribir = info.Length != stream.Length;
+                        stream.Position = 0;
+                    }
+
+                    if (necesitaEscribir)
+                    {
+                        using (var file = File.Create(destino))
+                            stream.CopyTo(file);
+                    }
+                }
+
+                return destino;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         // ── Instalación ───────────────────────────────────────────────────────
         /// <summary>
-        /// Lanza el instalador del driver de forma asíncrona y espera a que termine.
+        /// Extrae el instalador embebido a %TEMP%, lo ejecuta y espera a que termine.
         /// Devuelve (exitCode, mensajeError). exitCode == 0 → éxito.
         /// </summary>
         public static async Task<(int ExitCode, string Error)> InstalarAsync(DriverInfo driver)
         {
             if (!driver.InstaladorDisponible)
-                return (-1, "El archivo instalador no está disponible.");
+                return (-1, "Este driver no tiene instalador bundleado.");
+
+            // Extraer desde el recurso embebido en el exe
+            var rutaInstalador = await Task.Run(() => ExtraerInstaladorATemporal(driver));
+
+            if (string.IsNullOrEmpty(rutaInstalador))
+                return (-1, $"No se pudo extraer el instalador embebido \"{driver.InstaladorArchivo}\" " +
+                             "desde el ejecutable. Verifique que la aplicación no esté dañada.");
 
             try
             {
                 var psi = new ProcessStartInfo
                 {
-                    FileName        = driver.InstaladorRuta,
+                    FileName        = rutaInstalador,
                     Arguments       = driver.InstaladorArgs,
-                    UseShellExecute = true,   // necesario para trigger UAC
+                    UseShellExecute = true,   // necesario para triggear UAC
                     Verb            = "runas" // solicitar elevación
                 };
 
                 var proc = Process.Start(psi);
                 if (proc == null)
-                    return (-1, "No se pudo iniciar el instalador.");
+                    return (-1, "No se pudo iniciar el proceso instalador.");
 
                 // Esperar sin bloquear el hilo UI
                 await Task.Run(() => proc.WaitForExit());
@@ -229,7 +281,7 @@ namespace QueryAnalyzer
             catch (System.ComponentModel.Win32Exception ex)
                 when (ex.NativeErrorCode == 1223) // ERROR_CANCELLED (usuario rechazó UAC)
             {
-                return (-2, "El usuario canceló la elevación de privilegios (UAC).");
+                return (-2, "Instalación cancelada (se rechazó la elevación UAC).");
             }
             catch (Exception ex)
             {
@@ -239,8 +291,7 @@ namespace QueryAnalyzer
 
         // ── Helpers ───────────────────────────────────────────────────────────
         /// <summary>
-        /// Devuelve true si hay al menos un driver de los soportados que no está instalado
-        /// Y que tiene un instalador disponible (bundleado).
+        /// Devuelve true si hay al menos un driver bundleado que no está instalado.
         /// </summary>
         public static bool HayDriversFaltantesInstalables(List<DriverInfo> catalogo)
             => catalogo.Any(d => !d.EstaInstalado && d.InstaladorDisponible);
