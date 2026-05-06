@@ -25,6 +25,13 @@ namespace QueryAnalyzer
         /// ignorando el resto del contenido del editor.
         /// </summary>
         public bool EjecutarSelectDirecto { get; set; } = false;
+
+        /// <summary>
+        /// Máximo de filas que se cargan en el grid de resultados por consulta.
+        /// 0 = sin límite (puede causar OOM en tablas muy grandes).
+        /// Default: 100 000.
+        /// </summary>
+        public int MaxFilasResultado { get; set; } = 100000;
     }
 
     /// <summary>

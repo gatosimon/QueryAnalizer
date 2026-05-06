@@ -111,6 +111,7 @@ namespace QueryAnalyzer
             chkIntellisense.IsChecked         = _configOriginal.IntellisenseActivo;
             chkCargarUltConsulta.IsChecked    = _configOriginal.CargarUltimaConsulta;
             chkEjecutarSelectDirecto.IsChecked = _configOriginal.EjecutarSelectDirecto;
+            txtMaxFilas.Text                  = _configOriginal.MaxFilasResultado.ToString();
 
             txtRutaConfig.Text = "Ruta: " + Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -271,12 +272,17 @@ namespace QueryAnalyzer
 
         private void BtnGuardar_Click(object sender, RoutedEventArgs e)
         {
+            int maxFilas = 100000;
+            if (int.TryParse(txtMaxFilas.Text.Trim(), out int parsedMax) && parsedMax >= 0)
+                maxFilas = parsedMax;
+
             var nueva = new AppConfig
             {
                 TemaOscuro              = chkTemaOscuro.IsChecked == true,
                 IntellisenseActivo      = chkIntellisense.IsChecked == true,
                 CargarUltimaConsulta    = chkCargarUltConsulta.IsChecked == true,
-                EjecutarSelectDirecto   = chkEjecutarSelectDirecto.IsChecked == true
+                EjecutarSelectDirecto   = chkEjecutarSelectDirecto.IsChecked == true,
+                MaxFilasResultado       = maxFilas,
             };
 
             try

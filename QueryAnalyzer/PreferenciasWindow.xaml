@@ -96,6 +96,18 @@
                                       Content="Al elegir 'SELECT TOP 10' o 'SELECT (todas las cols)', insertar y ejecutar directamente"
                                       Margin="0,0,0,4"
                                       ToolTip="El script se selecciona y ejecuta de inmediato, ignorando el resto del contenido del editor."/>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,4"
+                                        ToolTip="Límite de filas que se cargan en el grid. 0 = sin límite (riesgo de OOM en tablas grandes).">
+                                <TextBlock Text="Límite de filas en resultados:"
+                                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBox x:Name="txtMaxFilas"
+                                         Width="90" MaxLength="9"
+                                         VerticalContentAlignment="Center"/>
+                                <TextBlock Text="(0 = sin límite)"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource BrushFGMuted}"
+                                           FontSize="10" Margin="6,0,0,0"/>
+                            </StackPanel>
                         </StackPanel>
                     </GroupBox>
 

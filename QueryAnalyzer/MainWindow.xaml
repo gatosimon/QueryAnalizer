@@ -755,6 +755,31 @@
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
                         <Button x:Name="btnExecute"       Padding="2,2" Content="Ejecutar (F5)"    Width="84" Click="BtnExecute_Click"       Margin="0,4,0,-4"/>
                         <Button x:Name="btnExecuteScalar" Padding="2,2" Content="Ejecutar Escalar"            Click="BtnExecuteScalar_Click" Margin="8,0,0,-4" Height="22" VerticalAlignment="Bottom"/>
+
+                        <!-- Cancelar: visible y activo solo mientras hay una query en curso -->
+                        <Button x:Name="btnCancelarQuery"
+                                Padding="4,2" Content="⏹ Cancelar"
+                                Click="BtnCancelarQuery_Click"
+                                Margin="8,4,0,-4"
+                                IsEnabled="False"
+                                Foreground="OrangeRed"
+                                ToolTip="Cancelar la consulta en curso"/>
+
+                        <!-- Indicador de progreso: solo visible mientras ejecuta -->
+                        <ProgressBar x:Name="progEjecucion"
+                                     IsIndeterminate="True"
+                                     Width="110" Height="10"
+                                     Margin="10,0,0,0"
+                                     VerticalAlignment="Center"
+                                     Visibility="Collapsed"/>
+                        <TextBlock x:Name="lblEjecutando"
+                                   Text="Ejecutando..."
+                                   VerticalAlignment="Center"
+                                   Margin="5,0,0,0"
+                                   FontStyle="Italic"
+                                   Foreground="{DynamicResource BrushAccent}"
+                                   Visibility="Collapsed"/>
+
                         <Button x:Name="btnClear"         Padding="2,2" Content="Limpiar Resultados"          Click="BtnClear_Click"         Margin="8,4,0,-4"/>
                         <Button x:Name="btnLimpiarLog"    Padding="2,2" Content="Limpiar log"                 Click="BtnLimpiarLog_Click"    Margin="8,4,0,-4"/>
                         <Button x:Name="btnExcel"         Padding="2,2" Content="Generar Excel"               Click="BtnExcel_Click"         Margin="8,4,0,-4"/>

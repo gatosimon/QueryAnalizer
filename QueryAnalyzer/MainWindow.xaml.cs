@@ -68,6 +68,12 @@ namespace QueryAnalyzer
         // ── Configuración de la aplicación (config.xml) ─────────────────
         private AppConfig _configApp = new AppConfig();
 
+        // ── Cancelación de queries ────────────────────────────────────────
+        /// <summary>Referencia al comando ODBC activo para poder cancelarlo desde el hilo UI.</summary>
+        private volatile System.Data.Odbc.OdbcCommand _cmdActivo;
+        /// <summary>CTS para señalizar a Ejecutar() que no continúe con más sub-consultas.</summary>
+        private System.Threading.CancellationTokenSource _ctsCancelar;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -510,6 +516,28 @@ namespace QueryAnalyzer
             btnExcel.IsEnabled = !bloquear;
         }
 
+        /// <summary>
+        /// Activa / desactiva los controles del indicador de ejecución y el botón Cancelar.
+        /// Llamar desde el hilo UI.
+        /// </summary>
+        private void SetEstadoEjecutando(bool ejecutando)
+        {
+            btnExecute.IsEnabled       = !ejecutando;
+            btnExecuteScalar.IsEnabled = !ejecutando;
+            btnCancelarQuery.IsEnabled = ejecutando;
+            progEjecucion.Visibility   = ejecutando ? Visibility.Visible  : Visibility.Collapsed;
+            lblEjecutando.Visibility   = ejecutando ? Visibility.Visible  : Visibility.Collapsed;
+        }
+
+        private void BtnCancelarQuery_Click(object sender, RoutedEventArgs e)
+        {
+            // 1. Señalizar a Ejecutar() para que no procese más sub-consultas.
+            _ctsCancelar?.Cancel();
+            // 2. Cancelar el comando ODBC activo (corta el ExecuteReader en el hilo de fondo).
+            _cmdActivo?.Cancel();
+            AppendMessage("⏹ Cancelación solicitada...");
+        }
+
         private void TxtQuery_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.F5)
@@ -565,6 +593,11 @@ namespace QueryAnalyzer
                 return;
             }
 
+            // ── Activar indicador de progreso y cancelación ───────────────
+            _ctsCancelar = new System.Threading.CancellationTokenSource();
+            int maxFilas = _configApp.MaxFilasResultado;
+            SetEstadoEjecutando(true);
+
             long totalRows = 0;
             long totalColumns = 0;
 
@@ -583,6 +616,9 @@ namespace QueryAnalyzer
 
                 for (int i = 0; i < validQueries.Count; i++)
                 {
+                    // Respetar cancelación entre sub-consultas
+                    if (_ctsCancelar.IsCancellationRequested) break;
+
                     string sqlIndividual = validQueries[i];
                     Stopwatch swQuery = Stopwatch.StartNew();
                     AppendMessage($"Ejecutando consulta {i + 1}/{validQueries.Count}...");
@@ -590,7 +626,7 @@ namespace QueryAnalyzer
                     // 🔹 Extraemos los parámetros de esta consulta según la pila
                     var parametrosConsulta = ExtraerParametrosParaConsulta(sqlIndividual, parametrosTotales, ref posicionParametro);
 
-                    var (dt, queryEx) = await ExecuteQueryAsync(connStr, sqlIndividual, parametrosConsulta);
+                    var (dt, queryEx, truncado) = await ExecuteQueryAsync(connStr, sqlIndividual, parametrosConsulta, maxFilas);
 
                     if (queryEx != null)
                     {
@@ -855,14 +891,19 @@ namespace QueryAnalyzer
                         // así WPF ya tiene el handler activo cuando genera las columnas.
                         dataGrid.ItemsSource = dt.DefaultView;
 
-                        var tabItem = new TabItem
-                        {
-                            Header = $"Resultado {i + 1} ({dt.Columns.Count} cols, {dt.Rows.Count} filas, {FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds / 1000000)}) s)",
-                            Content = dataGrid
-                        };
+                        // Encabezado del tab: aviso visual si el resultado fue truncado
+                        string tabHeader = truncado
+                            ? $"⚠ Resultado {i + 1} ({dt.Columns.Count} cols, {dt.Rows.Count} filas TRUNCADAS, {FormatoNumero(elapsedMicroseconds)} µs)"
+                            : $"Resultado {i + 1} ({dt.Columns.Count} cols, {dt.Rows.Count} filas, {FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds / 1000000)}) s)";
 
+                        var tabItem = new TabItem { Header = tabHeader, Content = dataGrid };
                         tcResults.Items.Add(tabItem);
-                        AppendMessage($"Consulta {i + 1} exitosa. {dt.Rows.Count} filas devueltas en {FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds / 1000000)}) s");
+
+                        if (truncado)
+                            AppendMessage($"⚠ Resultado truncado a {dt.Rows.Count} filas (límite en Preferencias). " +
+                                          $"Usá LIMIT/TOP/FETCH en la consulta, o aumentá el límite en Preferencias → Límite de filas.");
+                        else
+                            AppendMessage($"Consulta {i + 1} exitosa. {dt.Rows.Count} filas devueltas en {FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds / 1000000)}) s");
                     });
                 }
 
@@ -878,7 +919,10 @@ namespace QueryAnalyzer
 
                 await Dispatcher.InvokeAsync(() =>
                 {
-                    AppendMessage($"Ejecución total finalizada. {validQueries.Count} consultas ejecutadas en {FormatoNumero(totalElapsedMicroseconds)} µs ({FormatoNumero(totalElapsedMicroseconds / 1000000)}) s");
+                    string resumen = _ctsCancelar.IsCancellationRequested
+                        ? "⏹ Ejecución cancelada por el usuario."
+                        : $"Ejecución total finalizada. {validQueries.Count} consultas ejecutadas en {FormatoNumero(totalElapsedMicroseconds)} µs ({FormatoNumero(totalElapsedMicroseconds / 1000000)}) s";
+                    AppendMessage(resumen);
                     if (tcResults.Items.Count > 0)
                         tcResults.SelectedIndex = 0;
                 });
@@ -886,6 +930,11 @@ namespace QueryAnalyzer
             catch (Exception ex)
             {
                 await Dispatcher.InvokeAsync(() => AppendMessage("Error: " + ex.Message));
+            }
+            finally
+            {
+                // Siempre restaurar el estado de los botones, incluso si hubo excepción o cancelación
+                SetEstadoEjecutando(false);
             }
         }
 
@@ -1005,19 +1054,43 @@ namespace QueryAnalyzer
             return lista;
         }
 
-        private async Task<(DataTable dt, Exception error)> ExecuteQueryAsync(string connStr, string sql, List<QueryParameter> parametros)
+        /// <param name="maxFilas">Límite de filas a leer (0 = sin límite). Previene OOM en tablas grandes.</param>
+        private async Task<(DataTable dt, Exception error, bool truncado)> ExecuteQueryAsync(
+            string connStr, string sql, List<QueryParameter> parametros, int maxFilas = 0)
         {
+            // Capturar el motor antes de entrar al hilo de background (conexionActual es mutable).
+            TipoMotor motorActual = conexionActual?.Motor ?? TipoMotor.MS_SQL;
+
             return await Task.Run(() =>
             {
                 var dt = new DataTable();
+                bool truncado = false;
 
                 try
                 {
                     using (var conn = new OdbcConnection(connStr))
                     {
                         conn.Open();
+
+                        // ── PostgreSQL: deshabilitar statement_timeout del servidor ──────
+                        // El servidor puede tener un statement_timeout corto (ej. 30 s) que
+                        // cancela consultas en tablas grandes con el error 57014.
+                        // SET statement_timeout = 0 lo desactiva para esta sesión.
+                        if (motorActual == TipoMotor.POSTGRES)
+                        {
+                            using (var cmdSt = new OdbcCommand("SET statement_timeout = 0", conn))
+                                cmdSt.ExecuteNonQuery();
+                        }
+
                         using (var cmd = new OdbcCommand(sql, conn))
                         {
+                            // Sin límite de tiempo en el driver ODBC (cliente).
+                            // El control del tiempo lo maneja el usuario con el botón Cancelar.
+                            cmd.CommandTimeout = 0;
+
+                            // Exponer el comando para que BtnCancelarQuery_Click pueda cancelarlo.
+                            _cmdActivo = cmd;
+
                             if (parametros != null)
                             {
                                 foreach (var p in parametros)
@@ -1062,9 +1135,17 @@ namespace QueryAnalyzer
                                     dt.Columns.Add(nombreFinal, tipoCol);
                                 }
 
-                                // Llenar filas
+                                // Llenar filas con límite opcional para prevenir OOM
+                                int filasCont = 0;
                                 while (reader.Read())
                                 {
+                                    // Cortar si se alcanzó el límite configurado
+                                    if (maxFilas > 0 && filasCont >= maxFilas)
+                                    {
+                                        truncado = true;
+                                        break;
+                                    }
+
                                     var row = dt.NewRow();
                                     for (int i = 0; i < reader.FieldCount; i++)
                                     {
@@ -1084,6 +1165,7 @@ namespace QueryAnalyzer
                                         }
                                     }
                                     dt.Rows.Add(row);
+                                    filasCont++;
                                 }
                             }
                         }
@@ -1091,10 +1173,16 @@ namespace QueryAnalyzer
                 }
                 catch (Exception err)
                 {
-                    return (dt, err);
+                    _cmdActivo = null;
+                    return (dt, err, truncado);
+                }
+                finally
+                {
+                    // Limpiar referencia al comando activo (sea éxito, error o cancelación)
+                    _cmdActivo = null;
                 }
 
-                return (dt, null);
+                return (dt, null, truncado);
             });
         }
 
@@ -1659,7 +1747,16 @@ namespace QueryAnalyzer
                                 agregarSelect("🔟 SELECT TOP 10", () => GenerarSelectTop10(capSchema, capTabla));
                                 agregarSelect("✔ SELECT (todas las cols)", () =>
                                 {
-                                    using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarSelectAllCols(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
+                                    using (var c = new OdbcConnection(connStr))
+                                    {
+                                        c.Open();
+                                        // ObtenerNombresColumnas usa SQL directo por motor (información_schema /
+                                        // SYSCAT / PRAGMA) y cae a GetSchema solo si el SQL falla.
+                                        // Esto evita el SELECT vacío que generaba GetSchema en PostgreSQL
+                                        // cuando el driver ODBC ignoraba el filtro de catálogo nulo.
+                                        var colNames = ObtenerNombresColumnas(c, capSchema, capTabla);
+                                        return GenerarSelectAllColsDesdeNombres(capSchema, capTabla, colNames);
+                                    }
                                 });
                                 ctxMenu.Items.Add(new Separator());
 
@@ -2280,14 +2377,127 @@ namespace QueryAnalyzer
         private string GenerarSelectAllCols(string schema, string tabla, DataTable columnas)
         {
             string t = NombreCompleto(schema, tabla);
-            var cols = new System.Text.StringBuilder();
             var rows = columnas.Rows.Cast<DataRow>().ToList();
+            // Fallback: si GetSchema no devolvió columnas (frecuente en PostgreSQL/DB2/SQLite
+            // cuando el driver ODBC ignora el filtro de catálogo nulo), usar SELECT *.
+            if (rows.Count == 0)
+                return $"SELECT *\r\nFROM {t};\r\n";
+
+            var cols = new System.Text.StringBuilder();
             for (int i = 0; i < rows.Count; i++)
             {
                 cols.Append("    " + Q(rows[i]["COLUMN_NAME"].ToString()));
                 if (i < rows.Count - 1) cols.Append(",\r\n");
             }
             return $"SELECT\r\n{cols.ToString()}\r\nFROM {t};\r\n";
+        }
+
+        /// <summary>
+        /// Obtiene los nombres de columnas de una tabla/vista mediante SQL directo
+        /// al catálogo de cada motor. Más fiable que GetSchema para PostgreSQL, DB2 y SQLite,
+        /// cuyos drivers ODBC a veces ignoran las restricciones de catálogo.
+        /// </summary>
+        private List<string> ObtenerNombresColumnas(OdbcConnection conn, string schema, string tabla)
+        {
+            TipoMotor motor = conexionActual?.Motor ?? TipoMotor.MS_SQL;
+            var nombres = new List<string>();
+
+            // Para PostgreSQL: deshabilitar statement_timeout en esta conexión también,
+            // por si el servidor tiene un límite corto configurado.
+            if (motor == TipoMotor.POSTGRES)
+            {
+                try
+                {
+                    using (var cmdSt = new OdbcCommand("SET statement_timeout = 0", conn))
+                        cmdSt.ExecuteNonQuery();
+                }
+                catch { /* no crítico */ }
+            }
+
+            try
+            {
+                switch (motor)
+                {
+                    case TipoMotor.MS_SQL:
+                    {
+                        string s = string.IsNullOrEmpty(schema) ? "dbo" : schema;
+                        string sql = $"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS " +
+                                     $"WHERE TABLE_SCHEMA = '{s}' AND TABLE_NAME = '{tabla}' " +
+                                     $"ORDER BY ORDINAL_POSITION";
+                        using (var cmd = new OdbcCommand(sql, conn) { CommandTimeout = 0 })
+                        using (var dr = cmd.ExecuteReader())
+                            while (dr.Read()) nombres.Add(dr[0].ToString());
+                        break;
+                    }
+                    case TipoMotor.POSTGRES:
+                    {
+                        string s = string.IsNullOrEmpty(schema) ? "public" : schema;
+                        string sql = $"SELECT column_name FROM information_schema.columns " +
+                                     $"WHERE table_schema = '{s}' AND table_name = '{tabla}' " +
+                                     $"ORDER BY ordinal_position";
+                        using (var cmd = new OdbcCommand(sql, conn) { CommandTimeout = 0 })
+                        using (var dr = cmd.ExecuteReader())
+                            while (dr.Read()) nombres.Add(dr[0].ToString());
+                        break;
+                    }
+                    case TipoMotor.DB2:
+                    {
+                        string s = string.IsNullOrEmpty(schema) ? "%" : schema.ToUpperInvariant();
+                        string sql = $"SELECT COLNAME FROM SYSCAT.COLUMNS " +
+                                     $"WHERE TABSCHEMA = '{s}' AND TABNAME = '{tabla.ToUpperInvariant()}' " +
+                                     $"ORDER BY COLNO";
+                        using (var cmd = new OdbcCommand(sql, conn) { CommandTimeout = 0 })
+                        using (var dr = cmd.ExecuteReader())
+                            while (dr.Read()) nombres.Add(dr[0].ToString().TrimEnd());
+                        break;
+                    }
+                    case TipoMotor.SQLite:
+                    {
+                        // PRAGMA devuelve: cid, name, type, notnull, dflt_value, pk
+                        using (var cmd = new OdbcCommand($"PRAGMA table_info({tabla})", conn) { CommandTimeout = 0 })
+                        using (var dr = cmd.ExecuteReader())
+                            while (dr.Read()) nombres.Add(dr["name"].ToString());
+                        break;
+                    }
+                }
+            }
+            catch { /* continúa con el fallback */ }
+
+            // Fallback: GetSchema (funciona bien para MS SQL; para otros motores puede estar vacío)
+            if (nombres.Count == 0)
+            {
+                try
+                {
+                    var dt = conn.GetSchema("Columns", new string[] { null, schema, tabla });
+                    foreach (DataRow row in dt.Rows)
+                    {
+                        string col = row["COLUMN_NAME"].ToString();
+                        if (!string.IsNullOrEmpty(col)) nombres.Add(col);
+                    }
+                }
+                catch { }
+            }
+
+            return nombres;
+        }
+
+        /// <summary>
+        /// Genera SELECT enumerando explícitamente las columnas dadas.
+        /// Si la lista está vacía, vuelve a SELECT *.
+        /// </summary>
+        private string GenerarSelectAllColsDesdeNombres(string schema, string tabla, List<string> colNames)
+        {
+            string t = NombreCompleto(schema, tabla);
+            if (colNames.Count == 0)
+                return $"SELECT *\r\nFROM {t};\r\n";
+
+            var cols = new System.Text.StringBuilder();
+            for (int i = 0; i < colNames.Count; i++)
+            {
+                cols.Append("    " + Q(colNames[i]));
+                if (i < colNames.Count - 1) cols.Append(",\r\n");
+            }
+            return $"SELECT\r\n{cols}\r\nFROM {t};\r\n";
         }
 
         private string GenerarCreateTable(string schema, string tabla, DataTable columnas)
@@ -6410,7 +6620,7 @@ WHERE (type='table' OR type='view')
             foreach (var kvp in unicos)
                 AppendMessage($"✅ Tabla '{kvp.Key}' → [{kvp.Value}].[{kvp.Key}]  (corrección automática). Re-ejecutando...");
 
-            var (dtRetry, exRetry) = await ExecuteQueryAsync(connStr, sqlCorregido, parametros);
+            var (dtRetry, exRetry, _) = await ExecuteQueryAsync(connStr, sqlCorregido, parametros);
             if (exRetry != null)
             {
                 AppendMessage($"Error en re-ejecución con esquema corregido: {exRetry.Message}");
