@@ -29,3 +29,7 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\Preferenci
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\NombreConjuntoDialog.g.cs
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\PreferenciasWindow.g.cs
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.csproj.AssemblyReference.cache
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\Drivers\sqliteodbc.exe
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\Drivers\psqlodbc-setup.exe
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\InstaladorDriversWindow.baml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\InstaladorDriversWindow.g.cs

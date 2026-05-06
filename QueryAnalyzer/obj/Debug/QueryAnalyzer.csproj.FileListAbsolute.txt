@@ -81,3 +81,7 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\Preferencias
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\PreferenciasWindow.g.cs
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\NombreConjuntoDialog.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\NombreConjuntoDialog.g.cs
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\Drivers\sqliteodbc.exe
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\Drivers\psqlodbc-setup.exe
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\InstaladorDriversWindow.baml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\InstaladorDriversWindow.g.cs
