@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -82,24 +83,19 @@ namespace QueryAnalyzer
         public InstaladorDriversWindow()
         {
             InitializeComponent();
-            AplicarTema();
+            AplicarTemaActual();
         }
 
-        // ── Tema ─────────────────────────────────────────────────────────────
-        private void AplicarTema()
+        // ── Tema: mismo patrón que PreferenciasWindow ─────────────────────────
+        private void AplicarTemaActual()
         {
-            // Reutilizar el mismo mecanismo de tema que el resto de la app
-            if (Owner is MainWindow mw)
-            {
-                var temaActual = mw.Resources.MergedDictionaries.Count > 0
-                    ? mw.Resources.MergedDictionaries[0]
-                    : null;
-                if (temaActual != null)
-                {
-                    Resources.MergedDictionaries.Clear();
-                    Resources.MergedDictionaries.Add(temaActual);
-                }
-            }
+            var mainWindow = Application.Current.MainWindow;
+            if (mainWindow == null) return;
+            var tema = mainWindow.Resources.MergedDictionaries.FirstOrDefault();
+            if (tema == null) return;
+            var wd = Resources.MergedDictionaries;
+            if (wd.Count > 0) wd[0] = tema;
+            else wd.Add(tema);
         }
 
         // ── Carga inicial ─────────────────────────────────────────────────────

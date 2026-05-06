@@ -28,11 +28,12 @@
                 <Setter Property="Cursor"          Value="Hand"/>
             </Style>
 
-            <!-- Convertidor inline: verde si Instalado, naranja si no -->
-            <Style x:Key="EstadoIconStyle" TargetType="TextBlock">
-                <Setter Property="FontSize"          Value="16"/>
-                <Setter Property="VerticalAlignment" Value="Center"/>
-                <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Style TargetType="GroupBox">
+                <Setter Property="Foreground"  Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+            </Style>
+            <Style TargetType="ScrollViewer">
+                <Setter Property="Background" Value="{DynamicResource BrushWindowBG}"/>
             </Style>
         </ResourceDictionary>
     </Window.Resources>
@@ -58,8 +59,10 @@
         <Border Grid.Row="1"
                 BorderBrush="{DynamicResource BrushBorder}" BorderThickness="1"
                 CornerRadius="3">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <ItemsControl x:Name="listDrivers" Margin="0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          Background="{DynamicResource BrushWindowBG}">
+                <ItemsControl x:Name="listDrivers" Margin="0"
+                              Background="{DynamicResource BrushWindowBG}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Grid Margin="0">
