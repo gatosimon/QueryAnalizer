@@ -97,6 +97,10 @@
     <Compile Include="NombreConjuntoDialog.xaml.cs">
       <DependentUpon>NombreConjuntoDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="InstaladorDriversWindow.xaml.cs">
+      <DependentUpon>InstaladorDriversWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="OdbcDriverManager.cs" />
     <Compile Include="PhraseManager.cs" />
     <Compile Include="PreferenciasWindow.xaml.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -121,6 +125,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="ScriptResultWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="InstaladorDriversWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -154,6 +162,13 @@
     <Resource Include="Assets\frases.xml" />
     <Content Include="Logo.ico" />
     <Content Include="Logo.png" />
+    <!-- Instaladores de drivers ODBC bundleados -->
+    <Content Include="Drivers\sqliteodbc.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Drivers\psqlodbc-setup.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">

@@ -396,7 +396,7 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid Margin="8">
+    <Grid x:Name="grdRaiz" Margin="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -448,6 +448,15 @@
                     FontSize="12"
                     ToolTip="Configuración de la aplicación"
                     Click="BtnPreferencias_Click"
+                    DockPanel.Dock="Left"/>
+            <!-- Botón de drivers ODBC -->
+            <Button x:Name="btnDriversOdbc"
+                    Content="&#x1F50C; Drivers ODBC"
+                    Padding="6,2"
+                    Margin="6,0,0,0"
+                    FontSize="12"
+                    ToolTip="Verificar e instalar drivers ODBC requeridos"
+                    Click="BtnDriversOdbc_Click"
                     DockPanel.Dock="Left"/>
         </DockPanel>
 
@@ -911,11 +920,38 @@
             </Grid>
         </Grid>
 
-        <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch"
+        <GridSplitter x:Name="splitterLog"
+                      Grid.Row="2" Height="5" HorizontalAlignment="Stretch"
                       ResizeDirection="Rows" ShowsPreview="True"/>
 
-        <Grid Grid.Row="3" Margin="0,6,0,0">
+        <!-- ── Panel de mensajes / log ─────────────────────────────── -->
+        <Grid x:Name="grdLog" Grid.Row="3">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>   <!-- header con botón toggle -->
+                <RowDefinition Height="*"/>      <!-- contenido: txtMessages  -->
+            </Grid.RowDefinitions>
+
+            <!-- Header del panel de log -->
+            <DockPanel Grid.Row="0"
+                       LastChildFill="True"
+                       Margin="0,2,0,2">
+                <Button x:Name="btnToggleLog"
+                        DockPanel.Dock="Right"
+                        Content="▼"
+                        Width="20" Height="18"
+                        Padding="0" FontSize="10"
+                        VerticalContentAlignment="Center"
+                        Click="btnToggleLog_Click"
+                        ToolTip="Colapsar / expandir panel de mensajes"/>
+                <TextBlock Text="📋 Mensajes"
+                           VerticalAlignment="Center"
+                           Padding="2,0"
+                           FontWeight="SemiBold"/>
+            </DockPanel>
+
+            <!-- Contenido del log -->
             <TextBox x:Name="txtMessages"
+                     Grid.Row="1"
                      IsReadOnly="True"
                      VerticalScrollBarVisibility="Auto"
                      TextWrapping="Wrap"/>

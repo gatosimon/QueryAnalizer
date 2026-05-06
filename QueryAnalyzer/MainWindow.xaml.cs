@@ -111,6 +111,11 @@ namespace QueryAnalyzer
             // Ctrl+Space: disparar intellisense manualmente
             // Ctrl+Shift+Home: corregir selección hasta el inicio del documento
             txtQuery.TextArea.PreviewKeyDown += TxtQueryArea_PreviewKeyDown;
+
+            // Verificar drivers ODBC faltantes después de que la UI esté completamente cargada
+            Dispatcher.BeginInvoke(
+                System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+                new System.Action(VerificarDriversAlIniciar));
         }
 
         /// <summary>
@@ -3691,6 +3696,48 @@ ORDER BY R.CONSTNAME, KC.COLSEQ";
             ventana.ShowDialog();
             AplicarTema();
         }
+        // ── Drivers ODBC ─────────────────────────────────────────────────────────
+        private void BtnDriversOdbc_Click(object sender, RoutedEventArgs e)
+        {
+            var ventana = new InstaladorDriversWindow { Owner = this };
+            ventana.ShowDialog();
+        }
+
+        /// <summary>
+        /// Se llama una vez al inicio (vía Dispatcher) para notificar drivers faltantes.
+        /// Solo alerta si hay algún driver bundleado (con instalador incluido) que no está instalado.
+        /// </summary>
+        private void VerificarDriversAlIniciar()
+        {
+            try
+            {
+                var catalogo = OdbcDriverManager.ObtenerCatalogo();
+                OdbcDriverManager.ActualizarEstados(catalogo);
+
+                if (!OdbcDriverManager.HayDriversFaltantesInstalables(catalogo))
+                    return; // todos los drivers con instalador disponible ya están instalados
+
+                var faltantes = string.Join(", ",
+                    catalogo
+                    .FindAll(d => !d.EstaInstalado && d.InstaladorDisponible)
+                    .ConvertAll(d => d.Nombre));
+
+                var resp = MessageBox.Show(
+                    $"Se detectaron drivers ODBC no instalados en esta PC:\n\n  {faltantes}\n\n" +
+                    "¿Desea abrir el gestor de drivers para instalarlos ahora?",
+                    "Drivers ODBC faltantes",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (resp == MessageBoxResult.Yes)
+                    BtnDriversOdbc_Click(null, null);
+            }
+            catch
+            {
+                // No interrumpir el inicio de la app por errores en esta verificación
+            }
+        }
+
         // ════════════════════════════════════════════════════════════════
 
         /// <summary>
@@ -5435,6 +5482,43 @@ ORDER BY R.CONSTNAME, KC.COLSEQ";
             };
 
             colDef.BeginAnimation(ColumnDefinition.WidthProperty, anim);
+        }
+
+        // ── Colapsar / expandir panel de Log ─────────────────────────────────────
+        private bool   _logColapsado       = false;
+        private double _logAlturaExpandida = 100; // px guardados antes de colapsar
+
+        private void btnToggleLog_Click(object sender, RoutedEventArgs e)
+        {
+            var rowLog      = grdRaiz.RowDefinitions[3]; // fila del panel log en el grid raíz
+            var rowSplitter = grdRaiz.RowDefinitions[2]; // GridSplitter sobre el log
+
+            if (!_logColapsado)
+            {
+                // ── Colapsar ──────────────────────────────────────────────
+                // Guardar la altura actual (en píxeles) antes de colapsar
+                if (rowLog.ActualHeight > 0)
+                    _logAlturaExpandida = rowLog.ActualHeight;
+
+                // Ocultar el contenido del TextBox; la fila se ajusta sola al header (Auto)
+                txtMessages.Visibility = Visibility.Collapsed;
+                rowLog.Height          = GridLength.Auto;
+                rowSplitter.Height     = new GridLength(0);
+
+                _logColapsado        = true;
+                btnToggleLog.Content = "▲";
+            }
+            else
+            {
+                // ── Expandir ──────────────────────────────────────────────
+                // Restaurar primero la fila y el splitter, luego mostrar el contenido
+                rowLog.Height      = new GridLength(_logAlturaExpandida, GridUnitType.Pixel);
+                rowSplitter.Height = new GridLength(5);
+                txtMessages.Visibility = Visibility.Visible;
+
+                _logColapsado        = false;
+                btnToggleLog.Content = "▼";
+            }
         }
 
         // ── Colapsar / expandir Parámetros ───────────────────────────────────────
