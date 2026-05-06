@@ -35,8 +35,11 @@ namespace QueryAnalyzer
                 : new SolidColorBrush(Color.FromRgb(0xF4, 0x43, 0x36));
 
         // ── Visibilidades de los botones ──────────────────────────────────────
+        // Mostrar el botón siempre que el driver sea de tipo Bundle y no esté instalado,
+        // sin importar si el archivo instalador está presente en este momento.
+        // El chequeo de existencia del archivo se hace en el click handler.
         public Visibility VisibilidadInstalar
-            => (!_info.EstaInstalado && _info.InstaladorDisponible)
+            => (!_info.EstaInstalado && _info.Fuente == FuenteInstalar.Bundle)
                ? Visibility.Visible : Visibility.Collapsed;
 
         public Visibility VisibilidadDescargar
@@ -139,7 +142,18 @@ namespace QueryAnalyzer
         {
             if (_instalandoEnCurso) return;
 
-            if (!((sender as Button)?.Tag is DriverInfo driver)) return;
+            // Tag contiene el DriverVM (DataContext del DataTemplate), no el DriverInfo directamente
+            var vm = (sender as Button)?.Tag as DriverVM;
+            if (vm == null) return;
+            var driver = vm.Info;
+
+            // Verificar que el instalador esté presente en disco en este momento
+            if (!driver.InstaladorDisponible)
+            {
+                txtEstado.Text = $"⚠ No se encontró el instalador en: {driver.InstaladorRuta ?? "(ruta no definida)"}. " +
+                                 "Asegúrese de que la carpeta Drivers\\ esté junto al ejecutable.";
+                return;
+            }
 
             _instalandoEnCurso = true;
             txtEstado.Text = $"⏳ Instalando {driver.Nombre}... aguarde.";
@@ -152,13 +166,13 @@ namespace QueryAnalyzer
             OdbcDriverManager.ActualizarEstados(catalogo);
 
             // Actualizar los VMs con los nuevos estados
-            foreach (var vm in _vms)
+            foreach (var vmItem in _vms)
             {
-                var actualizado = catalogo.Find(d => d.Nombre == vm.Nombre);
+                var actualizado = catalogo.Find(d => d.Nombre == vmItem.Nombre);
                 if (actualizado != null)
                 {
-                    vm.Info.Estado = actualizado.Estado;
-                    vm.Actualizar();
+                    vmItem.Info.Estado = actualizado.Estado;
+                    vmItem.Actualizar();
                 }
             }
 
@@ -186,7 +200,10 @@ namespace QueryAnalyzer
         // ── Botón Descargar ───────────────────────────────────────────────────
         private void BtnDescargar_Click(object sender, RoutedEventArgs e)
         {
-            if (!((sender as Button)?.Tag is DriverInfo driver)) return;
+            // Tag contiene el DriverVM (DataContext del DataTemplate)
+            var vm = (sender as Button)?.Tag as DriverVM;
+            if (vm == null) return;
+            var driver = vm.Info;
             if (!string.IsNullOrEmpty(driver.UrlDescarga))
                 OdbcDriverManager.AbrirUrlDescarga(driver.UrlDescarga);
         }
