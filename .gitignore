@@ -1,0 +1,19 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# VS Code workspace
+*.code-workspace
+
+# Archivos sensibles locales
+Api Key.png
+Api key.txt
+A instalar/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Claude AI
+.claude/

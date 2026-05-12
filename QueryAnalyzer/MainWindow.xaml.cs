@@ -2,7 +2,7 @@ using Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Odbc;
+using CapiDL;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -42,7 +42,7 @@ namespace QueryAnalyzer
         private List<string> _resultadoBusqueda = null;  // lista de "schema.tabla" o "tabla"
         private string _terminoBusqueda = "";
 
-        public Dictionary<string, OdbcType> OdbcTypes { get; set; }
+        public Dictionary<string, System.Data.Odbc.OdbcType> OdbcTypes { get; set; }
         public List<QueryParameter> Parametros { get; set; }
 
         static public Conexion conexionActual = null;
@@ -378,8 +378,8 @@ namespace QueryAnalyzer
 
         private void CargarTipos()
         {
-            OdbcTypes = Enum.GetValues(typeof(OdbcType))
-                .Cast<OdbcType>()
+            OdbcTypes = Enum.GetValues(typeof(System.Data.Odbc.OdbcType))
+                .Cast<System.Data.Odbc.OdbcType>()
                 .ToDictionary(t => t.ToString(), t => t);
         }
 
@@ -1073,7 +1073,9 @@ namespace QueryAnalyzer
 
                 try
                 {
-                    using (var conn = new OdbcConnection(connStr))
+                    DataBase DB = new DataBase(connStr, false);
+                    using (var conn = DB.Connection)
+                    //using (var conn = new OdbcConnection(connStr))
                     {
                         conn.Open();
 
@@ -1083,11 +1085,11 @@ namespace QueryAnalyzer
                         // SET statement_timeout = 0 lo desactiva para esta sesión.
                         if (motorActual == TipoMotor.POSTGRES)
                         {
-                            using (var cmdSt = new OdbcCommand("SET statement_timeout = 0", conn))
+                            using (var cmdSt = new System.Data.Odbc.OdbcCommand("SET statement_timeout = 0", conn))
                                 cmdSt.ExecuteNonQuery();
                         }
 
-                        using (var cmd = new OdbcCommand(sql, conn))
+                        using (var cmd = new System.Data.Odbc.OdbcCommand(sql, conn))
                         {
                             // Sin límite de tiempo en el driver ODBC (cliente).
                             // El control del tiempo lo maneja el usuario con el botón Cancelar.
@@ -1101,7 +1103,7 @@ namespace QueryAnalyzer
                                 foreach (var p in parametros)
                                 {
                                     var name = p.Nombre.StartsWith("@") ? p.Nombre : "@" + p.Nombre;
-                                    var param = new OdbcParameter(name, p.Tipo);
+                                    var param = new System.Data.Odbc.OdbcParameter(name, p.Tipo);
                                     param.Value = string.IsNullOrEmpty(p.Valor) ? DBNull.Value : (object)p.Valor;
                                     cmd.Parameters.Add(param);
                                 }
@@ -1204,10 +1206,12 @@ namespace QueryAnalyzer
             {
                 var result = await Task.Run(() =>
                 {
-                    using (var conn = new OdbcConnection(connStr))
+                    DataBase DB = new DataBase(connStr, false);
+                    using (var conn = DB.Connection)
+                    //using (var conn = new OdbcConnection(connStr))
                     {
                         conn.Open();
-                        using (var cmd = new OdbcCommand(sql, conn))
+                        using (var cmd = new System.Data.Odbc.OdbcCommand(sql, conn))
                             return cmd.ExecuteScalar();
                     }
                 });
@@ -1449,7 +1453,9 @@ namespace QueryAnalyzer
             {
                 try
                 {
-                    using (var c = new OdbcConnection(conn))
+                    DataBase DB = new DataBase(conn);
+                    //using (var c = new OdbcConnection(conn))
+                    using (var c = DB.Connection)
                     {
                         c.Open();
                         Dispatcher.Invoke(() => AppendMessage("Conexión exitosa."));
@@ -1582,7 +1588,9 @@ namespace QueryAnalyzer
 
         private void Cargar(string[] tiposTabla, string filtrado, List<string> tablasConsulta, TreeView tvCargar, string connStr, System.Windows.Media.Imaging.BitmapImage tablaIcon, System.Windows.Media.Imaging.BitmapImage columnaIcon, System.Windows.Media.Imaging.BitmapImage columnaClaveIcon, System.Windows.Media.Imaging.BitmapImage claveIcon, System.Windows.Media.Imaging.BitmapImage vistaIcon, int tamañoIconos, CancellationToken token)
         {
-            using (var conn = new OdbcConnection(connStr))
+            DataBase DB = new DataBase(connStr, false);
+            using (var conn = DB.Connection)
+            //using (var conn = new OdbcConnection(connStr))
             {
                 conn.Open();
 
@@ -1752,7 +1760,9 @@ namespace QueryAnalyzer
                                 agregarSelect("🔟 SELECT TOP 10", () => GenerarSelectTop10(capSchema, capTabla));
                                 agregarSelect("✔ SELECT (todas las cols)", () =>
                                 {
-                                    using (var c = new OdbcConnection(connStr))
+                                    DB = new DataBase(connStr, false);
+                                    using (var c = DB.Connection)
+                                    //using (var c = new OdbcConnection(connStr))
                                     {
                                         c.Open();
                                         // ObtenerNombresColumnas usa SQL directo por motor (información_schema /
@@ -1770,18 +1780,24 @@ namespace QueryAnalyzer
                                     // ── Opciones exclusivas de TABLA ───────────────────
                                     agregarOpcion("🧱 CREATE TABLE", () =>
                                     {
-                                        using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarCreateTable(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
+                                        DB = new DataBase(connStr, false);
+                                        //using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarCreateTable(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
+                                        using (var c = DB.Connection) { c.Open(); return GenerarCreateTable(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
                                     });
                                     agregarOpcion("✏️ ALTER TABLE (add col)", () => GenerarAlterTableAddColumn(capSchema, capTabla));
                                     agregarOpcion("⚰ DROP TABLE", () => GenerarDropTable(capSchema, capTabla));
                                     ctxMenu.Items.Add(new Separator());
                                     agregarOpcion("➕ INSERT INTO", () =>
                                     {
-                                        using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarInsert(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
+                                        DB = new DataBase(connStr, false);
+                                        //using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarInsert(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
+                                        using (var c = DB.Connection) { c.Open(); return GenerarInsert(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
                                     });
                                     agregarOpcion("✏️ UPDATE ... SET", () =>
                                     {
-                                        using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarUpdate(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
+                                        DB = new DataBase(connStr, false);
+                                        //using (var c = new OdbcConnection(connStr)) { c.Open(); return GenerarUpdate(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
+                                        using (var c = DB.Connection) { c.Open(); return GenerarUpdate(capSchema, capTabla, c.GetSchema("Columns", new string[] { null, capSchema, capTabla })); }
                                     });
                                     agregarOpcion("🗑 DELETE FROM", () => GenerarDelete(capSchema, capTabla));
                                     ctxMenu.Items.Add(new Separator());
@@ -1843,7 +1859,9 @@ namespace QueryAnalyzer
         /// </summary>
         private void CargarDetallesTabla(TreeViewItem tablaNode, string schema, string nombreTabla, string tipo, string connStr, System.Windows.Media.Imaging.BitmapImage columnaIcon, System.Windows.Media.Imaging.BitmapImage columnaClaveIcon, System.Windows.Media.Imaging.BitmapImage claveIcon, int tamañoIconos)
         {
-            using (var conn = new OdbcConnection(connStr))
+            DataBase DB = new DataBase(connStr, false);
+            //using (var conn = new OdbcConnection(connStr))
+            using (var conn = DB.Connection)
             {
                 conn.Open();
 
@@ -2064,7 +2082,7 @@ namespace QueryAnalyzer
                             using (var cmdFK = conn.CreateCommand())
                             {
                                 cmdFK.CommandText = sqlFK;
-                                using (var adFK = new OdbcDataAdapter(cmdFK))
+                                using (var adFK = new System.Data.Odbc.OdbcDataAdapter(cmdFK))
                                 {
                                     var dtFK = new DataTable();
                                     adFK.Fill(dtFK);
@@ -2193,7 +2211,7 @@ namespace QueryAnalyzer
                                     break;
                             }
 
-                            using (var adapter = new OdbcDataAdapter(cmd))
+                            using (var adapter = new System.Data.Odbc.OdbcDataAdapter(cmd))
                             {
                                 var dtIndices = new DataTable();
                                 adapter.Fill(dtIndices);
@@ -2402,7 +2420,7 @@ namespace QueryAnalyzer
         /// al catálogo de cada motor. Más fiable que GetSchema para PostgreSQL, DB2 y SQLite,
         /// cuyos drivers ODBC a veces ignoran las restricciones de catálogo.
         /// </summary>
-        private List<string> ObtenerNombresColumnas(OdbcConnection conn, string schema, string tabla)
+        private List<string> ObtenerNombresColumnas(System.Data.Odbc.OdbcConnection conn, string schema, string tabla)
         {
             TipoMotor motor = conexionActual?.Motor ?? TipoMotor.MS_SQL;
             var nombres = new List<string>();
@@ -2413,7 +2431,7 @@ namespace QueryAnalyzer
             {
                 try
                 {
-                    using (var cmdSt = new OdbcCommand("SET statement_timeout = 0", conn))
+                    using (var cmdSt = new System.Data.Odbc.OdbcCommand("SET statement_timeout = 0", conn))
                         cmdSt.ExecuteNonQuery();
                 }
                 catch { /* no crítico */ }
@@ -2429,7 +2447,7 @@ namespace QueryAnalyzer
                         string sql = $"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS " +
                                      $"WHERE TABLE_SCHEMA = '{s}' AND TABLE_NAME = '{tabla}' " +
                                      $"ORDER BY ORDINAL_POSITION";
-                        using (var cmd = new OdbcCommand(sql, conn) { CommandTimeout = 0 })
+                        using (var cmd = new System.Data.Odbc.OdbcCommand(sql, conn) { CommandTimeout = 0 })
                         using (var dr = cmd.ExecuteReader())
                             while (dr.Read()) nombres.Add(dr[0].ToString());
                         break;
@@ -2440,7 +2458,7 @@ namespace QueryAnalyzer
                         string sql = $"SELECT column_name FROM information_schema.columns " +
                                      $"WHERE table_schema = '{s}' AND table_name = '{tabla}' " +
                                      $"ORDER BY ordinal_position";
-                        using (var cmd = new OdbcCommand(sql, conn) { CommandTimeout = 0 })
+                        using (var cmd = new System.Data.Odbc.OdbcCommand(sql, conn) { CommandTimeout = 0 })
                         using (var dr = cmd.ExecuteReader())
                             while (dr.Read()) nombres.Add(dr[0].ToString());
                         break;
@@ -2451,7 +2469,7 @@ namespace QueryAnalyzer
                         string sql = $"SELECT COLNAME FROM SYSCAT.COLUMNS " +
                                      $"WHERE TABSCHEMA = '{s}' AND TABNAME = '{tabla.ToUpperInvariant()}' " +
                                      $"ORDER BY COLNO";
-                        using (var cmd = new OdbcCommand(sql, conn) { CommandTimeout = 0 })
+                        using (var cmd = new System.Data.Odbc.OdbcCommand(sql, conn) { CommandTimeout = 0 })
                         using (var dr = cmd.ExecuteReader())
                             while (dr.Read()) nombres.Add(dr[0].ToString().TrimEnd());
                         break;
@@ -2459,7 +2477,7 @@ namespace QueryAnalyzer
                     case TipoMotor.SQLite:
                     {
                         // PRAGMA devuelve: cid, name, type, notnull, dflt_value, pk
-                        using (var cmd = new OdbcCommand($"PRAGMA table_info({tabla})", conn) { CommandTimeout = 0 })
+                        using (var cmd = new System.Data.Odbc.OdbcCommand($"PRAGMA table_info({tabla})", conn) { CommandTimeout = 0 })
                         using (var dr = cmd.ExecuteReader())
                             while (dr.Read()) nombres.Add(dr["name"].ToString());
                         break;
@@ -2805,7 +2823,9 @@ namespace QueryAnalyzer
             var setNombres = new HashSet<string>(
                 tablas.Select(t => t.Nombre), StringComparer.OrdinalIgnoreCase);
 
-            using (var conn = new OdbcConnection(connStr))
+            DataBase DB = new DataBase(connStr, false);
+            //using (var conn = new OdbcConnection(connStr))
+            using (var conn = DB.Connection)
             {
                 conn.Open();
 
@@ -2831,7 +2851,7 @@ JOIN sys.objects tr ON tr.object_id = fk.referenced_object_id
 JOIN sys.columns lc ON lc.object_id = fk.parent_object_id     AND lc.column_id = fkc.parent_column_id
 JOIN sys.columns rc ON rc.object_id = fk.referenced_object_id AND rc.column_id = fkc.referenced_column_id
 ORDER BY fk.name, fkc.constraint_column_id";
-                        using (var cmd = new OdbcCommand(sql, conn))
+                        using (var cmd = new System.Data.Odbc.OdbcCommand(sql, conn))
                         using (var dr = cmd.ExecuteReader())
                         {
                             while (dr.Read())
@@ -2879,7 +2899,7 @@ JOIN information_schema.constraint_column_usage ccu
    AND ccu.table_schema      = rc.unique_constraint_schema
 WHERE tc.constraint_type = 'FOREIGN KEY'
 ORDER BY tc.constraint_name, kcu.ordinal_position";
-                        using (var cmd = new OdbcCommand(sql, conn))
+                        using (var cmd = new System.Data.Odbc.OdbcCommand(sql, conn))
                         using (var dr = cmd.ExecuteReader())
                         {
                             while (dr.Read())
@@ -2922,7 +2942,7 @@ JOIN SYSCAT.KEYCOLUSE KR
     ON KR.CONSTNAME = R.REFKEYNAME AND KR.TABSCHEMA = R.REFTABSCHEMA AND KR.TABNAME = R.REFTABNAME
     AND KR.COLSEQ = KC.COLSEQ
 ORDER BY R.CONSTNAME, KC.COLSEQ";
-                        using (var cmd = new OdbcCommand(sql, conn))
+                        using (var cmd = new System.Data.Odbc.OdbcCommand(sql, conn))
                         using (var dr = cmd.ExecuteReader())
                         {
                             while (dr.Read())
@@ -2956,7 +2976,7 @@ ORDER BY R.CONSTNAME, KC.COLSEQ";
                             try
                             {
                                 string sqlPragma = $"PRAGMA foreign_key_list({t.Nombre})";
-                                using (var cmd = new OdbcCommand(sqlPragma, conn))
+                                using (var cmd = new System.Data.Odbc.OdbcCommand(sqlPragma, conn))
                                 using (var dr = cmd.ExecuteReader())
                                 {
                                     while (dr.Read())
@@ -3779,7 +3799,7 @@ ORDER BY R.CONSTNAME, KC.COLSEQ";
 
                 // ── 1. Recopilar metadatos de columnas y FKs ─────────────────────────
                 // Estructura: nombre → (tipo, columnas, relaciones)
-                var tablasMeta = new Dictionary<string, EsquemaTablaInfo>(StringComparer.OrdinalIgnoreCase);
+                var tablasMeta = new Dictionary<string, EsquematizadorService.EsquemaTablaInfo>(StringComparer.OrdinalIgnoreCase);
 
                 // Leer los nodos visibles para obtener nombre/schema/tipo
                 var nodosInfo = new List<Tuple<string, string, string>>(); // schema, nombre, tipo
@@ -3798,10 +3818,14 @@ ORDER BY R.CONSTNAME, KC.COLSEQ";
                     nodosInfo.Add(Tuple.Create(schema, nombreTabla, tipo));
                 }
 
+                EsquematizadorService servicioEsquema = new EsquematizadorService(conexionActual);
+
                 // Consultar columnas y FKs en background
                 await Task.Run(() =>
                 {
-                    using (var conn = new OdbcConnection(connStr))
+                    DataBase DB = new DataBase(connStr, false);
+                    //using (var conn = new OdbcConnection(connStr))
+                    using (var conn = DB.Connection)
                     {
                         conn.Open();
 
@@ -3812,7 +3836,7 @@ ORDER BY R.CONSTNAME, KC.COLSEQ";
                             string nombre = t.Item2;
                             string tipoObj = t.Item3;
 
-                            var info = new EsquemaTablaInfo { Nombre = nombre, Schema = schema, Tipo = tipoObj };
+                            var info = new EsquematizadorService.EsquemaTablaInfo { Nombre = nombre, Schema = schema, Tipo = tipoObj };
 
                             try
                             {
@@ -3822,7 +3846,7 @@ ORDER BY R.CONSTNAME, KC.COLSEQ";
                                     string colName = col["COLUMN_NAME"].ToString();
                                     string colTipo = col["TYPE_NAME"].ToString();
                                     string colSize = col["COLUMN_SIZE"].ToString();
-                                    info.Columnas.Add(new EsquemaColumnaInfo { Nombre = colName, Tipo = colTipo, Longitud = colSize });
+                                    info.Columnas.Add(new EsquematizadorService.EsquemaColumnaInfo { Nombre = colName, Tipo = colTipo, Longitud = colSize });
                                 }
                             }
                             catch { /* Si falla para alguna tabla, continuar */ }
@@ -3833,7 +3857,7 @@ ORDER BY R.CONSTNAME, KC.COLSEQ";
                         // ── Relaciones FK según motor ───────────────────────────────
                         try
                         {
-                            var relaciones = ObtenerRelacionesFK(conn, tablasMeta.Keys.ToList());
+                            var relaciones = servicioEsquema.ObtenerRelacionesFK(conn, tablasMeta.Keys.ToList());
                             foreach (var rel in relaciones)
                             {
                                 if (tablasMeta.ContainsKey(rel.TablaOrigen))
@@ -3844,44 +3868,14 @@ ORDER BY R.CONSTNAME, KC.COLSEQ";
                     }
                 });
 
-                // ── 2. Preguntar plataforma ───────────────────────────────────────
-                PlataformaEsquema plataforma = PlataformaEsquema.DrawIO;
-                //PlataformaEsquema? plataforma = null;
-                //Dispatcher.Invoke(() => plataforma = ElegirPlataformaEsquema());
-                //if (plataforma == null)
-                //{
-                //    Dispatcher.Invoke(() => AppendMessage("Esquematización cancelada."));
-                //    return;
-                //}
-
-                // ── 3. Generar y abrir según plataforma ──────────────────────────
-                if (plataforma == PlataformaEsquema.DrawIO)
-                {
-                    // Layout jerárquico solo para Draw.io (Mermaid lo hace automáticamente)
-                    var posiciones = CalcularLayoutER(tablasMeta);
-                    string xmlDrawio = GenerarXmlDrawio(tablasMeta, posiciones);
-                    string encoded   = ComprimirDrawio(xmlDrawio);
-                    string url       = "https://app.diagrams.net/?src=about#R" + Uri.EscapeDataString(encoded);
-                    Dispatcher.Invoke(() => System.Diagnostics.Process.Start(url));
-                    Dispatcher.Invoke(() => AppendMessage("Diagrama generado y abierto en Draw.io."));
-                }
-                //else
-                //{
-                //    // Tldraw: mismo layout jerárquico que Draw.io, abierto como HTML local
-                //    var posicionesTld   = CalcularLayoutER(tablasMeta);
-                //    string htmlContent  = GenerarHtmlTldraw(tablasMeta, posicionesTld, conexionActual.Nombre);
-                //    string tempPath     = System.IO.Path.Combine(
-                //        System.IO.Path.GetTempPath(),
-                //        "ERD_" + conexionActual.Nombre + "_" +
-                //        DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".html");
-                //    System.IO.File.WriteAllText(tempPath, htmlContent, System.Text.Encoding.UTF8);
-
-                //    Dispatcher.Invoke(() =>
-                //    {
-                //        System.Diagnostics.Process.Start(tempPath);
-                //        AppendMessage("Diagrama Tldraw abierto en el navegador.\nArchivo: " + tempPath);
-                //    });
-                //}
+                // ── 2. Generar y abrir ──────────────────────────
+                // Layout jerárquico solo para Draw.io (Mermaid lo hace automáticamente)
+                var posiciones = servicioEsquema.CalcularLayoutER(tablasMeta);
+                string xmlDrawio = servicioEsquema.GenerarXmlDrawio(tablasMeta, posiciones);
+                string encoded   = servicioEsquema.ComprimirDrawio(xmlDrawio);
+                string url       = "https://app.diagrams.net/?src=about#R" + Uri.EscapeDataString(encoded);
+                Dispatcher.Invoke(() => System.Diagnostics.Process.Start(url));
+                Dispatcher.Invoke(() => AppendMessage("Diagrama generado y abierto en Draw.io."));
             }
             catch (Exception ex)
             {
@@ -3891,846 +3885,6 @@ ORDER BY R.CONSTNAME, KC.COLSEQ";
             {
                 btnEsquematizar.IsEnabled = true;
             }
-        }
-
-        // ────────────────────────────────────────────────────────────────
-        // Clases auxiliares para el esquematizador
-        // ────────────────────────────────────────────────────────────────
-
-        private class EsquemaTablaInfo
-        {
-            public string Nombre { get; set; }
-            public string Schema { get; set; }
-            public string Tipo { get; set; }   // "TABLE" | "VIEW"
-            public List<EsquemaColumnaInfo> Columnas { get; } = new List<EsquemaColumnaInfo>();
-            public List<EsquemaRelacionInfo> Relaciones { get; } = new List<EsquemaRelacionInfo>();
-        }
-
-        private class EsquemaColumnaInfo
-        {
-            public string Nombre { get; set; }
-            public string Tipo { get; set; }
-            public string Longitud { get; set; }
-        }
-
-        private class EsquemaRelacionInfo
-        {
-            public string TablaOrigen { get; set; }
-            public string ColumnaOrigen { get; set; }
-            public string TablaDestino { get; set; }
-            public string ColumnaDestino { get; set; }
-        }
-
-        // ────────────────────────────────────────────────────────────────
-        // Obtener FKs según motor
-        // ────────────────────────────────────────────────────────────────
-
-        private List<EsquemaRelacionInfo> ObtenerRelacionesFK(OdbcConnection conn, List<string> tablas)
-        {
-            var resultado = new List<EsquemaRelacionInfo>();
-            if (conexionActual == null) return resultado;
-
-            // Intentar primero vía GetSchema("ForeignKeys") — soportado por algunos drivers ODBC
-            try
-            {
-                var fkSchema = conn.GetSchema("ForeignKeys");
-                foreach (DataRow row in fkSchema.Rows)
-                {
-                    string tablaOrigen = ObtenerCampo(row, "FK_TABLE_NAME", "FKTABLE_NAME");
-                    string columnaOrigen = ObtenerCampo(row, "FK_COLUMN_NAME", "FKCOLUMN_NAME");
-                    string tablaDestino = ObtenerCampo(row, "PK_TABLE_NAME", "PKTABLE_NAME");
-                    string columnaDestino = ObtenerCampo(row, "PK_COLUMN_NAME", "PKCOLUMN_NAME");
-
-                    if (!string.IsNullOrEmpty(tablaOrigen) && !string.IsNullOrEmpty(tablaDestino))
-                    {
-                        resultado.Add(new EsquemaRelacionInfo
-                        {
-                            TablaOrigen = tablaOrigen,
-                            ColumnaOrigen = columnaOrigen,
-                            TablaDestino = tablaDestino,
-                            ColumnaDestino = columnaDestino
-                        });
-                    }
-                }
-                if (resultado.Count > 0) return resultado;
-            }
-            catch { }
-
-            // Fallback: consulta SQL específica por motor
-            string sql = null;
-            switch (conexionActual.Motor)
-            {
-                case TipoMotor.MS_SQL:
-                    sql = @"SELECT
-                                fk.TABLE_NAME  AS FK_TABLE,
-                                cu.COLUMN_NAME AS FK_COL,
-                                pk.TABLE_NAME  AS PK_TABLE,
-                                pt.COLUMN_NAME AS PK_COL
-                            FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
-                            JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS fk ON rc.CONSTRAINT_NAME  = fk.CONSTRAINT_NAME
-                            JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS pk ON rc.UNIQUE_CONSTRAINT_NAME = pk.CONSTRAINT_NAME
-                            JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE  cu ON rc.CONSTRAINT_NAME  = cu.CONSTRAINT_NAME
-                            JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE  pt ON rc.UNIQUE_CONSTRAINT_NAME = pt.CONSTRAINT_NAME
-                                                                         AND cu.ORDINAL_POSITION = pt.ORDINAL_POSITION";
-                    break;
-
-                case TipoMotor.POSTGRES:
-                    sql = @"SELECT
-                                kcu.table_name  AS FK_TABLE,
-                                kcu.column_name AS FK_COL,
-                                ccu.table_name  AS PK_TABLE,
-                                ccu.column_name AS PK_COL
-                            FROM information_schema.table_constraints tc
-                            JOIN information_schema.key_column_usage kcu
-                                ON tc.constraint_name = kcu.constraint_name
-                            JOIN information_schema.constraint_column_usage ccu
-                                ON ccu.constraint_name = tc.constraint_name
-                            WHERE tc.constraint_type = 'FOREIGN KEY'";
-                    break;
-
-                case TipoMotor.DB2:
-                    sql = @"SELECT
-                                R.TABNAME  AS FK_TABLE,
-                                K.COLNAME  AS FK_COL,
-                                R.REFTABNAME AS PK_TABLE,
-                                F.COLNAME  AS PK_COL
-                            FROM SYSCAT.REFERENCES R
-                            JOIN SYSCAT.KEYCOLUSE  K ON R.CONSTNAME = K.CONSTNAME AND R.TABSCHEMA = K.TABSCHEMA AND R.TABNAME = K.TABNAME
-                            JOIN SYSCAT.KEYCOLUSE  F ON R.REFKEYNAME= F.CONSTNAME AND R.REFTABSCHEMA = F.TABSCHEMA AND R.REFTABNAME= F.TABNAME
-                                                     AND K.COLSEQ = F.COLSEQ";
-                    break;
-
-                case TipoMotor.SQLite:
-                    // SQLite: iterar por tabla y usar PRAGMA foreign_key_list
-                    foreach (string tabla in tablas)
-                    {
-                        try
-                        {
-                            using (var cmd = conn.CreateCommand())
-                            {
-                                cmd.CommandText = $"PRAGMA foreign_key_list('{tabla}')";
-                                using (var rdr = cmd.ExecuteReader())
-                                {
-                                    while (rdr.Read())
-                                    {
-                                        resultado.Add(new EsquemaRelacionInfo
-                                        {
-                                            TablaOrigen = tabla,
-                                            ColumnaOrigen = rdr["from"].ToString(),
-                                            TablaDestino = rdr["table"].ToString(),
-                                            ColumnaDestino = rdr["to"].ToString()
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                        catch { }
-                    }
-                    return resultado;
-            }
-
-            if (!string.IsNullOrEmpty(sql))
-            {
-                try
-                {
-                    using (var cmd = conn.CreateCommand())
-                    {
-                        cmd.CommandText = sql;
-                        using (var rdr = cmd.ExecuteReader())
-                        {
-                            while (rdr.Read())
-                            {
-                                resultado.Add(new EsquemaRelacionInfo
-                                {
-                                    TablaOrigen = rdr[0].ToString(),
-                                    ColumnaOrigen = rdr[1].ToString(),
-                                    TablaDestino = rdr[2].ToString(),
-                                    ColumnaDestino = rdr[3].ToString()
-                                });
-                            }
-                        }
-                    }
-                }
-                catch { }
-            }
-
-            return resultado;
-        }
-
-        /// <summary>Lee un campo de un DataRow probando múltiples nombres de columna posibles.</summary>
-        private string ObtenerCampo(DataRow row, params string[] candidatos)
-        {
-            foreach (string c in candidatos)
-            {
-                if (row.Table.Columns.Contains(c) && row[c] != DBNull.Value)
-                    return row[c].ToString();
-            }
-            return string.Empty;
-        }
-
-        // ────────────────────────────────────────────────────────────────
-        // Generador de XML Draw.io
-        // ────────────────────────────────────────────────────────────────
-
-        private string GenerarXmlDrawio(
-            Dictionary<string, EsquemaTablaInfo> tablasMeta,
-            Dictionary<string, Tuple<int, int>> posiciones)
-        {
-            const int ANCHO_TABLA   = 260;
-            const int ALTO_CABECERA = 32;
-            const int ALTO_FILA     = 22;
-
-            var sb = new System.Text.StringBuilder();
-            sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-            sb.AppendLine("<mxGraphModel dx=\"1422\" dy=\"762\" grid=\"0\" gridSize=\"10\" guides=\"1\" " +
-                          "tooltips=\"1\" connect=\"1\" arrows=\"1\" fold=\"1\" page=\"0\" pageScale=\"1\" " +
-                          "pageWidth=\"1169\" pageHeight=\"827\" math=\"0\" shadow=\"0\">");
-            sb.AppendLine("<root>");
-            sb.AppendLine("<mxCell id=\"0\"/>");
-            sb.AppendLine("<mxCell id=\"1\" parent=\"0\"/>");
-
-            int idBase = 2;
-            var idPorTabla = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var kvp in tablasMeta)
-            {
-                EsquemaTablaInfo t = kvp.Value;
-                int id = idBase;
-                idPorTabla[t.Nombre] = id;
-
-                int altoTotal = ALTO_CABECERA + Math.Max(1, t.Columnas.Count) * ALTO_FILA;
-                Tuple<int, int> pos;
-                if (!posiciones.TryGetValue(t.Nombre, out pos)) pos = Tuple.Create(0, 0);
-                int x = pos.Item1;
-                int y = pos.Item2;
-
-                bool esVista = t.Tipo == "VIEW";
-
-                string estiloContenedor = esVista
-                    ? "swimlane;fontStyle=2;align=center;startSize=32;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;arcSize=4;"
-                    : "swimlane;fontStyle=1;align=center;startSize=32;fillColor=#fff2cc;strokeColor=#d6b656;rounded=1;arcSize=4;";
-
-                string etiqueta = string.IsNullOrEmpty(t.Schema)
-                    ? t.Nombre
-                    : $"{t.Schema}.{t.Nombre}";
-                if (esVista) etiqueta = "«view» " + etiqueta;
-
-                sb.AppendLine($"<mxCell id=\"{id}\" value=\"{EscXml(etiqueta)}\" " +
-                              $"style=\"{estiloContenedor}\" vertex=\"1\" parent=\"1\">");
-                sb.AppendLine($"  <mxGeometry x=\"{x}\" y=\"{y}\" width=\"{ANCHO_TABLA}\" " +
-                              $"height=\"{altoTotal}\" as=\"geometry\"/>");
-                sb.AppendLine("</mxCell>");
-
-                // Filas de columnas
-                for (int i = 0; i < t.Columnas.Count; i++)
-                {
-                    var col2 = t.Columnas[i];
-                    int childId = id + 1 + i;
-                    string label = col2.Nombre + "  :  " + col2.Tipo;
-                    if (!string.IsNullOrEmpty(col2.Longitud) && col2.Longitud != "0")
-                        label += "(" + col2.Longitud + ")";
-
-                    sb.AppendLine($"<mxCell id=\"{childId}\" value=\"{EscXml(label)}\" " +
-                                  "style=\"text;align=left;spacingLeft=8;fontSize=11;fontFamily=Courier New;\" " +
-                                  $"vertex=\"1\" parent=\"{id}\">");
-                    sb.AppendLine($"  <mxGeometry x=\"0\" y=\"{ALTO_CABECERA + i * ALTO_FILA}\" " +
-                                  $"width=\"{ANCHO_TABLA}\" height=\"{ALTO_FILA}\" as=\"geometry\"/>");
-                    sb.AppendLine("</mxCell>");
-                }
-
-                idBase += 1 + t.Columnas.Count;
-            }
-
-            // ── Conectores FK (auto-routing, sin puntos de anclaje fijos) ────────
-            int connId = idBase;
-            var relacionesYaVistas = new HashSet<string>();
-
-            foreach (var kvp in tablasMeta)
-            {
-                foreach (var rel in kvp.Value.Relaciones)
-                {
-                    if (!idPorTabla.ContainsKey(rel.TablaOrigen) ||
-                        !idPorTabla.ContainsKey(rel.TablaDestino)) continue;
-
-                    string clave = rel.TablaOrigen + "|" + rel.ColumnaOrigen + "|" +
-                                   rel.TablaDestino + "|" + rel.ColumnaDestino;
-                    if (!relacionesYaVistas.Add(clave)) continue;
-
-                    int idOrigen  = idPorTabla[rel.TablaOrigen];
-                    int idDestino = idPorTabla[rel.TablaDestino];
-                    string label  = rel.ColumnaOrigen + " → " + rel.ColumnaDestino;
-
-                    // Estilo auto-routing: draw.io elige el camino óptimo
-                    // Sin anclas fijas: draw.io elige el mejor punto de conexión
-                    string estiloArco =
-                        "edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;" +
-                        "jettySize=auto;" +
-                        "endArrow=ERone;endFill=0;startArrow=ERmanyToOne;startFill=0;";
-
-                    sb.AppendLine($"<mxCell id=\"{connId}\" value=\"{EscXml(label)}\" " +
-                                  $"style=\"{estiloArco}\" " +
-                                  $"edge=\"1\" source=\"{idOrigen}\" target=\"{idDestino}\" parent=\"1\">");
-                    sb.AppendLine("  <mxGeometry relative=\"1\" as=\"geometry\"/>");
-                    sb.AppendLine("</mxCell>");
-                    connId++;
-                }
-            }
-
-            sb.AppendLine("</root></mxGraphModel>");
-            return sb.ToString();
-        }
-
-        private string EscXml(string s)
-        {
-            return System.Security.SecurityElement.Escape(s) ?? string.Empty;
-        }
-
-        // ────────────────────────────────────────────────────────────────
-        // Compresión Draw.io: Deflate raw + Base64 (formato que acepta la URL de draw.io)
-        // ────────────────────────────────────────────────────────────────
-
-        private string ComprimirDrawio(string xml)
-        {
-            byte[] datos = System.Text.Encoding.UTF8.GetBytes(xml);
-
-            using (var ms = new System.IO.MemoryStream())
-            {
-                // DeflateStream escribe Deflate sin cabecera zlib (raw deflate)
-                using (var deflate = new System.IO.Compression.DeflateStream(ms, System.IO.Compression.CompressionMode.Compress, leaveOpen: true))
-                {
-                    deflate.Write(datos, 0, datos.Length);
-                }
-                return Convert.ToBase64String(ms.ToArray());
-            }
-        }
-
-        // ────────────────────────────────────────────────────────────────
-        // Selección de plataforma de diagramación
-        // ────────────────────────────────────────────────────────────────
-
-        private enum PlataformaEsquema { DrawIO, Tldraw }
-
-        /// <summary>
-        /// Muestra un diálogo modal para elegir entre Draw.io y Tldraw.
-        /// Devuelve null si el usuario cancela.
-        /// </summary>
-        private PlataformaEsquema? ElegirPlataformaEsquema()
-        {
-            PlataformaEsquema? resultado = null;
-
-            // Leer colores reales del tema activo para aplicarlos a los controles
-            // creados en código (los estilos implícitos no se propagan a ventanas
-            // instanciadas programáticamente sin ResourceDictionary propio).
-            var bgBrush   = (System.Windows.Media.Brush)this.FindResource("BrushWindowBG");
-            var fgBrush   = (System.Windows.Media.Brush)this.FindResource("BrushFG");
-            var btnBG     = (System.Windows.Media.Brush)this.FindResource("BrushBtnBG");
-            var btnBorder = (System.Windows.Media.Brush)this.FindResource("BrushBtnBorder");
-
-            var dlg = new Window
-            {
-                Title                 = "Abrir diagrama en…",
-                Width                 = 400,
-                Height                = 170,
-                ResizeMode            = ResizeMode.NoResize,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Owner                 = this,
-                Background            = bgBrush
-            };
-
-            var root = new Grid { Margin = new Thickness(24, 20, 24, 20) };
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-            var lbl = new TextBlock
-            {
-                Text         = "¿En qué plataforma querés abrir el esquema?",
-                TextWrapping = TextWrapping.Wrap,
-                Foreground   = fgBrush,
-                Margin       = new Thickness(0, 0, 0, 18)
-            };
-            Grid.SetRow(lbl, 0);
-
-            var btnRow = new StackPanel
-            {
-                Orientation         = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Center
-            };
-            Grid.SetRow(btnRow, 2);
-
-            var mkBtn = new Func<string, Button>(txt => new Button
-            {
-                Content         = txt,
-                Width           = 96,
-                Margin          = new Thickness(8, 0, 8, 0),
-                Padding         = new Thickness(4, 6, 4, 6),
-                Background      = btnBG,
-                Foreground      = fgBrush,
-                BorderBrush     = btnBorder,
-                BorderThickness = new Thickness(1)
-            });
-
-            var btnDrawio   = mkBtn("Draw.io");
-            var btnTldraw   = mkBtn("Tldraw");
-            var btnCancelar = mkBtn("Cancelar");
-
-            btnDrawio.Click   += (s, ev) => { resultado = PlataformaEsquema.DrawIO; dlg.Close(); };
-            btnTldraw.Click   += (s, ev) => { resultado = PlataformaEsquema.Tldraw; dlg.Close(); };
-            btnCancelar.Click += (s, ev) => dlg.Close();
-
-            btnRow.Children.Add(btnDrawio);
-            btnRow.Children.Add(btnTldraw);
-            btnRow.Children.Add(btnCancelar);
-
-            root.Children.Add(lbl);
-            root.Children.Add(btnRow);
-            dlg.Content = root;
-            dlg.ShowDialog();
-            return resultado;
-        }
-
-        // ────────────────────────────────────────────────────────────────
-        // Layout jerárquico para diagramas ER
-        // ────────────────────────────────────────────────────────────────
-
-        /// <summary>
-        /// Calcula las posiciones (x, y) de cada tabla usando un layout jerárquico
-        /// guiado por las relaciones FK.<br/>
-        /// • Las tablas padre (referenciadas) se colocan arriba.<br/>
-        /// • Las tablas hijo (con FK columns) se colocan debajo, con separación generosa.<br/>
-        /// • Las tablas sin FK se agrupan en una grilla al final.
-        /// </summary>
-        private Dictionary<string, Tuple<int, int>> CalcularLayoutER(
-            Dictionary<string, EsquemaTablaInfo> tablasMeta)
-        {
-            const int ANCHO     = 260;
-            const int ALTO_CAB  = 32;
-            const int ALTO_FILA = 22;
-            const int H_GAP     = 200;   // espacio horizontal entre tablas del mismo nivel
-            const int V_GAP     = 200;   // espacio vertical entre niveles
-            const int COMP_GAP  = 380;   // espacio entre componentes desconectados
-            const int COLS_MAX  = 4;     // máx columnas para grilla sin FK
-
-            var posiciones = new Dictionary<string, Tuple<int, int>>(StringComparer.OrdinalIgnoreCase);
-            var tablas = tablasMeta.Keys.ToList();
-            if (tablas.Count == 0) return posiciones;
-
-            // ── 1. Construir grafo de adyacencia ─────────────────────────────────
-            var inEdges  = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
-            var outEdges = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
-            var adjUnd   = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var t in tablas)
-            {
-                inEdges[t]  = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                outEdges[t] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                adjUnd[t]   = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            }
-
-            foreach (var kvp in tablasMeta)
-            {
-                foreach (var rel in kvp.Value.Relaciones)
-                {
-                    // src = tabla con FK column (hijo), dst = tabla referenciada (padre)
-                    string src = rel.TablaOrigen;
-                    string dst = rel.TablaDestino;
-                    if (!tablasMeta.ContainsKey(src) || !tablasMeta.ContainsKey(dst)) continue;
-                    outEdges[src].Add(dst);
-                    inEdges[dst].Add(src);
-                    adjUnd[src].Add(dst);
-                    adjUnd[dst].Add(src);
-                }
-            }
-
-            // ── 2. Componentes conectados (BFS no dirigido) ──────────────────────
-            var visitados   = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var componentes = new List<List<string>>();
-
-            foreach (var t in tablas)
-            {
-                if (visitados.Contains(t)) continue;
-                var comp = new List<string>();
-                var cola = new Queue<string>();
-                cola.Enqueue(t); visitados.Add(t);
-                while (cola.Count > 0)
-                {
-                    var cur = cola.Dequeue();
-                    comp.Add(cur);
-                    foreach (var v in adjUnd[cur])
-                        if (!visitados.Contains(v)) { visitados.Add(v); cola.Enqueue(v); }
-                }
-                componentes.Add(comp);
-            }
-
-            // Ordenar: componentes más grandes primero para que queden a la izquierda
-            componentes.Sort((a, b) => b.Count.CompareTo(a.Count));
-
-            // ── 3. Posicionar cada componente ────────────────────────────────────
-            int xGlobal = 0;
-
-            foreach (var comp in componentes)
-            {
-                var tablasComp = new HashSet<string>(comp, StringComparer.OrdinalIgnoreCase);
-                bool tieneFKs  = comp.Any(t =>
-                    outEdges[t].Any(d => tablasComp.Contains(d)) ||
-                    inEdges[t].Any(s => tablasComp.Contains(s)));
-
-                if (!tieneFKs)
-                {
-                    // ── Grilla simple para componentes sin FKs ──────────────────
-                    int cols = Math.Min(COLS_MAX, comp.Count);
-                    comp.Sort(StringComparer.OrdinalIgnoreCase);
-                    int c = 0, yOff = 0, xOff = 0;
-                    int maxAltoFila = 0;
-
-                    for (int i = 0; i < comp.Count; i++)
-                    {
-                        posiciones[comp[i]] = Tuple.Create(xGlobal + xOff, yOff);
-                        int altoT = ALTO_CAB + tablasMeta[comp[i]].Columnas.Count * ALTO_FILA;
-                        if (altoT > maxAltoFila) maxAltoFila = altoT;
-
-                        c++;
-                        if (c >= cols) { c = 0; xOff = 0; yOff += maxAltoFila + V_GAP; maxAltoFila = 0; }
-                        else           { xOff += ANCHO + H_GAP; }
-                    }
-
-                    int anchoComp = Math.Min(comp.Count, cols) * (ANCHO + H_GAP) - H_GAP;
-                    xGlobal += anchoComp + COMP_GAP;
-                }
-                else
-                {
-                    // ── Layout jerárquico guiado por FK — orden topológico de Kahn ──
-                    //
-                    // "Padre de layout" de t  = tablas que t referencia (outEdges[t] ∩ comp)
-                    // "Hijo  de layout" de t  = tablas que referencian a t (inEdges[t] ∩ comp)
-                    //
-                    // Kahn encola cada nodo exactamente UNA vez, cuando todos sus padres ya
-                    // fueron procesados, por lo que el nivel asignado es siempre el máximo
-                    // posible y el algoritmo termina en O(V+E) incluso con ciclos.
-                    // Los nodos que forman ciclos (in-degree nunca llega a 0) quedan sin nivel
-                    // y se les asigna 0 en el fallback final.
-
-                    // in-degree de Kahn = cantidad de padres de layout dentro del componente
-                    var inDeg = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                    foreach (var t in comp)
-                        inDeg[t] = outEdges[t].Count(d => tablasComp.Contains(d));
-
-                    var nivel = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                    var colaL = new Queue<string>();
-
-                    // Semilla: nodos sin padres (tablas "raíz" puras)
-                    foreach (var t in comp)
-                        if (inDeg[t] == 0) { nivel[t] = 0; colaL.Enqueue(t); }
-
-                    // Ciclo puro (todos tienen padres): elegir el más referenciado como raíz
-                    if (colaL.Count == 0)
-                    {
-                        var root = comp
-                            .OrderByDescending(t => inEdges[t].Count(s => tablasComp.Contains(s)))
-                            .First();
-                        nivel[root] = 0;
-                        inDeg[root] = 0;
-                        colaL.Enqueue(root);
-                    }
-
-                    while (colaL.Count > 0)
-                    {
-                        var cur = colaL.Dequeue();
-                        foreach (var hijo in inEdges[cur])
-                        {
-                            if (!tablasComp.Contains(hijo)) continue;
-
-                            // Propagar nivel máximo
-                            int nNivel = nivel[cur] + 1;
-                            if (!nivel.ContainsKey(hijo) || nivel[hijo] < nNivel)
-                                nivel[hijo] = nNivel;
-
-                            // Cuando todos los padres del hijo ya se procesaron, encolar
-                            inDeg[hijo]--;
-                            if (inDeg[hijo] == 0)
-                                colaL.Enqueue(hijo);
-                        }
-                    }
-
-                    // Fallback: nodos que quedaron en ciclos sin asignar → nivel 0
-                    foreach (var t in comp) if (!nivel.ContainsKey(t)) nivel[t] = 0;
-
-                    // Agrupar por nivel y ordenar cada nivel por nombre
-                    var porNivel = new SortedDictionary<int, List<string>>();
-                    foreach (var kvp in nivel)
-                    {
-                        if (!porNivel.ContainsKey(kvp.Value)) porNivel[kvp.Value] = new List<string>();
-                        porNivel[kvp.Value].Add(kvp.Key);
-                    }
-                    foreach (var kvp in porNivel) kvp.Value.Sort(StringComparer.OrdinalIgnoreCase);
-
-                    // ── Barycenter heuristic (un sweep top-down) ─────────────────────
-                    // Ordena las tablas dentro de cada nivel según la posición promedio
-                    // de sus padres en FK para minimizar el cruce de aristas.
-                    int maxNivLayout = porNivel.Keys.Max();
-                    for (int niv2 = 0; niv2 < maxNivLayout; niv2++)
-                    {
-                        if (!porNivel.ContainsKey(niv2) || !porNivel.ContainsKey(niv2 + 1)) continue;
-                        var nivActual = porNivel[niv2];
-                        var nivHijos  = porNivel[niv2 + 1];
-
-                        // Índice posicional de cada tabla en el nivel actual
-                        var idxPadre = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                        for (int ki = 0; ki < nivActual.Count; ki++) idxPadre[nivActual[ki]] = ki;
-
-                        // Baricentro de cada hijo = promedio del índice de sus padres
-                        var bary = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-                        for (int ki = 0; ki < nivHijos.Count; ki++)
-                        {
-                            string hijo = nivHijos[ki];
-                            var padresEnNivel = outEdges[hijo]
-                                .Where(p => idxPadre.ContainsKey(p))
-                                .ToList();
-                            bary[hijo] = padresEnNivel.Count > 0
-                                ? padresEnNivel.Average(p => (double)idxPadre[p])
-                                : (double)ki; // sin padres en este nivel: mantener posición
-                        }
-                        nivHijos.Sort((a, b) => bary[a].CompareTo(bary[b]));
-                    }
-
-                    // Ancho del componente = nivel más ancho
-                    int maxCols   = porNivel.Values.Max(lst => lst.Count);
-                    int anchoComp = maxCols * (ANCHO + H_GAP) - H_GAP;
-
-                    // Acumular yOffset por nivel según la altura máxima de cada nivel
-                    int yOff = 0;
-                    var yPorNivel = new Dictionary<int, int>();
-                    foreach (var kvp in porNivel)
-                    {
-                        yPorNivel[kvp.Key] = yOff;
-                        int maxAlto = kvp.Value.Max(t => ALTO_CAB + tablasMeta[t].Columnas.Count * ALTO_FILA);
-                        yOff += maxAlto + V_GAP;
-                    }
-
-                    // Asignar posiciones centradas dentro del ancho del componente
-                    foreach (var kvp in porNivel)
-                    {
-                        var lst       = kvp.Value;
-                        int anchoNiv  = lst.Count * (ANCHO + H_GAP) - H_GAP;
-                        int xStart    = xGlobal + (anchoComp - anchoNiv) / 2;
-
-                        for (int i = 0; i < lst.Count; i++)
-                            posiciones[lst[i]] = Tuple.Create(xStart + i * (ANCHO + H_GAP), yPorNivel[kvp.Key]);
-                    }
-
-                    xGlobal += anchoComp + COMP_GAP;
-                }
-            }
-
-            return posiciones;
-        }
-
-        // ────────────────────────────────────────────────────────────────
-        // Generador de HTML con Tldraw (ERD editable en el navegador)
-        // ────────────────────────────────────────────────────────────────
-
-        /// <summary>
-        /// Genera un archivo HTML autocontenido con el ERD cargado en Tldraw vía CDN.
-        /// Las formas se crean programáticamente con editor.createShapes(), evitando
-        /// por completo el paso de importar un archivo .tldr (y sus problemas de versión).
-        /// Se abre directamente en el navegador predeterminado; el diagrama es totalmente editable.
-        /// </summary>
-        private string GenerarHtmlTldraw(
-            Dictionary<string, EsquemaTablaInfo> tablasMeta,
-            Dictionary<string, Tuple<int, int>> posiciones,
-            string nombreConexion)
-        {
-            const int ANCHO     = 260;
-            const int ALTO_CAB  = 32;
-            const int ALTO_FILA = 22;
-            const int ALTO_MIN  = 80;
-
-            // ── Serializar tablas + relaciones como JSON embebido ─────────────────
-            var sbTablas = new System.Text.StringBuilder();
-            sbTablas.Append("[\n");
-            bool pt = true;
-            foreach (var kvp in tablasMeta)
-            {
-                EsquemaTablaInfo t = kvp.Value;
-                if (!pt) sbTablas.Append(",\n");
-                pt = false;
-
-                string display = string.IsNullOrEmpty(t.Schema)
-                    ? t.Nombre
-                    : t.Schema + "." + t.Nombre;
-
-                sbTablas.Append("  {");
-                sbTablas.Append("\"name\":"    + TldrJsStr(t.Nombre)  + ",");
-                sbTablas.Append("\"display\":" + TldrJsStr(display)   + ",");
-                sbTablas.Append("\"tipo\":"    + TldrJsStr(t.Tipo)    + ",");
-                sbTablas.Append("\"cols\":[");
-                bool pc = true;
-                foreach (var col in t.Columnas)
-                {
-                    if (!pc) sbTablas.Append(",");
-                    pc = false;
-                    string tipoCom = col.Tipo +
-                        (string.IsNullOrEmpty(col.Longitud) || col.Longitud == "0"
-                            ? "" : "(" + col.Longitud + ")");
-                    sbTablas.Append("{\"n\":" + TldrJsStr(col.Nombre) +
-                                    ",\"t\":" + TldrJsStr(tipoCom)    + "}");
-                }
-                sbTablas.Append("],\"rels\":[");
-                bool pr = true;
-                foreach (var rel in t.Relaciones)
-                {
-                    if (!pr) sbTablas.Append(",");
-                    pr = false;
-                    sbTablas.Append("{\"from\":" + TldrJsStr(rel.TablaOrigen)  +
-                                    ",\"col\":"  + TldrJsStr(rel.ColumnaOrigen) +
-                                    ",\"to\":"   + TldrJsStr(rel.TablaDestino)  + "}");
-                }
-                sbTablas.Append("]}");
-            }
-            sbTablas.Append("\n]");
-
-            // ── Serializar posiciones como JSON embebido ──────────────────────────
-            var sbPos = new System.Text.StringBuilder();
-            sbPos.Append("{\n");
-            bool pp = true;
-            foreach (var kvp in posiciones)
-            {
-                if (!pp) sbPos.Append(",\n");
-                pp = false;
-                sbPos.Append("  " + TldrJsStr(kvp.Key) +
-                             ":{\"x\":" + kvp.Value.Item1 +
-                             ",\"y\":"  + kvp.Value.Item2 + "}");
-            }
-            sbPos.Append("\n}");
-
-            string titulo = (nombreConexion ?? "")
-                .Replace("&", "&amp;").Replace("<", "&lt;").Replace("\"", "&quot;");
-            string fecha  = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
-
-            // ── HTML final ────────────────────────────────────────────────────────
-            // Las formas se crean con editor.createShapes() en el callback onMount,
-            // usando la API de la versión de tldraw que sirve esm.sh en ese momento.
-            // Esto garantiza compatibilidad total sin depender de versiones de schema.
-            return
-"<!DOCTYPE html>\n" +
-"<html lang=\"es\">\n" +
-"<head>\n" +
-"  <meta charset=\"UTF-8\"/>\n" +
-"  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"/>\n" +
-"  <title>ERD \u2014 " + titulo + "</title>\n" +
-"  <link rel=\"stylesheet\" href=\"https://unpkg.com/@tldraw/tldraw/tldraw.css\"/>\n" +
-"  <style>\n" +
-"    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}\n" +
-"    html,body,#root{width:100%;height:100%;overflow:hidden}\n" +
-"  </style>\n" +
-"</head>\n" +
-"<body>\n" +
-"  <div id=\"root\"></div>\n" +
-"  <script type=\"module\">\n" +
-"    // ?deps=react@18,react-dom@18 fuerza a tldraw Y a todas sus sub-dependencias\n" +
-"    // (radix-ui, etc.) a usar la misma instancia de React que importamos abajo.\n" +
-"    // Sin esto, esm.sh puede resolver react@19-canary para algunas deps,\n" +
-"    // creando dos instancias de React y el error 'Cannot read useState of null'.\n" +
-"    import { createElement } from 'https://esm.sh/react@18';\n" +
-"    import { createRoot }    from 'https://esm.sh/react-dom@18/client';\n" +
-"    import { Tldraw, createShapeId }\n" +
-"        from 'https://esm.sh/@tldraw/tldraw@2?deps=react@18,react-dom@18';\n" +
-"\n" +
-"    // ── Datos del ERD (generados por QueryAnalyzer " + fecha + ") ──────────\n" +
-"    const TABLAS     = " + sbTablas.ToString() + ";\n" +
-"    const POSICIONES = " + sbPos.ToString()    + ";\n" +
-"    const ANCHO      = " + ANCHO     + ";\n" +
-"    const ALTO_CAB   = " + ALTO_CAB  + ";\n" +
-"    const ALTO_FILA  = " + ALTO_FILA + ";\n" +
-"    const ALTO_MIN   = " + ALTO_MIN  + ";\n" +
-"\n" +
-"    function altoTabla(cols) {\n" +
-"      return Math.max(ALTO_MIN, ALTO_CAB + cols.length * ALTO_FILA + 8);\n" +
-"    }\n" +
-"\n" +
-"    function App() {\n" +
-"      function handleMount(editor) {\n" +
-"        const tableShapes = [];\n" +
-"        const arrowShapes = [];\n" +
-"\n" +
-"        // 1. Shapes de tablas\n" +
-"        TABLAS.forEach(t => {\n" +
-"          const id  = createShapeId('tbl_' + t.name.replace(/[^a-zA-Z0-9]/g, '_'));\n" +
-"          t._shapeId = id;   // guardar para flechas\n" +
-"          const pos = POSICIONES[t.name] || { x: 0, y: 0 };\n" +
-"          const h   = altoTabla(t.cols);\n" +
-"          const hdr = (t.tipo === 'VIEW' ? '\\u2B21 ' : '') + t.display;\n" +
-"          const sep = '\\u2500'.repeat(26);\n" +
-"          const body = t.cols.map(c => '  ' + c.n + '  ' + c.t).join('\\n');\n" +
-"          const text  = t.cols.length ? hdr + '\\n' + sep + '\\n' + body : hdr;\n" +
-"          tableShapes.push({\n" +
-"            id, type: 'geo', x: pos.x, y: pos.y,\n" +
-"            props: {\n" +
-"              geo: 'rectangle', w: ANCHO, h, text,\n" +
-"              color: t.tipo === 'VIEW' ? 'blue' : 'orange',\n" +
-"              fill: 'semi', font: 'mono', size: 's',\n" +
-"              align: 'start', verticalAlign: 'start',\n" +
-"              growY: 0, url: ''\n" +
-"            }\n" +
-"          });\n" +
-"        });\n" +
-"\n" +
-"        editor.createShapes(tableShapes);\n" +
-"\n" +
-"        // 2. Flechas FK  (point-based: sin binding, sin dependencia de schema)\n" +
-"        const yaVistas = new Set();\n" +
-"        let fkIdx = 0;\n" +
-"        TABLAS.forEach(t => {\n" +
-"          (t.rels || []).forEach(rel => {\n" +
-"            const key = rel.from + '\\x00' + rel.col + '\\x00' + rel.to;\n" +
-"            if (yaVistas.has(key)) return;\n" +
-"            yaVistas.add(key);\n" +
-"            const pf = POSICIONES[rel.from];\n" +
-"            const pd = POSICIONES[rel.to];\n" +
-"            if (!pf || !pd) return;\n" +
-"            const tFrom = TABLAS.find(x => x.name === rel.from);\n" +
-"            const hFrom = tFrom ? altoTabla(tFrom.cols) : ALTO_MIN;\n" +
-"            // salida: borde inferior-centro del hijo; llegada: borde superior-centro del padre\n" +
-"            const sx = pf.x + ANCHO / 2,  sy = pf.y + hFrom;\n" +
-"            const ex = pd.x + ANCHO / 2,  ey = pd.y;\n" +
-"            arrowShapes.push({\n" +
-"              id: createShapeId('fk_' + (fkIdx++)),\n" +
-"              type: 'arrow', x: 0, y: 0,\n" +
-"              props: {\n" +
-"                start: { x: sx, y: sy },\n" +
-"                end:   { x: ex, y: ey },\n" +
-"                arrowheadStart: 'none', arrowheadEnd: 'arrow',\n" +
-"                text: rel.col,\n" +
-"                size: 's', color: 'black', fill: 'none',\n" +
-"                font: 'draw', dash: 'solid',\n" +
-"                labelPosition: 0.5, bend: 0, labelColor: 'black'\n" +
-"              }\n" +
-"            });\n" +
-"          });\n" +
-"        });\n" +
-"\n" +
-"        if (arrowShapes.length) editor.createShapes(arrowShapes);\n" +
-"        editor.zoomToFit();\n" +
-"      }\n" +
-"      return createElement(Tldraw, { onMount: handleMount });\n" +
-"    }\n" +
-"\n" +
-"    createRoot(document.getElementById('root')).render(createElement(App));\n" +
-"  </script>\n" +
-"</body>\n" +
-"</html>";
-        }
-
-        /// <summary>Convierte un string C# en un literal de cadena JSON válido para embeber en JS.</summary>
-        private static string TldrJsStr(string s)
-        {
-            if (s == null) return "\"\"";
-            return "\""
-                + s.Replace("\\", "\\\\")
-                   .Replace("\"", "\\\"")
-                   .Replace("\n", "\\n")
-                   .Replace("\r", "")
-                + "\"";
         }
 
         /// <summary>
@@ -5659,12 +4813,12 @@ ORDER BY R.CONSTNAME, KC.COLSEQ";
         public class ContextoParametro
         {
             public string Nombre { get; set; }
-            public OdbcType Tipo { get; set; }
+            public System.Data.Odbc.OdbcType Tipo { get; set; }
         }
 
-        private OdbcType ObtenerTipoRealDesdeDB(string nombreColumna, string queryCompleta)
+        private System.Data.Odbc.OdbcType ObtenerTipoRealDesdeDB(string nombreColumna, string queryCompleta)
         {
-            if (conexionActual == null) return OdbcType.VarChar;
+            if (conexionActual == null) return System.Data.Odbc.OdbcType.VarChar;
 
             try
             {
@@ -5673,14 +4827,16 @@ ORDER BY R.CONSTNAME, KC.COLSEQ";
                 var matchTabla = Regex.Match(queryCompleta, @"FROM\s+([^\s\s,;]+)", RegexOptions.IgnoreCase);
                 if (matchTabla.Success) tabla = matchTabla.Groups[1].Value;
 
-                using (OdbcConnection conn = new OdbcConnection(ConexionesManager.GetConnectionString(conexionActual)))
+                DataBase DB = new DataBase(ConexionesManager.GetConnectionString(conexionActual), false);
+                using (System.Data.Odbc.OdbcConnection conn = DB.Connection)
+                //using (OdbcConnection conn = new OdbcConnection(ConexionesManager.GetConnectionString(conexionActual)))
                 {
                     conn.Open();
                     // 2. Pedimos solo el esquema de la tabla para no traer datos
                     string schemaQuery = $"SELECT {nombreColumna} FROM {tabla} WHERE 1=0";
-                    using (OdbcCommand cmd = new OdbcCommand(schemaQuery, conn))
+                    using (System.Data.Odbc.OdbcCommand cmd = new System.Data.Odbc.OdbcCommand(schemaQuery, conn))
                     {
-                        using (OdbcDataReader reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly))
+                        using (System.Data.Odbc.OdbcDataReader reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly))
                         {
                             DataTable schemaTable = reader.GetSchemaTable();
                             if (schemaTable != null && schemaTable.Rows.Count > 0)
@@ -5695,38 +4851,38 @@ ORDER BY R.CONSTNAME, KC.COLSEQ";
             }
             catch { /* Si falla la consulta de metadatos, cae al default */ }
 
-            return OdbcType.VarChar;
+            return System.Data.Odbc.OdbcType.VarChar;
         }
 
-        private OdbcType MapearTipoADotNet(Type t)
+        private System.Data.Odbc.OdbcType MapearTipoADotNet(Type t)
         {
             return Mapeo[t.Name.ToUpper()];
         }
 
-        public Dictionary<string, OdbcType> Mapeo = new Dictionary<string, OdbcType>
+        public Dictionary<string, System.Data.Odbc.OdbcType> Mapeo = new Dictionary<string, System.Data.Odbc.OdbcType>
         {
-            { "BOOL",       OdbcType.Bit},            //"OdbcType.Smallint"}, 	// DB2 no tiene BOOLEAN real en versiones antiguas
-            { "BYTE",       OdbcType.TinyInt},        // SMALLINT usado como byte en DB2
-            { "BYTE[]",     OdbcType.VarBinary},	    // BLOB, VARBINARY, BYTEA
-            { "CHAR",       OdbcType.Char},           // CHAR(1)
-            { "CHAR[]",     OdbcType.VarBinary},	    // BLOB, VARBINARY, BYTEA
-            { "DATETIME",   OdbcType.DateTime},	    // TIMESTAMP (Date si sólo fecha)
-            { "DECIMAL",    OdbcType.Numeric },       // DECIMAL(p,s), NUMERIC
-            { "DOUBLE",     OdbcType.Double},	        // DOUBLE
-            { "FLOAT",      OdbcType.Real }, 	        // REAL
-            { "GUID",       OdbcType.Char},           // DB2 no tiene UNIQUEIDENTIFIER → usar CHAR(36)
-            { "INT",        OdbcType.Int},            // INTEGER
-            { "INT16",      OdbcType.SmallInt },      // SMALLINT	
-            { "INT64",      OdbcType.BigInt },	    // BIGINT
-            { "LONG",       OdbcType.BigInt },	    // BIGINT
-            { "SBYTE",      OdbcType.Double},	        // DOUBLE
-            { "SHORT",      OdbcType.SmallInt },      // SMALLINT	
-            { "SINGLE",     OdbcType.Double},	        // DOUBLE
-            { "STRING",     OdbcType.VarChar},	    // VARCHAR, usar NVarChar si es Unicode	
-            { "TIMESPAN",   OdbcType.Time},	        // TIME
-            { "UINT",       OdbcType.BigInt},          // BIGINT
-            { "ULONG",      OdbcType.BigInt},          // BIGINT
-            { "USHORT",     OdbcType.BigInt}          // BIGINT
+            { "BOOL",       System.Data.Odbc.OdbcType.Bit},            //"OdbcType.Smallint"}, 	// DB2 no tiene BOOLEAN real en versiones antiguas
+            { "BYTE",       System.Data.Odbc.OdbcType.TinyInt},        // SMALLINT usado como byte en DB2
+            { "BYTE[]",     System.Data.Odbc.OdbcType.VarBinary},	    // BLOB, VARBINARY, BYTEA
+            { "CHAR",       System.Data.Odbc.OdbcType.Char},           // CHAR(1)
+            { "CHAR[]",     System.Data.Odbc.OdbcType.VarBinary},	    // BLOB, VARBINARY, BYTEA
+            { "DATETIME",   System.Data.Odbc.OdbcType.DateTime},	    // TIMESTAMP (Date si sólo fecha)
+            { "DECIMAL",    System.Data.Odbc.OdbcType.Numeric },       // DECIMAL(p,s), NUMERIC
+            { "DOUBLE",     System.Data.Odbc.OdbcType.Double},	        // DOUBLE
+            { "FLOAT",      System.Data.Odbc.OdbcType.Real }, 	        // REAL
+            { "GUID",       System.Data.Odbc.OdbcType.Char},           // DB2 no tiene UNIQUEIDENTIFIER → usar CHAR(36)
+            { "INT",        System.Data.Odbc.OdbcType.Int},            // INTEGER
+            { "INT16",      System.Data.Odbc.OdbcType.SmallInt },      // SMALLINT	
+            { "INT64",      System.Data.Odbc.OdbcType.BigInt },	    // BIGINT
+            { "LONG",       System.Data.Odbc.OdbcType.BigInt },	    // BIGINT
+            { "SBYTE",      System.Data.Odbc.OdbcType.Double},	        // DOUBLE
+            { "SHORT",      System.Data.Odbc.OdbcType.SmallInt },      // SMALLINT	
+            { "SINGLE",     System.Data.Odbc.OdbcType.Double},	        // DOUBLE
+            { "STRING",     System.Data.Odbc.OdbcType.VarChar},	    // VARCHAR, usar NVarChar si es Unicode	
+            { "TIMESPAN",   System.Data.Odbc.OdbcType.Time},	        // TIME
+            { "UINT",       System.Data.Odbc.OdbcType.BigInt},          // BIGINT
+            { "ULONG",      System.Data.Odbc.OdbcType.BigInt},          // BIGINT
+            { "USHORT",     System.Data.Odbc.OdbcType.BigInt}          // BIGINT
         };
 
         private ContextoParametro ObtenerContextoDeParametro(string texto, int posicion)
@@ -5750,7 +4906,7 @@ ORDER BY R.CONSTNAME, KC.COLSEQ";
             }
 
             // --- LLAMADA A LA DB PARA TIPO REAL ---
-            OdbcType tipoSugerido = ObtenerTipoRealDesdeDB(campoReal, texto);
+            System.Data.Odbc.OdbcType tipoSugerido = ObtenerTipoRealDesdeDB(campoReal, texto);
 
             // --- CONSTRUCCIÓN DEL NOMBRE ---
             string sufijo = "";
@@ -5821,7 +4977,7 @@ ORDER BY R.CONSTNAME, KC.COLSEQ";
                         Parametros.Insert(parametrosAntes, new QueryParameter
                         {
                             Nombre = nombreParametro,
-                            Tipo = OdbcType.VarChar,
+                            Tipo = System.Data.Odbc.OdbcType.VarChar,
                             Valor = ""
                         });
 
@@ -6064,7 +5220,9 @@ ORDER BY R.CONSTNAME, KC.COLSEQ";
             var resultados = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             string t = termino.Replace("'", "''"); // escapado básico
 
-            using (var conn = new OdbcConnection(connStr))
+            DataBase DB = new DataBase(connStr, false);
+            //using (var conn = new OdbcConnection(connStr))
+            using (var conn = DB.Connection)
             {
                 conn.Open();
 
@@ -6146,7 +5304,7 @@ WHERE (type='table' OR type='view')
 
                 try
                 {
-                    using (var cmd = new OdbcCommand(sql, conn))
+                    using (var cmd = new System.Data.Odbc.OdbcCommand(sql, conn))
                     using (var rdr = cmd.ExecuteReader())
                     {
                         while (rdr.Read())
@@ -6613,10 +5771,12 @@ WHERE (type='table' OR type='view')
             {
                 try
                 {
-                    using (var conn = new OdbcConnection(connStr))
+                    DataBase DB = new DataBase(connStr, false);
+                    //using (var conn = new OdbcConnection(connStr))
+                    using (var conn = DB.Connection)
                     {
                         conn.Open();
-                        using (var cmd = new OdbcCommand(sql, conn))
+                        using (var cmd = new System.Data.Odbc.OdbcCommand(sql, conn))
                         using (var r = cmd.ExecuteReader())
                         {
                             while (r.Read())

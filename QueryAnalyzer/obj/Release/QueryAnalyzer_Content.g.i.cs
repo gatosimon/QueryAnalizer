@@ -10,7 +10,5 @@
 
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("logo.ico")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("logo.png")]
-[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("drivers/sqliteodbc.exe")]
-[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("drivers/psqlodbc-setup.exe")]
 
 

@@ -266,7 +266,7 @@ namespace QueryAnalyzer
                 {
                     FileName        = rutaInstalador,
                     Arguments       = driver.InstaladorArgs,
-                    UseShellExecute = true,   // necesario para triggear UAC
+                    UseShellExecute = false,   // necesario para triggear UAC
                     Verb            = "runas" // solicitar elevación
                 };
 

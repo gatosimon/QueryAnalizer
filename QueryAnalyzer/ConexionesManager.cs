@@ -45,7 +45,8 @@ namespace QueryAnalyzer
                     }
                     else
                     {
-                        stringConnection = $@"Driver={{{driver}}};Server=SQL{servidor}\{servidor};Database={baseDatos};Uid={usuario};Pwd={contraseña};TrustServerCertificate=yes;";
+                        //stringConnection = $@"Driver={{{driver}}};Server=SQL{servidor}\{servidor};Database={baseDatos};Uid={usuario};Pwd={contraseña};TrustServerCertificate=yes;";
+                        stringConnection = $@"Driver={{{driver}}};Server={servidor};Database={baseDatos};Uid={usuario};Pwd={contraseña};TrustServerCertificate=yes;";
                     }
                     break;
                 case TipoMotor.DB2:

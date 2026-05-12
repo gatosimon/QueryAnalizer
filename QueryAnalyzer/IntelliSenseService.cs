@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Odbc;
+using CapiDL;
 using System.Threading.Tasks;
 
 namespace QueryAnalyzer
@@ -30,13 +30,16 @@ namespace QueryAnalyzer
             try
             {
                 string connStr = ConexionesManager.GetConnectionString(conexion);
-                using (var conn = new OdbcConnection(connStr))
+
+                DataBase DB = new DataBase(connStr, false);
+                //using (var conn = new OdbcConnection(connStr))
+                using (var conn = DB.Connection)
                 {
                     conn.Open();
                     string query = BuildQuery(conexion.Motor, nombreTabla);
                     if (string.IsNullOrEmpty(query)) return resultado;
 
-                    using (var cmd = new OdbcCommand(query, conn))
+                    using (var cmd = new System.Data.Odbc.OdbcCommand(query, conn))
                     using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
@@ -73,7 +76,7 @@ namespace QueryAnalyzer
             switch (motor)
             {
                 case TipoMotor.MS_SQL:
-                    return 
+                    return
                         $@"SELECT COLUMN_NAME, DATA_TYPE 
                         FROM INFORMATION_SCHEMA.COLUMNS 
                         WHERE TABLE_NAME = '{t}' 
@@ -81,14 +84,14 @@ namespace QueryAnalyzer
 
                 case TipoMotor.DB2:
                     // DB2 v7 usa SYSIBM.SYSCOLUMNS. COLTYPE es CHAR(8) → tipo truncado, normal para v7
-                    return 
+                    return
                         $@"SELECT NAME, COLTYPE 
                         FROM SYSIBM.SYSCOLUMNS 
                         WHERE TBNAME = '{t.ToUpper()}' 
                         ORDER BY COLNO";
 
                 case TipoMotor.POSTGRES:
-                    return 
+                    return
                         $@"SELECT column_name, data_type 
                         FROM information_schema.columns 
                         WHERE table_name = '{t.ToLower()}' 
@@ -120,7 +123,9 @@ namespace QueryAnalyzer
             try
             {
                 string connStr = ConexionesManager.GetConnectionString(conexion);
-                using (var conn = new OdbcConnection(connStr))
+                DataBase DB = new DataBase(connStr, false);
+                //using (var conn = new OdbcConnection(connStr))
+                using (var conn = DB.Connection)
                 {
                     conn.Open();
                     string query = BuildQueryTablas(conexion.Motor);
@@ -139,7 +144,7 @@ namespace QueryAnalyzer
                         return resultado;
                     }
 
-                    using (var cmd = new OdbcCommand(query, conn))
+                    using (var cmd = new System.Data.Odbc.OdbcCommand(query, conn))
                     using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())

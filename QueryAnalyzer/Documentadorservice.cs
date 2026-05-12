@@ -88,8 +88,10 @@ namespace QueryAnalyzer
 
                         // Construir tipo completo con longitud si corresponde
                         string tipoUpper = tipoDB.ToUpper();
-                        bool tieneLogitud = tipoUpper.Contains("CHAR") ||
-                                            tipoUpper.Contains("BINARY");
+                        //bool tieneLogitud = tipoUpper.Contains("CHAR") ||
+                        //                    tipoUpper.Contains("BINARY");
+                        bool tieneLogitud = Convert.ToDouble(longitud) > 0 & !(tipoUpper.Contains("DATE") || tipoUpper.Contains("TIME"));
+
                         string tipoCompleto = (tieneLogitud && !string.IsNullOrEmpty(longitud))
                             ? $"{tipoDB.ToUpper()}({longitud})"
                             : tipoDB.ToUpper();
