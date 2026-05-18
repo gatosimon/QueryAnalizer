@@ -1597,11 +1597,23 @@ namespace QueryAnalyzer
             // Filtrar las filas cuyo tipo sea "TABLE" o "VIEW" 👈 CAMBIADO
             DataRow[] tablasFiltradas = tablas.Select(selecciones);
 
-            // Si querés seguir usando un DataTable:
+            // Construir DataTable base con las filas que pasaron el filtro de tipo
             DataTable tablasSolo = tablasFiltradas.Length > 0 ? tablasFiltradas.CopyToDataTable() : tablas.Clone();
-            if (_islaActiva != null)
+
+            // Filtro de isla: comparar con los valores reales de TABLE_SCHEM/TABLE_NAME,
+            // NO con t.Table.TableName (que es el nombre del objeto DataTable, siempre el mismo).
+            if (_islaActiva != null && tablasFiltradas.Length > 0)
             {
-                tablasSolo = tablasFiltradas.Length > 0 ? tablasFiltradas.Where(t => _islaActiva.Tablas.Contains(t.Table.TableName)).ToArray().CopyToDataTable() : tablas.Clone();
+                var enIsla = tablasFiltradas.Where(t =>
+                {
+                    string sch  = t.IsNull("TABLE_SCHEM") ? "" : t["TABLE_SCHEM"].ToString().Trim();
+                    string nom  = t.IsNull("TABLE_NAME")  ? "" : t["TABLE_NAME"].ToString().Trim();
+                    string idFila = string.IsNullOrEmpty(sch) ? nom : $"{sch}.{nom}";
+                    return _islaActiva.Tablas.Any(isla =>
+                        string.Equals(isla, idFila, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(isla, nom,    StringComparison.OrdinalIgnoreCase));
+                }).ToArray();
+                tablasSolo = enIsla.Length > 0 ? enIsla.CopyToDataTable() : tablas.Clone();
             }
             bool cargarTabla = true;
             int tablasLeidas = 0;
@@ -4185,12 +4197,20 @@ namespace QueryAnalyzer
 
         private void btnExplorarConsultas_Click(object sender, RoutedEventArgs e)
         {
-            // Cancelar si el otro sigue corriendo
             _explorarCTS?.Cancel();
-
             _explorarCTS = new CancellationTokenSource();
 
             List<string> tablasConsulta = ExtraerTablas(txtQuery.Text);
+
+            // Si la query está vacía o no tiene tablas reconocibles,
+            // cargar el esquema completo en lugar de mostrar 0 resultados.
+            if (tablasConsulta.Count == 0)
+            {
+                AppendMessage("ℹ No se detectaron tablas en la consulta — se carga el esquema completo.");
+                LanzarCargarEsquema();
+                return;
+            }
+
             CargarEsquema(string.Empty, tablasConsulta, _explorarCTS.Token);
         }
 
@@ -5037,7 +5057,14 @@ namespace QueryAnalyzer
                 _resultadoBusqueda = resultado;
                 _terminoBusqueda = termino;
 
-                AppendMessage($"Búsqueda completada: {resultado.Count} tabla(s)/vista(s) encontradas.");
+                // Explicar el alcance de la búsqueda: tabla + columnas + índices + constraints.
+                // Esto aclara por qué pueden aparecer tablas cuyo NOMBRE no contiene el término
+                // (pero sí alguna de sus columnas, índices o constraints).
+                string msgBusqueda = resultado.Count == 0
+                    ? $"Búsqueda de '{termino}': sin resultados (nombre de tabla, columna, índice y constraint)."
+                    : $"Búsqueda de '{termino}': {resultado.Count} tabla(s)/vista(s). " +
+                      "Nota: incluye tablas cuyos nombres de columna, índice o constraint también coinciden.";
+                AppendMessage(msgBusqueda);
             }
             catch (Exception ex)
             {
