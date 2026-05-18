@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Data.Odbc;
+using CapiDL;
 using System.Data;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,7 +13,7 @@ namespace QueryAnalyzer
     public class EsquematizadorService
     {
         private Conexion conexion = null;
-        
+
         // ────────────────────────────────────────────────────────────────
         // Clases auxiliares para el esquematizador
         // ────────────────────────────────────────────────────────────────
@@ -50,7 +50,7 @@ namespace QueryAnalyzer
         // Obtener FKs según motor
         // ────────────────────────────────────────────────────────────────
 
-        public List<EsquemaRelacionInfo> ObtenerRelacionesFK(OdbcConnection conn, List<string> tablas)
+        public List<EsquemaRelacionInfo> ObtenerRelacionesFK(DataBase db, List<string> tablas)
         {
             var resultado = new List<EsquemaRelacionInfo>();
             if (conexion == null) return resultado;
@@ -58,7 +58,7 @@ namespace QueryAnalyzer
             // Intentar primero vía GetSchema("ForeignKeys") — soportado por algunos drivers ODBC
             try
             {
-                var fkSchema = conn.GetSchema("ForeignKeys");
+                var fkSchema = db.GetSchema("ForeignKeys");
                 foreach (DataRow row in fkSchema.Rows)
                 {
                     string tablaOrigen = ObtenerCampo(row, "FK_TABLE_NAME", "FKTABLE_NAME");
@@ -131,22 +131,16 @@ namespace QueryAnalyzer
                     {
                         try
                         {
-                            using (var cmd = conn.CreateCommand())
+                            db.CommandText = $"PRAGMA foreign_key_list('{tabla}')";
+                            while (db.Read())
                             {
-                                cmd.CommandText = $"PRAGMA foreign_key_list('{tabla}')";
-                                using (var rdr = cmd.ExecuteReader())
+                                resultado.Add(new EsquemaRelacionInfo
                                 {
-                                    while (rdr.Read())
-                                    {
-                                        resultado.Add(new EsquemaRelacionInfo
-                                        {
-                                            TablaOrigen = tabla,
-                                            ColumnaOrigen = rdr["from"].ToString(),
-                                            TablaDestino = rdr["table"].ToString(),
-                                            ColumnaDestino = rdr["to"].ToString()
-                                        });
-                                    }
-                                }
+                                    TablaOrigen = tabla,
+                                    ColumnaOrigen = db.Reader["from"].ToString(),
+                                    TablaDestino = db.Reader["table"].ToString(),
+                                    ColumnaDestino = db.Reader["to"].ToString()
+                                });
                             }
                         }
                         catch { }
@@ -158,22 +152,16 @@ namespace QueryAnalyzer
             {
                 try
                 {
-                    using (var cmd = conn.CreateCommand())
+                    db.CommandText = sql;
+                    while (db.Read())
                     {
-                        cmd.CommandText = sql;
-                        using (var rdr = cmd.ExecuteReader())
+                        resultado.Add(new EsquemaRelacionInfo
                         {
-                            while (rdr.Read())
-                            {
-                                resultado.Add(new EsquemaRelacionInfo
-                                {
-                                    TablaOrigen = rdr[0].ToString(),
-                                    ColumnaOrigen = rdr[1].ToString(),
-                                    TablaDestino = rdr[2].ToString(),
-                                    ColumnaDestino = rdr[3].ToString()
-                                });
-                            }
-                        }
+                            TablaOrigen = db.Reader[0].ToString(),
+                            ColumnaOrigen = db.Reader[1].ToString(),
+                            TablaDestino = db.Reader[2].ToString(),
+                            ColumnaDestino = db.Reader[3].ToString()
+                        });
                     }
                 }
                 catch { }

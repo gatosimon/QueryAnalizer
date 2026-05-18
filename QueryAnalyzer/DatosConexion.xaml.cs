@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Odbc;
+using CapiDL;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -94,29 +94,24 @@ namespace QueryAnalyzer
                 string stringConnection = ConexionActual.GetConnGetConnectionString();// $@"Driver={{ODBC Driver 17 for SQL Server}};Server=SQL{ConexionActual.Servidor}\{ConexionActual.Servidor};Database=;Uid={ConexionActual.Usuario};Pwd={ConexionActual.Contrasena};TrustServerCertificate=yes;";
                 try
                 {
-                    using (var c = new OdbcConnection(stringConnection))
+                    DataBase DB = new DataBase(stringConnection);
+                    cmbBaseDatos.Items.Clear();
+
+                    DB.CommandText = "SELECT UPPER(name) FROM sys.databases WHERE state = 0 ORDER BY name ASC";
+                    while (DB.Read())
                     {
-                        c.Open();
-                        cmbBaseDatos.Items.Clear();
-
-                        OdbcCommand cmd = c.CreateCommand();
-                        cmd.CommandText = "SELECT UPPER(name) FROM sys.databases WHERE state = 0 ORDER BY name ASC";
-                        OdbcDataReader reader = cmd.ExecuteReader();
-                        while (reader.Read())
-                        {
-                            cmbBaseDatos.Items.Add(reader.GetString(0));
-                        }
-
-                        c.Close();
-
-                        // Posicionar en la base guardada
-                        cmbBaseDatos.SelectedValue = baseDatos.ToUpper();
-
-                        cmbBaseDatos.Visibility = Visibility.Visible;
-                        cmbBaseDatos.IsEnabled = true;
-                        txtBaseDatos.Visibility = Visibility.Hidden;
-                        txtBaseDatos.IsEnabled = false;
+                        cmbBaseDatos.Items.Add(DB.Reader.GetString(0));
                     }
+
+                    DB.CloseConnection();
+
+                    // Posicionar en la base guardada
+                    cmbBaseDatos.SelectedValue = baseDatos.ToUpper();
+
+                    cmbBaseDatos.Visibility = Visibility.Visible;
+                    cmbBaseDatos.IsEnabled = true;
+                    txtBaseDatos.Visibility = Visibility.Hidden;
+                    txtBaseDatos.IsEnabled = false;
                 }
                 catch
                 {
@@ -220,25 +215,21 @@ namespace QueryAnalyzer
                 string stringConnection = ConexionesManager.GetConnectionString(TipoMotor.MS_SQL, txtServidor.Text.Trim(), txtPuerto.Text, string.Empty, txtUsuario.Text.Trim(), txtContrasena.Password, chkEsWeb.IsChecked.GetValueOrDefault());
                 try
                 {
-                    using (var c = new OdbcConnection(stringConnection))
+                    DataBase DB = new DataBase(stringConnection);
+                    cmbBaseDatos.Items.Clear();
+
+                    DB.CommandText = "SELECT UPPER(name) FROM sys.databases WHERE state = 0 ORDER BY name ASC";
+                    
+                    while (DB.Read())
                     {
-                        c.Open();
-                        cmbBaseDatos.Items.Clear();
-
-                        OdbcCommand cmd = c.CreateCommand();
-                        cmd.CommandText = "SELECT UPPER(name) FROM sys.databases WHERE state = 0 ORDER BY name ASC";
-                        OdbcDataReader reader = cmd.ExecuteReader();
-                        while (reader.Read())
-                        {
-                            cmbBaseDatos.Items.Add(reader.GetString(0));
-                        }
-
-                        c.Close();
-                        cmbBaseDatos.Visibility = Visibility.Visible;
-                        txtBaseDatos.Visibility = Visibility.Hidden;
-                        txtBaseDatos.IsEnabled = false;
-                        cmbBaseDatos.IsEnabled = true;
+                        cmbBaseDatos.Items.Add(DB.Reader.GetString(0));
                     }
+
+                    DB.CloseConnection();
+                    cmbBaseDatos.Visibility = Visibility.Visible;
+                    txtBaseDatos.Visibility = Visibility.Hidden;
+                    txtBaseDatos.IsEnabled = false;
+                    cmbBaseDatos.IsEnabled = true;
                 }
                 catch (Exception ex)
                 {
@@ -282,11 +273,8 @@ namespace QueryAnalyzer
             {
                 try
                 {
-                    using (var c = new OdbcConnection(stringConnection))
-                    {
-                        c.Open();
-                        MessageBox.Show("Conexión exitosa.");
-                    }
+                    DataBase DB = new DataBase(stringConnection);
+                    MessageBox.Show("Conexión exitosa.");
                 }
                 catch (Exception ex)
                 {
@@ -318,3 +306,324 @@ namespace QueryAnalyzer
         }
     }
 }
+
+//using System;
+//using System.Collections.Generic;
+//using System.Data.Odbc;
+//using System.IO;
+//using System.Linq;
+//using System.Runtime.Serialization.Formatters.Binary;
+//using Microsoft.Win32;
+//using System.Windows;
+//using System.Threading.Tasks;
+//using System.Windows.Controls;
+
+//namespace QueryAnalyzer
+//{
+//    public partial class DatosConexion : Window
+//    {
+//        private Dictionary<TipoMotor, string> motores;
+
+//        public Conexion ConexionActual = null;
+
+//        public DatosConexion()
+//        {
+//            InitializeComponent();
+//            AplicarTemaActual();
+//            InicializarMotores();
+//        }
+//        public DatosConexion(Conexion conexion)
+//        {
+//            InitializeComponent();
+//            AplicarTemaActual();
+//            InicializarMotores();
+//            ConexionActual = conexion;
+//            InicializarDatosConexion();
+//        }
+
+//        /// <summary>Aplica el mismo tema que tiene cargado MainWindow.</summary>
+//        private void AplicarTemaActual()
+//        {
+//            // Reutiliza el mismo objeto ResourceDictionary que MainWindow ya tiene en memoria.
+//            // Asi respeta los archivos editados por el usuario en disco.
+//            var mainWindow = Application.Current.MainWindow;
+//            if (mainWindow == null) return;
+//            var mainMerged = mainWindow.Resources.MergedDictionaries;
+//            if (mainMerged.Count == 0) return;
+
+//            var temaActual = mainMerged[0];
+//            var misMerged = this.Resources.MergedDictionaries;
+//            if (misMerged.Count > 0)
+//                misMerged[0] = temaActual;
+//            else
+//                misMerged.Add(temaActual);
+//        }
+
+//        private void InicializarMotores()
+//        {
+//            motores = Enum.GetValues(typeof(TipoMotor))
+//                .Cast<TipoMotor>()
+//                .ToDictionary(m => m, m => m.ToString().Replace("_", " "));
+
+//            cmbMotor.ItemsSource = motores;
+//            cmbMotor.SelectedIndex = 0;
+//        }
+
+//        private void InicializarDatosConexion()
+//        {
+//            if (ConexionActual != null)
+//            {
+//                txtNombre.Text = ConexionActual.Nombre;
+//                cmbMotor.SelectedValue = ConexionActual.Motor;
+//                txtServidor.Text = ConexionActual.Servidor;
+//                txtUsuario.Text = ConexionActual.Usuario;
+//                txtContrasena.Password = ConexionActual.Contrasena;
+//                txtPuerto.Text = ConexionActual.Puerto;
+//                chkEsWeb.IsChecked = ConexionActual.EsWeb;
+
+//                AjustarControlBaseDatos(ConexionActual.Motor, ConexionActual.BaseDatos);
+//            }
+//        }
+
+//        private void AjustarControlBaseDatos(TipoMotor motor, string baseDatos)
+//        {
+//            if (motor == TipoMotor.DB2)
+//            {
+//                // Lista fija, solo posicionar en la base guardada
+//                cmbBaseDatos.ItemsSource = ConexionesManager.BasesDB2;
+//                cmbBaseDatos.SelectedValue = baseDatos;
+//                cmbBaseDatos.Visibility = Visibility.Visible;
+//                cmbBaseDatos.IsEnabled = true;
+//                txtBaseDatos.Visibility = Visibility.Hidden;
+//                txtBaseDatos.IsEnabled = false;
+//            }
+//            else if (motor == TipoMotor.MS_SQL)
+//            {
+//                // Intentar conectar y cargar las bases disponibles posicionando en la guardada
+//                string stringConnection = ConexionActual.GetConnGetConnectionString();// $@"Driver={{ODBC Driver 17 for SQL Server}};Server=SQL{ConexionActual.Servidor}\{ConexionActual.Servidor};Database=;Uid={ConexionActual.Usuario};Pwd={ConexionActual.Contrasena};TrustServerCertificate=yes;";
+//                try
+//                {
+//                    using (var c = new OdbcConnection(stringConnection))
+//                    {
+//                        c.Open();
+//                        cmbBaseDatos.Items.Clear();
+
+//                        OdbcCommand cmd = c.CreateCommand();
+//                        cmd.CommandText = "SELECT UPPER(name) FROM sys.databases WHERE state = 0 ORDER BY name ASC";
+//                        OdbcDataReader reader = cmd.ExecuteReader();
+//                        while (reader.Read())
+//                        {
+//                            cmbBaseDatos.Items.Add(reader.GetString(0));
+//                        }
+
+//                        c.Close();
+
+//                        // Posicionar en la base guardada
+//                        cmbBaseDatos.SelectedValue = baseDatos.ToUpper();
+
+//                        cmbBaseDatos.Visibility = Visibility.Visible;
+//                        cmbBaseDatos.IsEnabled = true;
+//                        txtBaseDatos.Visibility = Visibility.Hidden;
+//                        txtBaseDatos.IsEnabled = false;
+//                    }
+//                }
+//                catch
+//                {
+//                    // Si la conexión falla, mostrar el textbox con el valor guardado
+//                    txtBaseDatos.Text = baseDatos;
+//                    txtBaseDatos.Visibility = Visibility.Visible;
+//                    txtBaseDatos.IsEnabled = true;
+//                    cmbBaseDatos.Visibility = Visibility.Hidden;
+//                    cmbBaseDatos.IsEnabled = false;
+//                }
+//            }
+//            else
+//            {
+//                txtBaseDatos.Text = baseDatos;
+//                txtBaseDatos.Visibility = Visibility.Visible;
+//                txtBaseDatos.IsEnabled = true;
+//                cmbBaseDatos.Visibility = Visibility.Hidden;
+//                cmbBaseDatos.IsEnabled = false;
+//            }
+//        }
+
+//        private void btnGuardar_Click(object sender, RoutedEventArgs e)
+//        {
+//            if (ConexionActual == null)
+//            {
+//                ConexionActual = new Conexion();
+//            }
+
+//            ConexionActual.Nombre = txtNombre.Text.Trim();
+//            ConexionActual.Motor = (TipoMotor)cmbMotor.SelectedValue;
+//            ConexionActual.Servidor = txtServidor.Text.Trim();
+//            ConexionActual.BaseDatos = cmbBaseDatos.Visibility == Visibility.Visible ? cmbBaseDatos.Text.Trim() : txtBaseDatos.Text.Trim();
+//            ConexionActual.Usuario = txtUsuario.Text.Trim();
+//            ConexionActual.Contrasena = txtContrasena.Password;
+//            ConexionActual.Puerto = txtPuerto.Text;
+//            ConexionActual.EsWeb = chkEsWeb.IsChecked.GetValueOrDefault();
+
+//            var conexiones = ConexionesManager.Cargar();
+//            conexiones[ConexionActual.Nombre] = ConexionActual;
+//            ConexionesManager.Guardar(conexiones);
+
+//            MainWindow.conexionActual = ConexionActual;
+//            MessageBox.Show("Conexión guardada correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+//            Close();
+//        }
+
+//        private void cmbMotor_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+//        {
+//            var seleccionado = cmbMotor.SelectedValue != null
+//                ? cmbMotor.SelectedValue.ToString()
+//                : string.Empty;
+
+//            // 🔹 DB2: usa combo de bases
+//            if (seleccionado == TipoMotor.DB2.ToString())
+//            {
+//                cmbBaseDatos.Visibility = Visibility.Visible;
+//                cmbBaseDatos.ItemsSource = ConexionesManager.BasesDB2;
+//                cmbBaseDatos.SelectedIndex = 0;
+
+//                txtBaseDatos.Visibility = Visibility.Hidden;
+//                txtBaseDatos.IsEnabled = false;
+//                cmbBaseDatos.IsEnabled = true;
+//            }
+//            else
+//            {
+//                cmbBaseDatos.Visibility = Visibility.Hidden;
+//                txtBaseDatos.Visibility = Visibility.Visible;
+//                txtBaseDatos.IsEnabled = true;
+//                cmbBaseDatos.IsEnabled = false;
+//            }
+
+//            // 🔹 SQLite: muestra el botón de búsqueda
+//            if (seleccionado == TipoMotor.SQLite.ToString())
+//            {
+//                btnBuscarBase.IsEnabled = true;
+//                lblUsuario.Visibility = Visibility.Hidden;
+//                txtUsuario.Visibility = Visibility.Hidden;
+//                lblContrasena.Visibility = Visibility.Hidden;
+//                txtContrasena.Visibility = Visibility.Hidden;
+//                lblBaseDatos.Visibility = Visibility.Hidden;
+//                cmbBaseDatos.Visibility = Visibility.Hidden;
+//                txtBaseDatos.Visibility = Visibility.Hidden;
+//            }
+//            else
+//            {
+//                btnBuscarBase.IsEnabled = false;
+//                lblUsuario.Visibility = Visibility.Visible;
+//                txtUsuario.Visibility = Visibility.Visible;
+//                lblContrasena.Visibility = Visibility.Visible;
+//                txtContrasena.Visibility = Visibility.Visible;
+//                lblBaseDatos.Visibility = Visibility.Visible;
+//                cmbBaseDatos.Visibility = (seleccionado == TipoMotor.POSTGRES.ToString()) ? Visibility.Hidden : Visibility.Visible;
+//                txtBaseDatos.Visibility = Visibility.Visible;
+//            }
+//        }
+
+//        private void txtContrasena_LostFocus(object sender, RoutedEventArgs e)
+//        {
+//            if (cmbMotor.SelectedValue.ToString() == TipoMotor.MS_SQL.ToString())
+//            {
+//                string stringConnection = ConexionesManager.GetConnectionString(TipoMotor.MS_SQL, txtServidor.Text.Trim(), txtPuerto.Text, string.Empty, txtUsuario.Text.Trim(), txtContrasena.Password, chkEsWeb.IsChecked.GetValueOrDefault());
+//                try
+//                {
+//                    using (var c = new OdbcConnection(stringConnection))
+//                    {
+//                        c.Open();
+//                        cmbBaseDatos.Items.Clear();
+
+//                        OdbcCommand cmd = c.CreateCommand();
+//                        cmd.CommandText = "SELECT UPPER(name) FROM sys.databases WHERE state = 0 ORDER BY name ASC";
+//                        OdbcDataReader reader = cmd.ExecuteReader();
+//                        while (reader.Read())
+//                        {
+//                            cmbBaseDatos.Items.Add(reader.GetString(0));
+//                        }
+
+//                        c.Close();
+//                        cmbBaseDatos.Visibility = Visibility.Visible;
+//                        txtBaseDatos.Visibility = Visibility.Hidden;
+//                        txtBaseDatos.IsEnabled = false;
+//                        cmbBaseDatos.IsEnabled = true;
+//                    }
+//                }
+//                catch (Exception ex)
+//                {
+//                    MessageBox.Show("Ocurrió un error al intentar obtener las bases de datos desde el servidor. Verifique el usuario y la contraseña.", "ATENCIÓN!!!");
+//                }
+//            }
+//        }
+
+//        private void btnBuscarBase_Click(object sender, RoutedEventArgs e)
+//        {
+//            var dlg = new OpenFileDialog
+//            {
+//                Title = "Seleccionar archivo",
+//                Filter = "Todos los archivos (*.*)|*.db"
+//            };
+
+//            if (dlg.ShowDialog() == true)
+//            {
+//                // Ruta completa del archivo seleccionado
+//                string ruta = dlg.FileName;
+
+//                // Ejemplo: mostrar en un TextBox
+//                txtServidor.Text = ruta;
+//            }
+//        }
+
+//        private void btnProbar_Click(object sender, RoutedEventArgs e)
+//        {
+//            TipoMotor motor = (TipoMotor)cmbMotor.SelectedValue;
+
+//            string baseDatos = cmbBaseDatos.Text.Trim().Length > 0 ? cmbBaseDatos.Text.Trim() : txtBaseDatos.Text.Trim();
+//            string stringConnection = ConexionesManager.GetConnectionString(motor, txtServidor.Text, txtPuerto.Text, baseDatos, txtUsuario.Text, txtContrasena.Password, chkEsWeb.IsChecked.GetValueOrDefault());
+
+//            if (string.IsNullOrWhiteSpace(stringConnection))
+//            {
+//                MessageBox.Show("El string de conexión está vacío", "Atención!!!");
+//                return;
+//            }
+
+//            Task.Run(() =>
+//            {
+//                try
+//                {
+//                    using (var c = new OdbcConnection(stringConnection))
+//                    {
+//                        c.Open();
+//                        MessageBox.Show("Conexión exitosa.");
+//                    }
+//                }
+//                catch (Exception ex)
+//                {
+//                    MessageBox.Show("Conexión fallida: " + ex.Message);
+//                }
+//            });
+//        }
+
+//        private void btnTogglePass_Click(object sender, RoutedEventArgs e)
+//        {
+//            if (txtContrasenaRevelada.Visibility == Visibility.Collapsed)
+//            {
+//                // Mostrar contraseña
+//                txtContrasenaRevelada.Text = txtContrasena.Password;
+//                txtContrasena.Visibility = Visibility.Collapsed;
+//                txtContrasenaRevelada.Visibility = Visibility.Visible;
+//                btnTogglePass.Content = "🙈"; // Opcional: cambiar el icono
+//                txtContrasenaRevelada.Focus();
+//            }
+//            else
+//            {
+//                // Ocultar contraseña
+//                txtContrasena.Password = txtContrasenaRevelada.Text;
+//                txtContrasenaRevelada.Visibility = Visibility.Collapsed;
+//                txtContrasena.Visibility = Visibility.Visible;
+//                btnTogglePass.Content = "👁";
+//                txtContrasena.Focus();
+//            }
+//        }
+//    }
+//}
