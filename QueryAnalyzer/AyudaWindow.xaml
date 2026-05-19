@@ -1,0 +1,223 @@
+<Window x:Class="QueryAnalyzer.AyudaWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Ayuda - Query Analyzer"
+        Height="680" Width="760"
+        MinHeight="400" MinWidth="500"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BrushWindowBG}"
+        Foreground="{DynamicResource BrushFG}">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ThemeLight.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+            </Style>
+
+            <Style x:Key="Titulo" TargetType="TextBlock">
+                <Setter Property="Foreground"  Value="{DynamicResource BrushAccent}"/>
+                <Setter Property="FontSize"    Value="15"/>
+                <Setter Property="FontWeight"  Value="Bold"/>
+                <Setter Property="Margin"      Value="0,14,0,4"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+            </Style>
+
+            <Style x:Key="Subtitulo" TargetType="TextBlock">
+                <Setter Property="Foreground"  Value="{DynamicResource BrushFG}"/>
+                <Setter Property="FontSize"    Value="12"/>
+                <Setter Property="FontWeight"  Value="SemiBold"/>
+                <Setter Property="Margin"      Value="0,8,0,2"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+            </Style>
+
+            <Style x:Key="Cuerpo" TargetType="TextBlock">
+                <Setter Property="Foreground"  Value="{DynamicResource BrushFG}"/>
+                <Setter Property="FontSize"    Value="12"/>
+                <Setter Property="Margin"      Value="10,1,0,1"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+            </Style>
+
+            <Style x:Key="Nota" TargetType="TextBlock">
+                <Setter Property="Foreground"  Value="{DynamicResource BrushFGMuted}"/>
+                <Setter Property="FontSize"    Value="11"/>
+                <Setter Property="FontStyle"   Value="Italic"/>
+                <Setter Property="Margin"      Value="10,2,0,2"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+            </Style>
+
+            <Style x:Key="Codigo" TargetType="TextBlock">
+                <Setter Property="Foreground"   Value="{DynamicResource BrushAccent}"/>
+                <Setter Property="FontFamily"   Value="Consolas"/>
+                <Setter Property="FontSize"     Value="11"/>
+                <Setter Property="Margin"       Value="10,1,0,1"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Cabecera -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource BrushAccent}"
+                CornerRadius="4"
+                Padding="12,8"
+                Margin="0,0,0,8">
+            <StackPanel>
+                <TextBlock Text="Query Analyzer — Guía de uso"
+                           Foreground="White"
+                           FontSize="16"
+                           FontWeight="Bold"/>
+                <TextBlock Text="Referencia rápida del comportamiento de la aplicación"
+                           Foreground="White"
+                           Opacity="0.85"
+                           FontSize="11"
+                           Margin="0,2,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Contenido scrolleable -->
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="4,0,8,8">
+
+                <!-- ══ CONEXIONES ════════════════════════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}" Text="🔌 Conexiones"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Nueva / Editar / Eliminar: gestionan las conexiones ODBC guardadas."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Probar conexión: verifica que la conexión sea válida sin cargar el esquema."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Driver/Proveedor: filtra las conexiones por tipo de motor (SQL Server, PostgreSQL, DB2, SQLite)."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Al seleccionar una conexión el esquema se recarga en segundo plano; el área de consulta permanece activa."/>
+                <TextBlock Style="{StaticResource Nota}"   Text="Si la conexión no está bien configurada, el intento de conexión finaliza automáticamente tras 15 segundos."/>
+
+                <!-- ══ EXPLORADOR DE ESQUEMA ═══════════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}" Text="🗂 Explorador de esquema"/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Explorar / Explorar consultas"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Explorar: carga el esquema completo de la base de datos activa."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Explorar consultas: detecta las tablas referenciadas en la consulta actual y filtra el esquema mostrando solo esas tablas. Si no se detectan tablas, carga el esquema completo."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Buscar"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Busca el término en nombres de tabla, nombres de columna, nombres de índice y nombres de constraint."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Por eso puede aparecer una tabla cuyo nombre no coincide con el término buscado: lo que coincidió fue alguna de sus columnas, índices o constraints."/>
+                <TextBlock Style="{StaticResource Nota}"   Text="Ej.: buscar 'Preg' puede devolver 'MensajesCuestionario' si uno de sus foreign keys se llama FK_MensajesCuestionario_Preguntas."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Filtros: Mostrar / Esquema"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Mostrar: permite ver solo Tablas, solo Vistas o ambas."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Esquema: filtra por schema de base de datos (útil en PostgreSQL, SQL Server con múltiples schemas)."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Islas de tablas"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Un conjunto guardado de tablas. Al seleccionar una isla, el explorador muestra solo esas tablas."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• '+ Guardar isla': guarda las tablas con checkbox marcado como una nueva isla con nombre."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• '✕ Quitar filtro': vuelve a mostrar todas las tablas sin filtro de isla."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Redimensionar la barra lateral"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Arrastrar el separador vertical entre la barra lateral y el área de consulta para cambiar el ancho."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Los botones '&lt;&lt;' / '>>' colapsan o expanden la barra lateral completamente."/>
+
+                <!-- ══ AREA DE CONSULTA ════════════════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}" Text="✏️ Área de consulta"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• F5 o botón 'Ejecutar': ejecuta la consulta completa, o el texto seleccionado si hay selección activa."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Ejecutar Escalar: ejecuta y devuelve un único valor (útil para COUNT, MAX, etc.)."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Cancelar: interrumpe la consulta en curso."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• ✕ Limpiar consulta: borra el contenido del editor."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Múltiples consultas: se pueden separar con punto y coma (;) o en líneas distintas; cada una genera una pestaña de resultados."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Comentarios"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Comentarios de línea: cualquier línea que comience con -- es ignorada al ejecutar."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Comentarios de bloque: todo lo encerrado entre /* y */ es ignorado al ejecutar, incluso si abarca varias líneas."/>
+                <TextBlock Style="{StaticResource Codigo}" Text="/* Esta parte no se ejecuta */  SELECT * FROM tabla  -- ni esta línea"/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Atajos de teclado"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Ctrl+Space: activa el autocompletado de tablas y columnas (IntelliSense)."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Ctrl+K, Ctrl+C: comenta el texto seleccionado (o la línea actual) envolviéndolo en /* */."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Ctrl+K, Ctrl+U: descomenta quitando los marcadores /* */ del texto seleccionado."/>
+                <TextBlock Style="{StaticResource Nota}"   Text="Los atajos Ctrl+K son secuenciales: primero Ctrl+K y luego, sin soltar Ctrl, C o U."/>
+
+                <!-- ══ PARAMETROS ══════════════════════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}" Text="⚙ Parámetros"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• La consulta puede incluir '?' como placeholder de parámetro ODBC."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Cada '?' genera automáticamente una fila en la tabla de Parámetros donde se asigna nombre, tipo y valor."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• El nombre del parámetro se deduce del contexto de la consulta (columna a la izquierda del '?')."/>
+
+                <!-- ══ HISTORIAL ═══════════════════════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}" Text="📜 Historial"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Cada vez que se ejecuta una consulta, se guarda en el historial el contenido completo del editor (incluyendo comentarios y consultas no ejecutadas), asociado a la conexión activa."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Al hacer clic en una entrada se carga en el área de consulta junto con sus parámetros originales."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Delete sobre una entrada la elimina del historial."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• ▼ / ▲: colapsa o expande el panel de historial."/>
+
+                <!-- ══ MIS CONSULTAS ═══════════════════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}" Text="📌 Mis Consultas"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Permite guardar consultas con nombre, descripción y usuario para reutilizarlas fácilmente, sin importar la sesión o conexión activa."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Guardar"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Botón '📌 Guardar': abre el diálogo para asignar título (obligatorio), descripción y usuario. Se guarda el contenido completo del editor."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Cargar en el editor"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Clic simple sobre una consulta guardada: la carga en el área de edición."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• También disponible con Enter o a través del menú contextual → 📂 Cargar en editor."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Editar metadatos"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Doble clic sobre una consulta guardada: abre el diálogo para editar título, descripción y usuario. La consulta SQL no se modifica."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• También disponible con F2 o a través del menú contextual → ✏️ Editar."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Eliminar"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Tecla Delete o menú contextual → 🗑 Eliminar (pide confirmación)."/>
+
+                <TextBlock Style="{StaticResource Nota}" Text="Las consultas guardadas se almacenan en %APPDATA%\QueryAnalyzer\mis_consultas.xml y son compartidas por todas las conexiones."/>
+
+                <!-- ══ RESULTADOS ══════════════════════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}" Text="📊 Resultados"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Cada consulta genera una pestaña de resultados independiente."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• 'Limpiar Resultados': cierra todas las pestañas de resultados."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• 'Generar Excel': exporta todos los resultados visibles a un archivo .xlsx."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• El panel de mensajes (log) registra tiempos de ejecución, errores y avisos."/>
+
+                <!-- ══ MENÚ CONTEXTUAL DE TABLA ═══════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}" Text="🖱 Menú contextual de tabla / vista"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Clic derecho sobre un nodo del explorador para generar scripts SQL: SELECT TOP 10, SELECT (todas las cols), CREATE TABLE/VIEW, INSERT, UPDATE, DELETE, CREATE INDEX, COUNT, etc."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• 'DESIGN': abre el diseñador visual de la tabla (solo tablas, no vistas)."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• 'Documentar tabla': genera un .docx solo para esa tabla."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Doble clic en tabla: genera e inserta un SELECT TOP 10 de esa tabla."/>
+
+                <!-- ══ DOCUMENTAR / ESQUEMATIZAR ══════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}" Text="📝 Documentar / Esquematizar"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Documentar: genera un archivo .docx con la estructura completa de las tablas y vistas visibles en el explorador."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Esquematizar: genera un diagrama de relaciones en formato Draw.io (.xml) con las tablas/vistas visibles."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Selección múltiple: con los checkboxes del explorador se pueden elegir tablas específicas para documentar o esquematizar."/>
+
+                <!-- ══ TEMAS ═══════════════════════════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}" Text="🌙 Temas (claro / oscuro)"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Botón luna (🌙) / sol (☀): alterna entre modo oscuro y claro."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Los archivos de tema se guardan en:"/>
+                <TextBlock Style="{StaticResource Codigo}" Text="%APPDATA%\QueryAnalyzer\Themes\ThemeLight.xaml"/>
+                <TextBlock Style="{StaticResource Codigo}" Text="%APPDATA%\QueryAnalyzer\Themes\ThemeDark.xaml"/>
+                <TextBlock Style="{StaticResource Nota}"   Text="Estos archivos se pueden editar manualmente para personalizar colores. La primera vez se extraen automáticamente desde la aplicación."/>
+
+                <!-- ══ DRIVERS ODBC ════════════════════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}" Text="🔌 Drivers ODBC"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• La aplicación usa ODBC (32 bits) para conectarse a las bases de datos."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Botón 'Drivers ODBC': lista los drivers disponibles e instalados, y permite instalar SQLite y PostgreSQL desde instaladores embebidos."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• SQL Server y DB2 requieren instalar el driver manualmente desde el sitio del proveedor."/>
+
+                <!-- ══ ACTUALIZACIONES ═════════════════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}" Text="🔄 Actualizaciones"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• La versión instalada se muestra en la barra superior (esquina derecha)."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Las actualizaciones se verifican y aplican automáticamente al iniciar (si hay nueva versión disponible)."/>
+
+                <!-- Espaciado final -->
+                <Border Height="16"/>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>

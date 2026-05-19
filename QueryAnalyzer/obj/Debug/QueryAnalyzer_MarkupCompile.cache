@@ -10,11 +10,11 @@ none
 false
 DEBUG;TRACE
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\App.xaml
-7139799795
+9-1364611657
 2-2088533729
-23119541387
-69-1296768422
-DatosConexion.xaml;MainWindow.xaml;NombreConjuntoDialog.xaml;PreferenciasWindow.xaml;ScriptResultWindow.xaml;InstaladorDriversWindow.xaml;TableDesignerWindow.xaml;
+26-730529312
+69-622360737
+AyudaWindow.xaml;GuardarConsultaDialog.xaml;DatosConexion.xaml;MainWindow.xaml;NombreConjuntoDialog.xaml;PreferenciasWindow.xaml;ScriptResultWindow.xaml;InstaladorDriversWindow.xaml;TableDesignerWindow.xaml;
 
 False
 

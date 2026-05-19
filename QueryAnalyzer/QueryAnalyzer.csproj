@@ -51,6 +51,10 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CapiDL, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>\\server06\desarrolloweb\MVC_Dlls\CapiDL\CapiDL.dll</HintPath>
+    </Reference>
     <Reference Include="DocumentFormat.OpenXml, Version=2.5.5631.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\DocumentFormat.OpenXml.2.5\lib\DocumentFormat.OpenXml.dll</HintPath>
     </Reference>
@@ -81,6 +85,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App.xaml.cs" />
+    <Compile Include="AyudaWindow.xaml.cs">
+      <DependentUpon>AyudaWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="GuardarConsultaDialog.xaml.cs">
+      <DependentUpon>GuardarConsultaDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ConsultaGuardada.cs" />
     <Compile Include="AppConfig.cs" />
     <Compile Include="Conexion.cs" />
     <Compile Include="ConexionesManager.cs" />
@@ -112,6 +123,14 @@
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml" />
+    <Page Include="AyudaWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="GuardarConsultaDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="DatosConexion.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -178,12 +197,6 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\CapiDL\CapiDL\CapiDL.csproj">
-      <Project>{774f2744-1ae9-4cee-9f66-f61ee1cbff30}</Project>
-      <Name>CapiDL</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

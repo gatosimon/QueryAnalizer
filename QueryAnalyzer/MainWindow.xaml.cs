@@ -112,6 +112,9 @@ namespace QueryAnalyzer
             // Ctrl+Shift+Home: corregir selección hasta el inicio del documento
             txtQuery.TextArea.PreviewKeyDown += TxtQueryArea_PreviewKeyDown;
 
+            // Cargar Mis Consultas guardadas al iniciar
+            RefrescarListaMisConsultas();
+
             // Verificar drivers ODBC faltantes después de que la UI esté completamente cargada
             Dispatcher.BeginInvoke(
                 System.Windows.Threading.DispatcherPriority.ApplicationIdle,
@@ -520,6 +523,12 @@ namespace QueryAnalyzer
             btnClear.IsEnabled = !bloquear;
             btnLimpiarLog.IsEnabled = !bloquear;
             btnExcel.IsEnabled = !bloquear;
+            btnLimpiarConsulta.IsEnabled = !bloquear;
+        }
+
+        private void btnLimpiarConsulta_Click(object sender, RoutedEventArgs e)
+        {
+            txtQuery.Text = string.Empty;
         }
 
         /// <summary>
@@ -552,13 +561,13 @@ namespace QueryAnalyzer
 
         private string LimpiarConsulta(string sql)
         {
-            // Divide la consulta por líneas
-            var lineas = sql.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            // 1. Eliminar comentarios de bloque /* ... */ (pueden abarcar múltiples líneas)
+            sql = Regex.Replace(sql, @"/\*.*?\*/", string.Empty, RegexOptions.Singleline);
 
-            // Filtra las líneas que NO empiezan con -- (ignorando espacios en blanco al inicio)
+            // 2. Eliminar líneas que empiezan con -- (ignorando espacios al inicio)
+            var lineas = sql.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             var lineasLimpias = lineas.Where(linea => !linea.TrimStart().StartsWith("--"));
 
-            // Une todo de nuevo con espacios para que el motor SQL lo reciba en una sola línea o limpia
             return string.Join("\r\n", lineasLimpias);
         }
 
@@ -573,7 +582,9 @@ namespace QueryAnalyzer
 
             string connStr = GetConnectionString();
             string sqlCompleto = txtQuery.SelectedText.Length > 0 ? txtQuery.SelectedText : txtQuery.Text;
-            string sqlHistorial = sqlCompleto;
+            // El historial siempre guarda el contenido COMPLETO del editor (incluyendo comentarios),
+            // independientemente de si se ejecutó solo texto seleccionado.
+            string sqlHistorial = txtQuery.Text;
             sqlCompleto = LimpiarConsulta(sqlCompleto);
 
             if (string.IsNullOrWhiteSpace(connStr))
@@ -1236,6 +1247,28 @@ namespace QueryAnalyzer
             if (conexionActual != null)
             {
                 stringConnection = ConexionesManager.GetConnectionString(conexionActual.Motor, conexionActual.Servidor, conexionActual.Puerto, conexionActual.BaseDatos, conexionActual.Usuario, conexionActual.Contrasena, conexionActual.EsWeb);
+
+                // Agregar timeout de conexión para evitar cuelgues en conexiones mal configuradas.
+                // Cada driver ODBC usa su propio parámetro de timeout.
+                switch (conexionActual.Motor)
+                {
+                    case TipoMotor.MS_SQL:
+                        if (!stringConnection.Contains("LoginTimeout"))
+                            stringConnection += "LoginTimeout=15;";
+                        break;
+                    case TipoMotor.DB2:
+                        if (!stringConnection.Contains("LoginTimeout"))
+                            stringConnection += "LoginTimeout=15;";
+                        break;
+                    case TipoMotor.POSTGRES:
+                        // El driver psqlODBC reconoce connect_timeout (en segundos)
+                        if (!stringConnection.Contains("connect_timeout"))
+                            stringConnection += "connect_timeout=15;";
+                        break;
+                    case TipoMotor.SQLite:
+                        // SQLite es local; no aplica timeout de red
+                        break;
+                }
             }
             return stringConnection;
         }
@@ -1426,6 +1459,231 @@ namespace QueryAnalyzer
             CargarHistoriaEnConsultas(lstHistory.SelectedItem);
         }
 
+        // ════════════════════════════════════════════════════════
+        // MIS CONSULTAS GUARDADAS
+        // ════════════════════════════════════════════════════════
+
+        private static readonly string CONSULTAS_XML =
+            Path.Combine(App.AppDataFolder, "mis_consultas.xml");
+
+        // Estado de colapso del panel Mis Consultas
+        private bool _misConsultasColapsado = false;
+        private double _misConsultasAlturaExpandida = 0;
+
+        /// <summary>Abre el diálogo y guarda la consulta actual con título y descripción.</summary>
+        private void btnGuardarConsulta_Click(object sender, RoutedEventArgs e)
+        {
+            string contenido = txtQuery.Text;
+            if (string.IsNullOrWhiteSpace(contenido))
+            {
+                AppendMessage("El área de consulta está vacía, no hay nada que guardar.");
+                return;
+            }
+
+            var dlg = new GuardarConsultaDialog(contenido, conexionActual?.Nombre ?? "")
+            {
+                Owner = this
+            };
+
+            if (dlg.ShowDialog() == true && dlg.Resultado != null)
+            {
+                var todas = CargarTodasLasConsultasGuardadas();
+                todas.Add(dlg.Resultado);
+                GuardarTodasLasConsultasGuardadas(todas);
+                RefrescarListaMisConsultas();
+                AppendMessage($"✅ Consulta '{dlg.Resultado.Titulo}' guardada correctamente.");
+            }
+        }
+
+        /// <summary>Carga en lstMisConsultas todas las consultas guardadas, ordenadas por fecha desc.</summary>
+        private void RefrescarListaMisConsultas()
+        {
+            try
+            {
+                var todas = CargarTodasLasConsultasGuardadas();
+                lstMisConsultas.ItemsSource = todas
+                    .OrderByDescending(c => c.Fecha)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                AppendMessage("Error cargando Mis Consultas: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Carga la consulta guardada actualmente seleccionada en el área de edición.
+        /// Llamado tanto desde SelectionChanged como desde doble click.
+        /// </summary>
+        private void CargarConsultaGuardadaEnEditor()
+        {
+            try
+            {
+                var cg = lstMisConsultas.SelectedItem as QueryAnalyzer.Models.ConsultaGuardada;
+                if (cg == null) return;
+
+                // Usar Document.Text (API interna de AvalonEdit) para garantizar
+                // que el contenido se establece aunque el Text property tenga caché
+                txtQuery.Document.Text = cg.Consulta ?? string.Empty;
+
+                try { SincronizarParametros(); }
+                catch { /* sin conexión activa — ignorar */ }
+            }
+            catch (Exception ex)
+            {
+                AppendMessage("Error cargando consulta guardada: " + ex.Message);
+            }
+        }
+
+        /// <summary>Clic simple: selección → carga en el editor.</summary>
+        private void lstMisConsultas_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count == 0) return;
+            // Aseguramos que SelectedItem ya refleja el nuevo ítem antes de cargar
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input,
+                (Action)CargarConsultaGuardadaEnEditor);
+        }
+
+        /// <summary>Doble clic: abre el diálogo de edición de metadatos.</summary>
+        private void lstMisConsultas_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            EditarConsultaGuardada();
+        }
+
+        /// <summary>Selecciona el ítem sobre el que se hizo clic derecho antes de abrir el menú.</summary>
+        private void lstMisConsultas_ItemRightClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (sender is ListBoxItem item)
+                item.IsSelected = true;
+        }
+
+        // ── Handlers del menú contextual de Mis Consultas ───────────────────
+
+        private void menuMC_Cargar_Click(object sender, RoutedEventArgs e)
+            => CargarConsultaGuardadaEnEditor();
+
+        private void menuMC_Editar_Click(object sender, RoutedEventArgs e)
+            => EditarConsultaGuardada();
+
+        private void menuMC_Eliminar_Click(object sender, RoutedEventArgs e)
+            => EliminarConsultaGuardadaSeleccionada();
+
+        /// <summary>
+        /// Abre el diálogo pre-completado con los datos del ítem seleccionado para editarlos.
+        /// Solo se editan título, descripción y usuario; la consulta SQL no cambia.
+        /// </summary>
+        private void EditarConsultaGuardada()
+        {
+            var cg = lstMisConsultas.SelectedItem as QueryAnalyzer.Models.ConsultaGuardada;
+            if (cg == null) return;
+
+            var dlg = new GuardarConsultaDialog(cg) { Owner = this };
+            if (dlg.ShowDialog() != true || dlg.Resultado == null) return;
+
+            // Reemplazar la entrada antigua (misma fecha = misma consulta)
+            var todas = CargarTodasLasConsultasGuardadas();
+            int idx = todas.FindIndex(c => c.Fecha == cg.Fecha && c.Titulo == cg.Titulo);
+            if (idx >= 0)
+                todas[idx] = dlg.Resultado;
+            else
+                todas.Add(dlg.Resultado); // fallback: si no se encontró, agregar
+
+            GuardarTodasLasConsultasGuardadas(todas);
+            RefrescarListaMisConsultas();
+            AppendMessage($"✏️ Consulta '{dlg.Resultado.Titulo}' actualizada.");
+        }
+
+        /// <summary>Elimina la consulta guardada seleccionada (con confirmación).</summary>
+        private void EliminarConsultaGuardadaSeleccionada()
+        {
+            var cg = lstMisConsultas.SelectedItem as QueryAnalyzer.Models.ConsultaGuardada;
+            if (cg == null) return;
+
+            var r = MessageBox.Show(
+                $"¿Eliminar la consulta guardada '{cg.Titulo}'?",
+                "Confirmar eliminación",
+                MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (r != MessageBoxResult.Yes) return;
+
+            var todas = CargarTodasLasConsultasGuardadas();
+            todas.RemoveAll(c => c.Titulo == cg.Titulo && c.Fecha == cg.Fecha);
+            GuardarTodasLasConsultasGuardadas(todas);
+            RefrescarListaMisConsultas();
+            AppendMessage($"🗑 Consulta '{cg.Titulo}' eliminada.");
+        }
+
+        /// <summary>Delete = eliminar; F2 = editar; Enter = cargar en editor.</summary>
+        private void lstMisConsultas_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Delete) { EliminarConsultaGuardadaSeleccionada(); e.Handled = true; }
+            else if (e.Key == Key.F2) { EditarConsultaGuardada();              e.Handled = true; }
+            else if (e.Key == Key.Enter) { CargarConsultaGuardadaEnEditor();   e.Handled = true; }
+        }
+
+        private List<QueryAnalyzer.Models.ConsultaGuardada> CargarTodasLasConsultasGuardadas()
+        {
+            try
+            {
+                if (!File.Exists(CONSULTAS_XML))
+                    return new List<QueryAnalyzer.Models.ConsultaGuardada>();
+
+                using (var fs = new FileStream(CONSULTAS_XML, FileMode.Open))
+                {
+                    var ser = new System.Xml.Serialization.XmlSerializer(
+                        typeof(List<QueryAnalyzer.Models.ConsultaGuardada>));
+                    return (List<QueryAnalyzer.Models.ConsultaGuardada>)ser.Deserialize(fs)
+                           ?? new List<QueryAnalyzer.Models.ConsultaGuardada>();
+                }
+            }
+            catch
+            {
+                return new List<QueryAnalyzer.Models.ConsultaGuardada>();
+            }
+        }
+
+        private void GuardarTodasLasConsultasGuardadas(List<QueryAnalyzer.Models.ConsultaGuardada> lista)
+        {
+            try
+            {
+                using (var fs = new FileStream(CONSULTAS_XML, FileMode.Create))
+                {
+                    var ser = new System.Xml.Serialization.XmlSerializer(
+                        typeof(List<QueryAnalyzer.Models.ConsultaGuardada>));
+                    ser.Serialize(fs, lista);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppendMessage("Error guardando Mis Consultas: " + ex.Message);
+            }
+        }
+
+        /// <summary>Colapsa / expande la sección Mis Consultas del panel derecho.</summary>
+        private void btnToggleMisConsultas_Click(object sender, RoutedEventArgs e)
+        {
+            var fila = grdDerecho.RowDefinitions[7];
+
+            if (!_misConsultasColapsado)
+            {
+                if (fila.ActualHeight > 0)
+                    _misConsultasAlturaExpandida = fila.ActualHeight;
+                lstMisConsultas.Visibility = Visibility.Collapsed;
+                fila.Height = GridLength.Auto;
+                _misConsultasColapsado = true;
+                btnToggleMisConsultas.Content = "▲";
+            }
+            else
+            {
+                fila.Height = new GridLength(
+                    _misConsultasAlturaExpandida > 0 ? _misConsultasAlturaExpandida : 120,
+                    GridUnitType.Pixel);
+                lstMisConsultas.Visibility = Visibility.Visible;
+                _misConsultasColapsado = false;
+                btnToggleMisConsultas.Content = "▼";
+            }
+        }
+
         // ────────────────────────────────────────────────────────
         // Resto del código (Explorador, botones, etc.) sin cambios estructurales
         // ────────────────────────────────────────────────────────
@@ -1576,38 +1834,23 @@ namespace QueryAnalyzer
 
         private void Cargar(string[] tiposTabla, string filtrado, List<string> tablasConsulta, TreeView tvCargar, string connStr, System.Windows.Media.Imaging.BitmapImage tablaIcon, System.Windows.Media.Imaging.BitmapImage columnaIcon, System.Windows.Media.Imaging.BitmapImage columnaClaveIcon, System.Windows.Media.Imaging.BitmapImage claveIcon, System.Windows.Media.Imaging.BitmapImage vistaIcon, int tamañoIconos, CancellationToken token)
         {
+            // ── PASO 1: hilo de fondo — solo datos, sin tocar la UI ──────────────────
             DataBase DB = new DataBase(connStr);
-
-            // Obtiene las tablas
             DataTable tablas = new DataTable();
-
             foreach (string tipo in tiposTabla)
-            {
-                // Obtenemos el esquema actual (ej: "Tables", "Views")
-                DataTable esquemaTemporal = DB.GetSchema($"{tipo}s");
-
-                // Fusionamos el contenido en nuestra tabla principal
-                tablas.Merge(esquemaTemporal);
-            }
+                tablas.Merge(DB.GetSchema($"{tipo}s"));
 
             string selecciones = string.Join(" OR ", tiposTabla.Select(t => $"TABLE_TYPE = '{t}'").ToArray());
-
-            Dispatcher.Invoke(() => tvCargar.Items.Clear());
-
-            // Filtrar las filas cuyo tipo sea "TABLE" o "VIEW" 👈 CAMBIADO
             DataRow[] tablasFiltradas = tablas.Select(selecciones);
-
-            // Construir DataTable base con las filas que pasaron el filtro de tipo
             DataTable tablasSolo = tablasFiltradas.Length > 0 ? tablasFiltradas.CopyToDataTable() : tablas.Clone();
 
-            // Filtro de isla: comparar con los valores reales de TABLE_SCHEM/TABLE_NAME,
-            // NO con t.Table.TableName (que es el nombre del objeto DataTable, siempre el mismo).
+            // Filtro de isla (compara valores reales de TABLE_SCHEM/TABLE_NAME)
             if (_islaActiva != null && tablasFiltradas.Length > 0)
             {
                 var enIsla = tablasFiltradas.Where(t =>
                 {
-                    string sch  = t.IsNull("TABLE_SCHEM") ? "" : t["TABLE_SCHEM"].ToString().Trim();
-                    string nom  = t.IsNull("TABLE_NAME")  ? "" : t["TABLE_NAME"].ToString().Trim();
+                    string sch    = t.IsNull("TABLE_SCHEM") ? "" : t["TABLE_SCHEM"].ToString().Trim();
+                    string nom    = t.IsNull("TABLE_NAME")  ? "" : t["TABLE_NAME"].ToString().Trim();
                     string idFila = string.IsNullOrEmpty(sch) ? nom : $"{sch}.{nom}";
                     return _islaActiva.Tablas.Any(isla =>
                         string.Equals(isla, idFila, StringComparison.OrdinalIgnoreCase) ||
@@ -1615,51 +1858,69 @@ namespace QueryAnalyzer
                 }).ToArray();
                 tablasSolo = enIsla.Length > 0 ? enIsla.CopyToDataTable() : tablas.Clone();
             }
-            bool cargarTabla = true;
-            int tablasLeidas = 0;
-            int cantidadDeTablas = tablasConsulta == null ? tablasSolo.Rows.Count : tablasConsulta.Count;
 
-            // Ahora usás tablasSolo.Rows en el foreach
-            foreach (DataRow tabla in tablasSolo.Rows)
+            // Recopilar filas que deben mostrarse (filtro de tablasConsulta / filtrado de texto)
+            // Sin crear ningún control WPF aquí — todo eso se hace en el batch de UI.
+            var filasAMostrar = new List<(string Schema, string Tabla, string Tipo, string Header)>();
+            foreach (DataRow fila in tablasSolo.Rows)
+            {
+                token.ThrowIfCancellationRequested();
+                string schema      = fila["TABLE_SCHEM"].ToString();
+                string nombreTabla = fila["TABLE_NAME"].ToString();
+
+                bool match = tablasConsulta == null ||
+                             tablasConsulta.Any(t => t.ToUpper().Trim().EndsWith(nombreTabla.ToUpper().Trim()));
+                if (!match) continue;
+                if (filtrado.Length > 0 && !nombreTabla.ToUpper().Contains(filtrado.ToUpper())) continue;
+
+                string tipo   = fila["TABLE_TYPE"].ToString();
+                string header = string.IsNullOrEmpty(schema) ? nombreTabla : $"{schema}.{nombreTabla}";
+                filasAMostrar.Add((schema, nombreTabla, tipo, header));
+            }
+
+            token.ThrowIfCancellationRequested();
+
+            // ── PASO 2: hilo UI — limpiar el árbol (operación rápida) ────────────────
+            TipoMotor motorActual = conexionActual?.Motor ?? TipoMotor.MS_SQL;
+            Dispatcher.Invoke(() => tvCargar.Items.Clear());
+
+            // ── PASO 3: insertar nodos en LOTES con DispatcherPriority.Background ────
+            // Cada lote ocupa el hilo UI brevemente; entre lotes el Dispatcher puede
+            // procesar eventos de mayor prioridad (Input, Render), manteniendo el UI fluido.
+            // N/CHUNK round-trips en lugar de N (ej: 200 tablas → 10 invocaciones).
+            const int CHUNK = 20;
+            int total = filasAMostrar.Count;
+
+            for (int inicio = 0; inicio < total; inicio += CHUNK)
             {
                 token.ThrowIfCancellationRequested();
 
-                string schema = tabla["TABLE_SCHEM"].ToString();
-                string nombreTabla = tabla["TABLE_NAME"].ToString();
+                // Capturar rango del lote actual
+                int fin   = Math.Min(inicio + CHUNK, total);
+                int desde = inicio; // captura local para el closure
 
-                cargarTabla = tablasConsulta == null || (tablasConsulta != null &&
-                                tablasConsulta.Any(t => t.ToUpper().Trim().EndsWith(nombreTabla.ToUpper().Trim())));
-                if (cargarTabla)
+                Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Background, (Action)(() =>
                 {
-                    string tipo = tabla["TABLE_TYPE"].ToString();
-
-                    string headerText = string.IsNullOrEmpty(schema) ? nombreTabla : $"{schema}.{nombreTabla}";
-
-                    // 🔹 CARGA DIFERIDA: capturamos los datos de esta tabla para usarlos en el closure
-                    string capSchema = schema;
-                    string capTabla = nombreTabla;
-                    string capTipo = tipo;
-
-                    Dispatcher.Invoke(() =>
+                    for (int i = desde; i < fin; i++)
                     {
-                        // 🖼️ INICIO DE MODIFICACIÓN: nodo de tabla/vista con icono
+                        var (capSchema, capTabla, capTipo, headerText) = filasAMostrar[i];
+
                         var tablaHeader = new StackPanel { Orientation = Orientation.Horizontal };
 
-                        // ── CheckBox de selección múltiple ─────────────────────────────
                         var chkNodo = new CheckBox
                         {
                             VerticalAlignment = VerticalAlignment.Center,
                             Margin = new System.Windows.Thickness(0, 0, 4, 0),
                             ToolTip = "Seleccionar para Documentar / Esquematizar"
                         };
-                        chkNodo.Checked += (cs, ce) => ActualizarContadorSeleccion();
+                        chkNodo.Checked   += (cs, ce) => ActualizarContadorSeleccion();
                         chkNodo.Unchecked += (cs, ce) => ActualizarContadorSeleccion();
                         tablaHeader.Children.Add(chkNodo);
 
                         tablaHeader.Children.Add(new System.Windows.Controls.Image
                         {
-                            Source = capTipo == "VIEW" ? vistaIcon : tablaIcon, // 👈 CAMBIADO
-                            Width = tamañoIconos,
+                            Source = capTipo == "VIEW" ? vistaIcon : tablaIcon,
+                            Width  = tamañoIconos,
                             Height = tamañoIconos,
                             Margin = new System.Windows.Thickness(0, 0, 5, 0)
                         });
@@ -1667,157 +1928,135 @@ namespace QueryAnalyzer
 
                         var tablaNode = new TreeViewItem { Header = tablaHeader, Tag = new NodoTablaTag(capTabla, capTipo) };
 
-                        if (filtrado.Length == 0 || (filtrado.Length > 0 && capTabla.ToUpper().Contains(filtrado.ToUpper())))
+                        // Placeholder para carga diferida de columnas/PKs/índices al expandir
+                        tablaNode.Items.Add(new TreeViewItem { Header = "Cargando..." });
+                        tablaNode.Expanded += async (s, ev) =>
                         {
-                            // 🔹 CARGA DIFERIDA: placeholder para que el nodo sea expandible sin cargar nada todavía
-                            tablaNode.Items.Add(new TreeViewItem { Header = "Cargando..." });
-
-                            // 🔹 CARGA DIFERIDA: al expandir por primera vez se cargan columnas, PKs e índices
-                            tablaNode.Expanded += async (s, ev) =>
+                            var nodo = s as TreeViewItem;
+                            if (nodo.Items.Count == 1 && nodo.Items[0] is TreeViewItem ph &&
+                                ph.Header != null && ph.Header.ToString() == "Cargando...")
                             {
-                                var nodo = s as TreeViewItem;
-                                // Solo actuar si todavía tiene el placeholder (evita recargar)
-                                if (nodo.Items.Count == 1 && nodo.Items[0] is TreeViewItem ph && ph.Header != null && ph.Header.ToString() == "Cargando...")
+                                nodo.Items.Clear();
+                                try
                                 {
-                                    nodo.Items.Clear();
-                                    try
-                                    {
-                                        await Task.Run(() => CargarDetallesTabla(nodo, capSchema, capTabla, capTipo, connStr, columnaIcon, columnaClaveIcon, claveIcon, tamañoIconos));
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        Dispatcher.Invoke(() => AppendMessage($"Error cargando detalles de {capTabla}: " + ex.Message));
-                                    }
+                                    await Task.Run(() => CargarDetallesTabla(
+                                        nodo, capSchema, capTabla, capTipo, connStr,
+                                        columnaIcon, columnaClaveIcon, claveIcon, tamañoIconos));
                                 }
-                            };
-
-                            tvCargar.Items.Add(tablaNode);
-                            tablaNode.MouseDoubleClick += TablaNode_MouseDoubleClick;
-
-                            // ── Menú contextual de scripts ───────────────────────────
-                            var ctxMenu = new ContextMenu();
-                            AplicarEstiloContextMenu(ctxMenu);
-
-                            Action<string, Func<string>> agregarOpcion = (hdr, gen) =>
-                            {
-                                var menuItem = new MenuItem { Header = hdr };
-                                AplicarEstiloMenuItem(menuItem);
-                                menuItem.Click += (s, ev) =>
+                                catch (Exception ex)
                                 {
-                                    try { InsertarEnQuery(gen()); }
-                                    catch (Exception ex) { AppendMessage("Error generando script: " + ex.Message); }
-                                };
-                                ctxMenu.Items.Add(menuItem);
-                            };
+                                    AppendMessage($"Error cargando detalles de {capTabla}: " + ex.Message);
+                                }
+                            }
+                        };
 
-                            bool esVista = capTipo == "VIEW";
-                            TipoMotor motorCtx = conexionActual?.Motor ?? TipoMotor.MS_SQL;
+                        tvCargar.Items.Add(tablaNode);
+                        tablaNode.MouseDoubleClick += TablaNode_MouseDoubleClick;
 
-                            // Helper para SELECT TOP / SELECT ALL: respeta la preferencia
-                            // EjecutarSelectDirecto — inserta, selecciona y ejecuta de inmediato.
-                            Action<string, Func<string>> agregarSelect = (hdr, gen) =>
+                        // ── Menú contextual ─────────────────────────────────────────
+                        var ctxMenu = new ContextMenu();
+                        AplicarEstiloContextMenu(ctxMenu);
+
+                        Action<string, Func<string>> agregarOpcion = (hdr, gen) =>
+                        {
+                            var menuItem = new MenuItem { Header = hdr };
+                            AplicarEstiloMenuItem(menuItem);
+                            menuItem.Click += (s, ev) =>
                             {
-                                var mi = new MenuItem { Header = hdr };
-                                AplicarEstiloMenuItem(mi);
-                                mi.Click += (s, ev) =>
-                                {
-                                    try { InsertarEnQuery(gen(), _configApp.EjecutarSelectDirecto); }
-                                    catch (Exception ex) { AppendMessage("Error generando script: " + ex.Message); }
-                                };
-                                ctxMenu.Items.Add(mi);
+                                try { InsertarEnQuery(gen()); }
+                                catch (Exception ex) { AppendMessage("Error generando script: " + ex.Message); }
                             };
+                            ctxMenu.Items.Add(menuItem);
+                        };
 
-                            // ── SELECT: disponible para tablas y vistas ─────────────
-                            agregarSelect("🔟 SELECT TOP 10", () => GenerarSelectTop10(capSchema, capTabla));
-                            agregarSelect("✔ SELECT (todas las cols)", () =>
+                        Action<string, Func<string>> agregarSelect = (hdr, gen) =>
+                        {
+                            var mi = new MenuItem { Header = hdr };
+                            AplicarEstiloMenuItem(mi);
+                            mi.Click += (s, ev) =>
+                            {
+                                try { InsertarEnQuery(gen(), _configApp.EjecutarSelectDirecto); }
+                                catch (Exception ex) { AppendMessage("Error generando script: " + ex.Message); }
+                            };
+                            ctxMenu.Items.Add(mi);
+                        };
+
+                        bool esVista = capTipo == "VIEW";
+
+                        agregarSelect("🔟 SELECT TOP 10", () => GenerarSelectTop10(capSchema, capTabla));
+                        agregarSelect("✔ SELECT (todas las cols)", () =>
+                        {
+                            DB = new DataBase(connStr);
+                            var colNames = ObtenerNombresColumnas(DB, capSchema, capTabla);
+                            return GenerarSelectAllColsDesdeNombres(capSchema, capTabla, colNames);
+                        });
+                        ctxMenu.Items.Add(new Separator());
+
+                        if (!esVista)
+                        {
+                            agregarOpcion("🧱 CREATE TABLE", () =>
                             {
                                 DB = new DataBase(connStr);
-                                // ObtenerNombresColumnas usa SQL directo por motor (información_schema /
-                                // SYSCAT / PRAGMA) y cae a GetSchema solo si el SQL falla.
-                                // Esto evita el SELECT vacío que generaba GetSchema en PostgreSQL
-                                // cuando el driver ODBC ignoraba el filtro de catálogo nulo.
-                                var colNames = ObtenerNombresColumnas(DB, capSchema, capTabla);
-                                return GenerarSelectAllColsDesdeNombres(capSchema, capTabla, colNames);
+                                return GenerarCreateTable(capSchema, capTabla,
+                                    DB.GetSchema("Columns", new string[] { null, capSchema, capTabla }));
                             });
+                            agregarOpcion("✏️ ALTER TABLE (add col)", () => GenerarAlterTableAddColumn(capSchema, capTabla));
+                            agregarOpcion("⚰ DROP TABLE",             () => GenerarDropTable(capSchema, capTabla));
                             ctxMenu.Items.Add(new Separator());
-
-                            if (!esVista)
+                            agregarOpcion("➕ INSERT INTO", () =>
                             {
-                                // ── Opciones exclusivas de TABLA ───────────────────
-                                agregarOpcion("🧱 CREATE TABLE", () =>
-                                {
-                                    DB = new DataBase(connStr);
-                                    return GenerarCreateTable(capSchema, capTabla, DB.GetSchema("Columns", new string[] { null, capSchema, capTabla }));
-                                });
-                                agregarOpcion("✏️ ALTER TABLE (add col)", () => GenerarAlterTableAddColumn(capSchema, capTabla));
-                                agregarOpcion("⚰ DROP TABLE", () => GenerarDropTable(capSchema, capTabla));
-                                ctxMenu.Items.Add(new Separator());
-                                agregarOpcion("➕ INSERT INTO", () =>
-                                {
-                                    DB = new DataBase(connStr);
-                                    return GenerarInsert(capSchema, capTabla, DB.GetSchema("Columns", new string[] { null, capSchema, capTabla }));
-                                });
-                                agregarOpcion("✏️ UPDATE ... SET", () =>
-                                {
-                                    DB = new DataBase(connStr);
-                                    return GenerarUpdate(capSchema, capTabla, DB.GetSchema("Columns", new string[] { null, capSchema, capTabla }));
-                                });
-                                agregarOpcion("🗑 DELETE FROM", () => GenerarDelete(capSchema, capTabla));
-                                ctxMenu.Items.Add(new Separator());
-                                agregarOpcion("🔑 CREATE INDEX", () => GenerarCreateIndex(capSchema, capTabla));
-                                agregarOpcion("💣 DROP INDEX", () => GenerarDropIndex(capSchema, capTabla));
-                                agregarSelect("📊 COUNT(*)", () => GenerarCount(capSchema, capTabla));
-                                agregarOpcion("⚙ DESIGN", () => Diseñar(capSchema, capTabla));
-                            }
-                            else
+                                DB = new DataBase(connStr);
+                                return GenerarInsert(capSchema, capTabla,
+                                    DB.GetSchema("Columns", new string[] { null, capSchema, capTabla }));
+                            });
+                            agregarOpcion("✏️ UPDATE ... SET", () =>
                             {
-                                // ── Opciones de VISTA según motor ──────────────────
-                                // CREATE VIEW: todos los motores
-                                agregarOpcion("🧱 CREATE VIEW", () => GenerarCreateView(capSchema, capTabla));
-
-                                // VIEW DEFINITION: todos los motores
-                                agregarOpcion("🔍 VIEW DEFINITION", () => GenerarViewDefinition(capSchema, capTabla));
-
-                                // ALTER VIEW: solo MS SQL y PostgreSQL (DB2 y SQLite requieren DROP+CREATE)
-                                if (motorCtx == TipoMotor.MS_SQL || motorCtx == TipoMotor.POSTGRES)
-                                {
-                                    agregarOpcion("✏️ ALTER VIEW", () => GenerarAlterView(capSchema, capTabla));
-                                }
-
-                                // DROP VIEW: todos los motores
-                                agregarOpcion("🗑 DROP VIEW", () => GenerarDropView(capSchema, capTabla));
-                                ctxMenu.Items.Add(new Separator());
-                                agregarOpcion("📊 COUNT(*)", () => GenerarCount(capSchema, capTabla));
-                            }
-
-                            // ── Documentar tabla / vista ────────────────────────────
+                                DB = new DataBase(connStr);
+                                return GenerarUpdate(capSchema, capTabla,
+                                    DB.GetSchema("Columns", new string[] { null, capSchema, capTabla }));
+                            });
+                            agregarOpcion("🗑 DELETE FROM",   () => GenerarDelete(capSchema, capTabla));
                             ctxMenu.Items.Add(new Separator());
-                            var menuDocTabla = new MenuItem { Header = $"📝 Documentar {capTabla}" };
-                            AplicarEstiloMenuItem(menuDocTabla);
-                            menuDocTabla.Click += async (s, ev) =>
-                            {
-                                await DocumentarTablaAsync(capSchema, capTabla, capTipo);
-                            };
-                            ctxMenu.Items.Add(menuDocTabla);
-
-                            tablaNode.ContextMenu = ctxMenu;
-                            // ─────────────────────────────────────────────────────────
+                            agregarOpcion("🔑 CREATE INDEX",  () => GenerarCreateIndex(capSchema, capTabla));
+                            agregarOpcion("💣 DROP INDEX",    () => GenerarDropIndex(capSchema, capTabla));
+                            agregarSelect("📊 COUNT(*)",       () => GenerarCount(capSchema, capTabla));
+                            agregarOpcion("⚙ DESIGN",         () => Diseñar(capSchema, capTabla));
                         }
-                    });
+                        else
+                        {
+                            agregarOpcion("🧱 CREATE VIEW",     () => GenerarCreateView(capSchema, capTabla));
+                            agregarOpcion("🔍 VIEW DEFINITION", () => GenerarViewDefinition(capSchema, capTabla));
+                            if (motorActual == TipoMotor.MS_SQL || motorActual == TipoMotor.POSTGRES)
+                                agregarOpcion("✏️ ALTER VIEW",  () => GenerarAlterView(capSchema, capTabla));
+                            agregarOpcion("🗑 DROP VIEW",        () => GenerarDropView(capSchema, capTabla));
+                            ctxMenu.Items.Add(new Separator());
+                            agregarSelect("📊 COUNT(*)",          () => GenerarCount(capSchema, capTabla));
+                        }
 
-                    tablasLeidas++;
-                }
+                        ctxMenu.Items.Add(new Separator());
+                        var menuDocTabla = new MenuItem { Header = $"📝 Documentar {capTabla}" };
+                        AplicarEstiloMenuItem(menuDocTabla);
+                        menuDocTabla.Click += async (s, ev) =>
+                        {
+                            await DocumentarTablaAsync(capSchema, capTabla, capTipo);
+                        };
+                        ctxMenu.Items.Add(menuDocTabla);
 
-                Dispatcher.Invoke(() =>
-                {
-                    txtExplorar.Text = $"{tablasLeidas} tablas leídas de {cantidadDeTablas}";
+                        tablaNode.ContextMenu = ctxMenu;
+                    }
+
+                    // Actualizar contador al final de cada lote
+                    txtExplorar.Text = $"{fin} / {total} tablas";
                     ActualizarContadorExplorador();
-                });
-                if (tablasLeidas == cantidadDeTablas)
-                {
-                    break;
-                }
+                }));
             }
+
+            // Contador final
+            Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Background, (Action)(() =>
+            {
+                txtExplorar.Text = $"{total} tablas leídas";
+                ActualizarContadorExplorador();
+            }));
         }
 
         /// <summary>
@@ -3653,6 +3892,12 @@ namespace QueryAnalyzer
             ventana.ShowDialog();
         }
 
+        private void BtnAyuda_Click(object sender, RoutedEventArgs e)
+        {
+            var ayuda = new AyudaWindow { Owner = this };
+            ayuda.Show();
+        }
+
         /// <summary>
         /// Se llama una vez al inicio (vía Dispatcher) para notificar drivers faltantes.
         /// Solo alerta si hay algún driver bundleado (con instalador incluido) que no está instalado.
@@ -4636,6 +4881,9 @@ namespace QueryAnalyzer
         private bool _historialColapsado = false;
         private double _historialAlturaExpandida = 0;
 
+        // ── Ctrl+K chord (Ctrl+K,C = comentar; Ctrl+K,U = descomentar) ───────
+        private bool _ctrlKPresionado = false;
+
         private void btnToggleHistorial_Click(object sender, RoutedEventArgs e)
         {
             var rowContenido = grdDerecho.RowDefinitions[4]; // content Historial
@@ -4649,7 +4897,7 @@ namespace QueryAnalyzer
             AnimarFila(rowContenido, to, () =>
             {
                 _historialColapsado = !_historialColapsado;
-                btnToggleHistorial.Content = _historialColapsado ? "▼" : "▲";
+                btnToggleHistorial.Content = _historialColapsado ? "▲" : "▼";
                 rowSplitter.Height = (_paramsColapsado || _historialColapsado)
                     ? new GridLength(0)
                     : new GridLength(5);
@@ -5347,6 +5595,102 @@ namespace QueryAnalyzer
                 AbrirIntellisense(null, enContextoTabla);
                 return;
             }
+
+            // ── Ctrl+K: primer acorde — armar secuencia Ctrl+K,C / Ctrl+K,U ──
+            if (e.Key == Key.K && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                _ctrlKPresionado = true;
+                e.Handled = true;
+                return;
+            }
+
+            // ── Segundo acorde tras Ctrl+K ────────────────────────────────────
+            if (_ctrlKPresionado)
+            {
+                _ctrlKPresionado = false;
+
+                // Ctrl+K, C → comentar selección con /* */
+                if (e.Key == Key.C && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+                {
+                    ComentarSeleccion();
+                    e.Handled = true;
+                    return;
+                }
+
+                // Ctrl+K, U → descomentar /* */ de la selección
+                if (e.Key == Key.U && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+                {
+                    DescomentarSeleccion();
+                    e.Handled = true;
+                    return;
+                }
+
+                // Cualquier otra tecla cancela el chord sin acción
+            }
+        }
+
+        /// <summary>
+        /// Envuelve el texto seleccionado (o la línea actual si no hay selección)
+        /// en un comentario de bloque /* … */.
+        /// </summary>
+        private void ComentarSeleccion()
+        {
+            string texto;
+            int offset, length;
+
+            if (txtQuery.SelectionLength > 0)
+            {
+                texto  = txtQuery.SelectedText;
+                offset = txtQuery.SelectionStart;
+                length = txtQuery.SelectionLength;
+            }
+            else
+            {
+                // Sin selección: operar sobre la línea actual
+                var linea = txtQuery.Document.GetLineByOffset(txtQuery.CaretOffset);
+                texto  = txtQuery.Document.GetText(linea.Offset, linea.Length);
+                offset = linea.Offset;
+                length = linea.Length;
+            }
+
+            string comentado = "/* " + texto + " */";
+            txtQuery.Document.Replace(offset, length, comentado);
+
+            // Dejar el cursor al final del bloque comentado
+            txtQuery.CaretOffset = offset + comentado.Length;
+        }
+
+        /// <summary>
+        /// Elimina el primer par de marcadores /* … */ que envuelvan la selección actual
+        /// (o la línea entera si no hay selección).
+        /// </summary>
+        private void DescomentarSeleccion()
+        {
+            string texto;
+            int offset, length;
+
+            if (txtQuery.SelectionLength > 0)
+            {
+                texto  = txtQuery.SelectedText;
+                offset = txtQuery.SelectionStart;
+                length = txtQuery.SelectionLength;
+            }
+            else
+            {
+                var linea = txtQuery.Document.GetLineByOffset(txtQuery.CaretOffset);
+                texto  = txtQuery.Document.GetText(linea.Offset, linea.Length);
+                offset = linea.Offset;
+                length = linea.Length;
+            }
+
+            // Quitar todos los /* … */ del fragmento seleccionado
+            string descomentado = Regex.Replace(texto, @"/\*\s?(.*?)\s?\*/", "$1",
+                                                RegexOptions.Singleline);
+
+            if (descomentado == texto) return; // nada que quitar
+
+            txtQuery.Document.Replace(offset, length, descomentado);
+            txtQuery.CaretOffset = offset + descomentado.Length;
         }
 
         /// <summary>

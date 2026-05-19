@@ -58,7 +58,6 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\ICSharpCode.
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\Npgsql.dll
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\System.Threading.Tasks.Extensions.dll
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\System.ValueTuple.dll
-C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\CapiDL.pdb
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\ICSharpCode.AvalonEdit.xml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\Npgsql.xml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Debug\System.Threading.Tasks.Extensions.xml
@@ -85,3 +84,7 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\QueryAnalyze
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\QueryAnalyzer.csproj.CopyComplete
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\QueryAnalyzer.exe
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\QueryAnalyzer.pdb
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\AyudaWindow.baml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\AyudaWindow.g.cs
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\GuardarConsultaDialog.baml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\GuardarConsultaDialog.g.cs
