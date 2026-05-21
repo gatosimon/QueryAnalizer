@@ -416,6 +416,18 @@ namespace QueryAnalyzer
             cbConnectionName.DisplayMemberPath = "Nombre";
         }
 
+        /// <summary>
+        /// Recarga la lista de conexiones respetando el driver actualmente seleccionado.
+        /// Si hay un driver elegido en cbDriver aplica el filtro; si no, carga todo.
+        /// </summary>
+        private void RefrescarConexionesFiltradas()
+        {
+            if (cbDriver.SelectedValue is TipoMotor driver)
+                FiltrarConexiones(driver);
+            else
+                InicializarConexiones();
+        }
+
         private void cbdriver_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             try
@@ -991,21 +1003,14 @@ namespace QueryAnalyzer
         {
             try
             {
+                // ── Reunir todas las pestañas con datos ──────────────────────
                 var hojas = new Dictionary<string, System.Data.DataTable>();
-
-                // 🔹 Recorre automáticamente todas las pestañas del TabControl
                 foreach (TabItem tab in tcResults.Items)
                 {
                     var grid = tab.Content as DataGrid;
-                    if (grid?.ItemsSource == null)
-                        continue;
-
-                    // Convertir el DataGrid en DataTable
+                    if (grid?.ItemsSource == null) continue;
                     var dt = ((System.Data.DataView)grid.ItemsSource).ToTable();
-
-                    // Nombre de la hoja = título del tab (sin caracteres inválidos)
-                    string nombreHoja = tab.Header.ToString();
-                    hojas[nombreHoja] = dt;
+                    hojas[tab.Header.ToString()] = dt;
                 }
 
                 if (hojas.Count == 0)
@@ -1014,29 +1019,78 @@ namespace QueryAnalyzer
                     return;
                 }
 
-                // 🔹 Crear el Excel
-                var excelService = new ExcelService();
-                byte[] archivoExcel = excelService.CrearExcelMultiplesHojas(hojas);
+                // ── Mostrar diálogo de formato ───────────────────────────────
+                var dlg = new ExportarDialog { Owner = this };
+                if (dlg.ShowDialog() != true) return;
 
-                // 🔹 Guardar: permite al usuario elegir carpeta y nombre de archivo
-                System.Windows.Forms.SaveFileDialog sfdExcel = new System.Windows.Forms.SaveFileDialog();
-                sfdExcel.Title = "Guardar Excel";
-                sfdExcel.Filter = "Archivos Excel (*.xlsx)|*.xlsx";
-                sfdExcel.FileName = "ResultadosConsultas.xlsx";
-                sfdExcel.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                var svc = new ExcelService();
 
-                if (sfdExcel.ShowDialog() != System.Windows.Forms.DialogResult.OK)
-                    return;
+                if (dlg.FormatoSeleccionado == FormatoExportacion.Excel)
+                {
+                    // ── Excel ────────────────────────────────────────────────
+                    byte[] bytes = svc.CrearExcelMultiplesHojas(hojas, dlg.IncluirEncabezados);
 
-                string ruta = sfdExcel.FileName;
-                excelService.GuardarArchivo(archivoExcel, ruta);
+                    var sfd = new System.Windows.Forms.SaveFileDialog
+                    {
+                        Title            = "Guardar Excel",
+                        Filter           = "Archivos Excel (*.xlsx)|*.xlsx",
+                        FileName         = "ResultadosConsultas.xlsx",
+                        InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+                    };
+                    if (sfd.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
 
-                AppendMessage($"Excel generado correctamente en: {ruta}");
-                System.Diagnostics.Process.Start(ruta);
+                    svc.GuardarArchivo(bytes, sfd.FileName);
+                    AppendMessage($"Excel generado en: {sfd.FileName}");
+                    System.Diagnostics.Process.Start(sfd.FileName);
+                }
+                else
+                {
+                    // ── CSV ──────────────────────────────────────────────────
+                    var utf8Bom = new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: true);
+
+                    if (hojas.Count == 1)
+                    {
+                        // Un solo resultado → un único archivo
+                        var primer = hojas.First();
+                        var sfd = new System.Windows.Forms.SaveFileDialog
+                        {
+                            Title            = "Guardar CSV",
+                            Filter           = "CSV (*.csv)|*.csv",
+                            FileName         = svc.SanitizarNombreArchivo(primer.Key) + ".csv",
+                            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+                        };
+                        if (sfd.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+
+                        string csv = svc.CrearCsv(primer.Value, dlg.IncluirEncabezados);
+                        System.IO.File.WriteAllText(sfd.FileName, csv, utf8Bom);
+                        AppendMessage($"CSV generado en: {sfd.FileName}");
+                        System.Diagnostics.Process.Start(sfd.FileName);
+                    }
+                    else
+                    {
+                        // Múltiples resultados → un archivo CSV por resultado, elegir carpeta
+                        var fbd = new System.Windows.Forms.FolderBrowserDialog
+                        {
+                            Description         = "Seleccionar carpeta donde guardar los archivos CSV",
+                            ShowNewFolderButton = true
+                        };
+                        if (fbd.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+
+                        foreach (var hoja in hojas)
+                        {
+                            string nombre = svc.SanitizarNombreArchivo(hoja.Key) + ".csv";
+                            string ruta   = System.IO.Path.Combine(fbd.SelectedPath, nombre);
+                            string csv    = svc.CrearCsv(hoja.Value, dlg.IncluirEncabezados);
+                            System.IO.File.WriteAllText(ruta, csv, utf8Bom);
+                        }
+                        AppendMessage($"{hojas.Count} archivos CSV generados en: {fbd.SelectedPath}");
+                        System.Diagnostics.Process.Start(fbd.SelectedPath);
+                    }
+                }
             }
             catch (Exception ex)
             {
-                AppendMessage("Error al generar Excel: " + ex.Message);
+                AppendMessage("Error al generar el archivo: " + ex.Message);
             }
         }
 
@@ -1718,7 +1772,8 @@ namespace QueryAnalyzer
         {
             DatosConexion datosConexion = new DatosConexion(conexionActual);
             datosConexion.ShowDialog();
-            InicializarConexiones();
+            RefrescarConexionesFiltradas();
+            // Restaurar la selección al mismo ítem (puede haber cambiado el nombre)
             foreach (var item in cbConnectionName.Items)
             {
                 try
@@ -1729,10 +1784,7 @@ namespace QueryAnalyzer
                         break;
                     }
                 }
-                catch (Exception err)
-                {
-
-                }
+                catch { }
             }
         }
 
@@ -1740,7 +1792,8 @@ namespace QueryAnalyzer
         {
             DatosConexion datosConexion = new DatosConexion();
             datosConexion.ShowDialog();
-            InicializarConexiones();
+            RefrescarConexionesFiltradas();
+            // Seleccionar la conexión recién creada (guardada en conexionActual por DatosConexion)
             foreach (var item in cbConnectionName.Items)
             {
                 try
@@ -1751,10 +1804,7 @@ namespace QueryAnalyzer
                         break;
                     }
                 }
-                catch (Exception err)
-                {
-
-                }
+                catch { }
             }
         }
 
@@ -1766,8 +1816,7 @@ namespace QueryAnalyzer
                 var conexiones = ConexionesManager.Cargar();
                 conexiones.Remove(conexionActual.Nombre);
                 ConexionesManager.Guardar(conexiones);
-                cbConnectionName.ItemsSource = conexiones.Values.ToList();
-                cbConnectionName.DisplayMemberPath = "Nombre";
+                RefrescarConexionesFiltradas();
             }
         }
 

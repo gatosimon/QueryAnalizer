@@ -837,7 +837,7 @@
 
                         <Button x:Name="btnClear"         Padding="2,2" Content="Limpiar Resultados"          Click="BtnClear_Click"         Margin="8,4,0,-4"/>
                         <Button x:Name="btnLimpiarLog"    Padding="2,2" Content="Limpiar log"                 Click="BtnLimpiarLog_Click"    Margin="8,4,0,-4"/>
-                        <Button x:Name="btnExcel"         Padding="2,2" Content="Generar Excel"               Click="BtnExcel_Click"         Margin="8,4,0,-4"/>
+                        <Button x:Name="btnExcel"         Padding="2,2" Content="Generar"               Click="BtnExcel_Click"         Margin="8,4,0,-4"/>
                         <TextBlock Text="Columnas (Total):" VerticalAlignment="Center" Margin="12,7,0,-1"/>
                         <TextBlock x:Name="txtColumnCount" Text="0" VerticalAlignment="Center" Margin="6,7,0,-1"/>
                         <TextBlock Text="Filas (Total):" VerticalAlignment="Center" Margin="12,7,0,-1"/>

@@ -92,7 +92,12 @@
       <DependentUpon>GuardarConsultaDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Models\ConsultaGuardada.cs" />
+    <Compile Include="Models\ServidorPreset.cs" />
     <Compile Include="AppConfig.cs" />
+    <Compile Include="ExportarDialog.xaml.cs">
+      <DependentUpon>ExportarDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ServidorPresetManager.cs" />
     <Compile Include="Conexion.cs" />
     <Compile Include="ConexionesManager.cs" />
     <Compile Include="ConfigManager.cs" />
@@ -124,6 +129,10 @@
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml" />
     <Page Include="AyudaWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ExportarDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

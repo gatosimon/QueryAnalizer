@@ -99,6 +99,12 @@
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Al seleccionar una conexión el esquema se recarga en segundo plano; el área de consulta permanece activa."/>
                 <TextBlock Style="{StaticResource Nota}"   Text="Si la conexión no está bien configurada, el intento de conexión finaliza automáticamente tras 15 segundos."/>
 
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Servidores predefinidos"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• El campo Servidor es un desplegable editable: podés elegir un servidor de la lista O escribir uno nuevo directamente."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• La lista se filtra automáticamente según el motor elegido (SQL Server, DB2, PostgreSQL, etc.)."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Al seleccionar un servidor predefinido se autocompletan: Puerto, ¿Es Web?, Usuario y Contraseña."/>
+                <TextBlock Style="{StaticResource Nota}"   Text="Los servidores predefinidos se editan en: %APPDATA%\QueryAnalyzer\servidores_preset.xml. Borrá ese archivo para regenerarlo con los valores de fábrica."/>
+
                 <!-- ══ EXPLORADOR DE ESQUEMA ═══════════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="🗂 Explorador de esquema"/>
 
@@ -180,8 +186,23 @@
                 <TextBlock Style="{StaticResource Titulo}" Text="📊 Resultados"/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Cada consulta genera una pestaña de resultados independiente."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• 'Limpiar Resultados': cierra todas las pestañas de resultados."/>
-                <TextBlock Style="{StaticResource Cuerpo}" Text="• 'Generar Excel': exporta todos los resultados visibles a un archivo .xlsx."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• El panel de mensajes (log) registra tiempos de ejecución, errores y avisos."/>
+
+                <!-- ══ EXPORTAR ════════════════════════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}" Text="💾 Exportar resultados"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Botón 'Generar': abre un diálogo para elegir el formato de exportación."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="📊 Excel (.xlsx)"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Exporta todos los resultados visibles: cada pestaña se convierte en una hoja separada con formato, colores y cabecera congelada."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="📄 CSV (.csv)"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Genera un archivo por cada pestaña de resultados. Si hay un solo resultado se pide el nombre del archivo; si hay varios se elige la carpeta destino."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Separador: punto y coma (;) — estándar en configuraciones regionales en español."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Codificación: UTF-8 con BOM, para apertura directa en Excel sin problemas de acentos."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="☑ Incluir encabezados"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Opción disponible en ambos formatos. Si está marcada, la primera fila contiene los nombres de las columnas."/>
+                <TextBlock Style="{StaticResource Nota}"   Text="Los archivos generados se abren automáticamente con la aplicación predeterminada al terminar la exportación."/>
 
                 <!-- ══ MENÚ CONTEXTUAL DE TABLA ═══════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="🖱 Menú contextual de tabla / vista"/>

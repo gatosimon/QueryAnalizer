@@ -14,7 +14,8 @@ namespace QueryAnalyzer
         // --------------------------------------------------------------------
         // 🔹 MÉTODO PRINCIPAL PARA MULTIHOJAS
         // --------------------------------------------------------------------
-        public byte[] CrearExcelMultiplesHojas(Dictionary<string, System.Data.DataTable> hojas)
+        public byte[] CrearExcelMultiplesHojas(Dictionary<string, System.Data.DataTable> hojas,
+                                              bool incluyeEncabezados = true)
         {
             using (MemoryStream stream = new MemoryStream())
             {
@@ -62,11 +63,14 @@ namespace QueryAnalyzer
                         };
                         sheets.Append(sheet);
 
-                        // 🔹 Encabezado
-                        Row headerRow = new Row() { Height = 20, CustomHeight = true };
-                        foreach (System.Data.DataColumn col in dt.Columns)
-                            headerRow.Append(CreateCell(col.ColumnName, 1));
-                        sheetData.Append(headerRow);
+                        // 🔹 Encabezado (opcional)
+                        if (incluyeEncabezados)
+                        {
+                            Row headerRow = new Row() { Height = 20, CustomHeight = true };
+                            foreach (System.Data.DataColumn col in dt.Columns)
+                                headerRow.Append(CreateCell(col.ColumnName, 1));
+                            sheetData.Append(headerRow);
+                        }
 
                         // 🔹 Filas de datos
                         uint rowIndex = 0;
@@ -409,6 +413,75 @@ namespace QueryAnalyzer
         public void GuardarArchivo(byte[] bytes, string ruta)
         {
             File.WriteAllBytes(ruta, bytes);
+        }
+
+        // ────────────────────────────────────────────────────────────────────
+        // CSV
+        // ────────────────────────────────────────────────────────────────────
+
+        private const char SEP_CSV = ';'; // punto y coma (estándar español/Argentina)
+
+        /// <summary>
+        /// Genera el contenido CSV de un DataTable.
+        /// Usa punto y coma como separador y UTF-8 con BOM para compatibilidad con Excel.
+        /// </summary>
+        public string CrearCsv(System.Data.DataTable dt, bool incluyeEncabezados)
+        {
+            var sb = new System.Text.StringBuilder();
+
+            if (incluyeEncabezados)
+            {
+                var headers = dt.Columns
+                    .Cast<System.Data.DataColumn>()
+                    .Select(c => EscaparCampoCsv(c.ColumnName));
+                sb.AppendLine(string.Join(SEP_CSV.ToString(), headers));
+            }
+
+            foreach (System.Data.DataRow fila in dt.Rows)
+            {
+                var campos = new List<string>();
+                foreach (System.Data.DataColumn col in dt.Columns)
+                {
+                    string valor = fila[col] == System.DBNull.Value
+                        ? ""
+                        : FormatearValorCsv(fila[col], col.DataType);
+                    campos.Add(EscaparCampoCsv(valor));
+                }
+                sb.AppendLine(string.Join(SEP_CSV.ToString(), campos));
+            }
+
+            return sb.ToString();
+        }
+
+        private string FormatearValorCsv(object valor, Type tipo)
+        {
+            if (valor == null) return "";
+            if (tipo == typeof(DateTime) && valor is DateTime dt)
+                return dt.ToString("dd/MM/yyyy");
+            if (tipo == typeof(bool))
+                return (bool)valor ? "True" : "False";
+            return Convert.ToString(valor);
+        }
+
+        private string EscaparCampoCsv(string campo)
+        {
+            if (string.IsNullOrEmpty(campo)) return "";
+            bool necesitaComillas = campo.IndexOf(SEP_CSV) >= 0
+                                 || campo.IndexOf('"')  >= 0
+                                 || campo.IndexOf('\n') >= 0
+                                 || campo.IndexOf('\r') >= 0;
+            if (necesitaComillas)
+                return '"' + campo.Replace("\"", "\"\"") + '"';
+            return campo;
+        }
+
+        /// <summary>
+        /// Devuelve un nombre de archivo seguro eliminando caracteres inválidos en Windows.
+        /// </summary>
+        public string SanitizarNombreArchivo(string nombre)
+        {
+            var invalidos = System.IO.Path.GetInvalidFileNameChars();
+            return new string(nombre.Where(c => !invalidos.Contains(c)).ToArray());
         }
     }
 }

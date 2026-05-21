@@ -106,6 +106,8 @@
                                         </ControlTemplate>
                                     </ToggleButton.Template>
                                 </ToggleButton>
+
+                                <!-- Modo sólo lectura (IsEditable=False) -->
                                 <ContentPresenter x:Name="ContentSite"
                                                   Content="{TemplateBinding SelectionBoxItem}"
                                                   ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
@@ -115,6 +117,20 @@
                                                   HorizontalAlignment="Left"
                                                   IsHitTestVisible="False"
                                                   TextElement.Foreground="{DynamicResource BrushFG}"/>
+
+                                <!-- Modo editable (IsEditable=True): PART_EditableTextBox obligatorio -->
+                                <TextBox x:Name="PART_EditableTextBox"
+                                         Visibility="Collapsed"
+                                         Margin="4,2,22,2"
+                                         Background="Transparent"
+                                         Foreground="{DynamicResource BrushFG}"
+                                         CaretBrush="{DynamicResource BrushFG}"
+                                         SelectionBrush="{DynamicResource BrushSelected}"
+                                         BorderThickness="0"
+                                         Padding="2,0"
+                                         VerticalAlignment="Center"
+                                         Focusable="True"/>
+
                                 <Popup x:Name="Popup"
                                        Placement="Bottom"
                                        IsOpen="{TemplateBinding IsDropDownOpen}"
@@ -126,7 +142,7 @@
                                           MinWidth="{TemplateBinding ActualWidth}"
                                           MaxHeight="{TemplateBinding MaxDropDownHeight}">
                                         <Border x:Name="DropDownBorder"
-                                                Background="{DynamicResource DynamicResource BrushControlBG}"
+                                                Background="{DynamicResource BrushControlBG}"
                                                 BorderBrush="{DynamicResource BrushBorder}"
                                                 BorderThickness="1"/>
                                         <ScrollViewer Margin="4,6" SnapsToDevicePixels="True">
@@ -135,6 +151,13 @@
                                     </Grid>
                                 </Popup>
                             </Grid>
+                            <ControlTemplate.Triggers>
+                                <!-- Activar el TextBox editable cuando IsEditable=True -->
+                                <Trigger Property="IsEditable" Value="True">
+                                    <Setter TargetName="ContentSite"           Property="Visibility" Value="Collapsed"/>
+                                    <Setter TargetName="PART_EditableTextBox"  Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
@@ -193,13 +216,21 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="30"/>
             </Grid.ColumnDefinitions>
-            <TextBox x:Name="txtServidor" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,5,0"/>
-            <Button x:Name="btnBuscarBase" Grid.Column="1" Content="..." Width="25"
+            <!-- ComboBox editable: permite elegir un preset O escribir libremente -->
+            <ComboBox x:Name="cmbServidor"
+                      Grid.Column="0"
+                      IsEditable="True"
+                      IsTextSearchEnabled="False"
+                      VerticalAlignment="Center"
+                      Margin="0,0,5,0"
+                      ToolTip="Seleccioná un servidor predefinido del desplegable, o escribí uno nuevo directamente"
+                      SelectionChanged="cmbServidor_SelectionChanged"/>
+            <Button x:Name="btnBuscarBase" Grid.Column="1" Content="…" Width="25"
                     HorizontalAlignment="Right" IsEnabled="False" Click="btnBuscarBase_Click"/>
         </Grid>
 
-        <TextBlock Grid.Row="3" Grid.Column="0" Text="Puerto:" Margin="5" VerticalAlignment="Center"/>
-        <Grid Grid.Row="3" Grid.Column="1" Margin="5">
+        <TextBlock x:Name="lblPuerto" Grid.Row="3" Grid.Column="0" Text="Puerto:" Margin="5" VerticalAlignment="Center"/>
+        <Grid x:Name="pnlPuerto" Grid.Row="3" Grid.Column="1" Margin="5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>

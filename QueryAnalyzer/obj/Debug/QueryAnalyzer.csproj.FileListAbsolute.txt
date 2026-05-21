@@ -88,3 +88,5 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\AyudaWindow.
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\AyudaWindow.g.cs
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\GuardarConsultaDialog.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\GuardarConsultaDialog.g.cs
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\ExportarDialog.baml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\ExportarDialog.g.cs
