@@ -1237,6 +1237,27 @@ namespace QueryAnalyzer
                         }
                         while (DB.Read());
                     }
+
+                    // Si la consulta devolvió 0 filas, el reader queda en EOF pero el esquema
+                    // sigue accesible. Lo leemos para que el DataGrid muestre los encabezados.
+                    if (dt.Columns.Count == 0)
+                    {
+                        try
+                        {
+                            int fc = DB.Reader?.FieldCount ?? 0;
+                            for (int i = 0; i < fc; i++)
+                            {
+                                string nombreReal  = DB.GetName(i);
+                                Type   tipoCol     = DB.GetFieldType(i) ?? typeof(string);
+                                string nombreFinal = nombreReal;
+                                int    sufijo      = 1;
+                                while (dt.Columns.Contains(nombreFinal))
+                                    nombreFinal = nombreReal + "_" + sufijo++;
+                                dt.Columns.Add(nombreFinal, tipoCol);
+                            }
+                        }
+                        catch { /* reader ya cerrado por el driver; DataGrid sin columnas */ }
+                    }
                 }
                 catch (Exception err)
                 {

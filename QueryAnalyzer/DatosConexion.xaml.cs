@@ -484,6 +484,46 @@ namespace QueryAnalyzer
             Close();
         }
 
+        private void btnCompartir_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                TipoMotor motor = cmbMotor.SelectedValue != null
+                    ? (TipoMotor)cmbMotor.SelectedValue
+                    : TipoMotor.MS_SQL;
+
+                string baseDatos = cmbBaseDatos.Visibility == Visibility.Visible
+                    ? cmbBaseDatos.Text.Trim()
+                    : txtBaseDatos.Text.Trim();
+
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine($"🔌 Conexión: {txtNombre.Text.Trim()}");
+                sb.AppendLine($"Motor: {motor}");
+                sb.AppendLine($"Servidor: {cmbServidor.Text.Trim()}");
+
+                if (!string.IsNullOrWhiteSpace(txtPuerto.Text))
+                    sb.AppendLine($"Puerto: {txtPuerto.Text.Trim()}");
+
+                if (chkEsWeb.IsChecked == true)
+                    sb.AppendLine("Es Web: Sí");
+
+                sb.AppendLine($"Usuario: {txtUsuario.Text.Trim()}");
+                sb.AppendLine($"Contraseña: {txtContrasena.Password}");
+
+                if (!string.IsNullOrWhiteSpace(baseDatos))
+                    sb.AppendLine($"Base de datos: {baseDatos}");
+
+                string texto = sb.ToString().Trim();
+                Clipboard.SetText(texto);
+                MessageBox.Show("Datos de conexión copiados al portapapeles.", "Listo",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"No se pudo abrir WhatsApp Web: {ex.Message}", "Error");
+            }
+        }
+
         private void btnTogglePass_Click(object sender, RoutedEventArgs e)
         {
             if (txtContrasenaRevelada.Visibility == Visibility.Collapsed)
