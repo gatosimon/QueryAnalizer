@@ -107,11 +107,12 @@ namespace QueryAnalyzer
         {
             _configOriginal = ConfigManager.ObtenerConfiguracion();
 
-            chkTemaOscuro.IsChecked           = _configOriginal.TemaOscuro;
-            chkIntellisense.IsChecked         = _configOriginal.IntellisenseActivo;
-            chkCargarUltConsulta.IsChecked    = _configOriginal.CargarUltimaConsulta;
+            chkTemaOscuro.IsChecked            = _configOriginal.TemaOscuro;
+            chkIntellisense.IsChecked          = _configOriginal.IntellisenseActivo;
+            chkCargarUltConsulta.IsChecked     = _configOriginal.CargarUltimaConsulta;
             chkEjecutarSelectDirecto.IsChecked = _configOriginal.EjecutarSelectDirecto;
-            txtMaxFilas.Text                  = _configOriginal.MaxFilasResultado.ToString();
+            chkResultadosEditables.IsChecked   = _configOriginal.ResultadosEditables;
+            txtMaxFilas.Text                   = _configOriginal.MaxFilasResultado.ToString();
 
             txtRutaConfig.Text = "Ruta: " + Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -282,6 +283,7 @@ namespace QueryAnalyzer
                 IntellisenseActivo      = chkIntellisense.IsChecked == true,
                 CargarUltimaConsulta    = chkCargarUltConsulta.IsChecked == true,
                 EjecutarSelectDirecto   = chkEjecutarSelectDirecto.IsChecked == true,
+                ResultadosEditables     = chkResultadosEditables.IsChecked == true,
                 MaxFilasResultado       = maxFilas,
             };
 

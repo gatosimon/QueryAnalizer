@@ -520,7 +520,7 @@ namespace QueryAnalyzer
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"No se pudo abrir WhatsApp Web: {ex.Message}", "Error");
+                MessageBox.Show($"No se pudieron copiar los datos al portapapeles: {ex.Message}", "Error");
             }
         }
 

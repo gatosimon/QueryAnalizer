@@ -655,7 +655,7 @@ namespace QueryAnalyzer
                     // 🔹 Extraemos los parámetros de esta consulta según la pila
                     var parametrosConsulta = ExtraerParametrosParaConsulta(sqlIndividual, parametrosTotales, ref posicionParametro);
 
-                    var (dt, queryEx, truncado) = await ExecuteQueryAsync(connStr, sqlIndividual, parametrosConsulta, maxFilas);
+                    var (dt, queryEx, truncado, esNoQuery) = await ExecuteQueryAsync(connStr, sqlIndividual, parametrosConsulta, maxFilas);
 
                     if (queryEx != null)
                     {
@@ -693,8 +693,8 @@ namespace QueryAnalyzer
 
                     swQuery.Stop();
                     double elapsedMicroseconds = swQuery.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
-                    totalRows += dt.Rows.Count;
-                    totalColumns += dt.Columns.Count;
+                    totalRows    += esNoQuery ? 0 : dt.Rows.Count;
+                    totalColumns += esNoQuery ? 0 : dt.Columns.Count;
 
                     await Dispatcher.InvokeAsync(() =>
                     {
@@ -707,23 +707,28 @@ namespace QueryAnalyzer
                         headerStyle.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(6, 4, 6, 4)));
                         headerStyle.Setters.Add(new Setter(DataGridColumnHeader.SeparatorBrushProperty, (System.Windows.Media.Brush)this.FindResource("BrushBorder")));
 
+                        bool esEditable = _configApp.ResultadosEditables && !esNoQuery;
                         var dataGrid = new DataGrid
                         {
-                            IsReadOnly = true,
+                            IsReadOnly = !esEditable,
+                            CanUserAddRows = esEditable,
+                            CanUserDeleteRows = esEditable,
                             AutoGenerateColumns = true,
                             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                             AlternationCount = 2,
                             RowStyle = (Style)this.FindResource("ResultGridRowStyle"),
-                            ColumnHeaderStyle = headerStyle,// --- APLICAMOS EL ESTILO ---
-                            SelectionMode = DataGridSelectionMode.Single,     // NUEVO
-                            SelectionUnit = DataGridSelectionUnit.FullRow     // NUEVO
+                            ColumnHeaderStyle = headerStyle,
+                            SelectionMode = DataGridSelectionMode.Single,
+                            SelectionUnit = esEditable
+                                ? DataGridSelectionUnit.CellOrRowHeader
+                                : DataGridSelectionUnit.FullRow
                         };
 
-                        // Click simple: selecciona la fila completa
+                        // Click simple: selecciona la fila (solo en modo solo lectura)
                         dataGrid.PreviewMouseLeftButtonDown += (s, mouseEvent) =>
                         {
+                            if (esEditable) return;
                             var clickedElement = mouseEvent.OriginalSource as DependencyObject;
-
                             var cell = FindVisualParent<DataGridCell>(clickedElement);
                             if (cell != null && mouseEvent.ClickCount == 1)
                             {
@@ -736,33 +741,21 @@ namespace QueryAnalyzer
                             }
                         };
 
-                        // Doble click: selecciona el contenido de la celda para copiado
+                        // Doble click: en modo lectura copia la celda; en modo edición WPF lo maneja solo
                         dataGrid.MouseDoubleClick += (s, mouseEvent) =>
                         {
+                            if (esEditable) return;
                             var clickedElement = mouseEvent.OriginalSource as DependencyObject;
-
-                            // Si el doble click viene de un header, no interceptar:
-                            // el DataGrid necesita procesar ese evento para ordenar la columna.
                             if (FindVisualParent<DataGridColumnHeader>(clickedElement) != null)
                                 return;
-
                             var cell = FindVisualParent<DataGridCell>(clickedElement);
                             if (cell != null && cell.Content is TextBlock textBlock)
                             {
-                                // Entrar en modo de edición (aunque sea ReadOnly, podemos seleccionar el texto)
                                 dataGrid.CurrentCell = new DataGridCellInfo(cell);
                                 dataGrid.BeginEdit();
-
-                                // Si tiene contenido, seleccionarlo
                                 if (!string.IsNullOrEmpty(textBlock.Text))
                                 {
-                                    // Seleccionar todo el texto del TextBlock
-                                    var range = new TextRange(textBlock.ContentStart, textBlock.ContentEnd);
-
-                                    // Copiar al portapapeles automáticamente
                                     Clipboard.SetText(textBlock.Text);
-
-                                    // Opcional: mostrar mensaje
                                     AppendMessage($"Celda seleccionada y copiada: {textBlock.Text}");
                                 }
                             }
@@ -857,6 +850,34 @@ namespace QueryAnalyzer
                         };
                         cellContextMenu.Items.Add(menuCopiarTodo);
 
+                        if (esEditable)
+                        {
+                            cellContextMenu.Items.Add(new Separator());
+
+                            var menuEliminarFila = new MenuItem { Header = "🗑 Eliminar fila" };
+                            AplicarEstiloMenuItem(menuEliminarFila);
+                            menuEliminarFila.Click += (s, x) =>
+                            {
+                                if (dataGrid.CurrentCell.Item is DataRowView drv)
+                                    drv.Row.Delete();
+                            };
+                            cellContextMenu.Items.Add(menuEliminarFila);
+
+                            var menuInsertarFila = new MenuItem { Header = "➕ Insertar fila vacía" };
+                            AplicarEstiloMenuItem(menuInsertarFila);
+                            menuInsertarFila.Click += (s, x) =>
+                            {
+                                var view = dataGrid.ItemsSource as System.Data.DataView;
+                                if (view != null)
+                                {
+                                    var newRow = view.Table.NewRow();
+                                    view.Table.Rows.Add(newRow);
+                                    dataGrid.ScrollIntoView(dataGrid.Items[dataGrid.Items.Count - 1]);
+                                }
+                            };
+                            cellContextMenu.Items.Add(menuInsertarFila);
+                        }
+
                         dataGrid.ContextMenu = cellContextMenu;
 
                         // AutoGeneratingColumn se dispara ANTES de que cada columna sea añadida al DataGrid,
@@ -920,15 +941,41 @@ namespace QueryAnalyzer
                         // así WPF ya tiene el handler activo cuando genera las columnas.
                         dataGrid.ItemsSource = dt.DefaultView;
 
-                        // Encabezado del tab: aviso visual si el resultado fue truncado
-                        string tabHeader = truncado
-                            ? $"⚠ Resultado {i + 1} ({dt.Columns.Count} cols, {dt.Rows.Count} filas TRUNCADAS, {FormatoNumero(elapsedMicroseconds)} µs)"
-                            : $"Resultado {i + 1} ({dt.Columns.Count} cols, {dt.Rows.Count} filas, {FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds / 1000000)}) s)";
+                        // Las filas cargadas con Rows.Add() quedan en DataRowState.Added.
+                        // AcceptChanges() las marca como Unchanged para que solo los cambios
+                        // del usuario sean detectados por GetChanges().
+                        if (esEditable) dt.AcceptChanges();
+
+                        // En modo edición: actualizar barra de guardado al detectar cambios en el DataTable.
+                        // Se usa dt.RowChanged/Deleted (no RowEditEnding) porque RowEditEnding dispara
+                        // antes de que el DataTable registre el cambio, entonces GetChanges() retorna null.
+                        if (esEditable)
+                        {
+                            dt.RowChanged += (s, ev) =>
+                            {
+                                if (ev.Action == DataRowAction.Add || ev.Action == DataRowAction.Change)
+                                    Dispatcher.InvokeAsync(ActualizarBarraGuardar);
+                            };
+                            dt.RowDeleted += (s, ev) =>
+                                Dispatcher.InvokeAsync(ActualizarBarraGuardar);
+                        }
+
+                        // Encabezado del tab
+                        string editMark = esEditable ? "✎ " : "";
+                        string tabHeader = esNoQuery
+                            ? $"Resultado {i + 1} — comando ejecutado ({FormatoNumero(elapsedMicroseconds)} µs)"
+                            : truncado
+                                ? $"⚠ Resultado {i + 1} ({dt.Columns.Count} cols, {dt.Rows.Count} filas TRUNCADAS, {FormatoNumero(elapsedMicroseconds)} µs)"
+                                : $"{editMark}Resultado {i + 1} ({dt.Columns.Count} cols, {dt.Rows.Count} filas, {FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds / 1000000)}) s)";
 
                         var tabItem = new TabItem { Header = tabHeader, Content = dataGrid };
+                        if (esEditable)
+                            tabItem.Tag = new TabInfo { Table = dt, Sql = sqlIndividual, ConnStr = connStr };
                         tcResults.Items.Add(tabItem);
 
-                        if (truncado)
+                        if (esNoQuery)
+                            AppendMessage($"Consulta {i + 1} ejecutada en {FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds / 1000000)}) s");
+                        else if (truncado)
                             AppendMessage($"⚠ Resultado truncado a {dt.Rows.Count} filas (límite en Preferencias). " +
                                           $"Usá LIMIT/TOP/FETCH en la consulta, o aumentá el límite en Preferencias → Límite de filas.");
                         else
@@ -1125,8 +1172,314 @@ namespace QueryAnalyzer
             return lista;
         }
 
+        private static (string v1, string v2) ObtenerVerbosSQL(string sql)
+        {
+            if (string.IsNullOrWhiteSpace(sql)) return ("", "");
+            int pos = 0;
+            var sb = new System.Text.StringBuilder(sql.Length);
+            while (pos < sql.Length)
+            {
+                if (pos + 1 < sql.Length && sql[pos] == '/' && sql[pos + 1] == '*')
+                {
+                    int fin = sql.IndexOf("*/", pos + 2, StringComparison.Ordinal);
+                    pos = fin < 0 ? sql.Length : fin + 2;
+                    sb.Append(' ');
+                }
+                else if (pos + 1 < sql.Length && sql[pos] == '-' && sql[pos + 1] == '-')
+                {
+                    int fin = sql.IndexOf('\n', pos + 2);
+                    pos = fin < 0 ? sql.Length : fin + 1;
+                    sb.Append(' ');
+                }
+                else
+                {
+                    sb.Append(sql[pos++]);
+                }
+            }
+            var palabras = sb.ToString().Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            string v1 = palabras.Length > 0 ? palabras[0].ToUpperInvariant() : "";
+            string v2 = palabras.Length > 1 ? palabras[1].ToUpperInvariant() : "";
+            return (v1, v2);
+        }
+
+        private static readonly HashSet<string> _verbosNoSelect = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "DELETE", "UPDATE", "INSERT", "MERGE", "REPLACE",
+            "DROP", "CREATE", "ALTER", "TRUNCATE", "RENAME",
+            "EXEC", "EXECUTE", "CALL",
+            "GRANT", "REVOKE", "DENY"
+        };
+
+        private static bool EsNoSelect(string sql, out string v1, out string v2)
+        {
+            (v1, v2) = ObtenerVerbosSQL(sql);
+            return _verbosNoSelect.Contains(v1);
+        }
+
+        private static string ExtraerNombreTabla(string sql, string v1)
+        {
+            if (string.IsNullOrWhiteSpace(sql)) return "";
+            int pos = 0;
+            var sb = new System.Text.StringBuilder(sql.Length);
+            while (pos < sql.Length)
+            {
+                if (pos + 1 < sql.Length && sql[pos] == '/' && sql[pos + 1] == '*')
+                {
+                    int fin = sql.IndexOf("*/", pos + 2, StringComparison.Ordinal);
+                    pos = fin < 0 ? sql.Length : fin + 2;
+                    sb.Append(' ');
+                }
+                else if (pos + 1 < sql.Length && sql[pos] == '-' && sql[pos + 1] == '-')
+                {
+                    int fin = sql.IndexOf('\n', pos + 2);
+                    pos = fin < 0 ? sql.Length : fin + 1;
+                    sb.Append(' ');
+                }
+                else { sb.Append(sql[pos++]); }
+            }
+            var p = sb.ToString().Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            string Limpiar(string token)
+            {
+                if (token.Length >= 2 &&
+                    ((token[0] == '"'  && token[token.Length - 1] == '"')  ||
+                     (token[0] == '['  && token[token.Length - 1] == ']')  ||
+                     (token[0] == '`'  && token[token.Length - 1] == '`')))
+                    return token.Substring(1, token.Length - 2);
+                return token;
+            }
+            switch (v1.ToUpperInvariant())
+            {
+                case "UPDATE":
+                    return p.Length > 1 ? Limpiar(p[1]) : "";
+                case "DELETE":
+                    if (p.Length > 1 && string.Equals(p[1], "FROM", StringComparison.OrdinalIgnoreCase))
+                        return p.Length > 2 ? Limpiar(p[2]) : "";
+                    return p.Length > 1 ? Limpiar(p[1]) : "";
+                case "INSERT":
+                    if (p.Length > 1 && string.Equals(p[1], "INTO", StringComparison.OrdinalIgnoreCase))
+                        return p.Length > 2 ? Limpiar(p[2]) : "";
+                    return p.Length > 1 ? Limpiar(p[1]) : "";
+                case "TRUNCATE":
+                    if (p.Length > 1 && string.Equals(p[1], "TABLE", StringComparison.OrdinalIgnoreCase))
+                        return p.Length > 2 ? Limpiar(p[2]) : "";
+                    return p.Length > 1 ? Limpiar(p[1]) : "";
+                case "DROP":
+                case "CREATE":
+                case "ALTER":
+                    return p.Length > 2 ? Limpiar(p[2]) : "";
+                default:
+                    return "";
+            }
+        }
+
+        private static string MensajeNoQuery(string v1, string v2, int filasAfectadas, string tabla = "")
+        {
+            string t   = string.IsNullOrWhiteSpace(tabla) ? "" : $" \"{tabla}\"";
+            string en  = string.IsNullOrWhiteSpace(tabla) ? "" : $" en la tabla \"{tabla}\"";
+            string de  = string.IsNullOrWhiteSpace(tabla) ? "" : $" de la tabla \"{tabla}\"";
+            string na  = filasAfectadas < 0  ? ""
+                       : filasAfectadas == 1 ? " (1 fila afectada)"
+                       :                       $" ({filasAfectadas} filas afectadas)";
+            switch (v1)
+            {
+                case "DELETE":
+                    if (filasAfectadas < 0)  return $"Eliminación ejecutada correctamente{de}.";
+                    if (filasAfectadas == 0) return $"No se eliminó ningún registro{de}.";
+                    return filasAfectadas == 1
+                        ? $"Se eliminó 1 registro{de}."
+                        : $"Se eliminaron {filasAfectadas} registros{de}.";
+                case "UPDATE":
+                    if (filasAfectadas < 0)  return $"Actualización ejecutada correctamente{en}.";
+                    if (filasAfectadas == 0) return $"No se actualizó ningún registro{en}.";
+                    return filasAfectadas == 1
+                        ? $"Se actualizó 1 registro{en}."
+                        : $"Se actualizaron {filasAfectadas} registros{en}.";
+                case "INSERT":
+                    if (filasAfectadas < 0)  return $"Inserción ejecutada correctamente{en}.";
+                    if (filasAfectadas == 0) return $"No se insertó ningún registro{en}.";
+                    return filasAfectadas == 1
+                        ? $"Se insertó 1 registro{en}."
+                        : $"Se insertaron {filasAfectadas} registros{en}.";
+                case "MERGE":
+                    return $"MERGE ejecutado correctamente{t}" + na + ".";
+                case "TRUNCATE":
+                    return $"Tabla{t} vaciada correctamente (TRUNCATE).";
+                case "DROP":
+                    switch (v2)
+                    {
+                        case "TABLE":     return $"Tabla{t} eliminada correctamente.";
+                        case "VIEW":      return $"Vista{t} eliminada correctamente.";
+                        case "DATABASE":  return $"Base de datos{t} eliminada correctamente.";
+                        case "PROCEDURE": return $"Procedimiento almacenado{t} eliminado correctamente.";
+                        case "FUNCTION":  return $"Función{t} eliminada correctamente.";
+                        case "INDEX":     return $"Índice{t} eliminado correctamente.";
+                        case "SCHEMA":    return $"Esquema{t} eliminado correctamente.";
+                        case "TRIGGER":   return $"Trigger{t} eliminado correctamente.";
+                        default:          return $"Objeto{t} eliminado correctamente.";
+                    }
+                case "CREATE":
+                    switch (v2)
+                    {
+                        case "TABLE":     return $"Tabla{t} creada correctamente.";
+                        case "VIEW":      return $"Vista{t} creada correctamente.";
+                        case "DATABASE":  return $"Base de datos{t} creada correctamente.";
+                        case "PROCEDURE": return $"Procedimiento almacenado{t} creado correctamente.";
+                        case "FUNCTION":  return $"Función{t} creada correctamente.";
+                        case "INDEX":     return $"Índice{t} creado correctamente.";
+                        case "SCHEMA":    return $"Esquema{t} creado correctamente.";
+                        case "TRIGGER":   return $"Trigger{t} creado correctamente.";
+                        default:          return $"Objeto{t} creado correctamente.";
+                    }
+                case "ALTER":
+                    switch (v2)
+                    {
+                        case "TABLE":     return $"Tabla{t} modificada correctamente.";
+                        case "VIEW":      return $"Vista{t} modificada correctamente.";
+                        case "DATABASE":  return $"Base de datos{t} modificada correctamente.";
+                        case "PROCEDURE": return $"Procedimiento almacenado{t} modificado correctamente.";
+                        case "FUNCTION":  return $"Función{t} modificada correctamente.";
+                        case "SCHEMA":    return $"Esquema{t} modificado correctamente.";
+                        default:          return $"Objeto{t} modificado correctamente.";
+                    }
+                case "EXEC":
+                case "EXECUTE":
+                case "CALL":
+                    return "Procedimiento ejecutado correctamente" + na + ".";
+                case "GRANT":
+                    return "Permisos otorgados correctamente.";
+                case "REVOKE":
+                case "DENY":
+                    return "Permisos revocados/denegados correctamente.";
+                case "RENAME":
+                    return "Objeto renombrado correctamente.";
+                default:
+                    return v1 + " ejecutado correctamente" + na + ".";
+            }
+        }
+
+        private static string ExtraerTablaDesdeSelect(string sql)
+        {
+            if (string.IsNullOrWhiteSpace(sql)) return "";
+            int pos = 0;
+            var sb = new System.Text.StringBuilder(sql.Length);
+            while (pos < sql.Length)
+            {
+                if (pos + 1 < sql.Length && sql[pos] == '/' && sql[pos + 1] == '*')
+                {
+                    int fin = sql.IndexOf("*/", pos + 2, StringComparison.Ordinal);
+                    pos = fin < 0 ? sql.Length : fin + 2;
+                    sb.Append(' ');
+                }
+                else if (pos + 1 < sql.Length && sql[pos] == '-' && sql[pos + 1] == '-')
+                {
+                    int fin = sql.IndexOf('\n', pos + 2);
+                    pos = fin < 0 ? sql.Length : fin + 1;
+                    sb.Append(' ');
+                }
+                else { sb.Append(sql[pos++]); }
+            }
+            var words = sb.ToString().Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < words.Length - 1; i++)
+            {
+                if (!string.Equals(words[i], "FROM", StringComparison.OrdinalIgnoreCase)) continue;
+                string w = words[i + 1];
+                if (w.Length >= 2 &&
+                    ((w[0] == '"' && w[w.Length - 1] == '"') ||
+                     (w[0] == '[' && w[w.Length - 1] == ']') ||
+                     (w[0] == '`' && w[w.Length - 1] == '`')))
+                    return w.Substring(1, w.Length - 2);
+                return w;
+            }
+            return "";
+        }
+
+        private static string FormatoValorSQL(object value, Type type)
+        {
+            if (value == null || value == DBNull.Value) return "NULL";
+            if (type == typeof(string))
+                return $"'{value.ToString().Replace("'", "''")}'";
+            if (type == typeof(bool))
+                return (bool)value ? "1" : "0";
+            if (type == typeof(DateTime))
+                return $"'{((DateTime)value):yyyy-MM-dd HH:mm:ss}'";
+            if (type == typeof(DateTimeOffset))
+                return $"'{(DateTimeOffset)value:yyyy-MM-dd HH:mm:ss}'";
+            return value.ToString();
+        }
+
+        private static string BuildSingleUpdate(DataRow row, string tableName)
+        {
+            var setList   = new System.Collections.Generic.List<string>();
+            var whereList = new System.Collections.Generic.List<string>();
+            foreach (DataColumn col in row.Table.Columns)
+            {
+                var orig = row[col, DataRowVersion.Original];
+                var curr = row[col, DataRowVersion.Current];
+                if (!object.Equals(orig, curr))
+                    setList.Add($"{col.ColumnName} = {FormatoValorSQL(curr, col.DataType)}");
+                whereList.Add(orig == DBNull.Value
+                    ? $"{col.ColumnName} IS NULL"
+                    : $"{col.ColumnName} = {FormatoValorSQL(orig, col.DataType)}");
+            }
+            if (setList.Count == 0) return null;
+            return $"UPDATE {tableName}\n" +
+                   $"SET {string.Join(", ", setList)}\n" +
+                   $"WHERE {string.Join(" AND ", whereList)}";
+        }
+
+        private static string BuildSingleInsert(DataRow row, string tableName)
+        {
+            var cols = new System.Collections.Generic.List<string>();
+            var vals = new System.Collections.Generic.List<string>();
+            foreach (DataColumn col in row.Table.Columns)
+            {
+                var val = row[col, DataRowVersion.Current];
+                if (val == DBNull.Value) continue;
+                cols.Add(col.ColumnName);
+                vals.Add(FormatoValorSQL(val, col.DataType));
+            }
+            if (cols.Count == 0) return null;
+            return $"INSERT INTO {tableName} ({string.Join(", ", cols)})\n" +
+                   $"VALUES ({string.Join(", ", vals)})";
+        }
+
+        private static string BuildSingleDelete(DataRow row, string tableName)
+        {
+            var whereList = new System.Collections.Generic.List<string>();
+            foreach (DataColumn col in row.Table.Columns)
+            {
+                var orig = row[col, DataRowVersion.Original];
+                whereList.Add(orig == DBNull.Value
+                    ? $"{col.ColumnName} IS NULL"
+                    : $"{col.ColumnName} = {FormatoValorSQL(orig, col.DataType)}");
+            }
+            return $"DELETE FROM {tableName}\nWHERE {string.Join(" AND ", whereList)}";
+        }
+
+        private static string BuildSingleStatement(DataRow row, string tableName)
+        {
+            switch (row.RowState)
+            {
+                case DataRowState.Modified: return BuildSingleUpdate(row, tableName);
+                case DataRowState.Added:    return BuildSingleInsert(row, tableName);
+                case DataRowState.Deleted:  return BuildSingleDelete(row, tableName);
+                default: return null;
+            }
+        }
+
+        private static string BuildStatementsPreview(DataTable changes, string tableName)
+        {
+            var sb = new System.Text.StringBuilder();
+            foreach (DataRow row in changes.Rows)
+            {
+                string s = BuildSingleStatement(row, tableName);
+                if (s != null) { sb.AppendLine(s); sb.AppendLine(); }
+            }
+            return sb.ToString();
+        }
+
         /// <param name="maxFilas">Límite de filas a leer (0 = sin límite). Previene OOM en tablas grandes.</param>
-        private async Task<(DataTable dt, Exception error, bool truncado)> ExecuteQueryAsync(
+        private async Task<(DataTable dt, Exception error, bool truncado, bool esNoQuery)> ExecuteQueryAsync(
             string connStr, string sql, List<QueryParameter> parametros, int maxFilas = 0)
         {
             // Capturar el motor antes de entrar al hilo de background (conexionActual es mutable).
@@ -1238,10 +1591,20 @@ namespace QueryAnalyzer
                         while (DB.Read());
                     }
 
-                    // Si la consulta devolvió 0 filas, el reader queda en EOF pero el esquema
-                    // sigue accesible. Lo leemos para que el DataGrid muestre los encabezados.
+                    // 0 columnas: o bien SELECT sin filas, o bien DML/DDL (UPDATE, DELETE, INSERT, DDL…)
                     if (dt.Columns.Count == 0)
                     {
+                        if (EsNoSelect(sql, out var noq_v1, out var noq_v2))
+                        {
+                            // Sentencia DML/DDL: construir mensaje con tabla y filas afectadas
+                            int filasAfectadas = -1;
+                            try { filasAfectadas = DB.Reader?.RecordsAffected ?? -1; } catch { }
+                            string tabla = ExtraerNombreTabla(sql, noq_v1);
+                            dt.Columns.Add("Resultado", typeof(string));
+                            dt.Rows.Add(MensajeNoQuery(noq_v1, noq_v2, filasAfectadas, tabla));
+                            return (dt, null, false, true);
+                        }
+                        // SELECT sin filas: recuperar esquema del reader (en EOF pero sigue accesible)
                         try
                         {
                             int fc = DB.Reader?.FieldCount ?? 0;
@@ -1262,7 +1625,7 @@ namespace QueryAnalyzer
                 catch (Exception err)
                 {
                     _cmdActivo = null;
-                    return (dt, err, truncado);
+                    return (dt, err, truncado, false);
                 }
                 finally
                 {
@@ -1270,7 +1633,7 @@ namespace QueryAnalyzer
                     _cmdActivo = null;
                 }
 
-                return (dt, null, truncado);
+                return (dt, null, truncado, false);
             });
         }
 
@@ -1309,11 +1672,128 @@ namespace QueryAnalyzer
 
         private void BtnClear_Click(object sender, RoutedEventArgs e)
         {
-            // CAMBIO: Limpiar el TabControl
             tcResults.Items.Clear();
+            barGuardarCambios.Visibility = Visibility.Collapsed;
             txtRowCount.Text = "0";
             txtTiempoDeEjecucion.Text = "0";
             AppendMessage("Resultados borrados.");
+        }
+
+        private void tcResults_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ActualizarBarraGuardar();
+        }
+
+        private void ActualizarBarraGuardar()
+        {
+            if (tcResults.SelectedItem is TabItem tab && tab.Tag is TabInfo info)
+            {
+                var changes = info.Table.GetChanges();
+                if (changes != null && changes.Rows.Count > 0)
+                {
+                    int modified = changes.Rows.Cast<DataRow>()
+                        .Count(r => r.RowState == DataRowState.Modified);
+                    int added = changes.Rows.Cast<DataRow>()
+                        .Count(r => r.RowState == DataRowState.Added);
+                    int deleted = changes.Rows.Cast<DataRow>()
+                        .Count(r => r.RowState == DataRowState.Deleted);
+                    var parts = new System.Collections.Generic.List<string>();
+                    if (modified > 0) parts.Add($"{modified} modificada{(modified > 1 ? "s" : "")}");
+                    if (added    > 0) parts.Add($"{added} nueva{(added > 1 ? "s" : "")}");
+                    if (deleted  > 0) parts.Add($"{deleted} eliminada{(deleted > 1 ? "s" : "")}");
+                    lblCambiosPendientes.Text = $"● {string.Join(", ", parts)} sin guardar";
+                    barGuardarCambios.Visibility = Visibility.Visible;
+                    return;
+                }
+            }
+            barGuardarCambios.Visibility = Visibility.Collapsed;
+        }
+
+        private async void BtnGuardarCambios_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(tcResults.SelectedItem is TabItem tab) || !(tab.Tag is TabInfo info))
+                return;
+
+            var changes = info.Table.GetChanges();
+            if (changes == null || changes.Rows.Count == 0)
+            {
+                barGuardarCambios.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            string tableName = ExtraerTablaDesdeSelect(info.Sql);
+            if (string.IsNullOrWhiteSpace(tableName))
+            {
+                MessageBox.Show(
+                    "No se pudo determinar el nombre de la tabla desde la consulta.\n" +
+                    "Solo se pueden guardar cambios de SELECT simples (sin JOINs ni subqueries en el FROM).",
+                    "No se puede guardar", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                string connStr = info.ConnStr;
+                DataRow[] rows = changes.Rows.Cast<DataRow>().ToArray();
+                int mod = rows.Count(r => r.RowState == DataRowState.Modified);
+                int ins = rows.Count(r => r.RowState == DataRowState.Added);
+                int del = rows.Count(r => r.RowState == DataRowState.Deleted);
+
+                var resumenPartes = new System.Collections.Generic.List<string>();
+                if (mod > 0) resumenPartes.Add($"{mod} fila{(mod > 1 ? "s" : "")} modificada{(mod > 1 ? "s" : "")}");
+                if (ins > 0) resumenPartes.Add($"{ins} fila{(ins > 1 ? "s" : "")} nueva{(ins > 1 ? "s" : "")}");
+                if (del > 0) resumenPartes.Add($"{del} fila{(del > 1 ? "s" : "")} eliminada{(del > 1 ? "s" : "")}");
+
+                if (MessageBox.Show(
+                        $"Se guardarán {string.Join(", ", resumenPartes)} en la tabla \"{tableName}\".\n\n¿Continuar?",
+                        "Confirmar cambios",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question) != MessageBoxResult.Yes)
+                    return;
+
+                await Task.Run(() =>
+                {
+                    foreach (DataRow row in rows)
+                    {
+                        string stmt = BuildSingleStatement(row, tableName);
+                        if (stmt == null) continue;
+                        var db = new DataBase(connStr, false);
+                        db.CommandText = stmt;
+                        while (db.Read()) { }
+                        db.CloseConnection();
+                    }
+                });
+
+                info.Table.AcceptChanges();
+                barGuardarCambios.Visibility = Visibility.Collapsed;
+                var resumen = new System.Collections.Generic.List<string>();
+                if (mod > 0) resumen.Add($"{mod} modificada{(mod > 1 ? "s" : "")}");
+                if (ins > 0) resumen.Add($"{ins} insertada{(ins > 1 ? "s" : "")}");
+                if (del > 0) resumen.Add($"{del} eliminada{(del > 1 ? "s" : "")}");
+                AppendMessage($"Cambios guardados en \"{tableName}\": {string.Join(", ", resumen)}.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al guardar los cambios:\n{ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void BtnDescartarCambios_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(tcResults.SelectedItem is TabItem tab) || !(tab.Tag is TabInfo info))
+                return;
+
+            if (MessageBox.Show(
+                    "¿Descartar todos los cambios no guardados?",
+                    "Descartar cambios",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question) != MessageBoxResult.Yes)
+                return;
+
+            info.Table.RejectChanges();
+            barGuardarCambios.Visibility = Visibility.Collapsed;
+            AppendMessage("Cambios descartados.");
         }
 
         private string GetConnectionString()
@@ -1737,26 +2217,33 @@ namespace QueryAnalyzer
         /// <summary>Colapsa / expande la sección Mis Consultas del panel derecho.</summary>
         private void btnToggleMisConsultas_Click(object sender, RoutedEventArgs e)
         {
-            var fila = grdDerecho.RowDefinitions[7];
+            // Misma lógica que Parámetros/Historial: se colapsa/expande la fila de
+            // la SECCIÓN completa (header + contenido) hacia el alto natural del
+            // header, para que el espacio liberado vuelva a las demás secciones.
+            var rowSeccion = grdDerecho.RowDefinitions[4]; // sección Mis Consultas completa
+            var rowSplitter = grdDerecho.RowDefinitions[3]; // splitter Historial/Mis Consultas
+            double altoHeader = dockHeaderMisConsultas.ActualHeight;
 
             if (!_misConsultasColapsado)
             {
-                if (fila.ActualHeight > 0)
-                    _misConsultasAlturaExpandida = fila.ActualHeight;
-                lstMisConsultas.Visibility = Visibility.Collapsed;
-                fila.Height = GridLength.Auto;
+                if (rowSeccion.ActualHeight > altoHeader)
+                    _misConsultasAlturaExpandida = rowSeccion.ActualHeight;
+                rowSeccion.Height = new GridLength(altoHeader, GridUnitType.Pixel);
                 _misConsultasColapsado = true;
                 btnToggleMisConsultas.Content = "▲";
             }
             else
             {
-                fila.Height = new GridLength(
-                    _misConsultasAlturaExpandida > 0 ? _misConsultasAlturaExpandida : 120,
+                rowSeccion.Height = new GridLength(
+                    _misConsultasAlturaExpandida > altoHeader ? _misConsultasAlturaExpandida : 120,
                     GridUnitType.Pixel);
-                lstMisConsultas.Visibility = Visibility.Visible;
                 _misConsultasColapsado = false;
                 btnToggleMisConsultas.Content = "▼";
             }
+
+            rowSplitter.Height = (_historialColapsado || _misConsultasColapsado)
+                ? new GridLength(0)
+                : new GridLength(5);
         }
 
         // ────────────────────────────────────────────────────────
@@ -4929,15 +5416,19 @@ namespace QueryAnalyzer
 
         private void btnToggleParams_Click(object sender, RoutedEventArgs e)
         {
-            var rowContenido = grdDerecho.RowDefinitions[1]; // content Parámetros
-            var rowSplitter = grdDerecho.RowDefinitions[2]; // GridSplitter
+            // Se anima la fila de la SECCIÓN (header + contenido), no la del contenido
+            // a solas: así el espacio liberado lo recupera el resto de las secciones
+            // ("*") y el header conserva siempre su alto natural (Auto).
+            var rowSeccion = grdDerecho.RowDefinitions[0]; // sección Parámetros completa
+            var rowSplitter = grdDerecho.RowDefinitions[1]; // fila del splitter Parámetros/Historial
+            double altoHeader = dockHeaderParams.ActualHeight;
 
             if (!_paramsColapsado)
-                _paramsAlturaExpandida = rowContenido.ActualHeight;
+                _paramsAlturaExpandida = rowSeccion.ActualHeight;
 
-            double to = _paramsColapsado ? _paramsAlturaExpandida : 0;
+            double to = _paramsColapsado ? _paramsAlturaExpandida : altoHeader;
 
-            AnimarFila(rowContenido, to, () =>
+            AnimarFila(rowSeccion, to, () =>
             {
                 _paramsColapsado = !_paramsColapsado;
                 btnToggleParams.Content = _paramsColapsado ? "▼" : "▲";
@@ -4956,19 +5447,28 @@ namespace QueryAnalyzer
 
         private void btnToggleHistorial_Click(object sender, RoutedEventArgs e)
         {
-            var rowContenido = grdDerecho.RowDefinitions[4]; // content Historial
-            var rowSplitter = grdDerecho.RowDefinitions[2]; // GridSplitter
+            // Misma lógica que Parámetros: se anima la fila de la sección completa
+            // (grdDerecho.RowDefinitions[2]), no la fila de contenido dentro de la
+            // sección, para que el espacio liberado vuelva a repartirse entre las
+            // demás secciones ("*") y el header nunca cambie de tamaño.
+            var rowSeccion = grdDerecho.RowDefinitions[2]; // sección Historial completa
+            var rowSplitterPrev = grdDerecho.RowDefinitions[1]; // splitter Parámetros/Historial
+            var rowSplitterNext = grdDerecho.RowDefinitions[3]; // splitter Historial/Mis Consultas
+            double altoHeader = dockHeaderHistorial.ActualHeight;
 
             if (!_historialColapsado)
-                _historialAlturaExpandida = rowContenido.ActualHeight;
+                _historialAlturaExpandida = rowSeccion.ActualHeight;
 
-            double to = _historialColapsado ? _historialAlturaExpandida : 0;
+            double to = _historialColapsado ? _historialAlturaExpandida : altoHeader;
 
-            AnimarFila(rowContenido, to, () =>
+            AnimarFila(rowSeccion, to, () =>
             {
                 _historialColapsado = !_historialColapsado;
                 btnToggleHistorial.Content = _historialColapsado ? "▲" : "▼";
-                rowSplitter.Height = (_paramsColapsado || _historialColapsado)
+                rowSplitterPrev.Height = (_paramsColapsado || _historialColapsado)
+                    ? new GridLength(0)
+                    : new GridLength(5);
+                rowSplitterNext.Height = (_historialColapsado || _misConsultasColapsado)
                     ? new GridLength(0)
                     : new GridLength(5);
             });
@@ -6195,7 +6695,7 @@ namespace QueryAnalyzer
             foreach (var kvp in unicos)
                 AppendMessage($"✅ Tabla '{kvp.Key}' → [{kvp.Value}].[{kvp.Key}]  (corrección automática). Re-ejecutando...");
 
-            var (dtRetry, exRetry, _) = await ExecuteQueryAsync(connStr, sqlCorregido, parametros);
+            var (dtRetry, exRetry, _, _) = await ExecuteQueryAsync(connStr, sqlCorregido, parametros);
             if (exRetry != null)
             {
                 AppendMessage($"Error en re-ejecución con esquema corregido: {exRetry.Message}");
@@ -6203,6 +6703,13 @@ namespace QueryAnalyzer
             }
 
             return (true, sqlCorregido, dtRetry, unicos);
+        }
+
+        private sealed class TabInfo
+        {
+            internal DataTable Table;
+            internal string Sql;
+            internal string ConnStr;
         }
     }
 }

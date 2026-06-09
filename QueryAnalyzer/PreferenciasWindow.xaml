@@ -96,6 +96,10 @@
                                       Content="Al elegir 'SELECT TOP 10' o 'SELECT (todas las cols)', insertar y ejecutar directamente"
                                       Margin="0,0,0,4"
                                       ToolTip="El script se selecciona y ejecuta de inmediato, ignorando el resto del contenido del editor."/>
+                            <CheckBox x:Name="chkResultadosEditables"
+                                      Content="Permitir editar los resultados y guardar los cambios en la base de datos"
+                                      Margin="0,0,0,4"
+                                      ToolTip="Habilita la edición de celdas en los grids de resultado. Aparece un botón 'Guardar cambios' al pie del grid cuando hay modificaciones pendientes."/>
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,4"
                                         ToolTip="Límite de filas que se cargan en el grid. 0 = sin límite (riesgo de OOM en tablas grandes).">
                                 <TextBlock Text="Límite de filas en resultados:"
