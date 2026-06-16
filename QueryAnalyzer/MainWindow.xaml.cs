@@ -1067,7 +1067,15 @@ namespace QueryAnalyzer
                 }
 
                 // ── Mostrar diálogo de formato ───────────────────────────────
-                var dlg = new ExportarDialog { Owner = this };
+                // Intentar pre-rellenar el nombre de tabla del tab activo
+                string nombreTablaDefecto = null;
+                if (tcResults.SelectedItem is TabItem tabActivoPrev)
+                {
+                    if (tabActivoPrev.Tag is TabInfo ti)
+                        nombreTablaDefecto = ExtraerNombreTablaDesdeSQL(ti.Sql);
+                }
+
+                var dlg = new ExportarDialog(nombreTablaDefecto) { Owner = this };
                 if (dlg.ShowDialog() != true) return;
 
                 var svc = new ExcelService();
@@ -1090,7 +1098,7 @@ namespace QueryAnalyzer
                     AppendMessage($"Excel generado en: {sfd.FileName}");
                     System.Diagnostics.Process.Start(sfd.FileName);
                 }
-                else
+                else if (dlg.FormatoSeleccionado == FormatoExportacion.Csv)
                 {
                     // ── CSV ──────────────────────────────────────────────────
                     var utf8Bom = new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: true);
@@ -1134,11 +1142,92 @@ namespace QueryAnalyzer
                         System.Diagnostics.Process.Start(fbd.SelectedPath);
                     }
                 }
+                else
+                {
+                    // ── SQL INSERT ───────────────────────────────────────────
+                    var tabActivo = tcResults.SelectedItem as TabItem;
+                    var gridActivo = tabActivo?.Content as DataGrid;
+
+                    if (gridActivo?.ItemsSource == null)
+                    {
+                        AppendMessage("No hay resultado seleccionado para generar el script.");
+                        return;
+                    }
+
+                    var dt = ((System.Data.DataView)gridActivo.ItemsSource).ToTable();
+
+                    if (dt.Columns.Count == 0)
+                    {
+                        AppendMessage("El resultado activo no tiene columnas.");
+                        return;
+                    }
+
+                    string script = GenerarScriptInsert(dt, dlg.NombreTabla, dlg.IncluirDelete);
+                    var motorActual = conexionActual?.Motor ?? TipoMotor.MS_SQL;
+                    new ScriptResultWindow(script, motorActual) { Owner = this }.Show();
+                    AppendMessage($"Script INSERT generado: {dt.Rows.Count} filas → tabla '{dlg.NombreTabla}'.");
+                }
             }
             catch (Exception ex)
             {
                 AppendMessage("Error al generar el archivo: " + ex.Message);
             }
+        }
+
+        private static string GenerarScriptInsert(
+            System.Data.DataTable dt, string nombreTabla, bool conDelete)
+        {
+            var sb   = new System.Text.StringBuilder();
+            var cols = string.Join(", ", dt.Columns
+                .Cast<System.Data.DataColumn>()
+                .Select(c => c.ColumnName));
+
+            if (conDelete)
+            {
+                sb.AppendLine($"DELETE FROM {nombreTabla};");
+                sb.AppendLine();
+            }
+
+            foreach (System.Data.DataRow row in dt.Rows)
+            {
+                var vals = string.Join(", ", row.ItemArray.Select(EscaparValorSqlInsert));
+                sb.AppendLine($"INSERT INTO {nombreTabla} ({cols}) VALUES ({vals});");
+            }
+
+            return sb.ToString();
+        }
+
+        private static string EscaparValorSqlInsert(object valor)
+        {
+            if (valor == null || valor == DBNull.Value)
+                return "NULL";
+
+            Type t = valor.GetType();
+
+            if (t == typeof(bool))
+                return (bool)valor ? "1" : "0";
+
+            if (t == typeof(byte)  || t == typeof(short)   || t == typeof(int) ||
+                t == typeof(long)  || t == typeof(float)   || t == typeof(double) ||
+                t == typeof(decimal))
+                return Convert.ToString(valor, System.Globalization.CultureInfo.InvariantCulture);
+
+            if (t == typeof(DateTime))
+                return $"'{((DateTime)valor):yyyy-MM-dd HH:mm:ss}'";
+
+            return "'" + valor.ToString().Replace("'", "''") + "'";
+        }
+
+        private static string ExtraerNombreTablaDesdeSQL(string sql)
+        {
+            if (string.IsNullOrWhiteSpace(sql)) return null;
+            // Captura lo que sigue a FROM: opcionalmente schema.tabla o [schema].[tabla]
+            var m = System.Text.RegularExpressions.Regex.Match(
+                sql.Trim(),
+                @"\bFROM\s+((?:\[?[\w#]+\]?\.)?(?:\[?[\w#]+\]?))",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            if (!m.Success) return null;
+            return m.Groups[1].Value.Replace("[", "").Replace("]", "").Replace("\"", "");
         }
 
         private async void BtnLimpiarLog_Click(object sender, RoutedEventArgs e)

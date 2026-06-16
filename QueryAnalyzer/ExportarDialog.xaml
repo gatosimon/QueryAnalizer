@@ -78,7 +78,7 @@
                 BorderBrush="{DynamicResource BrushBorder}"
                 BorderThickness="1" CornerRadius="4"
                 Margin="0,0,0,6" Padding="10,8">
-            <RadioButton x:Name="rbExcel" IsChecked="True" GroupName="Formato">
+            <RadioButton x:Name="rbExcel" IsChecked="True" GroupName="Formato" Checked="rbArchivo_Checked">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📊" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
                     <StackPanel>
@@ -94,8 +94,8 @@
         <Border Background="{DynamicResource BrushControlBG}"
                 BorderBrush="{DynamicResource BrushBorder}"
                 BorderThickness="1" CornerRadius="4"
-                Margin="0,0,0,16" Padding="10,8">
-            <RadioButton x:Name="rbCsv" GroupName="Formato">
+                Margin="0,0,0,6" Padding="10,8">
+            <RadioButton x:Name="rbCsv" GroupName="Formato" Checked="rbArchivo_Checked">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📄" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
                     <StackPanel>
@@ -107,16 +107,49 @@
             </RadioButton>
         </Border>
 
-        <!-- Opciones comunes -->
-        <TextBlock Text="Opciones"
-                   FontWeight="SemiBold"
-                   FontSize="13"
+        <!-- SQL INSERT -->
+        <Border Background="{DynamicResource BrushControlBG}"
+                BorderBrush="{DynamicResource BrushBorder}"
+                BorderThickness="1" CornerRadius="4"
+                Margin="0,0,0,6" Padding="10,8">
+            <RadioButton x:Name="rbSql" GroupName="Formato" Checked="rbSql_Checked">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="🗃" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                    <StackPanel>
+                        <TextBlock Text="SQL Script (INSERT)"  FontWeight="SemiBold" FontSize="13"/>
+                        <TextBlock Text="Una línea INSERT por fila del resultado activo"
+                                   FontSize="10" Opacity="0.65"/>
+                    </StackPanel>
+                </StackPanel>
+            </RadioButton>
+        </Border>
+
+        <!-- Opciones SQL (visible solo cuando rbSql está seleccionado) -->
+        <Border x:Name="pnlOpcionesSql"
+                Visibility="Collapsed"
+                Background="{DynamicResource BrushControlBG}"
+                BorderBrush="{DynamicResource BrushBorder}"
+                BorderThickness="1" CornerRadius="4"
+                Margin="0,0,0,6" Padding="10,10">
+            <StackPanel>
+                <TextBlock Text="Nombre de la tabla destino:" FontSize="12" Margin="0,0,0,4"/>
+                <TextBox x:Name="txtNombreTabla" FontFamily="Consolas" Padding="4,3" Margin="0,0,0,10"/>
+                <CheckBox x:Name="chkDeletePrevio"
+                          Content="Incluir DELETE FROM antes de los INSERTs"
+                          IsChecked="False"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Opciones de archivo (visible solo para Excel/CSV) -->
+        <TextBlock x:Name="lblOpcionesArchivo"
+                   Text="Opciones"
+                   FontWeight="SemiBold" FontSize="13"
                    Margin="0,0,0,8"/>
 
         <CheckBox x:Name="chkEncabezados"
                   Content="Incluir fila de encabezados (nombres de columna)"
                   IsChecked="True"
-                  Margin="0,0,0,20"/>
+                  Margin="0,0,0,16"/>
 
         <!-- Botones -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
