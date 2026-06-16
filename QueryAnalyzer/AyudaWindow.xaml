@@ -95,7 +95,7 @@
                 <TextBlock Style="{StaticResource Titulo}" Text="🔌 Conexiones"/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Nueva / Editar / Eliminar: gestionan las conexiones ODBC guardadas."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Probar conexión: verifica que la conexión sea válida sin cargar el esquema."/>
-                <TextBlock Style="{StaticResource Cuerpo}" Text="• Driver/Proveedor: filtra las conexiones por tipo de motor (SQL Server, PostgreSQL, DB2, SQLite)."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Driver/Proveedor: filtra las conexiones por tipo de motor (SQL Server, PostgreSQL, DB2, SQLite). El filtro se mantiene activo al crear, editar o eliminar conexiones."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Al seleccionar una conexión el esquema se recarga en segundo plano; el área de consulta permanece activa."/>
                 <TextBlock Style="{StaticResource Nota}"   Text="Si la conexión no está bien configurada, el intento de conexión finaliza automáticamente tras 15 segundos."/>
 
@@ -104,6 +104,16 @@
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• La lista se filtra automáticamente según el motor elegido (SQL Server, DB2, PostgreSQL, etc.)."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Al seleccionar un servidor predefinido se autocompletan: Puerto, ¿Es Web?, Usuario y Contraseña."/>
                 <TextBlock Style="{StaticResource Nota}"   Text="Los servidores predefinidos se editan en: %APPDATA%\QueryAnalyzer\servidores_preset.xml. Borrá ese archivo para regenerarlo con los valores de fábrica."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Campos en cascada"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Al cambiar el Motor, todos los campos hacia abajo (Servidor, Puerto, Usuario, Contraseña, Base de datos) se limpian automáticamente."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Al seleccionar un Servidor predefinido, se cargan sus datos y se intenta cargar la lista de bases de datos disponibles."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• SQLite no requiere Puerto, Usuario ni Contraseña: esos campos se ocultan al elegir ese motor."/>
+                <TextBlock Style="{StaticResource Nota}"   Text="Si cambiás de servidor antes de que termine la carga de bases de datos, la carga anterior se cancela automáticamente."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="📤 Compartir datos de conexión"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Botón 'Compartir' en el formulario de conexión: copia al portapapeles los datos relevantes (motor, servidor, puerto, usuario, base de datos) en texto plano."/>
+                <TextBlock Style="{StaticResource Nota}"   Text="La contraseña se incluye en el texto copiado. Tené cuidado al compartir por canales no seguros."/>
 
                 <!-- ══ EXPLORADOR DE ESQUEMA ═══════════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="🗂 Explorador de esquema"/>
@@ -187,6 +197,7 @@
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Cada consulta genera una pestaña de resultados independiente."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• 'Limpiar Resultados': cierra todas las pestañas de resultados."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• El panel de mensajes (log) registra tiempos de ejecución, errores y avisos."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Si una consulta devuelve 0 filas, la grilla igual muestra los encabezados de columna para confirmar que la consulta fue válida y ejecutada correctamente."/>
 
                 <!-- ══ EXPORTAR ════════════════════════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="💾 Exportar resultados"/>
@@ -200,9 +211,16 @@
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Separador: punto y coma (;) — estándar en configuraciones regionales en español."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Codificación: UTF-8 con BOM, para apertura directa en Excel sin problemas de acentos."/>
 
+                <TextBlock Style="{StaticResource Subtitulo}" Text="🗃 SQL Script (INSERT)"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Genera un script SQL con una sentencia INSERT por cada fila del resultado activo (la pestaña seleccionada)."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Se solicita el nombre de la tabla destino, que se pre-completa automáticamente si se detecta en la consulta original."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Opción 'Incluir DELETE FROM antes de los INSERTs': agrega una sentencia DELETE FROM tabla; al inicio del script, útil para reemplazar datos de una tabla en el entorno destino."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• El script generado se muestra en la ventana de visualización y puede copiarse al portapapeles con un clic."/>
+                <TextBlock Style="{StaticResource Nota}"   Text="Útil para copiar datos de producción a desarrollo: ejecutá SELECT * FROM tabla en producción, luego Generar → SQL Script (INSERT) y pegá el script en el entorno destino."/>
+
                 <TextBlock Style="{StaticResource Subtitulo}" Text="☑ Incluir encabezados"/>
-                <TextBlock Style="{StaticResource Cuerpo}" Text="• Opción disponible en ambos formatos. Si está marcada, la primera fila contiene los nombres de las columnas."/>
-                <TextBlock Style="{StaticResource Nota}"   Text="Los archivos generados se abren automáticamente con la aplicación predeterminada al terminar la exportación."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Opción disponible en los formatos Excel y CSV. Si está marcada, la primera fila contiene los nombres de las columnas."/>
+                <TextBlock Style="{StaticResource Nota}"   Text="Los archivos generados (Excel y CSV) se abren automáticamente con la aplicación predeterminada al terminar la exportación."/>
 
                 <!-- ══ MENÚ CONTEXTUAL DE TABLA ═══════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="🖱 Menú contextual de tabla / vista"/>
