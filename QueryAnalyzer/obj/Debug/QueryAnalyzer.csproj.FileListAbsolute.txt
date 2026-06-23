@@ -90,3 +90,14 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\GuardarConsu
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\GuardarConsultaDialog.g.cs
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\ExportarDialog.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Debug\ExportarDialog.g.cs
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\TempCheck\QueryAnalyzer.exe
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\TempCheck\QueryAnalyzer.pdb
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\TempCheck\CapiDL.dll
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\TempCheck\DocumentFormat.OpenXml.dll
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\TempCheck\ICSharpCode.AvalonEdit.dll
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\TempCheck\Npgsql.dll
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\TempCheck\System.Threading.Tasks.Extensions.dll
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\TempCheck\System.ValueTuple.dll
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\TempCheck\ICSharpCode.AvalonEdit.xml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\TempCheck\Npgsql.xml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\TempCheck\System.Threading.Tasks.Extensions.xml

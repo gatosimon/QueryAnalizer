@@ -641,6 +641,46 @@ namespace QueryAnalyzer
                         .ToList();
                 });
 
+                // ── Validar parámetros sin valor ─────────────────────────────
+                int totalInterrogantes = validQueries.Sum(q => q.Count(c => c == '?'));
+                if (totalInterrogantes > 0)
+                {
+                    var sinValor = (parametrosTotales ?? new List<QueryParameter>())
+                        .Select((p, idx) => new { p, idx })
+                        .Where(x => string.IsNullOrWhiteSpace(x.p.Valor))
+                        .ToList();
+                    bool faltanFilas = totalInterrogantes > (parametrosTotales?.Count ?? 0);
+
+                    if (sinValor.Count > 0 || faltanFilas)
+                    {
+                        var msg = new System.Text.StringBuilder();
+                        msg.AppendLine("La consulta tiene parámetros (?) sin valor asignado:\n");
+
+                        foreach (var x in sinValor)
+                            msg.AppendLine($"  • {x.p.Nombre}  (posición {x.idx + 1})");
+
+                        if (faltanFilas)
+                        {
+                            int n = totalInterrogantes - (parametrosTotales?.Count ?? 0);
+                            msg.AppendLine($"  • {n} '?' en la consulta sin fila en la grilla de parámetros.");
+                        }
+
+                        msg.AppendLine("\nLos parámetros faltantes se enviarán como NULL, lo que puede");
+                        msg.AppendLine("devolver resultados vacíos o incorrectos.");
+                        msg.AppendLine("\n¿Ejecutar de todas formas?");
+
+                        var resp = MessageBox.Show(
+                            msg.ToString(),
+                            "Parámetros sin asignar",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Warning,
+                            MessageBoxResult.No);
+
+                        if (resp != MessageBoxResult.Yes)
+                            return;
+                    }
+                }
+
                 int posicionParametro = 0;
 
                 for (int i = 0; i < validQueries.Count; i++)
@@ -1490,27 +1530,142 @@ namespace QueryAnalyzer
             if (type == typeof(bool))
                 return (bool)value ? "1" : "0";
             if (type == typeof(DateTime))
-                return $"'{((DateTime)value):yyyy-MM-dd HH:mm:ss}'";
+                return $"'{((DateTime)value).ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture)}'";
             if (type == typeof(DateTimeOffset))
-                return $"'{(DateTimeOffset)value:yyyy-MM-dd HH:mm:ss}'";
+                return $"'{((DateTimeOffset)value).ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture)}'";
+            // Numéricos: forzar punto decimal (InvariantCulture). En configuración regional
+            // es-AR, value.ToString() sin cultura usa coma decimal y genera SQL inválido
+            // (ej. "SET Precio = 123,45"), lo que hacía fallar el UPDATE/INSERT silenciosamente
+            // o con error de sintaxis.
+            if (type == typeof(int) || type == typeof(long) || type == typeof(short) || type == typeof(byte) ||
+                type == typeof(decimal) || type == typeof(double) || type == typeof(float))
+                return Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
             return value.ToString();
         }
 
-        private static string BuildSingleUpdate(DataRow row, string tableName)
+        /// <summary>
+        /// Columnas binarias (rowversion/timestamp/varbinary) no se pueden representar como
+        /// literal SQL de forma confiable: se excluyen de SET/WHERE/INSERT.
+        /// </summary>
+        private static bool EsColumnaBinaria(Type type) => type == typeof(byte[]);
+
+        /// <summary>
+        /// Devuelve las columnas que forman la clave primaria de la tabla (o, si no tiene PK,
+        /// las del primer índice UNIQUE encontrado). Se usan para el WHERE de UPDATE/DELETE en
+        /// lugar de comparar por todas las columnas: comparar un DateTime por igualdad literal
+        /// (ej. '2026-06-04 06:56:29.610') falla seguido porque el valor recuperado por ODBC no
+        /// siempre coincide byte a byte con lo almacenado (redondeo de fracciones de segundo,
+        /// diferencias entre drivers/motores), y motores como DB2 no siempre exponen una "key
+        /// column" accesible de la misma forma aunque sí tengan índices.
+        /// Si no se encuentra ninguna clave, devuelve lista vacía: el llamador debe caer de
+        /// vuelta a comparar por todas las columnas (comportamiento anterior).
+        /// </summary>
+        private static System.Collections.Generic.List<string> ObtenerColumnasClave(
+            string connStr, TipoMotor motor, string tableName)
+        {
+            var resultado = new System.Collections.Generic.List<string>();
+            try
+            {
+                string tablaSimple = tableName.Contains(".")
+                    ? tableName.Substring(tableName.LastIndexOf('.') + 1)
+                    : tableName;
+                tablaSimple = tablaSimple.Trim('[', ']', '"', '`');
+
+                var DB = new DataBase(connStr, false);
+
+                if (motor == TipoMotor.SQLite)
+                {
+                    DB.CommandText = $"PRAGMA table_info('{tablaSimple}')";
+                    var claves = new System.Collections.Generic.List<(string nombre, int orden)>();
+                    while (DB.Read())
+                    {
+                        int pk = Convert.ToInt32(DB.Reader["pk"]);
+                        if (pk > 0) claves.Add((DB.Reader["name"].ToString(), pk));
+                    }
+                    DB.CloseConnection();
+                    return claves.OrderBy(c => c.orden).Select(c => c.nombre).ToList();
+                }
+
+                string sql = null, colIndice = null, colOrden = null;
+                switch (motor)
+                {
+                    case TipoMotor.MS_SQL:
+                        colIndice = "IndexId"; colOrden = "ColOrder";
+                        sql = $@"SELECT c.name AS ColumnName, i.index_id AS IndexId, ic.key_ordinal AS ColOrder
+                                 FROM sys.indexes i
+                                 INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+                                 INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+                                 INNER JOIN sys.objects o ON i.object_id = o.object_id
+                                 WHERE o.name = '{tablaSimple}' AND ic.is_included_column = 0
+                                 ORDER BY i.is_primary_key DESC, i.is_unique DESC, i.index_id, ic.key_ordinal";
+                        break;
+                    case TipoMotor.DB2:
+                        colIndice = "IndexName"; colOrden = "ColOrder";
+                        sql = $@"SELECT c.COLNAME AS ColumnName, i.INDNAME AS IndexName, c.COLSEQ AS ColOrder
+                                 FROM SYSCAT.INDEXES i
+                                 JOIN SYSCAT.INDEXCOLUSE c ON i.INDNAME = c.INDNAME AND i.INDSCHEMA = c.INDSCHEMA
+                                 WHERE i.TABNAME = UPPER('{tablaSimple}')
+                                 ORDER BY CASE i.UNIQUERULE WHEN 'P' THEN 0 WHEN 'U' THEN 1 ELSE 2 END, i.INDNAME, c.COLSEQ";
+                        break;
+                    case TipoMotor.POSTGRES:
+                        colIndice = "IndexName"; colOrden = "ColOrder";
+                        sql = $@"SELECT a.attname AS ColumnName, i.relname AS IndexName,
+                                        array_position(ix.indkey, a.attnum) AS ColOrder
+                                 FROM pg_class t
+                                 JOIN pg_index ix ON t.oid = ix.indrelid
+                                 JOIN pg_class i ON i.oid = ix.indexrelid
+                                 JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
+                                 WHERE t.relname = '{tablaSimple}'
+                                 ORDER BY ix.indisprimary DESC, ix.indisunique DESC, i.relname, ColOrder";
+                        break;
+                }
+                if (sql == null) return resultado;
+
+                DB.CommandText = sql;
+                var dt = new DataTable();
+                DB.DataAdapter.Fill(dt);
+                DB.CloseConnection();
+                if (dt.Rows.Count == 0) return resultado;
+
+                // El ORDER BY de cada consulta ya deja en la primera fila el índice "preferido"
+                // (PK si existe, sino el primer UNIQUE). Tomamos todas las filas de ese mismo
+                // índice y las ordenamos por su posición dentro de él.
+                object idIndicePreferido = dt.Rows[0][colIndice];
+                resultado = dt.AsEnumerable()
+                    .Where(r => Equals(r[colIndice], idIndicePreferido))
+                    .OrderBy(r => Convert.ToInt32(r[colOrden]))
+                    .Select(r => r["ColumnName"].ToString())
+                    .ToList();
+            }
+            catch
+            {
+                // Catálogo no accesible / tabla inexistente / motor sin soporte: se cae de
+                // vuelta a comparar por todas las columnas (comportamiento anterior).
+            }
+            return resultado;
+        }
+
+        private static string BuildSingleUpdate(DataRow row, string tableName,
+            System.Collections.Generic.List<string> columnasClave)
         {
             var setList   = new System.Collections.Generic.List<string>();
             var whereList = new System.Collections.Generic.List<string>();
+            bool usarClave = columnasClave != null && columnasClave.Count > 0;
             foreach (DataColumn col in row.Table.Columns)
             {
+                if (EsColumnaBinaria(col.DataType)) continue;
                 var orig = row[col, DataRowVersion.Original];
                 var curr = row[col, DataRowVersion.Current];
                 if (!object.Equals(orig, curr))
                     setList.Add($"{col.ColumnName} = {FormatoValorSQL(curr, col.DataType)}");
+
+                if (usarClave && !columnasClave.Contains(col.ColumnName, StringComparer.OrdinalIgnoreCase))
+                    continue;
                 whereList.Add(orig == DBNull.Value
                     ? $"{col.ColumnName} IS NULL"
                     : $"{col.ColumnName} = {FormatoValorSQL(orig, col.DataType)}");
             }
-            if (setList.Count == 0) return null;
+            if (setList.Count == 0 || whereList.Count == 0) return null;
             return $"UPDATE {tableName}\n" +
                    $"SET {string.Join(", ", setList)}\n" +
                    $"WHERE {string.Join(" AND ", whereList)}";
@@ -1522,6 +1677,7 @@ namespace QueryAnalyzer
             var vals = new System.Collections.Generic.List<string>();
             foreach (DataColumn col in row.Table.Columns)
             {
+                if (EsColumnaBinaria(col.DataType)) continue;
                 var val = row[col, DataRowVersion.Current];
                 if (val == DBNull.Value) continue;
                 cols.Add(col.ColumnName);
@@ -1532,36 +1688,44 @@ namespace QueryAnalyzer
                    $"VALUES ({string.Join(", ", vals)})";
         }
 
-        private static string BuildSingleDelete(DataRow row, string tableName)
+        private static string BuildSingleDelete(DataRow row, string tableName,
+            System.Collections.Generic.List<string> columnasClave)
         {
             var whereList = new System.Collections.Generic.List<string>();
+            bool usarClave = columnasClave != null && columnasClave.Count > 0;
             foreach (DataColumn col in row.Table.Columns)
             {
+                if (EsColumnaBinaria(col.DataType)) continue;
+                if (usarClave && !columnasClave.Contains(col.ColumnName, StringComparer.OrdinalIgnoreCase))
+                    continue;
                 var orig = row[col, DataRowVersion.Original];
                 whereList.Add(orig == DBNull.Value
                     ? $"{col.ColumnName} IS NULL"
                     : $"{col.ColumnName} = {FormatoValorSQL(orig, col.DataType)}");
             }
+            if (whereList.Count == 0) return null;
             return $"DELETE FROM {tableName}\nWHERE {string.Join(" AND ", whereList)}";
         }
 
-        private static string BuildSingleStatement(DataRow row, string tableName)
+        private static string BuildSingleStatement(DataRow row, string tableName,
+            System.Collections.Generic.List<string> columnasClave)
         {
             switch (row.RowState)
             {
-                case DataRowState.Modified: return BuildSingleUpdate(row, tableName);
+                case DataRowState.Modified: return BuildSingleUpdate(row, tableName, columnasClave);
                 case DataRowState.Added:    return BuildSingleInsert(row, tableName);
-                case DataRowState.Deleted:  return BuildSingleDelete(row, tableName);
+                case DataRowState.Deleted:  return BuildSingleDelete(row, tableName, columnasClave);
                 default: return null;
             }
         }
 
-        private static string BuildStatementsPreview(DataTable changes, string tableName)
+        private static string BuildStatementsPreview(DataTable changes, string tableName,
+            System.Collections.Generic.List<string> columnasClave)
         {
             var sb = new System.Text.StringBuilder();
             foreach (DataRow row in changes.Rows)
             {
-                string s = BuildSingleStatement(row, tableName);
+                string s = BuildSingleStatement(row, tableName, columnasClave);
                 if (s != null) { sb.AppendLine(s); sb.AppendLine(); }
             }
             return sb.ToString();
@@ -1840,15 +2004,38 @@ namespace QueryAnalyzer
                         MessageBoxImage.Question) != MessageBoxResult.Yes)
                     return;
 
+                TipoMotor motorActual = conexionActual?.Motor ?? TipoMotor.MS_SQL;
+
+                // Buscar la clave primaria (o un índice único) para armar el WHERE de
+                // UPDATE/DELETE solo con esas columnas. Si no se encuentra ninguna, se cae
+                // de vuelta a comparar por todas las columnas (comportamiento anterior).
+                var columnasClave = await Task.Run(() =>
+                    ObtenerColumnasClave(connStr, motorActual, tableName));
+
+                int filasSinAfectar = 0;
+                int filasSinSentencia = 0;
+
                 await Task.Run(() =>
                 {
                     foreach (DataRow row in rows)
                     {
-                        string stmt = BuildSingleStatement(row, tableName);
-                        if (stmt == null) continue;
+                        string stmt = BuildSingleStatement(row, tableName, columnasClave);
+                        if (stmt == null) { filasSinSentencia++; continue; }
+
                         var db = new DataBase(connStr, false);
                         db.CommandText = stmt;
                         while (db.Read()) { }
+
+                        // Para UPDATE/DELETE, 0 filas afectadas significa que el WHERE (construido
+                        // con los valores originales) no encontró la fila en la base de datos: el
+                        // cambio NO se guardó aunque no se haya producido ninguna excepción.
+                        if (row.RowState != DataRowState.Added)
+                        {
+                            int afectadas = -1;
+                            try { afectadas = db.Reader?.RecordsAffected ?? -1; } catch { }
+                            if (afectadas == 0) filasSinAfectar++;
+                        }
+
                         db.CloseConnection();
                     }
                 });
@@ -1860,6 +2047,21 @@ namespace QueryAnalyzer
                 if (ins > 0) resumen.Add($"{ins} insertada{(ins > 1 ? "s" : "")}");
                 if (del > 0) resumen.Add($"{del} eliminada{(del > 1 ? "s" : "")}");
                 AppendMessage($"Cambios guardados en \"{tableName}\": {string.Join(", ", resumen)}.");
+
+                if (filasSinAfectar > 0 || filasSinSentencia > 0)
+                {
+                    var advertencia = new System.Text.StringBuilder();
+                    advertencia.AppendLine("Atención: no todos los cambios se aplicaron realmente en la base de datos.\n");
+                    if (filasSinAfectar > 0)
+                        advertencia.AppendLine($"• {filasSinAfectar} fila(s) no coincidieron con ningún registro en \"{tableName}\" " +
+                            "(la fila original ya no existe o sus valores cambiaron en el origen).");
+                    if (filasSinSentencia > 0)
+                        advertencia.AppendLine($"• {filasSinSentencia} fila(s) no generaron ninguna sentencia SQL (sin columnas para comparar/actualizar).");
+                    advertencia.AppendLine("\nVolvé a ejecutar la consulta para verificar el estado real de los datos.");
+
+                    MessageBox.Show(advertencia.ToString(), "Algunos cambios no se aplicaron",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
             }
             catch (Exception ex)
             {
