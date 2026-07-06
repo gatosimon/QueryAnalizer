@@ -1253,7 +1253,13 @@ namespace QueryAnalyzer
                 return Convert.ToString(valor, System.Globalization.CultureInfo.InvariantCulture);
 
             if (t == typeof(DateTime))
-                return $"'{((DateTime)valor):yyyy-MM-dd HH:mm:ss}'";
+                return $"'{((DateTime)valor).ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture)}'";
+
+            if (t == typeof(DateTimeOffset))
+                return $"'{((DateTimeOffset)valor).ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture)}'";
+
+            if (t == typeof(byte[]))
+                return "NULL";
 
             return "'" + valor.ToString().Replace("'", "''") + "'";
         }

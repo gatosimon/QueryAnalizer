@@ -9,7 +9,9 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\System.Val
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\ICSharpCode.AvalonEdit.xml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\Npgsql.xml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\System.Threading.Tasks.Extensions.xml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.csproj.AssemblyReference.cache
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\AyudaWindow.baml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\ExportarDialog.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\GuardarConsultaDialog.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\DatosConexion.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\MainWindow.baml
@@ -19,6 +21,7 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\ScriptResu
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\InstaladorDriversWindow.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\TableDesignerWindow.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\AyudaWindow.g.cs
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\ExportarDialog.g.cs
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\GuardarConsultaDialog.g.cs
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\DatosConexion.g.cs
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\MainWindow.g.cs
@@ -35,6 +38,3 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnaly
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.csproj.CopyComplete
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.exe
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.pdb
-C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.csproj.AssemblyReference.cache
-C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\ExportarDialog.baml
-C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\ExportarDialog.g.cs

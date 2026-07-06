@@ -99,6 +99,16 @@ namespace QueryAnalyzer
                 },
                 new ServidorPreset
                 {
+                    NombreVisible = "DB2 DRI",
+                    Servidor      = "133.123.108.29",
+                    Puerto        = "50000",
+                    EsWeb         = false,
+                    Usuario       = "db2admin",
+                    Contrasena    = "db2admin",
+                    Motor         = TipoMotor.DB2
+                },
+                new ServidorPreset
+                {
                     NombreVisible = "Produccion DB2",
                     Servidor      = "SERVER01",
                     Puerto        = "50000",
