@@ -42,6 +42,11 @@ namespace QueryAnalyzer
         private List<string> _resultadoBusqueda = null;  // lista de "schema.tabla" o "tabla"
         private string _terminoBusqueda = "";
 
+        // Selección persistente de tablas/vistas (sobrevive filtros y rebuilds del árbol)
+        // Clave: headerText (ej: "dbo.Clientes" o "Clientes"); Valor: tag del nodo
+        private readonly Dictionary<string, NodoTablaTag> _seleccionPersistente =
+            new Dictionary<string, NodoTablaTag>(StringComparer.OrdinalIgnoreCase);
+
         public Dictionary<string, System.Data.Odbc.OdbcType> OdbcTypes { get; set; }
         public List<QueryParameter> Parametros { get; set; }
 
@@ -2767,8 +2772,12 @@ namespace QueryAnalyzer
                             Margin = new System.Windows.Thickness(0, 0, 4, 0),
                             ToolTip = "Seleccionar para Documentar / Esquematizar"
                         };
-                        chkNodo.Checked   += (cs, ce) => ActualizarContadorSeleccion();
-                        chkNodo.Unchecked += (cs, ce) => ActualizarContadorSeleccion();
+                        // Restaurar selección previa si esta tabla/vista estaba seleccionada
+                        if (_seleccionPersistente.ContainsKey(headerText))
+                            chkNodo.IsChecked = true;
+
+                        chkNodo.Checked   += (cs, ce) => { _seleccionPersistente[headerText] = new NodoTablaTag(capTabla, capTipo); ActualizarContadorSeleccion(); };
+                        chkNodo.Unchecked += (cs, ce) => { _seleccionPersistente.Remove(headerText); ActualizarContadorSeleccion(); };
                         tablaHeader.Children.Add(chkNodo);
 
                         tablaHeader.Children.Add(new System.Windows.Controls.Image
@@ -4514,27 +4523,59 @@ namespace QueryAnalyzer
         }
 
         /// <summary>
-        /// Devuelve los nodos visibles que tienen el CheckBox marcado.
+        /// Devuelve los nodos con CheckBox marcado (visibles en el árbol actual)
+        /// más nodos virtuales para las tablas/vistas seleccionadas que no están
+        /// en el árbol por efecto de un filtro activo.
         /// </summary>
         private List<TreeViewItem> GetNodosSeleccionados()
         {
-            return tvSchema.Items
-                .OfType<TreeViewItem>()
-                .Where(n => n.Visibility == System.Windows.Visibility.Visible &&
-                            ObtenerCheckboxNodo(n)?.IsChecked == true)
-                .ToList();
+            var resultado   = new List<TreeViewItem>();
+            var keysEnArbol = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (TreeViewItem nodo in tvSchema.Items)
+            {
+                string key = ObtenerHeaderText(nodo);
+                keysEnArbol.Add(key);
+                if (ObtenerCheckboxNodo(nodo)?.IsChecked == true)
+                    resultado.Add(nodo);
+            }
+
+            // Agregar seleccionados que el filtro activo ocultó del árbol
+            foreach (var kvp in _seleccionPersistente)
+            {
+                if (!keysEnArbol.Contains(kvp.Key))
+                    resultado.Add(CrearNodoVirtual(kvp.Key, kvp.Value));
+            }
+
+            return resultado;
         }
 
-        /// <summary>Actualiza el contador "N sel." en la barra de selección múltiple.</summary>
+        /// <summary>Crea un TreeViewItem sintético con Tag y header compatibles con ObtenerHeaderText.</summary>
+        private TreeViewItem CrearNodoVirtual(string headerText, NodoTablaTag tag)
+        {
+            var header = new System.Windows.Controls.StackPanel { Orientation = Orientation.Horizontal };
+            header.Children.Add(new System.Windows.Controls.CheckBox { IsChecked = true, VerticalAlignment = VerticalAlignment.Center });
+            header.Children.Add(new System.Windows.Controls.Image());
+            header.Children.Add(new System.Windows.Controls.TextBlock { Text = headerText });
+            return new TreeViewItem { Header = header, Tag = tag };
+        }
+
+        /// <summary>Actualiza el contador "N sel." usando el set persistente (incluye items ocultos por filtro).</summary>
         private void ActualizarContadorSeleccion()
         {
             if (txtSeleccionContador == null) return;
-            int n = tvSchema.Items
-                .OfType<TreeViewItem>()
-                .Count(nodo => nodo.Visibility == System.Windows.Visibility.Visible &&
-                               ObtenerCheckboxNodo(nodo)?.IsChecked == true);
-            txtSeleccionContador.Text = $"{n} sel.";
-            if (btnGenerarJoin != null) btnGenerarJoin.IsEnabled = n >= 2;
+            int total = _seleccionPersistente.Count;
+            txtSeleccionContador.Text = $"{total} sel.";
+
+            // JOIN solo aplica a nodos visibles con columnas cargadas
+            if (btnGenerarJoin != null)
+            {
+                int visiblesChecked = tvSchema.Items
+                    .OfType<TreeViewItem>()
+                    .Count(n => n.Visibility == System.Windows.Visibility.Visible &&
+                                ObtenerCheckboxNodo(n)?.IsChecked == true);
+                btnGenerarJoin.IsEnabled = visiblesChecked >= 2;
+            }
         }
 
         private void btnSelTodos_Click(object sender, RoutedEventArgs e)
@@ -4542,6 +4583,9 @@ namespace QueryAnalyzer
             foreach (TreeViewItem nodo in tvSchema.Items)
                 if (nodo.Visibility == System.Windows.Visibility.Visible)
                 {
+                    string key = ObtenerHeaderText(nodo);
+                    if (!string.IsNullOrEmpty(key) && nodo.Tag is NodoTablaTag tag)
+                        _seleccionPersistente[key] = tag;
                     var chk = ObtenerCheckboxNodo(nodo);
                     if (chk != null) chk.IsChecked = true;
                 }
@@ -4550,6 +4594,8 @@ namespace QueryAnalyzer
 
         private void btnDeselTodos_Click(object sender, RoutedEventArgs e)
         {
+            // Único punto donde se limpia la selección completa
+            _seleccionPersistente.Clear();
             foreach (TreeViewItem nodo in tvSchema.Items)
             {
                 var chk = ObtenerCheckboxNodo(nodo);

@@ -369,24 +369,32 @@ namespace QueryAnalyzer
                 // Motor primero → dispara cmbMotor_SelectionChanged (sin cascadeo por el flag)
                 cmbMotor.SelectedValue = ConexionActual.Motor;
 
-                // Restaurar servidor explícitamente
-                cmbServidor.Text       = ConexionActual.Servidor;
-
-                txtPuerto.Text         = ConexionActual.Puerto;
-                chkEsWeb.IsChecked     = ConexionActual.EsWeb;
-                txtUsuario.Text        = ConexionActual.Usuario;
-                txtContrasena.Password = ConexionActual.Contrasena;
+                if (!string.IsNullOrWhiteSpace(ConexionActual.ConnectionStringCustom))
+                {
+                    chkUsarConnectionString.IsChecked = true;
+                    txtConnectionString.Text = ConexionActual.ConnectionStringCustom;
+                }
+                else
+                {
+                    cmbServidor.Text       = ConexionActual.Servidor;
+                    txtPuerto.Text         = ConexionActual.Puerto;
+                    chkEsWeb.IsChecked     = ConexionActual.EsWeb;
+                    txtUsuario.Text        = ConexionActual.Usuario;
+                    txtContrasena.Password = ConexionActual.Contrasena;
+                }
             }
             finally
             {
                 _inicializando = false;
             }
 
-            // Cargar bases de datos (fuera del flag: opera en async)
-            CargarBasesDatosAsync(
-                ConexionActual.Motor, ConexionActual.Servidor, ConexionActual.Puerto,
-                ConexionActual.Usuario, ConexionActual.Contrasena, ConexionActual.EsWeb,
-                ConexionActual.BaseDatos ?? "");
+            if (string.IsNullOrWhiteSpace(ConexionActual.ConnectionStringCustom))
+            {
+                CargarBasesDatosAsync(
+                    ConexionActual.Motor, ConexionActual.Servidor, ConexionActual.Puerto,
+                    ConexionActual.Usuario, ConexionActual.Contrasena, ConexionActual.EsWeb,
+                    ConexionActual.BaseDatos ?? "");
+            }
         }
 
         // ══════════════════════════════════════════════════════════════════════
@@ -428,15 +436,23 @@ namespace QueryAnalyzer
 
         private void btnProbar_Click(object sender, RoutedEventArgs e)
         {
-            TipoMotor motor = (TipoMotor)cmbMotor.SelectedValue;
+            string stringConnection;
 
-            string baseDatos = cmbBaseDatos.Visibility == Visibility.Visible
-                               ? cmbBaseDatos.Text.Trim()
-                               : txtBaseDatos.Text.Trim();
-            string stringConnection = ConexionesManager.GetConnectionString(
-                motor, cmbServidor.Text, txtPuerto.Text,
-                baseDatos, txtUsuario.Text, txtContrasena.Password,
-                chkEsWeb.IsChecked.GetValueOrDefault());
+            if (chkUsarConnectionString.IsChecked == true)
+            {
+                stringConnection = ConexionesManager.NormalizarConnectionString(txtConnectionString.Text.Trim());
+            }
+            else
+            {
+                TipoMotor motor = (TipoMotor)cmbMotor.SelectedValue;
+                string baseDatos = cmbBaseDatos.Visibility == Visibility.Visible
+                                   ? cmbBaseDatos.Text.Trim()
+                                   : txtBaseDatos.Text.Trim();
+                stringConnection = ConexionesManager.GetConnectionString(
+                    motor, cmbServidor.Text, txtPuerto.Text,
+                    baseDatos, txtUsuario.Text, txtContrasena.Password,
+                    chkEsWeb.IsChecked.GetValueOrDefault());
+            }
 
             if (string.IsNullOrWhiteSpace(stringConnection))
             {
@@ -463,16 +479,25 @@ namespace QueryAnalyzer
             if (ConexionActual == null)
                 ConexionActual = new Conexion();
 
-            ConexionActual.Nombre     = txtNombre.Text.Trim();
-            ConexionActual.Motor      = (TipoMotor)cmbMotor.SelectedValue;
-            ConexionActual.Servidor   = cmbServidor.Text.Trim();
-            ConexionActual.BaseDatos  = cmbBaseDatos.Visibility == Visibility.Visible
-                                        ? cmbBaseDatos.Text.Trim()
-                                        : txtBaseDatos.Text.Trim();
-            ConexionActual.Usuario    = txtUsuario.Text.Trim();
-            ConexionActual.Contrasena = txtContrasena.Password;
-            ConexionActual.Puerto     = txtPuerto.Text;
-            ConexionActual.EsWeb      = chkEsWeb.IsChecked.GetValueOrDefault();
+            ConexionActual.Nombre = txtNombre.Text.Trim();
+            ConexionActual.Motor  = (TipoMotor)cmbMotor.SelectedValue;
+
+            if (chkUsarConnectionString.IsChecked == true)
+            {
+                ConexionActual.ConnectionStringCustom = txtConnectionString.Text.Trim();
+            }
+            else
+            {
+                ConexionActual.ConnectionStringCustom = null;
+                ConexionActual.Servidor   = cmbServidor.Text.Trim();
+                ConexionActual.BaseDatos  = cmbBaseDatos.Visibility == Visibility.Visible
+                                            ? cmbBaseDatos.Text.Trim()
+                                            : txtBaseDatos.Text.Trim();
+                ConexionActual.Usuario    = txtUsuario.Text.Trim();
+                ConexionActual.Contrasena = txtContrasena.Password;
+                ConexionActual.Puerto     = txtPuerto.Text;
+                ConexionActual.EsWeb      = chkEsWeb.IsChecked.GetValueOrDefault();
+            }
 
             var conexiones = ConexionesManager.Cargar();
             conexiones[ConexionActual.Nombre] = ConexionActual;
@@ -492,26 +517,34 @@ namespace QueryAnalyzer
                     ? (TipoMotor)cmbMotor.SelectedValue
                     : TipoMotor.MS_SQL;
 
-                string baseDatos = cmbBaseDatos.Visibility == Visibility.Visible
-                    ? cmbBaseDatos.Text.Trim()
-                    : txtBaseDatos.Text.Trim();
-
                 var sb = new System.Text.StringBuilder();
                 sb.AppendLine($"🔌 Conexión: {txtNombre.Text.Trim()}");
                 sb.AppendLine($"Motor: {motor}");
-                sb.AppendLine($"Servidor: {cmbServidor.Text.Trim()}");
 
-                if (!string.IsNullOrWhiteSpace(txtPuerto.Text))
-                    sb.AppendLine($"Puerto: {txtPuerto.Text.Trim()}");
+                if (chkUsarConnectionString.IsChecked == true)
+                {
+                    sb.AppendLine($"Connection String: {txtConnectionString.Text.Trim()}");
+                }
+                else
+                {
+                    string baseDatos = cmbBaseDatos.Visibility == Visibility.Visible
+                        ? cmbBaseDatos.Text.Trim()
+                        : txtBaseDatos.Text.Trim();
 
-                if (chkEsWeb.IsChecked == true)
-                    sb.AppendLine("Es Web: Sí");
+                    sb.AppendLine($"Servidor: {cmbServidor.Text.Trim()}");
 
-                sb.AppendLine($"Usuario: {txtUsuario.Text.Trim()}");
-                sb.AppendLine($"Contraseña: {txtContrasena.Password}");
+                    if (!string.IsNullOrWhiteSpace(txtPuerto.Text))
+                        sb.AppendLine($"Puerto: {txtPuerto.Text.Trim()}");
 
-                if (!string.IsNullOrWhiteSpace(baseDatos))
-                    sb.AppendLine($"Base de datos: {baseDatos}");
+                    if (chkEsWeb.IsChecked == true)
+                        sb.AppendLine("Es Web: Sí");
+
+                    sb.AppendLine($"Usuario: {txtUsuario.Text.Trim()}");
+                    sb.AppendLine($"Contraseña: {txtContrasena.Password}");
+
+                    if (!string.IsNullOrWhiteSpace(baseDatos))
+                        sb.AppendLine($"Base de datos: {baseDatos}");
+                }
 
                 string texto = sb.ToString().Trim();
                 Clipboard.SetText(texto);
@@ -521,6 +554,44 @@ namespace QueryAnalyzer
             catch (Exception ex)
             {
                 MessageBox.Show($"No se pudieron copiar los datos al portapapeles: {ex.Message}", "Error");
+            }
+        }
+
+        private void chkUsarConnectionString_Changed(object sender, RoutedEventArgs e)
+        {
+            AplicarModoConnectionString(chkUsarConnectionString.IsChecked == true);
+        }
+
+        private void AplicarModoConnectionString(bool usarCustom)
+        {
+            if (usarCustom)
+            {
+                lblConnectionString.Visibility = Visibility.Visible;
+                txtConnectionString.Visibility = Visibility.Visible;
+
+                lblServidor.Visibility   = Visibility.Collapsed;
+                pnlServidor.Visibility   = Visibility.Collapsed;
+                lblPuerto.Visibility     = Visibility.Collapsed;
+                pnlPuerto.Visibility     = Visibility.Collapsed;
+                lblUsuario.Visibility    = Visibility.Collapsed;
+                txtUsuario.Visibility    = Visibility.Collapsed;
+                lblContrasena.Visibility = Visibility.Collapsed;
+                pnlContrasena.Visibility = Visibility.Collapsed;
+                lblBaseDatos.Visibility  = Visibility.Collapsed;
+                txtBaseDatos.Visibility  = Visibility.Collapsed;
+                cmbBaseDatos.Visibility  = Visibility.Collapsed;
+            }
+            else
+            {
+                lblConnectionString.Visibility = Visibility.Collapsed;
+                txtConnectionString.Visibility = Visibility.Collapsed;
+
+                lblServidor.Visibility   = Visibility.Visible;
+                pnlServidor.Visibility   = Visibility.Visible;
+                pnlContrasena.Visibility = Visibility.Visible;
+
+                if (cmbMotor.SelectedValue != null)
+                    AjustarVisibilidadPorMotor((TipoMotor)cmbMotor.SelectedValue);
             }
         }
 

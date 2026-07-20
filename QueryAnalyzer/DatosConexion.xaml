@@ -196,6 +196,8 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="120"/>
@@ -210,8 +212,29 @@
                   DisplayMemberPath="Value" SelectedValuePath="Key"
                   SelectionChanged="cmbMotor_SelectionChanged"/>
 
-        <TextBlock Grid.Row="2" Grid.Column="0" Text="Servidor:" Margin="5" VerticalAlignment="Center"/>
-        <Grid Grid.Row="2" Grid.Column="1" Margin="5">
+        <CheckBox x:Name="chkUsarConnectionString"
+                  Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                  Content="Usar connection string personalizado"
+                  Margin="5,4"
+                  Foreground="{DynamicResource BrushFG}"
+                  Checked="chkUsarConnectionString_Changed"
+                  Unchecked="chkUsarConnectionString_Changed"/>
+
+        <TextBlock x:Name="lblConnectionString"
+                   Grid.Row="3" Grid.Column="0"
+                   Text="Connection String:" Margin="5,8,5,5" VerticalAlignment="Top"
+                   Visibility="Collapsed"/>
+        <TextBox x:Name="txtConnectionString"
+                 Grid.Row="3" Grid.Column="1"
+                 Margin="5" Height="70"
+                 TextWrapping="Wrap"
+                 AcceptsReturn="False"
+                 VerticalScrollBarVisibility="Auto"
+                 Visibility="Collapsed"
+                 ToolTip="Ingresá el connection string ODBC completo o una URI postgresql://user:pass@host:port/db"/>
+
+        <TextBlock x:Name="lblServidor" Grid.Row="4" Grid.Column="0" Text="Servidor:" Margin="5" VerticalAlignment="Center"/>
+        <Grid x:Name="pnlServidor" Grid.Row="4" Grid.Column="1" Margin="5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="30"/>
@@ -229,8 +252,8 @@
                     HorizontalAlignment="Right" IsEnabled="False" Click="btnBuscarBase_Click"/>
         </Grid>
 
-        <TextBlock x:Name="lblPuerto" Grid.Row="3" Grid.Column="0" Text="Puerto:" Margin="5" VerticalAlignment="Center"/>
-        <Grid x:Name="pnlPuerto" Grid.Row="3" Grid.Column="1" Margin="5">
+        <TextBlock x:Name="lblPuerto" Grid.Row="5" Grid.Column="0" Text="Puerto:" Margin="5" VerticalAlignment="Center"/>
+        <Grid x:Name="pnlPuerto" Grid.Row="5" Grid.Column="1" Margin="5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -240,11 +263,11 @@
                       Foreground="{DynamicResource BrushFG}"/>
         </Grid>
 
-        <TextBlock x:Name="lblUsuario" Grid.Row="4" Grid.Column="0" Text="Usuario:" Margin="5" VerticalAlignment="Center"/>
-        <TextBox x:Name="txtUsuario" Grid.Row="4" Grid.Column="1" Margin="5"/>
+        <TextBlock x:Name="lblUsuario" Grid.Row="6" Grid.Column="0" Text="Usuario:" Margin="5" VerticalAlignment="Center"/>
+        <TextBox x:Name="txtUsuario" Grid.Row="6" Grid.Column="1" Margin="5"/>
 
-        <TextBlock x:Name="lblContrasena" Grid.Row="5" Grid.Column="0" Text="Contraseña:" Margin="5" VerticalAlignment="Center"/>
-        <Grid Grid.Row="5" Grid.Column="1" Margin="5">
+        <TextBlock x:Name="lblContrasena" Grid.Row="7" Grid.Column="0" Text="Contraseña:" Margin="5" VerticalAlignment="Center"/>
+        <Grid x:Name="pnlContrasena" Grid.Row="7" Grid.Column="1" Margin="5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="35"/>
@@ -254,22 +277,22 @@
 
             <TextBox x:Name="txtContrasenaRevelada" Grid.Column="0" Visibility="Collapsed" />
 
-            <Button x:Name="btnTogglePass" Grid.Column="1" Content="👁" Margin="5,0,0,0" 
+            <Button x:Name="btnTogglePass" Grid.Column="1" Content="👁" Margin="5,0,0,0"
                     Click="btnTogglePass_Click" FontSize="14" Padding="0"/>
         </Grid>
 
-        <TextBlock x:Name="lblBaseDatos" Grid.Row="6" Grid.Column="0" Text="Base de datos:" Margin="5" VerticalAlignment="Center"/>
-        <TextBox x:Name="txtBaseDatos" Grid.Row="6" Grid.Column="1" Margin="5"/>
-        <ComboBox x:Name="cmbBaseDatos" Visibility="Hidden" Grid.Row="6" Grid.Column="1" Margin="5"/>
+        <TextBlock x:Name="lblBaseDatos" Grid.Row="8" Grid.Column="0" Text="Base de datos:" Margin="5" VerticalAlignment="Center"/>
+        <TextBox x:Name="txtBaseDatos" Grid.Row="8" Grid.Column="1" Margin="5"/>
+        <ComboBox x:Name="cmbBaseDatos" Visibility="Hidden" Grid.Row="8" Grid.Column="1" Margin="5"/>
 
-        <Button x:Name="btnCompartir" Grid.Row="7" Grid.Column="0" Margin="5,6,0,2"
+        <Button x:Name="btnCompartir" Grid.Row="9" Grid.Column="0" Margin="5,6,0,2"
                 Content="📤 Compartir" HorizontalAlignment="Left"
                 ToolTip="Copia los datos de esta conexión al portapapeles"
                 Click="btnCompartir_Click"/>
-        <Button x:Name="btnGuardar" Grid.Row="7" Grid.Column="1" Margin="0,6,5,2"
+        <Button x:Name="btnGuardar" Grid.Row="9" Grid.Column="1" Margin="0,6,5,2"
                 Content="Guardar Conexión" Width="113" HorizontalAlignment="Right"
                 Click="btnGuardar_Click"/>
-        <Button x:Name="btnProbar" Grid.Row="7" Grid.Column="1" Margin="5,6,5,2"
+        <Button x:Name="btnProbar" Grid.Row="9" Grid.Column="1" Margin="5,6,5,2"
                 Content="Probar Conexión" Width="113" HorizontalAlignment="Left"
                 Click="btnProbar_Click"/>
     </Grid>

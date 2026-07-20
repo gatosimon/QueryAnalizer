@@ -13,6 +13,7 @@ namespace QueryAnalyzer
         public string Contrasena { get; set; }
         public string Puerto { get; set; }
         public bool EsWeb { get; set; }
+        public string ConnectionStringCustom { get; set; }
 
         public override string ToString()
         {

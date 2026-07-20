@@ -25,7 +25,74 @@ namespace QueryAnalyzer
 
         public static string GetConnectionString(Conexion conexion)
         {
+            if (conexion != null && !string.IsNullOrWhiteSpace(conexion.ConnectionStringCustom))
+                return NormalizarConnectionString(conexion.ConnectionStringCustom);
+
             return GetConnectionString(conexion.Motor, conexion.Servidor, conexion.Puerto, conexion.BaseDatos, conexion.Usuario, conexion.Contrasena, conexion.EsWeb);
+        }
+
+        /// <summary>
+        /// Si el string es una URI postgresql://user:pass@host:port/db la convierte a ODBC.
+        /// Cualquier otro formato lo devuelve sin modificar.
+        /// </summary>
+        public static string NormalizarConnectionString(string connStr)
+        {
+            if (string.IsNullOrWhiteSpace(connStr)) return connStr;
+
+            if (connStr.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase) ||
+                connStr.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+                return ConvertirUriPostgresAOdbc(connStr);
+
+            return connStr;
+        }
+
+        private static string ConvertirUriPostgresAOdbc(string uri)
+        {
+            try
+            {
+                var u        = new Uri(uri);
+                string host  = u.Host;
+                int    port  = u.Port > 0 ? u.Port : 5432;
+                string db    = u.AbsolutePath.TrimStart('/');
+                string user  = string.Empty;
+                string pass  = string.Empty;
+
+                if (!string.IsNullOrEmpty(u.UserInfo))
+                {
+                    int idx = u.UserInfo.IndexOf(':');
+                    if (idx >= 0)
+                    {
+                        user = Uri.UnescapeDataString(u.UserInfo.Substring(0, idx));
+                        pass = Uri.UnescapeDataString(u.UserInfo.Substring(idx + 1));
+                    }
+                    else
+                    {
+                        user = Uri.UnescapeDataString(u.UserInfo);
+                    }
+                }
+
+                // Leer sslmode del query string si viene explícito
+                string sslMode = "prefer";
+                foreach (var param in u.Query.TrimStart('?').Split('&'))
+                {
+                    var kv = param.Split('=');
+                    if (kv.Length == 2 && kv[0].Equals("sslmode", StringComparison.OrdinalIgnoreCase))
+                    { sslMode = kv[1]; break; }
+                }
+
+                // Hosts remotos siempre requieren SSL (Railway, Supabase, etc.)
+                bool esLocal = host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+                            || host == "127.0.0.1" || host == "::1";
+                if (!esLocal && sslMode == "prefer")
+                    sslMode = "require";
+
+                string driver = ObtenerNombreDriver(TipoMotor.POSTGRES);
+                return $"Driver={{{driver}}};Server={host};Port={port};Database={db};Uid={user};Pwd={pass};SSLmode={sslMode};";
+            }
+            catch
+            {
+                return uri;
+            }
         }
 
         public static string GetConnectionString(TipoMotor motor, string servidor, string puerto, string baseDatos, string usuario, string contraseña, bool esWeb)
