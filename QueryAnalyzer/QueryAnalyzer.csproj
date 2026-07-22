@@ -99,6 +99,11 @@
     </Compile>
     <Compile Include="ServidorPresetManager.cs" />
     <Compile Include="Conexion.cs" />
+    <Compile Include="ComparadorModels.cs" />
+    <Compile Include="ComparadorService.cs" />
+    <Compile Include="ComparadorWindow.xaml.cs">
+      <DependentUpon>ComparadorWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ConexionesManager.cs" />
     <Compile Include="ConfigManager.cs" />
     <Compile Include="DatosConexion.xaml.cs">
@@ -137,6 +142,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="GuardarConsultaDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ComparadorWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

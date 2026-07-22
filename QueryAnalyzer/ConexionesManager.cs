@@ -95,6 +95,35 @@ namespace QueryAnalyzer
             }
         }
 
+        /// <summary>
+        /// Reemplaza la base de datos en un connection string ODBC ya armado.
+        /// </summary>
+        public static string CambiarBaseDatos(string connStr, string nuevaBase, TipoMotor motor)
+        {
+            if (string.IsNullOrWhiteSpace(connStr) || string.IsNullOrWhiteSpace(nuevaBase))
+                return connStr;
+
+            if (motor == TipoMotor.SQLite)
+                return connStr; // SQLite: el server path es la base, no se cambia desde aquí
+
+            // Reemplaza Database=xxx; o DBName=xxx;
+            var patrones = new[] { "Database=", "DBName=" };
+            foreach (string patron in patrones)
+            {
+                int idx = connStr.IndexOf(patron, StringComparison.OrdinalIgnoreCase);
+                if (idx >= 0)
+                {
+                    int fin = connStr.IndexOf(';', idx + patron.Length);
+                    string antes  = connStr.Substring(0, idx);
+                    string despues = fin >= 0 ? connStr.Substring(fin) : ";";
+                    return antes + patron + nuevaBase + despues;
+                }
+            }
+
+            // Si no encontró ninguno, agrega al final
+            return connStr.TrimEnd(';') + ";Database=" + nuevaBase + ";";
+        }
+
         public static string GetConnectionString(TipoMotor motor, string servidor, string puerto, string baseDatos, string usuario, string contraseña, bool esWeb)
         {
             string stringConnection = string.Empty;

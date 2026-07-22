@@ -467,6 +467,15 @@
                     ToolTip="Ver documentación y comportamiento de la aplicación"
                     Click="BtnAyuda_Click"
                     DockPanel.Dock="Left"/>
+            <!-- Botón de comparador de bases de datos -->
+            <Button x:Name="btnComparador"
+                    Content="&#x21FA; Comparar BDs"
+                    Padding="6,2"
+                    Margin="6,0,0,0"
+                    FontSize="12"
+                    ToolTip="Comparar estructura y datos entre dos bases de datos"
+                    Click="btnComparador_Click"
+                    DockPanel.Dock="Left"/>
         </DockPanel>
 
         <Grid Grid.Row="1">

@@ -249,6 +249,28 @@
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Botón 'Drivers ODBC': lista los drivers disponibles e instalados, y permite instalar SQLite y PostgreSQL desde instaladores embebidos."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• SQL Server y DB2 requieren instalar el driver manualmente desde el sitio del proveedor."/>
 
+                <!-- ══ COMPARADOR DE BASES DE DATOS ══════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}" Text="⟺ Comparador de Bases de Datos"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Botón '⟺ Comparar BDs' en la barra superior — abre una ventana no-modal para comparar dos bases de datos en paralelo."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Configuración de cada lado"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Conexión: elegí cualquiera de las conexiones guardadas."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Base de datos: el desplegable se puebla automáticamente con las BDs disponibles en esa conexión."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Esquemas: seleccioná uno o varios (Ctrl+clic / Shift+clic). Si no seleccionás ninguno se comparan todos."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Qué se compara"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Tablas: presencia/ausencia y diferencias de columnas (tipo, longitud, nullable, PK)."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Vistas: presencia/ausencia y diferencias en la definición SQL."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Índices: presencia/ausencia y diferencias en columnas y unicidad."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Datos (opcional): conteo de filas por tabla para detectar diferencias de volumen."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Lectura de resultados"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• ✓ (texto normal): idéntico en ambas bases."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• ⚠ (naranja): existe en ambas pero con diferencias."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• → (azul): solo en la Base A."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• ← (rojo): solo en la Base B."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Checkbox 'Mostrar iguales': incluye/excluye los objetos idénticos sin volver a consultar la base."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Exportar"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Botón '📤 Exportar': guarda los resultados en formato TXT (columnas tabuladas) o CSV para abrir en Excel."/>
+                <TextBlock Style="{StaticResource Nota}" Text="Tip: podés comparar una base consigo misma para verificar que los resultados sean todos ✓ iguales."/>
+
                 <!-- ══ ACTUALIZACIONES ═════════════════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="🔄 Actualizaciones"/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• La versión instalada se muestra en la barra superior (esquina derecha)."/>

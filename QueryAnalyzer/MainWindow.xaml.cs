@@ -4798,6 +4798,13 @@ namespace QueryAnalyzer
             ayuda.Show();
         }
 
+        private void btnComparador_Click(object sender, RoutedEventArgs e)
+        {
+            var w = new ComparadorWindow(ConexionesManager.Cargar());
+            w.Owner = this;
+            w.Show();
+        }
+
         /// <summary>
         /// Se llama una vez al inicio (vía Dispatcher) para notificar drivers faltantes.
         /// Solo alerta si hay algún driver bundleado (con instalador incluido) que no está instalado.

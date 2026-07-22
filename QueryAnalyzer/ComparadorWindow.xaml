@@ -1,0 +1,248 @@
+<Window x:Class="QueryAnalyzer.ComparadorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Comparador de Bases de Datos"
+        Width="1300" Height="850" MinWidth="900" MinHeight="600"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BrushWindowBG}"
+        Foreground="{DynamicResource BrushFG}">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ThemeLight.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+            </Style>
+            <Style TargetType="Label">
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+                <Setter Property="Padding"    Value="0,2,4,2"/>
+            </Style>
+            <Style TargetType="ComboBox">
+                <Setter Property="Background"      Value="{DynamicResource BrushControlBG}"/>
+                <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"     Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding"         Value="4,2"/>
+            </Style>
+            <Style TargetType="ListBox">
+                <Setter Property="Background"  Value="{DynamicResource BrushControlBG}"/>
+                <Setter Property="Foreground"  Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+            </Style>
+            <Style TargetType="CheckBox">
+                <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+            </Style>
+            <Style TargetType="Button">
+                <Setter Property="Background"      Value="{DynamicResource BrushBtnBG}"/>
+                <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"     Value="{DynamicResource BrushBtnBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding"         Value="10,4"/>
+                <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="3" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource BrushAccent}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed"   Value="True">
+                                    <Setter Property="Opacity"   Value="0.8"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled"   Value="False">
+                                    <Setter Property="Opacity"   Value="0.4"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style TargetType="GroupBox">
+                <Setter Property="Foreground"   Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"  Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding"      Value="6"/>
+                <Setter Property="Margin"       Value="2"/>
+            </Style>
+            <Style TargetType="TreeView">
+                <Setter Property="Background"  Value="{DynamicResource BrushControlBG}"/>
+                <Setter Property="Foreground"  Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>  <!-- Selectores de conexión -->
+            <RowDefinition Height="Auto"/>  <!-- Opciones -->
+            <RowDefinition Height="*"/>     <!-- Resultados -->
+            <RowDefinition Height="Auto"/>  <!-- Status -->
+        </Grid.RowDefinitions>
+
+        <!-- ══ ROW 0: Selectores ══════════════════════════════════════════════════ -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- BASE A -->
+            <GroupBox Grid.Column="0" Header="Base de Datos A" Margin="0,0,4,4">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="90"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Label Grid.Row="0" Grid.Column="0" Content="Motor:"/>
+                    <ComboBox x:Name="cmbMotorA" Grid.Row="0" Grid.Column="1" Margin="0,2"
+                              SelectionChanged="cmbMotorA_SelectionChanged"/>
+
+                    <Label Grid.Row="1" Grid.Column="0" Content="Conexión:"/>
+                    <ComboBox x:Name="cmbConexionA" Grid.Row="1" Grid.Column="1" Margin="0,2"
+                              SelectionChanged="cmbConexionA_SelectionChanged"/>
+
+                    <Label Grid.Row="2" Grid.Column="0" Content="Base:" Margin="0,4,0,0"/>
+                    <ComboBox x:Name="cmbBaseA" Grid.Row="2" Grid.Column="1" Margin="0,4,0,2"
+                              SelectionChanged="cmbBaseA_SelectionChanged"/>
+
+                    <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="Esquemas:" Padding="0,0,0,2"/>
+                            <Button Grid.Column="1" Content="Todos" Padding="4,1" Margin="0,0,3,2" FontSize="10"
+                                    Click="btnTodosA_Click"/>
+                            <Button Grid.Column="2" Content="Ninguno" Padding="4,1" Margin="0,0,0,2" FontSize="10"
+                                    Click="btnNingunoA_Click"/>
+                        </Grid>
+                        <ListBox x:Name="lstSchemasA" Grid.Row="1" Height="70"
+                                 SelectionMode="Extended"
+                                 ToolTip="Clic para seleccionar. Ctrl+Clic para múltiple. Shift+Clic para rango."/>
+                    </Grid>
+                </Grid>
+            </GroupBox>
+
+            <!-- Botones centrales -->
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0">
+                <Button x:Name="btnComparar" Content="&#x21FA; Comparar"
+                        FontSize="13" FontWeight="Bold" Margin="0,0,0,6"
+                        Click="btnComparar_Click"/>
+                <Button x:Name="btnExportar" Content="&#x1F4E4; Exportar"
+                        IsEnabled="False" Margin="0,0,0,0"
+                        Click="btnExportar_Click"/>
+            </StackPanel>
+
+            <!-- BASE B -->
+            <GroupBox Grid.Column="2" Header="Base de Datos B" Margin="4,0,0,4">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="90"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Label Grid.Row="0" Grid.Column="0" Content="Motor:"/>
+                    <ComboBox x:Name="cmbMotorB" Grid.Row="0" Grid.Column="1" Margin="0,2"
+                              SelectionChanged="cmbMotorB_SelectionChanged"/>
+
+                    <Label Grid.Row="1" Grid.Column="0" Content="Conexión:"/>
+                    <ComboBox x:Name="cmbConexionB" Grid.Row="1" Grid.Column="1" Margin="0,2"
+                              SelectionChanged="cmbConexionB_SelectionChanged"/>
+
+                    <Label Grid.Row="2" Grid.Column="0" Content="Base:" Margin="0,4,0,0"/>
+                    <ComboBox x:Name="cmbBaseB" Grid.Row="2" Grid.Column="1" Margin="0,4,0,2"
+                              SelectionChanged="cmbBaseB_SelectionChanged"/>
+
+                    <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="Esquemas:" Padding="0,0,0,2"/>
+                            <Button Grid.Column="1" Content="Todos" Padding="4,1" Margin="0,0,3,2" FontSize="10"
+                                    Click="btnTodosB_Click"/>
+                            <Button Grid.Column="2" Content="Ninguno" Padding="4,1" Margin="0,0,0,2" FontSize="10"
+                                    Click="btnNingunoB_Click"/>
+                        </Grid>
+                        <ListBox x:Name="lstSchemasB" Grid.Row="1" Height="70"
+                                 SelectionMode="Extended"
+                                 ToolTip="Clic para seleccionar. Ctrl+Clic para múltiple. Shift+Clic para rango."/>
+                    </Grid>
+                </Grid>
+            </GroupBox>
+        </Grid>
+
+        <!-- ══ ROW 1: Opciones ════════════════════════════════════════════════════ -->
+        <Border Grid.Row="1" BorderBrush="{DynamicResource BrushBorder}" BorderThickness="1"
+                CornerRadius="3" Padding="8,6" Margin="0,0,0,6">
+            <WrapPanel>
+                <TextBlock Text="Comparar:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <CheckBox x:Name="chkTablas"  Content="Tablas"   IsChecked="True" Margin="0,0,12,0"/>
+                <CheckBox x:Name="chkVistas"  Content="Vistas"   IsChecked="True" Margin="0,0,12,0"/>
+                <CheckBox x:Name="chkIndices" Content="Índices"  IsChecked="True" Margin="0,0,12,0"/>
+                <CheckBox x:Name="chkDatos"   Content="Datos (conteo de filas)" Margin="0,0,24,0"/>
+                <Separator Width="1" Height="20" Background="{DynamicResource BrushBorder}" Margin="0,0,24,0"/>
+                <CheckBox x:Name="chkIguales" Content="Mostrar iguales" Margin="0,0,12,0"
+                          Checked="chkIguales_Changed" Unchecked="chkIguales_Changed"/>
+            </WrapPanel>
+        </Border>
+
+        <!-- ══ ROW 2: Resultados ══════════════════════════════════════════════════ -->
+        <TreeView x:Name="tvResultados" Grid.Row="2"
+                  BorderThickness="1" Padding="4"
+                  VirtualizingStackPanel.IsVirtualizing="True"
+                  VirtualizingStackPanel.VirtualizationMode="Recycling"/>
+
+        <!-- ══ ROW 3: Status ══════════════════════════════════════════════════════ -->
+        <Grid Grid.Row="3" Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="160"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="txtStatus" Grid.Column="0" VerticalAlignment="Center"
+                       Text="Seleccioná las conexiones y hacé clic en Comparar."
+                       Foreground="{DynamicResource BrushFG}" Opacity="0.7"/>
+            <ProgressBar x:Name="pbProgreso" Grid.Column="1" Height="6"
+                         IsIndeterminate="False" Visibility="Collapsed"
+                         Minimum="0" Maximum="100" Value="0"/>
+        </Grid>
+    </Grid>
+</Window>
