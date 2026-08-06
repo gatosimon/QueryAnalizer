@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Comparador de Bases de Datos"
-        Width="1300" Height="850" MinWidth="900" MinHeight="600"
+        Width="1300" MinWidth="900" MinHeight="700"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BrushWindowBG}"
         Foreground="{DynamicResource BrushFG}">
@@ -41,7 +41,8 @@
                 <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
                 <Setter Property="BorderBrush"     Value="{DynamicResource BrushBtnBorder}"/>
                 <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Padding"         Value="10,4"/>
+                <Setter Property="Height"          Value="28"/>
+                <Setter Property="Padding"         Value="10,0"/>
                 <Setter Property="Cursor"          Value="Hand"/>
                 <Setter Property="Template">
                     <Setter.Value>
@@ -106,7 +107,8 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="90"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="80"/>
@@ -128,7 +130,7 @@
                     <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <Grid Grid.Row="0">
                             <Grid.ColumnDefinitions>
@@ -142,9 +144,35 @@
                             <Button Grid.Column="2" Content="Ninguno" Padding="4,1" Margin="0,0,0,2" FontSize="10"
                                     Click="btnNingunoA_Click"/>
                         </Grid>
-                        <ListBox x:Name="lstSchemasA" Grid.Row="1" Height="70"
+                        <ListBox x:Name="lstSchemasA" Grid.Row="1" Height="110"
                                  SelectionMode="Extended"
                                  ToolTip="Clic para seleccionar. Ctrl+Clic para múltiple. Shift+Clic para rango."/>
+                    </Grid>
+
+                    <Grid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="Tablas/Vistas:" Padding="0,0,0,2"/>
+                            <Button Grid.Column="1" Content="Todos" Padding="4,1" Margin="0,0,3,2" FontSize="10"
+                                    Click="btnTodosObjetosA_Click"/>
+                            <Button Grid.Column="2" Content="Ninguno" Padding="4,1" Margin="0,0,3,2" FontSize="10"
+                                    Click="btnNingunoObjetosA_Click"/>
+                            <Button Grid.Column="3" Content="⟳" Padding="6,1" Margin="0,0,0,2" FontSize="10"
+                                    Click="btnCargarObjetosA_Click"
+                                    ToolTip="Cargar lista para los esquemas seleccionados"/>
+                        </Grid>
+                        <ListBox x:Name="lstObjetosA" Grid.Row="1" Height="160"
+                                 SelectionMode="Extended"
+                                 ToolTip="Sin selección = comparar todos. [T]=Tabla  [V]=Vista. Ctrl+Clic para múltiple."/>
                     </Grid>
                 </Grid>
             </GroupBox>
@@ -166,7 +194,8 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="90"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="80"/>
@@ -188,7 +217,7 @@
                     <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <Grid Grid.Row="0">
                             <Grid.ColumnDefinitions>
@@ -202,9 +231,35 @@
                             <Button Grid.Column="2" Content="Ninguno" Padding="4,1" Margin="0,0,0,2" FontSize="10"
                                     Click="btnNingunoB_Click"/>
                         </Grid>
-                        <ListBox x:Name="lstSchemasB" Grid.Row="1" Height="70"
+                        <ListBox x:Name="lstSchemasB" Grid.Row="1" Height="110"
                                  SelectionMode="Extended"
                                  ToolTip="Clic para seleccionar. Ctrl+Clic para múltiple. Shift+Clic para rango."/>
+                    </Grid>
+
+                    <Grid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="Tablas/Vistas:" Padding="0,0,0,2"/>
+                            <Button Grid.Column="1" Content="Todos" Padding="4,1" Margin="0,0,3,2" FontSize="10"
+                                    Click="btnTodosObjetosB_Click"/>
+                            <Button Grid.Column="2" Content="Ninguno" Padding="4,1" Margin="0,0,3,2" FontSize="10"
+                                    Click="btnNingunoObjetosB_Click"/>
+                            <Button Grid.Column="3" Content="⟳" Padding="6,1" Margin="0,0,0,2" FontSize="10"
+                                    Click="btnCargarObjetosB_Click"
+                                    ToolTip="Cargar lista para los esquemas seleccionados"/>
+                        </Grid>
+                        <ListBox x:Name="lstObjetosB" Grid.Row="1" Height="160"
+                                 SelectionMode="Extended"
+                                 ToolTip="Sin selección = comparar todos. [T]=Tabla  [V]=Vista. Ctrl+Clic para múltiple."/>
                     </Grid>
                 </Grid>
             </GroupBox>
@@ -215,10 +270,14 @@
                 CornerRadius="3" Padding="8,6" Margin="0,0,0,6">
             <WrapPanel>
                 <TextBlock Text="Comparar:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <CheckBox x:Name="chkTablas"  Content="Tablas"   IsChecked="True" Margin="0,0,12,0"/>
-                <CheckBox x:Name="chkVistas"  Content="Vistas"   IsChecked="True" Margin="0,0,12,0"/>
-                <CheckBox x:Name="chkIndices" Content="Índices"  IsChecked="True" Margin="0,0,12,0"/>
-                <CheckBox x:Name="chkDatos"   Content="Datos (conteo de filas)" Margin="0,0,24,0"/>
+                <CheckBox x:Name="chkTablas"  Content="Tablas"   IsChecked="True" Margin="0,0,12,0"
+                          Checked="chkTipos_Changed" Unchecked="chkTipos_Changed"/>
+                <CheckBox x:Name="chkVistas"  Content="Vistas"   IsChecked="True" Margin="0,0,12,0"
+                          Checked="chkTipos_Changed" Unchecked="chkTipos_Changed"/>
+                <CheckBox x:Name="chkIndices" Content="Índices"  IsChecked="True" Margin="0,0,12,0"
+                          Checked="chkTipos_Changed" Unchecked="chkTipos_Changed"/>
+                <CheckBox x:Name="chkDatos"   Content="Datos (conteo de filas)" Margin="0,0,24,0"
+                          Checked="chkTipos_Changed" Unchecked="chkTipos_Changed"/>
                 <Separator Width="1" Height="20" Background="{DynamicResource BrushBorder}" Margin="0,0,24,0"/>
                 <CheckBox x:Name="chkIguales" Content="Mostrar iguales" Margin="0,0,12,0"
                           Checked="chkIguales_Changed" Unchecked="chkIguales_Changed"/>

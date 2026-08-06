@@ -14,6 +14,9 @@ namespace QueryAnalyzer
     {
         private readonly Dictionary<string, Conexion> _conexiones;
         private ResultadoComp _ultimoResultado;
+        private InfoLado      _ultimoLadoA;
+        private InfoLado      _ultimoLadoB;
+        private bool          _sincronizandoMotor;
 
         // Colores de estado
         private static readonly SolidColorBrush ColorSoloA    = new SolidColorBrush(Color.FromRgb(70,  130, 210)); // azul
@@ -25,6 +28,8 @@ namespace QueryAnalyzer
         {
             InitializeComponent();
             AplicarTemaActual();
+            var main = Application.Current.MainWindow;
+            if (main != null) Height = Math.Max(600, main.Height - 20);
             _conexiones = conexiones ?? new Dictionary<string, Conexion>();
             CargarConexiones();
         }
@@ -95,10 +100,26 @@ namespace QueryAnalyzer
         // ── Filtro por motor ──────────────────────────────────────────────────────
 
         private void cmbMotorA_SelectionChanged(object sender, SelectionChangedEventArgs e)
-            => FiltrarConexiones(cmbMotorA, cmbConexionA);
+        {
+            FiltrarConexiones(cmbMotorA, cmbConexionA);
+            if (!_sincronizandoMotor)
+            {
+                _sincronizandoMotor = true;
+                cmbMotorB.SelectedIndex = cmbMotorA.SelectedIndex;
+                _sincronizandoMotor = false;
+            }
+        }
 
         private void cmbMotorB_SelectionChanged(object sender, SelectionChangedEventArgs e)
-            => FiltrarConexiones(cmbMotorB, cmbConexionB);
+        {
+            FiltrarConexiones(cmbMotorB, cmbConexionB);
+            if (!_sincronizandoMotor)
+            {
+                _sincronizandoMotor = true;
+                cmbMotorA.SelectedIndex = cmbMotorB.SelectedIndex;
+                _sincronizandoMotor = false;
+            }
+        }
 
         // ── Cambio de conexión ────────────────────────────────────────────────────
 
@@ -210,6 +231,55 @@ namespace QueryAnalyzer
                 lst.SelectedItems.Clear();
         }
 
+        // ── Cargar / filtrar lista de objetos (tablas+vistas) ─────────────────────
+
+        private void btnCargarObjetosA_Click(object sender, RoutedEventArgs e)
+            => CargarObjetos(cmbConexionA, cmbBaseA, lstSchemasA, lstObjetosA);
+
+        private void btnCargarObjetosB_Click(object sender, RoutedEventArgs e)
+            => CargarObjetos(cmbConexionB, cmbBaseB, lstSchemasB, lstObjetosB);
+
+        private void btnTodosObjetosA_Click(object sender, RoutedEventArgs e)   => SeleccionarTodos(lstObjetosA, true);
+        private void btnNingunoObjetosA_Click(object sender, RoutedEventArgs e) => SeleccionarTodos(lstObjetosA, false);
+        private void btnTodosObjetosB_Click(object sender, RoutedEventArgs e)   => SeleccionarTodos(lstObjetosB, true);
+        private void btnNingunoObjetosB_Click(object sender, RoutedEventArgs e) => SeleccionarTodos(lstObjetosB, false);
+
+        private void CargarObjetos(ComboBox cmbConexion, ComboBox cmbBase, ListBox lstSchemas, ListBox lstObjetos)
+        {
+            var conexion = ObtenerConexionSeleccionada(cmbConexion);
+            if (conexion == null) return;
+
+            string bd = (cmbBase.SelectedItem as ComboBoxItem)?.Content?.ToString();
+            if (string.IsNullOrEmpty(bd)) return;
+
+            string connStr = ConexionesManager.CambiarBaseDatos(
+                ConexionesManager.GetConnectionString(conexion), bd, conexion.Motor);
+
+            string[] schemas = lstSchemas.SelectedItems.Count > 0
+                ? lstSchemas.SelectedItems.OfType<ListBoxItem>().Select(i => i.Content.ToString()).ToArray()
+                : null;
+
+            SetStatus("Cargando lista de objetos...");
+            Task.Run(() =>
+            {
+                var objetos = ComparadorService.GetNombresObjetos(connStr, conexion.Motor, schemas);
+                Dispatcher.Invoke(() =>
+                {
+                    lstObjetos.Items.Clear();
+                    foreach (var (nombre, esVista) in objetos)
+                    {
+                        string prefijo = esVista ? "[V] " : "[T] ";
+                        lstObjetos.Items.Add(new ListBoxItem
+                        {
+                            Content = prefijo + nombre,
+                            Tag     = esVista
+                        });
+                    }
+                    SetStatus($"{objetos.Count(o => !o.EsVista)} tabla(s) · {objetos.Count(o => o.EsVista)} vista(s) cargadas.");
+                });
+            });
+        }
+
         // ── Comparar ──────────────────────────────────────────────────────────────
 
         private async void btnComparar_Click(object sender, RoutedEventArgs e)
@@ -245,18 +315,38 @@ namespace QueryAnalyzer
                 ? lstSchemasB.SelectedItems.OfType<ListBoxItem>().Select(i => i.Content.ToString()).ToArray()
                 : null;
 
-            var opciones = new OpcionesComp
+            var opciones = BuildOpciones();
+
+            string[] nombresTabA = null, nombresVistA = null;
+            string[] nombresTabB = null, nombresVistB = null;
+            if (lstObjetosA.SelectedItems.Count > 0)
             {
-                CompararTablas  = chkTablas.IsChecked  == true,
-                CompararVistas  = chkVistas.IsChecked  == true,
-                CompararIndices = chkIndices.IsChecked == true,
-                CompararDatos   = chkDatos.IsChecked   == true,
-                MostrarIguales  = chkIguales.IsChecked == true
-            };
+                nombresTabA  = lstObjetosA.SelectedItems.OfType<ListBoxItem>()
+                    .Where(i => !(bool)i.Tag)
+                    .Select(i => i.Content.ToString().Substring(4)).ToArray(); // quita "[T] "
+                nombresVistA = lstObjetosA.SelectedItems.OfType<ListBoxItem>()
+                    .Where(i => (bool)i.Tag)
+                    .Select(i => i.Content.ToString().Substring(4)).ToArray(); // quita "[V] "
+                if (nombresTabA.Length  == 0) nombresTabA  = null;
+                if (nombresVistA.Length == 0) nombresVistA = null;
+            }
+            if (lstObjetosB.SelectedItems.Count > 0)
+            {
+                nombresTabB  = lstObjetosB.SelectedItems.OfType<ListBoxItem>()
+                    .Where(i => !(bool)i.Tag)
+                    .Select(i => i.Content.ToString().Substring(4)).ToArray();
+                nombresVistB = lstObjetosB.SelectedItems.OfType<ListBoxItem>()
+                    .Where(i => (bool)i.Tag)
+                    .Select(i => i.Content.ToString().Substring(4)).ToArray();
+                if (nombresTabB.Length  == 0) nombresTabB  = null;
+                if (nombresVistB.Length == 0) nombresVistB = null;
+            }
 
-            var ladoA = new InfoLado { Conexion = conA, ConnStr = connStrA, Schemas = schemasA };
-            var ladoB = new InfoLado { Conexion = conB, ConnStr = connStrB, Schemas = schemasB };
+            var ladoA = new InfoLado { Conexion = conA, ConnStr = connStrA, Schemas = schemasA, NombresTablas = nombresTabA, NombresVistas = nombresVistA };
+            var ladoB = new InfoLado { Conexion = conB, ConnStr = connStrB, Schemas = schemasB, NombresTablas = nombresTabB, NombresVistas = nombresVistB };
 
+            _ultimoLadoA = ladoA;
+            _ultimoLadoB = ladoB;
             btnComparar.IsEnabled = false;
             btnExportar.IsEnabled = false;
             tvResultados.Items.Clear();
@@ -308,11 +398,25 @@ namespace QueryAnalyzer
                     if (!mostrarIguales && diff.Estado == DiffEstado.Igual) continue;
                     var nodo = CrearNodoDiff(diff.Estado, FormatNombreTabla(diff), null);
 
-                    foreach (var col in diff.Columnas)
+                    if (diff.Estado == DiffEstado.SoloEnA || diff.Estado == DiffEstado.SoloEnB)
                     {
-                        if (!mostrarIguales && col.Estado == DiffEstado.Igual) continue;
-                        string desc = FormatColumna(col);
-                        nodo.Items.Add(CrearNodoDiff(col.Estado, desc, 14));
+                        var colsReales = diff.Estado == DiffEstado.SoloEnA
+                            ? diff.LadoA.Columnas
+                            : diff.LadoB.Columnas;
+                        foreach (var col in colsReales)
+                        {
+                            string desc = $"{col.Nombre}: {col.ResumenTipo()}{(col.EsPK ? " PK" : "")}";
+                            nodo.Items.Add(CrearNodoDiff(diff.Estado, desc, 14));
+                        }
+                    }
+                    else
+                    {
+                        foreach (var col in diff.Columnas)
+                        {
+                            if (!mostrarIguales && col.Estado == DiffEstado.Igual) continue;
+                            string desc = FormatColumna(col);
+                            nodo.Items.Add(CrearNodoDiff(col.Estado, desc, 14));
+                        }
                     }
 
                     nodoTablas.Items.Add(nodo);
@@ -460,19 +564,27 @@ namespace QueryAnalyzer
             }
         }
 
-        // ── Filtro mostrar iguales (re-poblar sin re-consultar) ───────────────────
+        // ── Filtros en vivo (re-poblar sin re-consultar) ──────────────────────────
+
+        private OpcionesComp BuildOpciones() => new OpcionesComp
+        {
+            CompararTablas  = chkTablas.IsChecked  == true,
+            CompararVistas  = chkVistas.IsChecked  == true,
+            CompararIndices = chkIndices.IsChecked == true,
+            CompararDatos   = chkDatos.IsChecked   == true,
+            MostrarIguales  = chkIguales.IsChecked == true
+        };
+
+        private void chkTipos_Changed(object sender, RoutedEventArgs e)
+        {
+            if (_ultimoResultado == null) return;
+            PoblarResultados(_ultimoResultado, BuildOpciones());
+        }
 
         private void chkIguales_Changed(object sender, RoutedEventArgs e)
         {
             if (_ultimoResultado == null) return;
-            PoblarResultados(_ultimoResultado, new OpcionesComp
-            {
-                CompararTablas  = chkTablas.IsChecked  == true,
-                CompararVistas  = chkVistas.IsChecked  == true,
-                CompararIndices = chkIndices.IsChecked == true,
-                CompararDatos   = chkDatos.IsChecked   == true,
-                MostrarIguales  = chkIguales.IsChecked == true
-            });
+            PoblarResultados(_ultimoResultado, BuildOpciones());
         }
 
         // ── Exportar ──────────────────────────────────────────────────────────────
@@ -483,20 +595,22 @@ namespace QueryAnalyzer
 
             var dlg = new SaveFileDialog
             {
-                Title            = "Exportar resultados",
-                Filter           = "Archivo de texto (*.txt)|*.txt|CSV (*.csv)|*.csv",
-                DefaultExt       = "txt",
-                FileName         = $"comparacion_{DateTime.Now:yyyyMMdd_HHmm}"
+                Title      = "Exportar resultados",
+                Filter     = "Reporte HTML (*.html)|*.html|Archivo de texto (*.txt)|*.txt|CSV (*.csv)|*.csv",
+                DefaultExt = "html",
+                FileName   = $"comparacion_{DateTime.Now:yyyyMMdd_HHmm}"
             };
             if (dlg.ShowDialog() != true) return;
 
             try
             {
-                bool csv = dlg.FilterIndex == 2;
-                string contenido = GenerarExportacion(_ultimoResultado, csv);
+                bool html = dlg.FilterIndex == 1;
+                bool csv  = dlg.FilterIndex == 3;
+                string contenido = html
+                    ? GenerarHtml(_ultimoResultado)
+                    : GenerarExportacion(_ultimoResultado, csv);
                 System.IO.File.WriteAllText(dlg.FileName, contenido, Encoding.UTF8);
-                MessageBox.Show("Exportación completada.", "Comparador",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Diagnostics.Process.Start(dlg.FileName);
             }
             catch (Exception ex)
             {
@@ -505,44 +619,307 @@ namespace QueryAnalyzer
             }
         }
 
+        // ── Reporte HTML ──────────────────────────────────────────────────────────
+
+        private string GenerarHtml(ResultadoComp res)
+        {
+            string bdA  = (cmbBaseA.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "-";
+            string bdB  = (cmbBaseB.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "-";
+            string conA = (cmbConexionA.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "-";
+            string conB = (cmbConexionB.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "-";
+            string schA = string.Join(", ", lstSchemasA.SelectedItems.OfType<ListBoxItem>().Select(i => i.Content));
+            string schB = string.Join(", ", lstSchemasB.SelectedItems.OfType<ListBoxItem>().Select(i => i.Content));
+            if (string.IsNullOrEmpty(schA)) schA = "(todos)";
+            if (string.IsNullOrEmpty(schB)) schB = "(todos)";
+
+            int totalDif = res.Tablas.Count(t => t.Estado != DiffEstado.Igual)
+                         + res.Vistas.Count(v => v.Estado != DiffEstado.Igual)
+                         + res.Indices.Count(i => i.Estado != DiffEstado.Igual);
+
+            var sb = new StringBuilder();
+            sb.AppendLine("<!DOCTYPE html><html lang='es'><head><meta charset='utf-8'>");
+            sb.AppendLine($"<title>Comparación {conA}/{bdA} vs {conB}/{bdB}</title>");
+            sb.AppendLine(@"<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Segoe UI,Arial,sans-serif;font-size:13px;background:#f4f6f9;color:#222;padding:16px}
+h1{font-size:18px;margin-bottom:4px}
+.meta{color:#555;font-size:12px;margin-bottom:20px}
+.meta span{display:inline-block;margin-right:16px}
+section{background:#fff;border:1px solid #dde;border-radius:6px;margin-bottom:16px;overflow:hidden}
+h2{font-size:14px;padding:10px 14px;background:#eef0f5;border-bottom:1px solid #dde;display:flex;align-items:center;gap:8px}
+.counts{font-size:11px;font-weight:normal;color:#555}
+.counts span{padding:1px 6px;border-radius:10px;margin-right:4px}
+.c-a{background:#dbeafe;color:#1d4ed8}
+.c-b{background:#fee2e2;color:#991b1b}
+.c-d{background:#ffedd5;color:#9a3412}
+.c-i{background:#f0fdf4;color:#166534}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:7px 10px;background:#f8f9fb;font-size:11px;color:#666;border-bottom:1px solid #dde;font-weight:600;white-space:nowrap}
+td{padding:5px 10px;border-bottom:1px solid #f0f0f4;vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr.solo-a td{background:#eff6ff}tr.solo-a td:first-child{border-left:3px solid #3b82f6;color:#1d4ed8;font-weight:500}
+tr.solo-b td{background:#fff1f2}tr.solo-b td:first-child{border-left:3px solid #ef4444;color:#991b1b;font-weight:500}
+tr.diferente td{background:#fffbeb}tr.diferente td:first-child{border-left:3px solid #f59e0b;color:#92400e;font-weight:500}
+tr.igual td{color:#444}tr.igual td:first-child{border-left:3px solid #d1d5db}
+tr.sub td{font-size:12px}
+tr.sub td:first-child{padding-left:28px;color:inherit;font-weight:normal}
+.badge{display:inline-block;font-size:10px;padding:1px 5px;border-radius:8px;font-weight:600}
+.est-A{color:#1d4ed8}.est-B{color:#991b1b}.est-D{color:#92400e}.est-I{color:#166534}
+pre{font-size:11px;white-space:pre-wrap;word-break:break-all;background:#f8f8f8;padding:6px 8px;border-radius:4px;max-height:120px;overflow:auto}
+.empty{padding:10px 14px;color:#888;font-size:12px}
+</style></head><body>");
+
+            sb.AppendLine($"<h1>Comparación de Bases de Datos</h1>");
+            sb.AppendLine($@"<div class='meta'>
+  <span>🅰 <strong>{H(conA)}</strong> — {H(bdA)} [{H(schA)}]</span>
+  <span>🅱 <strong>{H(conB)}</strong> — {H(bdB)} [{H(schB)}]</span>
+  <span>📅 {DateTime.Now:dd/MM/yyyy HH:mm}</span>
+  <span>⚠ <strong>{totalDif}</strong> diferencia(s)</span>
+</div>");
+
+            // ── Tablas
+            HtmlSeccion(sb, "📋 Tablas", res.Tablas.Count,
+                res.Tablas.Count(t => t.Estado == DiffEstado.Igual),
+                res.Tablas.Count(t => t.Estado == DiffEstado.SoloEnA),
+                res.Tablas.Count(t => t.Estado == DiffEstado.SoloEnB),
+                res.Tablas.Count(t => t.Estado == DiffEstado.Diferente));
+
+            if (res.Tablas.Count == 0) { sb.AppendLine("<div class='empty'>Sin tablas comparadas.</div>"); }
+            else
+            {
+                sb.AppendLine("<table><thead><tr><th>Tabla</th><th>Estado</th><th>Detalle A</th><th>Detalle B</th></tr></thead><tbody>");
+                foreach (var d in res.Tablas)
+                {
+                    string cls = EstadoCls(d.Estado);
+                    string est = EstadoBadge(d.Estado);
+                    sb.AppendLine($"<tr class='{cls}'><td>{H(d.Nombre)}</td><td>{est}</td><td></td><td></td></tr>");
+
+                    if (d.Estado == DiffEstado.SoloEnA || d.Estado == DiffEstado.SoloEnB)
+                    {
+                        var cols = d.Estado == DiffEstado.SoloEnA ? d.LadoA.Columnas : d.LadoB.Columnas;
+                        bool esA = d.Estado == DiffEstado.SoloEnA;
+                        foreach (var col in cols)
+                        {
+                            string desc = H(ResumenColumna(col));
+                            sb.AppendLine($"<tr class='sub {cls}'><td>{H(col.Nombre)}</td><td></td><td>{(esA ? desc : "")}</td><td>{(!esA ? desc : "")}</td></tr>");
+                        }
+                    }
+                    else
+                    {
+                        foreach (var c in d.Columnas.Where(x => x.Estado != DiffEstado.Igual))
+                        {
+                            string detA = c.LadoA != null ? H(ResumenColumna(c.LadoA)) : "";
+                            string detB = c.LadoB != null ? H(ResumenColumna(c.LadoB)) : "";
+                            string cCls = EstadoCls(c.Estado);
+                            sb.AppendLine($"<tr class='sub {cCls}'><td>{H(c.Nombre)}</td><td>{EstadoBadge(c.Estado)}</td><td>{detA}</td><td>{detB}</td></tr>");
+                        }
+                    }
+                }
+                sb.AppendLine("</tbody></table>");
+            }
+            sb.AppendLine("</section>");
+
+            // ── Vistas
+            HtmlSeccion(sb, "👁 Vistas", res.Vistas.Count,
+                res.Vistas.Count(v => v.Estado == DiffEstado.Igual),
+                res.Vistas.Count(v => v.Estado == DiffEstado.SoloEnA),
+                res.Vistas.Count(v => v.Estado == DiffEstado.SoloEnB),
+                res.Vistas.Count(v => v.Estado == DiffEstado.Diferente));
+
+            if (res.Vistas.Count == 0) { sb.AppendLine("<div class='empty'>Sin vistas comparadas.</div>"); }
+            else
+            {
+                sb.AppendLine("<table><thead><tr><th>Vista</th><th>Estado</th><th>Definición A</th><th>Definición B</th></tr></thead><tbody>");
+                foreach (var v in res.Vistas)
+                {
+                    string cls = EstadoCls(v.Estado);
+                    sb.AppendLine($"<tr class='{cls}'><td>{H(v.Nombre)}</td><td>{EstadoBadge(v.Estado)}</td>");
+                    if (v.Estado != DiffEstado.Igual)
+                    {
+                        string defA = v.LadoA?.Definicion ?? "";
+                        string defB = v.LadoB?.Definicion ?? "";
+                        sb.AppendLine($"<td>{(defA.Length > 0 ? $"<pre>{H(defA)}</pre>" : "")}</td>");
+                        sb.AppendLine($"<td>{(defB.Length > 0 ? $"<pre>{H(defB)}</pre>" : "")}</td></tr>");
+                    }
+                    else sb.AppendLine("<td></td><td></td></tr>");
+                }
+                sb.AppendLine("</tbody></table>");
+            }
+            sb.AppendLine("</section>");
+
+            // ── Índices
+            HtmlSeccion(sb, "🔑 Índices", res.Indices.Count,
+                res.Indices.Count(i => i.Estado == DiffEstado.Igual),
+                res.Indices.Count(i => i.Estado == DiffEstado.SoloEnA),
+                res.Indices.Count(i => i.Estado == DiffEstado.SoloEnB),
+                res.Indices.Count(i => i.Estado == DiffEstado.Diferente));
+
+            if (res.Indices.Count == 0) { sb.AppendLine("<div class='empty'>Sin índices comparados.</div>"); }
+            else
+            {
+                sb.AppendLine("<table><thead><tr><th>Índice</th><th>Estado</th><th>Detalle A</th><th>Detalle B</th></tr></thead><tbody>");
+                foreach (var idx in res.Indices)
+                {
+                    string cls = EstadoCls(idx.Estado);
+                    string detA = idx.LadoA != null ? H(ResumenIndice(idx.LadoA)) : "";
+                    string detB = idx.LadoB != null ? H(ResumenIndice(idx.LadoB)) : "";
+                    sb.AppendLine($"<tr class='{cls}'><td>{H(idx.Nombre)}</td><td>{EstadoBadge(idx.Estado)}</td><td>{detA}</td><td>{detB}</td></tr>");
+                }
+                sb.AppendLine("</tbody></table>");
+            }
+            sb.AppendLine("</section>");
+
+            // ── Datos
+            if (res.Datos.Count > 0)
+            {
+                HtmlSeccion(sb, "📊 Datos", res.Datos.Count,
+                    res.Datos.Count(d => d.Estado == DiffEstado.Igual), 0, 0,
+                    res.Datos.Count(d => d.Estado != DiffEstado.Igual));
+                sb.AppendLine("<table><thead><tr><th>Tabla</th><th>Estado</th><th>Filas A</th><th>Filas B</th></tr></thead><tbody>");
+                foreach (var d in res.Datos)
+                    sb.AppendLine($"<tr class='{EstadoCls(d.Estado)}'><td>{H(d.Tabla)}</td><td>{EstadoBadge(d.Estado)}</td><td>{d.ConteoA:N0}</td><td>{d.ConteoB:N0}</td></tr>");
+                sb.AppendLine("</tbody></table></section>");
+            }
+
+            sb.AppendLine("</body></html>");
+            return sb.ToString();
+        }
+
+        private static void HtmlSeccion(StringBuilder sb, string titulo, int total, int iguales, int soloA, int soloB, int dif)
+        {
+            sb.Append($"<section><h2>{titulo} <span class='counts'>");
+            if (iguales > 0) sb.Append($"<span class='c-i'>{iguales} iguales</span>");
+            if (dif > 0)     sb.Append($"<span class='c-d'>{dif} diferentes</span>");
+            if (soloA > 0)   sb.Append($"<span class='c-a'>{soloA} solo en A</span>");
+            if (soloB > 0)   sb.Append($"<span class='c-b'>{soloB} solo en B</span>");
+            sb.AppendLine($"</span></h2>");
+        }
+
+        private static string EstadoCls(DiffEstado e)
+        {
+            switch (e)
+            {
+                case DiffEstado.SoloEnA:  return "solo-a";
+                case DiffEstado.SoloEnB:  return "solo-b";
+                case DiffEstado.Diferente: return "diferente";
+                default:                   return "igual";
+            }
+        }
+
+        private static string EstadoBadge(DiffEstado e)
+        {
+            switch (e)
+            {
+                case DiffEstado.SoloEnA:   return "<span class='badge est-A'>Solo en A</span>";
+                case DiffEstado.SoloEnB:   return "<span class='badge est-B'>Solo en B</span>";
+                case DiffEstado.Diferente: return "<span class='badge est-D'>Diferente</span>";
+                default:                   return "<span class='badge est-I'>Igual</span>";
+            }
+        }
+
+        private static string H(string s) => System.Security.SecurityElement.Escape(s ?? "");
+
         private string GenerarExportacion(ResultadoComp resultado, bool csv)
         {
             var sb = new StringBuilder();
-            string sep = csv ? "," : "\t";
 
             if (csv)
-                sb.AppendLine("Tipo,Objeto,Estado,Detalle");
+                sb.AppendLine("Tipo,Objeto,Estado,Lado A,Lado B");
 
+            // ── Tablas ──
             foreach (var d in resultado.Tablas)
             {
                 string estado = EstadoTexto(d.Estado);
-                if (csv) sb.AppendLine($"Tabla,\"{d.Nombre}\",{estado},");
+                if (csv) sb.AppendLine($"Tabla,\"{d.Nombre}\",{estado},,");
                 else     sb.AppendLine($"TABLA\t{d.Nombre}\t{estado}");
 
-                foreach (var c in d.Columnas.Where(x => x.Estado != DiffEstado.Igual))
+                if (d.Estado == DiffEstado.SoloEnA || d.Estado == DiffEstado.SoloEnB)
                 {
-                    if (csv) sb.AppendLine($"  Columna,\"{d.Nombre}.{c.Nombre}\",{EstadoTexto(c.Estado)},\"{FormatColumna(c)}\"");
-                    else     sb.AppendLine($"  COLUMNA\t{d.Nombre}.{c.Nombre}\t{EstadoTexto(c.Estado)}\t{FormatColumna(c)}");
+                    // Mostrar columnas reales del lado que existe
+                    var cols  = d.Estado == DiffEstado.SoloEnA ? d.LadoA.Columnas : d.LadoB.Columnas;
+                    bool esA  = d.Estado == DiffEstado.SoloEnA;
+                    foreach (var col in cols)
+                    {
+                        string desc = ResumenColumna(col);
+                        if (csv) sb.AppendLine($"Columna,\"{d.Nombre}.{col.Nombre}\",{estado},{(esA ? $"\"{desc}\"" : "")},{(!esA ? $"\"{desc}\"" : "")}");
+                        else     sb.AppendLine($"    COLUMNA\t{col.Nombre}\t{desc}");
+                    }
+                }
+                else
+                {
+                    foreach (var c in d.Columnas.Where(x => x.Estado != DiffEstado.Igual))
+                    {
+                        string detA = c.LadoA != null ? ResumenColumna(c.LadoA) : "";
+                        string detB = c.LadoB != null ? ResumenColumna(c.LadoB) : "";
+                        if (csv)
+                            sb.AppendLine($"Columna,\"{d.Nombre}.{c.Nombre}\",{EstadoTexto(c.Estado)},\"{detA}\",\"{detB}\"");
+                        else
+                        {
+                            sb.AppendLine($"    COLUMNA\t{c.Nombre}\t{EstadoTexto(c.Estado)}");
+                            if (!string.IsNullOrEmpty(detA)) sb.AppendLine($"        A: {detA}");
+                            if (!string.IsNullOrEmpty(detB)) sb.AppendLine($"        B: {detB}");
+                        }
+                    }
                 }
             }
+
+            // ── Vistas ──
             foreach (var v in resultado.Vistas)
             {
-                if (csv) sb.AppendLine($"Vista,\"{v.Nombre}\",{EstadoTexto(v.Estado)},");
-                else     sb.AppendLine($"VISTA\t{v.Nombre}\t{EstadoTexto(v.Estado)}");
+                string estado = EstadoTexto(v.Estado);
+                if (csv) sb.AppendLine($"Vista,\"{v.Nombre}\",{estado},,");
+                else     sb.AppendLine($"VISTA\t{v.Nombre}\t{estado}");
+
+                if (v.Estado != DiffEstado.Igual)
+                {
+                    string defA = v.LadoA?.Definicion ?? "";
+                    string defB = v.LadoB?.Definicion ?? "";
+                    if (csv)
+                        sb.AppendLine($"Definición,\"{v.Nombre}\",{estado},\"{defA.Replace("\"","\"\"")}\",\"{defB.Replace("\"","\"\"")}\"");
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(defA)) sb.AppendLine($"    A: {defA}");
+                        if (!string.IsNullOrEmpty(defB)) sb.AppendLine($"    B: {defB}");
+                    }
+                }
             }
-            foreach (var i in resultado.Indices)
+
+            // ── Índices ──
+            foreach (var idx in resultado.Indices)
             {
-                if (csv) sb.AppendLine($"Índice,\"{i.Nombre}\",{EstadoTexto(i.Estado)},");
-                else     sb.AppendLine($"INDICE\t{i.Nombre}\t{EstadoTexto(i.Estado)}");
+                string estado = EstadoTexto(idx.Estado);
+                if (csv) sb.AppendLine($"Índice,\"{idx.Nombre}\",{estado},,");
+                else     sb.AppendLine($"INDICE\t{idx.Nombre}\t{estado}");
+
+                if (idx.Estado != DiffEstado.Igual)
+                {
+                    string detA = idx.LadoA != null ? ResumenIndice(idx.LadoA) : "";
+                    string detB = idx.LadoB != null ? ResumenIndice(idx.LadoB) : "";
+                    if (csv)
+                        sb.AppendLine($"Detalle,\"{idx.Nombre}\",{estado},\"{detA}\",\"{detB}\"");
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(detA)) sb.AppendLine($"    A: {detA}");
+                        if (!string.IsNullOrEmpty(detB)) sb.AppendLine($"    B: {detB}");
+                    }
+                }
             }
+
+            // ── Datos ──
             foreach (var d in resultado.Datos)
             {
-                string detalle = $"A:{d.ConteoA} B:{d.ConteoB}";
-                if (csv) sb.AppendLine($"Datos,\"{d.Tabla}\",{EstadoTexto(d.Estado)},{detalle}");
-                else     sb.AppendLine($"DATOS\t{d.Tabla}\t{EstadoTexto(d.Estado)}\t{detalle}");
+                if (csv) sb.AppendLine($"Datos,\"{d.Tabla}\",{EstadoTexto(d.Estado)},\"{d.ConteoA:N0} filas\",\"{d.ConteoB:N0} filas\"");
+                else     sb.AppendLine($"DATOS\t{d.Tabla}\t{EstadoTexto(d.Estado)}\tA: {d.ConteoA:N0} filas  /  B: {d.ConteoB:N0} filas");
             }
+
             return sb.ToString();
         }
+
+        private string ResumenColumna(ColumnaComp col)
+            => $"{col.ResumenTipo()}{(col.EsPK ? " PK" : "")}{(col.Nullable ? " NULL" : " NOT NULL")}";
+
+        private string ResumenIndice(IndiceComp idx)
+            => $"cols: {idx.Columnas}  único: {idx.EsUnico}  PK: {idx.EsPK}";
 
         private string EstadoTexto(DiffEstado e)
         {

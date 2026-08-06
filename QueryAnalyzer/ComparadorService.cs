@@ -80,9 +80,47 @@ namespace QueryAnalyzer
             return lista;
         }
 
+        // ── Nombres de objetos (tablas+vistas) sin columnas — carga rápida ──────
+
+        public static List<(string Nombre, bool EsVista)> GetNombresObjetos(
+            string connStr, TipoMotor motor, string[] schemas)
+        {
+            var lista = new List<(string, bool)>();
+            try
+            {
+                var DB = new DataBase(connStr);
+                DataTable dtT = DB.GetSchema("TABLEs");
+                DB.CloseConnection();
+                foreach (DataRow r in dtT.Rows)
+                {
+                    if (r["TABLE_TYPE"].ToString().Trim().ToUpper() != "TABLE") continue;
+                    string schema = r["TABLE_SCHEM"].ToString().Trim();
+                    string nombre = r["TABLE_NAME"].ToString().Trim();
+                    if (schemas != null && schemas.Length > 0 &&
+                        !schemas.Any(s => s.Equals(schema, StringComparison.OrdinalIgnoreCase))) continue;
+                    lista.Add((nombre, false));
+                }
+
+                var DB2 = new DataBase(connStr);
+                DataTable dtV = DB2.GetSchema("VIEWs");
+                DB2.CloseConnection();
+                foreach (DataRow r in dtV.Rows)
+                {
+                    string schema = r["TABLE_SCHEM"].ToString().Trim();
+                    string nombre = r["TABLE_NAME"].ToString().Trim();
+                    if (schemas != null && schemas.Length > 0 &&
+                        !schemas.Any(s => s.Equals(schema, StringComparison.OrdinalIgnoreCase))) continue;
+                    lista.Add((nombre, true));
+                }
+            }
+            catch { }
+            return lista.OrderBy(x => x.Item2).ThenBy(x => x.Item1).ToList();
+        }
+
         // ── Tablas con columnas ───────────────────────────────────────────────────
 
-        public static List<TablaComp> GetTablas(string connStr, TipoMotor motor, string[] schemas)
+        public static List<TablaComp> GetTablas(string connStr, TipoMotor motor, string[] schemas,
+            string[] nombres = null)
         {
             var lista = new List<TablaComp>();
             try
@@ -106,6 +144,9 @@ namespace QueryAnalyzer
 
                     if (schemas != null && schemas.Length > 0 &&
                         !schemas.Any(s => s.Equals(schema, StringComparison.OrdinalIgnoreCase)))
+                        continue;
+                    if (nombres != null && nombres.Length > 0 &&
+                        !nombres.Any(n => n.Equals(nombre, StringComparison.OrdinalIgnoreCase)))
                         continue;
 
                     var tabla = new TablaComp { Schema = schema, Nombre = nombre };
@@ -237,7 +278,8 @@ namespace QueryAnalyzer
 
         // ── Vistas ────────────────────────────────────────────────────────────────
 
-        public static List<VistaComp> GetVistas(string connStr, TipoMotor motor, string[] schemas)
+        public static List<VistaComp> GetVistas(string connStr, TipoMotor motor, string[] schemas,
+            string[] nombres = null)
         {
             var lista = new List<VistaComp>();
             try
@@ -253,6 +295,9 @@ namespace QueryAnalyzer
 
                     if (schemas != null && schemas.Length > 0 &&
                         !schemas.Any(s => s.Equals(schema, StringComparison.OrdinalIgnoreCase)))
+                        continue;
+                    if (nombres != null && nombres.Length > 0 &&
+                        !nombres.Any(n => n.Equals(nombre, StringComparison.OrdinalIgnoreCase)))
                         continue;
 
                     string def = GetDefinicionVista(connStr, motor, schema, nombre);
@@ -572,9 +617,9 @@ namespace QueryAnalyzer
             if (opciones.CompararTablas)
             {
                 onProgress?.Invoke("Cargando tablas de A...");
-                var tA = GetTablas(ladoA.ConnStr, ladoA.Conexion.Motor, ladoA.Schemas);
+                var tA = GetTablas(ladoA.ConnStr, ladoA.Conexion.Motor, ladoA.Schemas, ladoA.NombresTablas);
                 onProgress?.Invoke("Cargando tablas de B...");
-                var tB = GetTablas(ladoB.ConnStr, ladoB.Conexion.Motor, ladoB.Schemas);
+                var tB = GetTablas(ladoB.ConnStr, ladoB.Conexion.Motor, ladoB.Schemas, ladoB.NombresTablas);
                 onProgress?.Invoke("Comparando tablas...");
                 resultado.Tablas = CompararTablas(tA, tB);
 
@@ -605,9 +650,9 @@ namespace QueryAnalyzer
             if (opciones.CompararVistas)
             {
                 onProgress?.Invoke("Cargando vistas de A...");
-                var vA = GetVistas(ladoA.ConnStr, ladoA.Conexion.Motor, ladoA.Schemas);
+                var vA = GetVistas(ladoA.ConnStr, ladoA.Conexion.Motor, ladoA.Schemas, ladoA.NombresVistas);
                 onProgress?.Invoke("Cargando vistas de B...");
-                var vB = GetVistas(ladoB.ConnStr, ladoB.Conexion.Motor, ladoB.Schemas);
+                var vB = GetVistas(ladoB.ConnStr, ladoB.Conexion.Motor, ladoB.Schemas, ladoB.NombresVistas);
                 onProgress?.Invoke("Comparando vistas...");
                 resultado.Vistas = CompararVistas(vA, vB);
             }

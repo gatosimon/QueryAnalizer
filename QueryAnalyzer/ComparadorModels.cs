@@ -115,8 +115,10 @@ namespace QueryAnalyzer
 
     public class InfoLado
     {
-        public Conexion  Conexion  { get; set; }
-        public string    ConnStr   { get; set; }
-        public string[]  Schemas   { get; set; }
+        public Conexion  Conexion      { get; set; }
+        public string    ConnStr       { get; set; }
+        public string[]  Schemas       { get; set; }
+        public string[]  NombresTablas { get; set; } // null = todas
+        public string[]  NombresVistas { get; set; } // null = todas
     }
 }

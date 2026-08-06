@@ -476,6 +476,15 @@
                     ToolTip="Comparar estructura y datos entre dos bases de datos"
                     Click="btnComparador_Click"
                     DockPanel.Dock="Left"/>
+            <!-- Botón de transferencia de datos -->
+            <Button x:Name="btnPasadorDatos"
+                    Content="&#x1F501; Transferir datos"
+                    Padding="6,2"
+                    Margin="6,0,0,0"
+                    FontSize="12"
+                    ToolTip="Transferir datos entre bases: genera scripts INSERT con resolución de FK"
+                    Click="btnPasadorDatos_Click"
+                    DockPanel.Dock="Left"/>
         </DockPanel>
 
         <Grid Grid.Row="1">
@@ -729,6 +738,14 @@
                                         IsEnabled="False"
                                         Click="btnGenerarJoin_Click"
                                         ToolTip="Generar SELECT JOIN o CREATE VIEW con las tablas/vistas seleccionadas (mínimo 2)"/>
+                                <Button x:Name="btnGenerarInserts"
+                                        DockPanel.Dock="Left"
+                                        Content="📋 Scripts INSERT"
+                                        FontSize="10" Padding="4,1"
+                                        Margin="4,0,0,0"
+                                        IsEnabled="False"
+                                        Click="btnGenerarInserts_Click"
+                                        ToolTip="Generar script INSERT (con DELETE previo) de todas las tablas seleccionadas"/>
                             </DockPanel>
 
                             <!-- TreeViews (ocupan el resto) -->

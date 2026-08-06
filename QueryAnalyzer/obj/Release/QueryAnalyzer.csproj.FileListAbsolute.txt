@@ -40,3 +40,5 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnaly
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.pdb
 c:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\ComparadorWindow.baml
 c:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\ComparadorWindow.g.cs
+c:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\PasadorDatosWindow.baml
+c:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\PasadorDatosWindow.g.cs

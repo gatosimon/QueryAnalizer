@@ -1,0 +1,350 @@
+<Window x:Class="QueryAnalyzer.PasadorDatosWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Transferencia de Datos entre Bases"
+        Width="1050" MinWidth="750" MinHeight="600"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BrushWindowBG}"
+        Foreground="{DynamicResource BrushFG}">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ThemeLight.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+            </Style>
+            <Style TargetType="Label">
+                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+                <Setter Property="Padding"    Value="0,2,4,2"/>
+            </Style>
+            <Style TargetType="ComboBox">
+                <Setter Property="Background"      Value="{DynamicResource BrushControlBG}"/>
+                <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"     Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding"         Value="4,2"/>
+            </Style>
+            <Style TargetType="ListBox">
+                <Setter Property="Background"  Value="{DynamicResource BrushControlBG}"/>
+                <Setter Property="Foreground"  Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+            </Style>
+            <Style TargetType="CheckBox">
+                <Setter Property="Foreground"               Value="{DynamicResource BrushFG}"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="Margin"                   Value="0,3"/>
+            </Style>
+            <Style TargetType="TextBox">
+                <Setter Property="Background"  Value="{DynamicResource BrushControlBG}"/>
+                <Setter Property="Foreground"  Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding"     Value="4,2"/>
+            </Style>
+            <Style TargetType="Button">
+                <Setter Property="Background"      Value="{DynamicResource BrushBtnBG}"/>
+                <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"     Value="{DynamicResource BrushBtnBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Height"          Value="28"/>
+                <Setter Property="Padding"         Value="10,0"/>
+                <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="3" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource BrushAccent}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed"   Value="True">
+                                    <Setter Property="Opacity"   Value="0.8"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled"   Value="False">
+                                    <Setter Property="Opacity"   Value="0.4"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style TargetType="GroupBox">
+                <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+                <Setter Property="BorderBrush"     Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding"         Value="6"/>
+                <Setter Property="Margin"          Value="2"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>  <!-- Selectores A / B -->
+            <RowDefinition Height="*"/>     <!-- Tablas + Opciones -->
+            <RowDefinition Height="Auto"/>  <!-- SQL actual + Progreso -->
+            <RowDefinition Height="120"/>   <!-- Log de progreso -->
+            <RowDefinition Height="Auto"/>  <!-- Botones -->
+        </Grid.RowDefinitions>
+
+        <!-- ══ ROW 0: Conexiones ═══════════════════════════════════════════════════ -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="40"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Base A -->
+            <GroupBox Grid.Column="0" Header="Base de Datos ORIGEN (A)" Margin="0,0,4,6">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Label Grid.Row="0" Grid.Column="0" Content="Motor:"/>
+                    <ComboBox x:Name="cmbMotorA" Grid.Row="0" Grid.Column="1" Margin="0,2"
+                              SelectionChanged="cmbMotorA_SelectionChanged"/>
+
+                    <Label Grid.Row="1" Grid.Column="0" Content="Conexión:"/>
+                    <ComboBox x:Name="cmbConexionA" Grid.Row="1" Grid.Column="1" Margin="0,2"/>
+                </Grid>
+            </GroupBox>
+
+            <!-- Flecha -->
+            <TextBlock Grid.Column="1" Text="→" FontSize="22" FontWeight="Bold"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                       Foreground="{DynamicResource BrushAccent}"/>
+
+            <!-- Base B -->
+            <GroupBox Grid.Column="2" Header="Base de Datos DESTINO (B)" Margin="4,0,0,6">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Label Grid.Row="0" Grid.Column="0" Content="Motor:"/>
+                    <ComboBox x:Name="cmbMotorB" Grid.Row="0" Grid.Column="1" Margin="0,2"
+                              SelectionChanged="cmbMotorB_SelectionChanged"/>
+
+                    <Label Grid.Row="1" Grid.Column="0" Content="Conexión:"/>
+                    <ComboBox x:Name="cmbConexionB" Grid.Row="1" Grid.Column="1" Margin="0,2"/>
+                </Grid>
+            </GroupBox>
+        </Grid>
+
+        <!-- ══ ROW 1: Tablas + Opciones ════════════════════════════════════════════ -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="260"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Lista de tablas -->
+            <GroupBox Grid.Column="0" Header="Tablas a transferir" Margin="0,0,4,4">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <DockPanel Grid.Row="0" Margin="0,0,0,4">
+                        <Button DockPanel.Dock="Right" Content="Quitar selec."
+                                Padding="6,0" Height="22" FontSize="10"
+                                Click="btnQuitarSeleccionadas_Click"
+                                ToolTip="Quitar las tablas seleccionadas de la lista"/>
+                        <Button DockPanel.Dock="Right" Content="✓ Todas" Margin="0,0,4,0"
+                                Padding="6,0" Height="22" FontSize="10"
+                                Click="btnMarcarTodas_Click"/>
+                        <Button DockPanel.Dock="Right" Content="☐ Ninguna" Margin="0,0,4,0"
+                                Padding="6,0" Height="22" FontSize="10"
+                                Click="btnDesmarcarTodas_Click"/>
+                        <TextBlock VerticalAlignment="Center" FontSize="10"
+                                   Foreground="{DynamicResource BrushFGMuted}"
+                                   x:Name="txtContadorTablas" Text="0 tablas"/>
+                    </DockPanel>
+
+                    <ListBox x:Name="lstTablas" Grid.Row="1"
+                             SelectionMode="Extended">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding Seleccionada, Mode=TwoWay}"
+                                          Content="{Binding NombreCompleto}"
+                                          Checked="chkTabla_Changed"
+                                          Unchecked="chkTabla_Changed"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <DockPanel Grid.Row="2" Margin="0,4,0,0">
+                        <Button DockPanel.Dock="Right" Content="+" Width="26" Height="24"
+                                FontSize="14" Padding="0"
+                                Click="btnAgregarTablaManual_Click"
+                                ToolTip="Agregar tabla a la lista"/>
+                        <TextBox x:Name="txtAgregarTabla" Height="24" FontSize="10"
+                                 Margin="0,0,4,0"
+                                 ToolTip="schema.tabla — presioná + para agregar"
+                                 KeyDown="txtAgregarTabla_KeyDown"/>
+                    </DockPanel>
+                </Grid>
+            </GroupBox>
+
+            <!-- Opciones + Advertencias FK -->
+            <StackPanel Grid.Column="1">
+                <GroupBox Header="Opciones" Margin="0,0,0,4">
+                    <StackPanel Margin="2">
+                        <CheckBox x:Name="chkBackup"
+                                  Content="Generar backup de B antes de vaciar"
+                                  IsChecked="True"/>
+                        <CheckBox x:Name="chkTransaccional"
+                                  Content="Transaccional (rollback si hay error)"
+                                  IsChecked="True"/>
+                        <CheckBox x:Name="chkSoloScript"
+                                  Content="Solo generar script (no ejecutar)"
+                                  IsChecked="False"
+                                  Checked="chkSoloScript_Changed"
+                                  Unchecked="chkSoloScript_Changed"/>
+                        <Separator Margin="0,6"/>
+                        <Button x:Name="btnAnalizarFKs"
+                                Content="🔍 Analizar dependencias FK"
+                                Margin="0,2"
+                                Click="btnAnalizarFKs_Click"
+                                ToolTip="Detecta el orden correcto de INSERT/DELETE y avisa sobre FKs cruzadas"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="Orden de tablas / Advertencias" MinHeight="100">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <TextBox x:Name="txtAdvertencias"
+                                 IsReadOnly="True"
+                                 TextWrapping="Wrap"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 Foreground="{DynamicResource BrushFG}"
+                                 FontSize="11"
+                                 Text="Presioná 'Analizar FK' para ver el orden recomendado."/>
+                    </ScrollViewer>
+                </GroupBox>
+            </StackPanel>
+        </Grid>
+
+        <!-- ══ ROW 2: SQL actual + Barra de progreso ═══════════════════════════════ -->
+        <Grid Grid.Row="2" Margin="0,0,0,4">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="110"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBox x:Name="txtSentenciaActual"
+                     Grid.Row="0" Grid.ColumnSpan="2"
+                     IsReadOnly="True"
+                     FontFamily="Consolas" FontSize="10"
+                     Background="Transparent" BorderThickness="0"
+                     Foreground="{DynamicResource BrushFGMuted}"
+                     TextWrapping="NoWrap"
+                     Margin="0,0,0,3"
+                     Text=""/>
+
+            <ProgressBar x:Name="pbProgreso"
+                         Grid.Row="1" Grid.Column="0"
+                         Height="14" Minimum="0" Maximum="100" Value="0"
+                         Background="{DynamicResource BrushControlBG}"
+                         BorderBrush="{DynamicResource BrushBorder}"
+                         Foreground="{DynamicResource BrushAccent}"/>
+
+            <TextBlock x:Name="txtPorcentaje"
+                       Grid.Row="1" Grid.Column="1"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Center"
+                       Margin="8,0,0,0"
+                       FontSize="11"
+                       Foreground="{DynamicResource BrushFGMuted}"
+                       Text=""/>
+        </Grid>
+
+        <!-- ══ ROW 3: Log ══════════════════════════════════════════════════════════ -->
+        <GroupBox Grid.Row="3" Header="Log de progreso" Margin="0,0,0,4">
+            <ScrollViewer x:Name="scrollLog" VerticalScrollBarVisibility="Auto">
+                <TextBox x:Name="txtLog"
+                         IsReadOnly="True"
+                         TextWrapping="Wrap"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Foreground="{DynamicResource BrushFG}"
+                         FontFamily="Consolas"
+                         FontSize="11"
+                         Text=""/>
+            </ScrollViewer>
+        </GroupBox>
+
+        <!-- ══ ROW 4: Botones ══════════════════════════════════════════════════════ -->
+        <DockPanel Grid.Row="4" LastChildFill="False">
+            <Button x:Name="btnEjecutar"
+                    DockPanel.Dock="Left"
+                    Content="▶ Ejecutar transferencia"
+                    Width="180"
+                    Click="btnEjecutar_Click"
+                    ToolTip="Transfiere los datos de A hacia B con las opciones seleccionadas"/>
+            <Button x:Name="btnVerScript"
+                    DockPanel.Dock="Left"
+                    Content="📄 Ver script"
+                    Width="110"
+                    Margin="8,0,0,0"
+                    IsEnabled="False"
+                    Click="btnVerScript_Click"
+                    ToolTip="Ver el script SQL del último resultado"/>
+            <Button x:Name="btnGuardarUnArchivo"
+                    DockPanel.Dock="Left"
+                    Content="💾 Guardar un archivo"
+                    Width="150"
+                    Margin="8,0,0,0"
+                    IsEnabled="False"
+                    Click="btnGuardarUnArchivo_Click"
+                    ToolTip="Guarda todos los INSERTs en un único archivo .sql"/>
+            <Button x:Name="btnGuardarPorTabla"
+                    DockPanel.Dock="Left"
+                    Content="📂 Guardar por tabla"
+                    Width="150"
+                    Margin="8,0,0,0"
+                    IsEnabled="False"
+                    Click="btnGuardarPorTabla_Click"
+                    ToolTip="Guarda un archivo .sql separado por cada tabla"/>
+            <Button x:Name="btnVerBackup"
+                    DockPanel.Dock="Left"
+                    Content="🗂 Ver backup"
+                    Width="110"
+                    Margin="8,0,0,0"
+                    IsEnabled="False"
+                    Click="btnVerBackup_Click"
+                    ToolTip="Ver el script de backup del estado previo de B"/>
+            <Button DockPanel.Dock="Right"
+                    Content="Cerrar"
+                    Width="80"
+                    Click="btnCerrar_Click"/>
+        </DockPanel>
+    </Grid>
+</Window>
