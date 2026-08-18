@@ -3,7 +3,7 @@ using System.Windows;
 
 namespace QueryAnalyzer
 {
-    public enum FormatoExportacion { Excel, Csv, SqlInsert }
+    public enum FormatoExportacion { Excel, Csv, Json, SqlInsert }
 
     public partial class ExportarDialog : Window
     {
@@ -47,6 +47,14 @@ namespace QueryAnalyzer
             chkEncabezados.Visibility      = Visibility.Visible;
         }
 
+        private void rbJson_Checked(object sender, RoutedEventArgs e)
+        {
+            if (pnlOpcionesSql == null) return;
+            pnlOpcionesSql.Visibility      = Visibility.Collapsed;
+            lblOpcionesArchivo.Visibility  = Visibility.Collapsed;
+            chkEncabezados.Visibility      = Visibility.Collapsed;
+        }
+
         private void btnGenerar_Click(object sender, RoutedEventArgs e)
         {
             if (rbSql.IsChecked == true)
@@ -61,6 +69,10 @@ namespace QueryAnalyzer
                 FormatoSeleccionado = FormatoExportacion.SqlInsert;
                 NombreTabla         = txtNombreTabla.Text.Trim();
                 IncluirDelete       = chkDeletePrevio.IsChecked == true;
+            }
+            else if (rbJson.IsChecked == true)
+            {
+                FormatoSeleccionado = FormatoExportacion.Json;
             }
             else
             {

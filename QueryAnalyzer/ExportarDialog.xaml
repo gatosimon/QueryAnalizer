@@ -107,6 +107,23 @@
             </RadioButton>
         </Border>
 
+        <!-- JSON -->
+        <Border Background="{DynamicResource BrushControlBG}"
+                BorderBrush="{DynamicResource BrushBorder}"
+                BorderThickness="1" CornerRadius="4"
+                Margin="0,0,0,6" Padding="10,8">
+            <RadioButton x:Name="rbJson" GroupName="Formato" Checked="rbJson_Checked">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{}{ }" FontSize="16" FontFamily="Consolas" FontWeight="Bold" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                    <StackPanel>
+                        <TextBlock Text="JSON (.json)"     FontWeight="SemiBold" FontSize="13"/>
+                        <TextBlock Text="Array de objetos, una entrada por fila del resultado activo"
+                                   FontSize="10" Opacity="0.65"/>
+                    </StackPanel>
+                </StackPanel>
+            </RadioButton>
+        </Border>
+
         <!-- SQL INSERT -->
         <Border Background="{DynamicResource BrushControlBG}"
                 BorderBrush="{DynamicResource BrushBorder}"

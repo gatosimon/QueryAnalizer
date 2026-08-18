@@ -431,6 +431,7 @@
             <Button x:Name="btnNewConn"         Content="Nueva"           Padding="2,2" Margin="8,0,0,0" Click="BtnNewConn_Click"      DockPanel.Dock="Left"/>
             <Button x:Name="btnDeleteConn_Copy" Content="Eliminar"        Padding="2,2" Margin="8,0,0,0" Click="btnDeleteConn_Click"   DockPanel.Dock="Left"/>
             <Button x:Name="btnEditConn"        Content="Editar"          Padding="2,2" Margin="8,0,0,0" Click="BtnEditConn_Click"     DockPanel.Dock="Left"/>
+            <Separator DockPanel.Dock="Left" Margin="8,2,0,2"/>
             <!-- Botón toggle de tema: el icono cambia en code-behind -->
             <Button x:Name="btnToggleTema"
                     Content="&#x1F319;"
@@ -440,33 +441,25 @@
                     ToolTip="Alternar modo claro / oscuro"
                     Click="BtnToggleTema_Click"
                     DockPanel.Dock="Left"/>
-            <!-- Botón de preferencias -->
-            <Button x:Name="btnPreferencias"
-                    Content="&#x2699; Preferencias"
+            <!-- Menú de configuración y ayuda -->
+            <Button x:Name="btnConfig"
+                    Content="&#x2699;"
                     Padding="6,2"
-                    Margin="6,0,0,0"
-                    FontSize="12"
-                    ToolTip="Configuración de la aplicación"
-                    Click="BtnPreferencias_Click"
-                    DockPanel.Dock="Left"/>
-            <!-- Botón de drivers ODBC -->
-            <Button x:Name="btnDriversOdbc"
-                    Content="&#x1F50C; Drivers ODBC"
-                    Padding="6,2"
-                    Margin="6,0,0,0"
-                    FontSize="12"
-                    ToolTip="Verificar e instalar drivers ODBC requeridos"
-                    Click="BtnDriversOdbc_Click"
-                    DockPanel.Dock="Left"/>
-            <!-- Botón de ayuda -->
-            <Button x:Name="btnAyuda"
-                    Content="&#x2753; Ayuda"
-                    Padding="6,2"
-                    Margin="6,0,0,0"
-                    FontSize="12"
-                    ToolTip="Ver documentación y comportamiento de la aplicación"
-                    Click="BtnAyuda_Click"
-                    DockPanel.Dock="Left"/>
+                    Margin="4,0,0,0"
+                    FontSize="14"
+                    ToolTip="Preferencias, Drivers ODBC, Ayuda"
+                    Click="BtnConfig_Click"
+                    DockPanel.Dock="Left">
+                <Button.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="&#x2699; Preferencias"  Click="BtnPreferencias_Click"/>
+                        <MenuItem Header="&#x1F50C; Drivers ODBC" Click="BtnDriversOdbc_Click"/>
+                        <Separator/>
+                        <MenuItem Header="&#x2753; Ayuda"         Click="BtnAyuda_Click"/>
+                    </ContextMenu>
+                </Button.ContextMenu>
+            </Button>
+            <Separator DockPanel.Dock="Left" Margin="8,2,0,2"/>
             <!-- Botón de comparador de bases de datos -->
             <Button x:Name="btnComparador"
                     Content="&#x21FA; Comparar BDs"
@@ -484,6 +477,15 @@
                     FontSize="12"
                     ToolTip="Transferir datos entre bases: genera scripts INSERT con resolución de FK"
                     Click="btnPasadorDatos_Click"
+                    DockPanel.Dock="Left"/>
+            <!-- Botón de limpiador de BD -->
+            <Button x:Name="btnLimpiadorBD"
+                    Content="&#x1F9F9; Limpiar BD"
+                    Padding="6,2"
+                    Margin="6,0,0,0"
+                    FontSize="12"
+                    ToolTip="Eliminar registros dados de baja lógica y reordenar IDs manteniendo integridad referencial"
+                    Click="btnLimpiadorBD_Click"
                     DockPanel.Dock="Left"/>
         </DockPanel>
 

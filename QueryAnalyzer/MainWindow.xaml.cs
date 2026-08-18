@@ -200,6 +200,14 @@ namespace QueryAnalyzer
             ActualizarHeadersGrillas();
         }
 
+        private void BtnConfig_Click(object sender, RoutedEventArgs e)
+        {
+            var btn = (System.Windows.Controls.Button)sender;
+            btn.ContextMenu.PlacementTarget = btn;
+            btn.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            btn.ContextMenu.IsOpen = true;
+        }
+
         private void BtnToggleTema_Click(object sender, RoutedEventArgs e)
         {
             _modoOscuro = !_modoOscuro;
@@ -1201,6 +1209,48 @@ namespace QueryAnalyzer
                             System.IO.File.WriteAllText(ruta, csv, utf8Bom);
                         }
                         AppendMessage($"{hojas.Count} archivos CSV generados en: {fbd.SelectedPath}");
+                        System.Diagnostics.Process.Start(fbd.SelectedPath);
+                    }
+                }
+                else if (dlg.FormatoSeleccionado == FormatoExportacion.Json)
+                {
+                    // ── JSON ─────────────────────────────────────────────────
+                    var utf8 = new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+
+                    if (hojas.Count == 1)
+                    {
+                        var primer = hojas.First();
+                        var sfd = new System.Windows.Forms.SaveFileDialog
+                        {
+                            Title            = "Guardar JSON",
+                            Filter           = "JSON (*.json)|*.json",
+                            FileName         = svc.SanitizarNombreArchivo(primer.Key) + ".json",
+                            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+                        };
+                        if (sfd.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+
+                        string json = svc.CrearJson(primer.Value);
+                        System.IO.File.WriteAllText(sfd.FileName, json, utf8);
+                        AppendMessage($"JSON generado en: {sfd.FileName}");
+                        System.Diagnostics.Process.Start(sfd.FileName);
+                    }
+                    else
+                    {
+                        var fbd = new System.Windows.Forms.FolderBrowserDialog
+                        {
+                            Description         = "Seleccionar carpeta donde guardar los archivos JSON",
+                            ShowNewFolderButton = true
+                        };
+                        if (fbd.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+
+                        foreach (var hoja in hojas)
+                        {
+                            string nombre = svc.SanitizarNombreArchivo(hoja.Key) + ".json";
+                            string ruta   = System.IO.Path.Combine(fbd.SelectedPath, nombre);
+                            string json   = svc.CrearJson(hoja.Value);
+                            System.IO.File.WriteAllText(ruta, json, utf8);
+                        }
+                        AppendMessage($"{hojas.Count} archivos JSON generados en: {fbd.SelectedPath}");
                         System.Diagnostics.Process.Start(fbd.SelectedPath);
                     }
                 }
@@ -4953,6 +5003,18 @@ namespace QueryAnalyzer
                 ConexionesManager.Cargar(),
                 new Dictionary<string, NodoTablaTag>(_seleccionPersistente),
                 conexionActual);
+            w.Owner = this;
+            w.Show();
+        }
+
+        private void btnLimpiadorBD_Click(object sender, RoutedEventArgs e)
+        {
+            if (conexionActual == null)
+            {
+                MessageBox.Show("Seleccioná una conexión activa antes de usar el Limpiador de BD.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            var w = new LimpiadorBDWindow(conexionActual, GetConnectionString());
             w.Owner = this;
             w.Show();
         }

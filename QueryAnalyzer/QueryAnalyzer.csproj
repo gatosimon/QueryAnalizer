@@ -104,6 +104,14 @@
     <Compile Include="ComparadorWindow.xaml.cs">
       <DependentUpon>ComparadorWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="LimpiadorBDModels.cs" />
+    <Compile Include="LimpiadorBDService.cs" />
+    <Compile Include="LimpiadorBDWindow.xaml.cs">
+      <DependentUpon>LimpiadorBDWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="LimpiadorTablaDialog.xaml.cs">
+      <DependentUpon>LimpiadorTablaDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="PasadorDatosModels.cs" />
     <Compile Include="PasadorDatosService.cs" />
     <Compile Include="PasadorDatosWindow.xaml.cs">
@@ -152,6 +160,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ComparadorWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="LimpiadorBDWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="LimpiadorTablaDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

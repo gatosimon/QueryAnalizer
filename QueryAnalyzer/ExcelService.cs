@@ -475,6 +475,84 @@ namespace QueryAnalyzer
             return campo;
         }
 
+        // ────────────────────────────────────────────────────────────────────
+        // JSON
+        // ────────────────────────────────────────────────────────────────────
+
+        public string CrearJson(System.Data.DataTable dt)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("[");
+
+            var cols = dt.Columns.Cast<System.Data.DataColumn>().ToList();
+
+            for (int r = 0; r < dt.Rows.Count; r++)
+            {
+                sb.AppendLine("  {");
+                for (int c = 0; c < cols.Count; c++)
+                {
+                    string coma = c < cols.Count - 1 ? "," : "";
+                    string clave = EscaparCadenaJson(cols[c].ColumnName);
+                    string valor = SerializarValorJson(dt.Rows[r][cols[c]], cols[c].DataType);
+                    sb.AppendLine($"    \"{clave}\": {valor}{coma}");
+                }
+                sb.Append("  }");
+                sb.AppendLine(r < dt.Rows.Count - 1 ? "," : "");
+            }
+
+            sb.Append("]");
+            return sb.ToString();
+        }
+
+        private string SerializarValorJson(object valor, Type tipo)
+        {
+            if (valor == null || valor == System.DBNull.Value)
+                return "null";
+            if (tipo == typeof(bool))
+                return (bool)valor ? "true" : "false";
+            if (tipo == typeof(byte)   || tipo == typeof(short)   || tipo == typeof(int)   ||
+                tipo == typeof(long)   || tipo == typeof(sbyte)   || tipo == typeof(ushort) ||
+                tipo == typeof(uint)   || tipo == typeof(ulong))
+                return Convert.ToString(valor, System.Globalization.CultureInfo.InvariantCulture);
+            if (tipo == typeof(float)  || tipo == typeof(double)  || tipo == typeof(decimal))
+            {
+                string s = Convert.ToString(valor, System.Globalization.CultureInfo.InvariantCulture);
+                return double.TryParse(s, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out _) ? s : "null";
+            }
+            if (tipo == typeof(DateTime) && valor is DateTime dt)
+                return $"\"{dt:yyyy-MM-ddTHH:mm:ss}\"";
+            if (tipo == typeof(DateTimeOffset) && valor is DateTimeOffset dto)
+                return $"\"{dto:yyyy-MM-ddTHH:mm:sszzz}\"";
+            if (tipo == typeof(byte[]))
+                return "null";
+            return $"\"{EscaparCadenaJson(Convert.ToString(valor))}\"";
+        }
+
+        private string EscaparCadenaJson(string s)
+        {
+            if (s == null) return "";
+            var sb = new System.Text.StringBuilder(s.Length);
+            foreach (char c in s)
+            {
+                switch (c)
+                {
+                    case '"':  sb.Append("\\\""); break;
+                    case '\\': sb.Append("\\\\"); break;
+                    case '\n': sb.Append("\\n");  break;
+                    case '\r': sb.Append("\\r");  break;
+                    case '\t': sb.Append("\\t");  break;
+                    default:
+                        if (c < 0x20)
+                            sb.Append($"\\u{(int)c:x4}");
+                        else
+                            sb.Append(c);
+                        break;
+                }
+            }
+            return sb.ToString();
+        }
+
         /// <summary>
         /// Devuelve un nombre de archivo seguro eliminando caracteres inválidos en Windows.
         /// </summary>

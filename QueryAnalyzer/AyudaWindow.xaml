@@ -211,6 +211,12 @@
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Separador: punto y coma (;) — estándar en configuraciones regionales en español."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Codificación: UTF-8 con BOM, para apertura directa en Excel sin problemas de acentos."/>
 
+                <TextBlock Style="{StaticResource Subtitulo}" Text="{}{ } JSON (.json)"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Genera un archivo JSON con un array de objetos: una entrada por fila del resultado activo (la pestaña seleccionada)."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Los nombres de columna se usan como claves. Tipos preservados: números sin comillas, booleanos como true/false, fechas en formato ISO 8601, nulos como null."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Si hay un solo resultado se pide el nombre del archivo; si hay varios se elige la carpeta destino y se genera un .json por pestaña."/>
+                <TextBlock Style="{StaticResource Nota}"   Text="Útil para integrar datos con APIs o herramientas que consumen JSON directamente."/>
+
                 <TextBlock Style="{StaticResource Subtitulo}" Text="🗃 SQL Script (INSERT)"/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Genera un script SQL con una sentencia INSERT por cada fila del resultado activo (la pestaña seleccionada)."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Se solicita el nombre de la tabla destino, que se pre-completa automáticamente si se detecta en la consulta original."/>
@@ -220,7 +226,8 @@
 
                 <TextBlock Style="{StaticResource Subtitulo}" Text="☑ Incluir encabezados"/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Opción disponible en los formatos Excel y CSV. Si está marcada, la primera fila contiene los nombres de las columnas."/>
-                <TextBlock Style="{StaticResource Nota}"   Text="Los archivos generados (Excel y CSV) se abren automáticamente con la aplicación predeterminada al terminar la exportación."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• En JSON esta opción no aplica: los nombres de columna siempre se incluyen como claves de cada objeto."/>
+                <TextBlock Style="{StaticResource Nota}"   Text="Los archivos generados (Excel, CSV y JSON) se abren automáticamente con la aplicación predeterminada al terminar la exportación."/>
 
                 <!-- ══ MENÚ CONTEXTUAL DE TABLA ═══════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="🖱 Menú contextual de tabla / vista"/>
@@ -246,7 +253,7 @@
                 <!-- ══ DRIVERS ODBC ════════════════════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="🔌 Drivers ODBC"/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• La aplicación usa ODBC (32 bits) para conectarse a las bases de datos."/>
-                <TextBlock Style="{StaticResource Cuerpo}" Text="• Botón 'Drivers ODBC': lista los drivers disponibles e instalados, y permite instalar SQLite y PostgreSQL desde instaladores embebidos."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Menú ⚙ → 'Drivers ODBC': lista los drivers disponibles e instalados, y permite instalar SQLite y PostgreSQL desde instaladores embebidos."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• SQL Server y DB2 requieren instalar el driver manualmente desde el sitio del proveedor."/>
 
                 <!-- ══ COMPARADOR DE BASES DE DATOS ══════════════════════ -->
@@ -262,10 +269,13 @@
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Índices: presencia/ausencia y diferencias en columnas y unicidad."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Datos (opcional): conteo de filas por tabla para detectar diferencias de volumen."/>
                 <TextBlock Style="{StaticResource Subtitulo}" Text="Lectura de resultados"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Al terminar la comparación aparece un panel con 'A: [conexión/base]  vs  B: [conexión/base]' para no perder de vista cuál es cada lado."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• ✓ (texto normal): idéntico en ambas bases."/>
-                <TextBlock Style="{StaticResource Cuerpo}" Text="• ⚠ (naranja): existe en ambas pero con diferencias."/>
-                <TextBlock Style="{StaticResource Cuerpo}" Text="• → (azul): solo en la Base A."/>
-                <TextBlock Style="{StaticResource Cuerpo}" Text="• ← (rojo): solo en la Base B."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• ⚠ (naranja): existe en ambas pero con diferencias de columnas, tipo o definición."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• → (azul): existe solo en la Base A — se muestra [nombre de la BD] al final del elemento."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• ← (rojo): existe solo en la Base B — se muestra [nombre de la BD] al final del elemento."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• En columnas diferentes el formato es 'BaseA: tipo / BaseB: tipo' (sin flechas) para evitar confusión con los indicadores de azul/rojo."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• La barra de opciones incluye una leyenda de colores siempre visible."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Checkbox 'Mostrar iguales': incluye/excluye los objetos idénticos sin volver a consultar la base."/>
                 <TextBlock Style="{StaticResource Subtitulo}" Text="Exportar"/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Botón '📤 Exportar': guarda los resultados en formato TXT (columnas tabuladas) o CSV para abrir en Excel."/>
@@ -291,6 +301,29 @@
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="    – Solo generar script: produce el SQL sin ejecutarlo (útil para revisión manual)."/>
                 <TextBlock Style="{StaticResource Nota}"      Text="Tip: si hay FK entre las tablas seleccionadas y tablas fuera del conjunto, el analizador lo advierte antes de ejecutar."/>
                 <TextBlock Style="{StaticResource Nota}"      Text="Tip: el botón 'Ver backup' queda activo tras la transferencia para recuperar el estado previo de B."/>
+
+                <!-- ══ LIMPIADOR DE BD ════════════════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}"    Text="🧹 Limpiador de BD"/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Configuración"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Accedé desde el botón '🧹 Limpiar BD' en la barra superior (requiere conexión activa)."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• En el panel izquierdo configurá el campo de baja global (ej: 'Baja') y el valor que indica baja (ej: '1', 'S', 'true')."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Hacé doble clic en una tabla de la lista para configurar su campo de baja, valor y clave primaria individualmente."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Seleccioná múltiples tablas y usá 'Aplicar a seleccionadas' para asignar la misma configuración a un grupo."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• '🔍 Detectar campos automáticamente' busca en cada tabla columnas con nombres comunes: Baja, IsDeleted, Activo, FechaBaja, Eliminado."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Modos de conflicto FK"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Bloquear: si hay hijos activos que referencian padres en baja, el script no se genera hasta resolver el conflicto."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Baja en cascada: los hijos activos también se marcan como dados de baja antes de eliminar."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Ignorar: los registros en baja con dependencias activas se omiten; solo se eliminan los que no tienen conflicto."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Flujo de trabajo"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="1. Configurar campos de baja → 2. Analizar (solo lectura) → 3. Generar Script → 4. Revisar script → 5. Ejecutar."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El paso 'Ejecutar Script' abre una transacción. Al terminar pedirá confirmación de COMMIT; si cancelás, se hace ROLLBACK automático."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El script también es editable manualmente en la pestaña 'Script SQL' antes de ejecutarlo."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Reordenamiento de IDs"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Activá 'Reordenar IDs' para compactar los valores de la clave primaria y eliminar huecos."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El reordenamiento actualiza primero las FKs en tablas hijas y luego los PKs en las tablas padre (orden topológico)."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Para columnas IDENTITY en SQL Server, el script incluye instrucciones adicionales y comentarios con el flujo necesario."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Tip: antes de ejecutar en producción, probá el flujo completo contra una base de datos de desarrollo o backup."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Tip: el script generado incluye ROLLBACK por defecto; para confirmar los cambios hay que confirmar el COMMIT en la ventana de ejecución."/>
 
                 <!-- ══ ACTUALIZACIONES ═════════════════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="🔄 Actualizaciones"/>

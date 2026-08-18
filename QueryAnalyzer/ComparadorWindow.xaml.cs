@@ -17,6 +17,10 @@ namespace QueryAnalyzer
         private InfoLado      _ultimoLadoA;
         private InfoLado      _ultimoLadoB;
         private bool          _sincronizandoMotor;
+        private string        _etiquetaA;
+        private string        _etiquetaB;
+        private string        _bdNombreA;
+        private string        _bdNombreB;
 
         // Colores de estado
         private static readonly SolidColorBrush ColorSoloA    = new SolidColorBrush(Color.FromRgb(70,  130, 210)); // azul
@@ -345,6 +349,11 @@ namespace QueryAnalyzer
             var ladoA = new InfoLado { Conexion = conA, ConnStr = connStrA, Schemas = schemasA, NombresTablas = nombresTabA, NombresVistas = nombresVistA };
             var ladoB = new InfoLado { Conexion = conB, ConnStr = connStrB, Schemas = schemasB, NombresTablas = nombresTabB, NombresVistas = nombresVistB };
 
+            _etiquetaA = $"{(cmbConexionA.SelectedItem as ComboBoxItem)?.Content} / {bdA}";
+            _etiquetaB = $"{(cmbConexionB.SelectedItem as ComboBoxItem)?.Content} / {bdB}";
+            _bdNombreA = bdA;
+            _bdNombreB = bdB;
+
             _ultimoLadoA = ladoA;
             _ultimoLadoB = ladoB;
             btnComparar.IsEnabled = false;
@@ -358,6 +367,9 @@ namespace QueryAnalyzer
                 _ultimoResultado = await Task.Run(() =>
                     ComparadorService.Comparar(ladoA, ladoB, opciones, msg => Dispatcher.Invoke(() => SetStatus(msg))));
 
+                txtResumenA.Text = _etiquetaA;
+                txtResumenB.Text = _etiquetaB;
+                panelResumen.Visibility = Visibility.Visible;
                 PoblarResultados(_ultimoResultado, opciones);
                 btnExportar.IsEnabled = true;
             }
@@ -391,12 +403,15 @@ namespace QueryAnalyzer
                 int nDif   = resultado.Tablas.Count(t => t.Estado == DiffEstado.Diferente);
 
                 var nodoTablas = CrearNodoCategoria(
-                    $"Tablas  ({nIgual} iguales · {nDif} diferentes · {nSoloA} solo en A · {nSoloB} solo en B)");
+                    $"Tablas  ({nIgual} iguales · {nDif} diferentes · {nSoloA} solo en {_etiquetaA} · {nSoloB} solo en {_etiquetaB})");
 
                 foreach (var diff in resultado.Tablas)
                 {
                     if (!mostrarIguales && diff.Estado == DiffEstado.Igual) continue;
-                    var nodo = CrearNodoDiff(diff.Estado, FormatNombreTabla(diff), null);
+                    string etqTabla = diff.Estado == DiffEstado.SoloEnA ? $"  [{_etiquetaA}]"
+                                    : diff.Estado == DiffEstado.SoloEnB ? $"  [{_etiquetaB}]"
+                                    : null;
+                    var nodo = CrearNodoDiff(diff.Estado, FormatNombreTabla(diff) + (etqTabla ?? ""), null);
 
                     if (diff.Estado == DiffEstado.SoloEnA || diff.Estado == DiffEstado.SoloEnB)
                     {
@@ -434,14 +449,15 @@ namespace QueryAnalyzer
                 int nDif   = resultado.Vistas.Count(v => v.Estado == DiffEstado.Diferente);
 
                 var nodoVistas = CrearNodoCategoria(
-                    $"Vistas  ({nIgual} iguales · {nDif} diferentes · {nSoloA} solo en A · {nSoloB} solo en B)");
+                    $"Vistas  ({nIgual} iguales · {nDif} diferentes · {nSoloA} solo en {_etiquetaA} · {nSoloB} solo en {_etiquetaB})");
 
                 foreach (var diff in resultado.Vistas)
                 {
                     if (!mostrarIguales && diff.Estado == DiffEstado.Igual) continue;
                     string label = diff.Nombre;
-                    if (diff.Estado == DiffEstado.Diferente)
-                        label += "  (definición diferente)";
+                    if (diff.Estado == DiffEstado.Diferente)    label += "  (definición diferente)";
+                    else if (diff.Estado == DiffEstado.SoloEnA) label += $"  [{_etiquetaA}]";
+                    else if (diff.Estado == DiffEstado.SoloEnB) label += $"  [{_etiquetaB}]";
                     nodoVistas.Items.Add(CrearNodoDiff(diff.Estado, label, null));
                 }
                 nodoVistas.IsExpanded = nDif > 0 || nSoloA > 0 || nSoloB > 0;
@@ -457,14 +473,16 @@ namespace QueryAnalyzer
                 int nDif   = resultado.Indices.Count(i => i.Estado == DiffEstado.Diferente);
 
                 var nodoIndices = CrearNodoCategoria(
-                    $"Índices  ({nIgual} iguales · {nDif} diferentes · {nSoloA} solo en A · {nSoloB} solo en B)");
+                    $"Índices  ({nIgual} iguales · {nDif} diferentes · {nSoloA} solo en {_etiquetaA} · {nSoloB} solo en {_etiquetaB})");
 
                 foreach (var diff in resultado.Indices)
                 {
                     if (!mostrarIguales && diff.Estado == DiffEstado.Igual) continue;
                     string label = $"{diff.Nombre}  [{(diff.LadoA ?? diff.LadoB).Tabla}]";
                     if (diff.Estado == DiffEstado.Diferente)
-                        label += $"  A: {diff.LadoA?.Columnas}  /  B: {diff.LadoB?.Columnas}";
+                        label += $"  {_etiquetaA}: {diff.LadoA?.Columnas}  /  {_etiquetaB}: {diff.LadoB?.Columnas}";
+                    else if (diff.Estado == DiffEstado.SoloEnA) label += $"  [{_etiquetaA}]";
+                    else if (diff.Estado == DiffEstado.SoloEnB) label += $"  [{_etiquetaB}]";
                     nodoIndices.Items.Add(CrearNodoDiff(diff.Estado, label, null));
                 }
                 nodoIndices.IsExpanded = nDif > 0 || nSoloA > 0 || nSoloB > 0;
@@ -483,7 +501,7 @@ namespace QueryAnalyzer
                 foreach (var diff in resultado.Datos)
                 {
                     if (!mostrarIguales && diff.Estado == DiffEstado.Igual) continue;
-                    string label = $"{diff.Tabla}  (A: {diff.ConteoA:N0} filas  /  B: {diff.ConteoB:N0} filas)";
+                    string label = $"{diff.Tabla}  ({_etiquetaA}: {diff.ConteoA:N0} filas  /  {_etiquetaB}: {diff.ConteoB:N0} filas)";
                     nodoDatos.Items.Add(CrearNodoDiff(diff.Estado, label, null));
                 }
                 nodoDatos.IsExpanded = nDif > 0;
@@ -548,18 +566,18 @@ namespace QueryAnalyzer
                 case DiffEstado.Igual:
                     return $"{col.Nombre}: {col.LadoA.ResumenTipo()}";
                 case DiffEstado.SoloEnA:
-                    return $"{col.Nombre}: {col.LadoA.ResumenTipo()}{(col.LadoA.EsPK ? " PK" : "")}";
+                    return $"{col.Nombre}: {col.LadoA.ResumenTipo()}{(col.LadoA.EsPK ? " PK" : "")}  [solo en {_bdNombreA}]";
                 case DiffEstado.SoloEnB:
-                    return $"{col.Nombre}: {col.LadoB.ResumenTipo()}{(col.LadoB.EsPK ? " PK" : "")}";
+                    return $"{col.Nombre}: {col.LadoB.ResumenTipo()}{(col.LadoB.EsPK ? " PK" : "")}  [solo en {_bdNombreB}]";
                 default: // Diferente
                     var sb = new StringBuilder();
-                    sb.Append(col.Nombre).Append(": ");
+                    sb.Append(col.Nombre).Append(":  ");
                     if (col.LadoA.ResumenTipo() != col.LadoB.ResumenTipo())
-                        sb.Append($"tipo {col.LadoA.ResumenTipo()} → {col.LadoB.ResumenTipo()}");
+                        sb.Append($"{_bdNombreA}: {col.LadoA.ResumenTipo()}  /  {_bdNombreB}: {col.LadoB.ResumenTipo()}");
                     if (col.LadoA.Nullable != col.LadoB.Nullable)
-                        sb.Append($"  nullable {col.LadoA.Nullable} → {col.LadoB.Nullable}");
+                        sb.Append($"  nullable: {_bdNombreA}={col.LadoA.Nullable} / {_bdNombreB}={col.LadoB.Nullable}");
                     if (col.LadoA.EsPK != col.LadoB.EsPK)
-                        sb.Append($"  PK {col.LadoA.EsPK} → {col.LadoB.EsPK}");
+                        sb.Append($"  PK: {_bdNombreA}={col.LadoA.EsPK} / {_bdNombreB}={col.LadoB.EsPK}");
                     return sb.ToString();
             }
         }

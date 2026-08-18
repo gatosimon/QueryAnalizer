@@ -88,6 +88,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>  <!-- Selectores de conexión -->
             <RowDefinition Height="Auto"/>  <!-- Opciones -->
+            <RowDefinition Height="Auto"/>  <!-- Resumen post-comparación -->
             <RowDefinition Height="*"/>     <!-- Resultados -->
             <RowDefinition Height="Auto"/>  <!-- Status -->
         </Grid.RowDefinitions>
@@ -281,17 +282,50 @@
                 <Separator Width="1" Height="20" Background="{DynamicResource BrushBorder}" Margin="0,0,24,0"/>
                 <CheckBox x:Name="chkIguales" Content="Mostrar iguales" Margin="0,0,12,0"
                           Checked="chkIguales_Changed" Unchecked="chkIguales_Changed"/>
+                <Separator Width="1" Height="20" Background="{DynamicResource BrushBorder}" Margin="4,0,16,0"/>
+                <TextBlock Text="Leyenda:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"
+                           Foreground="{DynamicResource BrushFGMuted}"/>
+                <TextBlock Text="→ A" Foreground="#4682D2" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Text="← B" Foreground="#D23C3C" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Text="⚠ Diferente" Foreground="#DC8C1E" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Text="✓ Igual" VerticalAlignment="Center" Opacity="0.55"/>
             </WrapPanel>
         </Border>
 
-        <!-- ══ ROW 2: Resultados ══════════════════════════════════════════════════ -->
-        <TreeView x:Name="tvResultados" Grid.Row="2"
+        <!-- ══ ROW 2: Resumen post-comparación ═════════════════════════════════════ -->
+        <Border x:Name="panelResumen" Grid.Row="2" Visibility="Collapsed"
+                Background="{DynamicResource BrushPanelBG}"
+                BorderBrush="{DynamicResource BrushBorder}" BorderThickness="1"
+                CornerRadius="3" Padding="10,6" Margin="0,0,0,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="A: " FontWeight="Bold" Foreground="#4682D2" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="txtResumenA" FontWeight="SemiBold" VerticalAlignment="Center"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+                <TextBlock Grid.Column="1" Text="vs" FontWeight="Bold" Margin="16,0"
+                           VerticalAlignment="Center" Foreground="{DynamicResource BrushFGMuted}"/>
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <TextBlock Text="B: " FontWeight="Bold" Foreground="#D23C3C" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="txtResumenB" FontWeight="SemiBold" VerticalAlignment="Center"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ══ ROW 3: Resultados ══════════════════════════════════════════════════ -->
+        <TreeView x:Name="tvResultados" Grid.Row="3"
                   BorderThickness="1" Padding="4"
                   VirtualizingStackPanel.IsVirtualizing="True"
                   VirtualizingStackPanel.VirtualizationMode="Recycling"/>
 
-        <!-- ══ ROW 3: Status ══════════════════════════════════════════════════════ -->
-        <Grid Grid.Row="3" Margin="0,4,0,0">
+        <!-- ══ ROW 4: Status ══════════════════════════════════════════════════════ -->
+        <Grid Grid.Row="4" Margin="0,4,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="160"/>
