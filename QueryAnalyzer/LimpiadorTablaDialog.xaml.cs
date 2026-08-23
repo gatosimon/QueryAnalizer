@@ -22,7 +22,7 @@ namespace QueryAnalyzer
 
             _columnas = svc.GetColumnas(cfg.Schema, cfg.Nombre);
             cbPK.ItemsSource = _columnas;
-            cbPK.Text = cfg.CampoPK ?? "";
+            txtPK.Text = cfg.ResumenPK;
             chkReordenar.IsChecked = cfg.ReordenarIds;
             chkIncluir.IsChecked = cfg.Incluir;
 
@@ -162,10 +162,29 @@ namespace QueryAnalyzer
 
         // ── Aceptar / Cancelar ────────────────────────────────────────────
 
+        /// <summary>Columnas separadas por coma → lista limpia, sin vacíos.</summary>
+        private static List<string> ParsearCamposPK(string texto)
+            => (texto ?? "").Split(',')
+                            .Select(s => s.Trim())
+                            .Where(s => !string.IsNullOrEmpty(s))
+                            .ToList();
+
+        private void btnAgregarPK_Click(object sender, RoutedEventArgs e)
+        {
+            string col = cbPK.SelectedItem as string;
+            if (string.IsNullOrEmpty(col)) return;
+
+            var actuales = ParsearCamposPK(txtPK.Text);
+            if (actuales.Any(c => string.Equals(c, col, System.StringComparison.OrdinalIgnoreCase))) return;
+
+            actuales.Add(col);
+            txtPK.Text = string.Join(", ", actuales);
+        }
+
         private void btnAceptar_Click(object sender, RoutedEventArgs e)
         {
             _cfg.CondicionesBaja = GetCondiciones();
-            _cfg.CampoPK    = cbPK.Text.Trim();
+            _cfg.CamposPK   = ParsearCamposPK(txtPK.Text);
             _cfg.ReordenarIds = chkReordenar.IsChecked == true;
             _cfg.Incluir    = chkIncluir.IsChecked == true;
             DialogResult = true;

@@ -742,12 +742,19 @@
                                         ToolTip="Generar SELECT JOIN o CREATE VIEW con las tablas/vistas seleccionadas (mínimo 2)"/>
                                 <Button x:Name="btnGenerarInserts"
                                         DockPanel.Dock="Left"
-                                        Content="📋 Scripts INSERT"
+                                        Content="💾 Backup Esquema"
                                         FontSize="10" Padding="4,1"
                                         Margin="4,0,0,0"
                                         IsEnabled="False"
                                         Click="btnGenerarInserts_Click"
-                                        ToolTip="Generar script INSERT (con DELETE previo) de todas las tablas seleccionadas"/>
+                                        ToolTip="Generar script .sql de resguardo de las tablas seleccionadas — restaurable contra la misma base (orden FK, IDENTITY y transacción incluidos)"/>
+                                <Button x:Name="btnRestaurarBackup"
+                                        DockPanel.Dock="Left"
+                                        Content="&#x267B; Restaurar Backup"
+                                        FontSize="10" Padding="4,1"
+                                        Margin="4,0,0,0"
+                                        Click="btnRestaurarBackup_Click"
+                                        ToolTip="Ejecutar un script .sql de backup generado por QueryAnalyzer contra la conexión activa (respeta las fases FK y usa una transacción con rollback)"/>
                             </DockPanel>
 
                             <!-- TreeViews (ocupan el resto) -->

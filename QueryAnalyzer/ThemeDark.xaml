@@ -29,6 +29,8 @@
     <SolidColorBrush x:Key="BrushEditor"     Color="#1E1E1E"/>
     <SolidColorBrush x:Key="BrushEditorFG"   Color="#D4D4D4"/>
     <SolidColorBrush x:Key="BrushRowHover"   Color="#FFD800"/>
+    <SolidColorBrush x:Key="BrushNroFilaBG"  Color="#37474F"/>
+    <SolidColorBrush x:Key="BrushNroFilaFG"  Color="#DCDCAA"/>
     <x:String x:Key="ThemeToggleIcon">&#x2600;&#xFE0F;</x:String>
 
 </ResourceDictionary>

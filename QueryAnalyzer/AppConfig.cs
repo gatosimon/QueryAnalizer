@@ -38,6 +38,13 @@ namespace QueryAnalyzer
         /// y se pueden guardar en la base de datos con el botón "Guardar cambios".
         /// </summary>
         public bool ResultadosEditables { get; set; } = true;
+
+        /// <summary>
+        /// Muestra una columna "Nº" con la numeración de filas al inicio del grid
+        /// de resultados. Es una columna puramente visual: no forma parte del
+        /// DataTable, así que no se copia, no se exporta ni afecta al guardado.
+        /// </summary>
+        public bool MostrarNumeroFila { get; set; } = true;
     }
 
     /// <summary>

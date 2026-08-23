@@ -81,9 +81,19 @@
                 <ColumnDefinition Width="110"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Label Grid.Column="0" Content="Campo PK:" VerticalAlignment="Center"/>
-            <ComboBox x:Name="cbPK" Grid.Column="1" IsEditable="True"
-                      ToolTip="Columna clave primaria (necesaria para reordenamiento de IDs)"/>
+            <Label Grid.Column="0" Content="Campos PK:" VerticalAlignment="Center"/>
+            <DockPanel Grid.Column="1">
+                <ComboBox x:Name="cbPK" DockPanel.Dock="Left" Width="120"
+                          ToolTip="Elegí una columna y presioná ➕ para agregarla a la PK"/>
+                <Button x:Name="btnAgregarPK" DockPanel.Dock="Left" Content="➕" Width="26"
+                        Margin="2,0,4,0" Click="btnAgregarPK_Click"
+                        ToolTip="Agregar la columna seleccionada a la clave primaria"/>
+                <TextBox x:Name="txtPK" VerticalContentAlignment="Center"
+                         Background="{DynamicResource BrushControlBG}"
+                         Foreground="{DynamicResource BrushFG}"
+                         BorderBrush="{DynamicResource BrushBorder}"
+                         ToolTip="Columnas de la PK separadas por coma, en orden. Compuesta: 'Sucursal, Numero'"/>
+            </DockPanel>
         </Grid>
 
         <CheckBox x:Name="chkReordenar" Content="Reordenar IDs" Margin="0,0,0,4"

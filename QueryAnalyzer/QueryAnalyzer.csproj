@@ -117,6 +117,7 @@
     <Compile Include="PasadorDatosWindow.xaml.cs">
       <DependentUpon>PasadorDatosWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="RestauradorBackupService.cs" />
     <Compile Include="ScriptHelper.cs" />
     <Compile Include="ConexionesManager.cs" />
     <Compile Include="ConfigManager.cs" />

@@ -50,6 +50,8 @@ namespace QueryAnalyzer
                 { "BrushEditor",     "#FFFFFF" },
                 { "BrushEditorFG",   "#1A1A1A" },
                 { "BrushRowHover",   "#FFD800" },
+                { "BrushNroFilaBG",  "#D6E4F7" },
+                { "BrushNroFilaFG",  "#1A3A5C" },
             };
 
         private static readonly Dictionary<string, string> DefaultOscuro =
@@ -82,6 +84,8 @@ namespace QueryAnalyzer
                 { "BrushEditor",     "#1E1E1E" },
                 { "BrushEditorFG",   "#D4D4D4" },
                 { "BrushRowHover",   "#FFD800" },
+                { "BrushNroFilaBG",  "#37474F" },
+                { "BrushNroFilaFG",  "#DCDCAA" },
             };
 
         // ── Estado ───────────────────────────────────────────────────────────
@@ -112,6 +116,7 @@ namespace QueryAnalyzer
             chkCargarUltConsulta.IsChecked     = _configOriginal.CargarUltimaConsulta;
             chkEjecutarSelectDirecto.IsChecked = _configOriginal.EjecutarSelectDirecto;
             chkResultadosEditables.IsChecked   = _configOriginal.ResultadosEditables;
+            chkMostrarNroFila.IsChecked        = _configOriginal.MostrarNumeroFila;
             txtMaxFilas.Text                   = _configOriginal.MaxFilasResultado.ToString();
 
             txtRutaConfig.Text = "Ruta: " + Path.Combine(
@@ -284,6 +289,7 @@ namespace QueryAnalyzer
                 CargarUltimaConsulta    = chkCargarUltConsulta.IsChecked == true,
                 EjecutarSelectDirecto   = chkEjecutarSelectDirecto.IsChecked == true,
                 ResultadosEditables     = chkResultadosEditables.IsChecked == true,
+                MostrarNumeroFila       = chkMostrarNroFila.IsChecked == true,
                 MaxFilasResultado       = maxFilas,
             };
 

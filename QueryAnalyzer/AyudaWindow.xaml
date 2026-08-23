@@ -148,6 +148,13 @@
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• ✕ Limpiar consulta: borra el contenido del editor."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Múltiples consultas: se pueden separar con punto y coma (;) o en líneas distintas; cada una genera una pestaña de resultados."/>
 
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Lotes de varias sentencias"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Un lote de dos o más sentencias se ejecuta completo sobre UNA sola conexión, así que todo lo que dependa de la sesión funciona de una sentencia a la siguiente."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Eso incluye: BEGIN TRANSACTION / COMMIT / ROLLBACK, tablas temporales (#tmp) y los SET de sesión."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Si el lote termina con una transacción abierta (BEGIN sin COMMIT), al cerrar la conexión se revierte."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Nota: si por algún motivo no se puede abrir la conexión única, el lote corre igual pero sentencia por sentencia, y el log lo avisa — en ese caso las transacciones y las tablas temporales NO funcionan."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Tip: los scripts generados por el Limpiador de BD conviene correrlos desde el botón 'Ejecutar Script' de su propia ventana, donde hay confirmación explícita de COMMIT. Si pegás uno acá, el editor te lo advierte."/>
+
                 <TextBlock Style="{StaticResource Subtitulo}" Text="Comentarios"/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Comentarios de línea: cualquier línea que comience con -- es ignorada al ejecutar."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Comentarios de bloque: todo lo encerrado entre /* y */ es ignorado al ejecutar, incluso si abarca varias líneas."/>
@@ -282,13 +289,20 @@
                 <TextBlock Style="{StaticResource Nota}" Text="Tip: podés comparar una base consigo misma para verificar que los resultados sean todos ✓ iguales."/>
 
                 <!-- ══ SCRIPTS MASIVOS / TRANSFERENCIA ════════════════════ -->
-                <TextBlock Style="{StaticResource Titulo}" Text="📋 Scripts INSERT masivos y Transferencia de datos"/>
+                <TextBlock Style="{StaticResource Titulo}" Text="💾 Backup de esquema y Transferencia de datos"/>
 
-                <TextBlock Style="{StaticResource Subtitulo}" Text="Generar scripts INSERT de múltiples tablas"/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Backup de esquema (💾 Backup Esquema)"/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• Seleccioná tablas con los checkboxes del árbol de esquemas."/>
-                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Presioná '📋 Scripts INSERT' en la barra de selección múltiple."/>
-                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Se genera un script con DELETE + INSERTs por cada tabla, en una sola ventana de resultado."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Presioná '💾 Backup Esquema' en la barra de selección múltiple y elegí dónde guardar el archivo .sql."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El script generado es restaurable: ejecutarlo contra la MISMA base la deja tal como estaba."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Incluye deshabilitar/rehabilitar FK, los DELETE en orden hija→padre, los INSERT en orden padre→hija, y todo dentro de BEGIN TRAN / COMMIT."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Preserva los valores de columnas IDENTITY (SET IDENTITY_INSERT en SQL Server, OVERRIDING SYSTEM VALUE en PostgreSQL y DB2), de modo que las claves foráneas siguen resolviendo tras restaurar."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Omite las columnas calculadas y rowversion/timestamp, que el motor regenera solo."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• La cabecera del script lista el orden de restauración resuelto y la cantidad de filas por tabla."/>
                 <TextBlock Style="{StaticResource Nota}"      Text="Tip: solo se procesan TABLAs; las vistas son ignoradas."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Tip: seleccioná TODAS las tablas del esquema para que el orden FK se resuelva completo. Si faltan tablas referenciadas, el resguardo puede no restaurar bien."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Atención: ejecutá el script completo. Si salteás la FASE 1 (deshabilitar FK) o lo corrés por partes, el orden de las tablas pasa a importar y puede fallar."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Tip: no hace falta ejecutarlo a mano — el botón '♻ Restaurar Backup', al lado, lo corre respetando las fases. Ver la sección siguiente."/>
 
                 <TextBlock Style="{StaticResource Subtitulo}" Text="Transferencia de datos entre bases (🔁 Transferir datos)"/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• Abre la ventana de transferencia desde el botón '🔁 Transferir datos' en la barra superior."/>
@@ -306,24 +320,175 @@
                 <TextBlock Style="{StaticResource Titulo}"    Text="🧹 Limpiador de BD"/>
                 <TextBlock Style="{StaticResource Subtitulo}" Text="Configuración"/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• Accedé desde el botón '🧹 Limpiar BD' en la barra superior (requiere conexión activa)."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El selector 'Esquema' define el ALCANCE de toda la operación: detección, aplicación de condiciones, análisis y script sólo tocan el esquema elegido. Con '(Todos)' abarca la base entera."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Las tablas arrancan destildadas: hay que elegir explícitamente cuáles limpiar. El renglón 'Alcance' debajo del selector te dice cuántas hay y cuántas están incluidas."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Nota: los conflictos FK se siguen detectando contra tablas de esquemas fuera de alcance. Si una tabla de dbo referencia una de SIEP, el análisis lo avisa igual — es lo que evita un DELETE que falle por FK."/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• En el panel izquierdo configurá el campo de baja global (ej: 'Baja') y el valor que indica baja (ej: '1', 'S', 'true')."/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• Hacé doble clic en una tabla de la lista para configurar su campo de baja, valor y clave primaria individualmente."/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• Seleccioná múltiples tablas y usá 'Aplicar a seleccionadas' para asignar la misma configuración a un grupo."/>
-                <TextBlock Style="{StaticResource Cuerpo}"    Text="• '🔍 Detectar campos automáticamente' busca en cada tabla columnas con nombres comunes: Baja, IsDeleted, Activo, FechaBaja, Eliminado."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Detección automática"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• '🔍 Detectar campos automáticamente' busca en cada tabla columnas con nombres comunes: BajaUsuario, BajaFecha, Baja, IsDeleted, Eliminado, Activo, Vigente."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El mismo botón completa la clave primaria de todas las tablas con una sola consulta al catálogo del motor. La columna 'PK' de la lista muestra el resultado."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Si el catálogo no devuelve la PK de una tabla, se deduce de las FKs que la referencian."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Las PK compuestas se detectan completas y se muestran separadas por coma. Para editarlas a mano, doble clic en la tabla."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El desplegable 'Unir con' define si las condiciones detectadas se combinan con AND u OR. Sólo aplica cuando la tabla aporta más de un campo de baja (ej: BajaUsuario y BajaFecha)."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Cuidado: con OR alcanza que uno solo de los campos indique baja para que el registro se elimine, así que borra más que con AND. Revisá la columna 'En baja' del análisis antes de generar el script."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Tip: si una tabla queda sin PK, el análisis lo informa en las advertencias antes de que generes el script."/>
                 <TextBlock Style="{StaticResource Subtitulo}" Text="Modos de conflicto FK"/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• Bloquear: si hay hijos activos que referencian padres en baja, el script no se genera hasta resolver el conflicto."/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• Baja en cascada: los hijos activos también se marcan como dados de baja antes de eliminar."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="    – El valor que se escribe en el hijo es el de la columna 'Val.cascada' de cada condición. Tiene que hacer que el hijo cumpla su propia condición de baja, o el DELETE no lo va a alcanzar."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="    – Las FK compuestas se resuelven con un EXISTS que correlaciona todas las columnas de la clave, no una por una."/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• Ignorar: los registros en baja con dependencias activas se omiten; solo se eliminan los que no tienen conflicto."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Borrado en cascada (sin bajas lógicas): elimina físicamente todo lo que esté dado de baja lógica, y con ello todo lo que lo referencie. Es el modo para dejar la base sin ninguna baja lógica pendiente."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="    – NO escribe en BajaUsuario ni BajaFecha. A diferencia de 'Baja en cascada', que marca como dadas de baja filas que estaban activas, este modo sólo borra."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="    – Una fila activa que referencia a una fila en baja también se elimina: apunta a algo que va a dejar de existir, así que pierde sentido."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="    – El arrastre alcanza tablas que NO tildaste, pero SIEMPRE dentro del esquema elegido. El análisis las lista en las advertencias y el script las marca con '-- CASCADA (fuera de la selección, dentro del esquema)'."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Borrado seguro (respeta las FK, no arrastra): elimina físicamente una fila dada de baja SÓLO si ninguna fila viva la referencia. Es la contracara del anterior: en vez de arrastrar hacia abajo, retiene hacia arriba."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="    – Tampoco escribe en BajaUsuario ni BajaFecha, y sólo toca las tablas que tildaste: sin arrastre, el alcance no se expande solo."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Borrado iterativo (⚠ arrastra filas activas): suspende las FK, borra TODAS las bajas lógicas sin mirar quién las referencia, y después barre en loop lo que quedó sin conectar con nada. Es el único modo que rompe la integridad a propósito para repararla al final."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="    – Es el modo para dejar la base sin una sola baja lógica, cuando ninguno de los otros dos llega: la cascada arrastra de más y el seguro retiene de más."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Cómo trabaja el script (y por qué es seguro)"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El script tiene dos fases. Primero CAPTURA en tablas temporales '#del_…' las claves de las filas condenadas, propagando de padres a hijos. Recién después BORRA, de hijos a padres, uniendo cada tabla contra su conjunto."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• La condición es POSITIVA: una fila se elimina sólo si fue identificada como parte del conjunto. Si un supuesto está equivocado, la fila no entra y sobrevive — nunca al revés."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Como se borra en el orden correcto, las claves foráneas quedan ACTIVAS toda la corrida. El motor es el árbitro: si el arrastre se quedó corto, el DELETE del padre falla con error de FK y se revierte todo."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Sólo las tablas que forman un ciclo de FK pierden la validación, porque ahí no existe un orden válido. El análisis te dice cuáles son."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Freno de seguridad (opcional, apagado por defecto)"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Con 'Frenar si una tabla pierde más del 90% de sus filas' tildado, el script aborta antes de borrar nada si alguna tabla perdería más del 90%. Es una red contra una condición de baja mal escrita que se lleve la tabla entera."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Abortar es literal: corta el script ahí mismo, revierte, y el mensaje te dice cuántas filas de cuántas alcanzaba el borrado, para que puedas juzgar si el arrastre tenía sentido."/>
+                <TextBlock Style="{StaticResource Codigo}"    Text="IF (SELECT COUNT(*) FROM #del_X) * 100 &gt; (SELECT COUNT(*) FROM X) * 90 SELECT CAST('ABORTADO: X pierde ...' AS INT);"/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Viene apagado porque el umbral es porcentual: en una tabla de dos filas, borrar las dos ya es el 100% y el freno salta aunque la limpieza sea correcta. Conviene tildarlo en bases grandes o cuando la condición de baja todavía no está probada."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="El corte es un error de conversión provocado a propósito: así el mensaje puede llevar los conteos y el script frena tanto acá como pegado en SSMS. Por eso el error llega envuelto en 'Conversion failed…'."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="    – La columna 'Cascada (≥)' del análisis es un piso, no el total: cuenta un solo nivel de FK."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Cuidado: una fila se elimina si CUALQUIERA de sus padres se elimina. Por ejemplo, un vínculo pregunta–cuestionario se va si se elimina la pregunta, el cuestionario o la sección repetible a la que pertenece, aunque los otros dos sigan vivos. Revisá la columna 'Cascada (≥)' antes de ejecutar."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Borrado seguro — qué hace y por qué existe"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Las claves foráneas de la base declaran qué pasa al borrar un padre. En el esquema SIEP las 135 FK dicen NO ACTION, sin una sola excepción: 'no borres un padre que todavía tiene hijos'."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• 'Borrado en cascada' hace lo contrario en todas: condena al padre y arrastra a los hijos, emulando un ON DELETE CASCADE que ninguna relación autoriza. 'Borrado seguro' respeta lo que la base declara."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• La regla es una sola: una fila se borra si está dada de baja Y ninguna fila viva la referencia. Si algo vivo la usa, se retiene y sobrevive a esta corrida."/>
+                <TextBlock Style="{StaticResource Codigo}"    Text="AND NOT EXISTS (SELECT 1 FROM [SIEP].[PreguntasPorCuestionario] e WHERE h.[IdSeccion] = e.[IdSeccion] AND NOT EXISTS (SELECT 1 FROM #del_SIEP_PreguntasPorCuestionario y WHERE ...))"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El NOT EXISTS de adentro descuenta a los hijos que se van en la misma corrida: si TODOS los que retenían al padre están condenados, el padre queda libre y también se borra. Por eso la captura va de hijos a padres, al revés que en la cascada, y una sola pasada cierra la cadena entera."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Una referencia desde otro esquema retiene igual, aunque esa tabla esté fuera del alcance."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Esperá que retenga de más, no de menos: es normal que queden filas en baja sin borrar. No es una falla — es una fila que algo vivo todavía usa. Borrá primero lo que la referencia y en la corrida siguiente se va."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="En el análisis, el total de filas en baja de este modo es un TECHO, no lo que se va a borrar. Cuánto se borra realmente lo dice el resumen por tabla del log, ya dentro de la transacción y antes de confirmar."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Limitación: una FK de una tabla hacia sí misma (jerarquías padre-hijo dentro de la misma tabla) no lleva guarda, porque su conjunto se está armando en esa misma sentencia."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Pestaña 'Retenciones' — qué no se borró y por qué"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Con el modo 'Borrado seguro', al analizar se llena esta pestaña: una fila por cada relación que está dejando bajas sin borrar, con cuántas filas retiene y qué se puede hacer."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Hay tres motivos, y no se resuelven igual. La distinción es todo el sentido del informe:"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="    – Cadena incompleta: lo que retiene TAMBIÉN está dado de baja, pero su tabla no entró al alcance, así que nadie la borra y el padre queda trabado. Es el único caso que se resuelve con un botón."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="    – Retenida en cadena: lo que retiene está en baja y su tabla SÍ está tildada, pero igual no se va a borrar porque ella misma quedó retenida. La traba se propaga hacia arriba: hay que destrabar la hija primero."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="    – Datos vivos: lo que retiene está activo. No hay nada técnico que hacer — o la baja del padre está mal puesta, o hay que dar de baja el vínculo desde la aplicación."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El botón '✚ Incluir las tablas que retienen' tilda las tablas de las filas 'Cadena incompleta' y les detecta campos de baja y PK. Después volvé a analizar: la cadena aparece cerrada."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El botón '🔍 Ver qué la retiene' carga en 'Script SQL' la consulta que devuelve las filas que están reteniendo, para poder mirarlas antes de decidir. Es un SELECT: no borra nada, pero pisa el script generado."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Incluir tablas NO amplía el borrado como lo hace la cascada: cada tabla incluida sigue borrando únicamente sus propias filas dadas de baja. Lo único que cambia es que alguien se ocupa de las hijas que hoy nadie mira, y como la captura va de hijos a padres, una sola corrida más cierra la cadena entera."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Las filas en gris son las de 'Datos vivos': están para que sepas qué pasó, no para accionar sobre ellas."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Si el botón de incluir aparece apagado es porque no hay ninguna 'Cadena incompleta', y eso normalmente significa que ya está todo tildado: no queda ninguna tabla por incluir. El texto debajo de la grilla dice en qué situación estás, y el mismo mensaje sale como tooltip del botón."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="El resumen desglosa las retenciones por motivo y cuenta aparte las relaciones que no se pudieron calcular, para distinguir 'no hay nada que hacer' de 'no se pudo medir'."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Si la tabla que retiene está en otro esquema, tildarla no alcanza: el selector 'Esquema' define el alcance real. Poné '(Todos)' o el informe va a seguir mostrando la misma retención."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Borrado iterativo — romper la integridad y repararla"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Los otros dos modos físicos nunca dejan la base inconsistente, ni por un instante, y para lograrlo necesitan tablas temporales, orden topológico y trato especial de los ciclos. Este hace lo contrario: rompe la integridad a propósito en el paso 1 y la repara en el paso 4."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Son cuatro pasos: (1) suspender las FK, (2) borrar TODAS las bajas sin mirar a nadie, (3) barrer en loop lo que quedó desconectado, (4) rehabilitar las FK."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Con las constraints suspendidas el orden deja de importar, así que no hay temporales ni orden topológico que calcular. La convergencia la da el loop: el paso 3 se repite hasta que una vuelta entera no borra nada."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Cuándo se borra una fila en el paso 3"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• La regla es exigente: se borra sólo la fila que NO logra conectarse con nada. Si sigue enganchada por algún dato, sobrevive aunque otro esté roto."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Las FK se agrupan por DATO, no por relación. Si IdPregunta apunta a dos tablas distintas, encontrarlo en cualquiera de las dos ya lo deja conectado."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Un dato vacío (NULL, o 0 y '' si está tildada la opción de centinelas) se ignora: no apuntar a nada no es prueba de estar roto. Y hace falta que al menos un dato apunte a algo, así que una fila con todas sus FK vacías nunca se borra."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Ejemplo, con A relacionada a B y D por IdPregunta, y a C por IdOperador:"/>
+                <TextBlock Style="{StaticResource Codigo}"    Text="IdPregunta=7 (no está ni en B ni en D), IdOperador=NULL   → SE BORRA"/>
+                <TextBlock Style="{StaticResource Codigo}"    Text="IdPregunta=7 (no está), IdOperador=3 (sí está en C)      → sobrevive"/>
+                <TextBlock Style="{StaticResource Codigo}"    Text="IdPregunta=7 (está en B), IdOperador=3 (no está en C)    → sobrevive"/>
+                <TextBlock Style="{StaticResource Codigo}"    Text="IdPregunta=NULL, IdOperador=NULL                        → sobrevive"/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Es mucho más conservador que 'Depurar relaciones truncadas', donde alcanza UNA sola FK rota para condenar la fila. Por eso ese barrido no corre en este modo aunque lo tildes: usaría el criterio contrario y se llevaría justo las filas que este modo decidió conservar."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Cuidado: este modo BORRA FILAS ACTIVAS. Una fila viva que sólo apuntaba a registros dados de baja queda apuntando a la nada en el paso 2 y se elimina en el paso 3. Es el criterio declarado del modo, no un descuido — pero es la razón para mirar el análisis antes de ejecutar."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El análisis estima cuántas filas activas caen y las muestra en la columna 'Cascada (≥)'. Es un piso: cuenta una vuelta del barrido, y el loop puede dar varias."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Por qué quedan FK sin verificar"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Como una fila rota por un dato pero sana por otro se conserva, esa relación queda violada. Por eso el paso 4 rehabilita las constraints SIN revalidar lo existente: con 'WITH CHECK', una sola de esas filas haría fallar el ALTER y revertiría la corrida entera."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El precio es que esas constraints quedan 'untrusted': el motor las vuelve a exigir para lo que venga, pero no verificó lo que ya estaba, y mientras sigan así las ignora al armar los planes de ejecución."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Al terminar, y todavía dentro de la transacción, el log lista qué FK quedaron violadas y con cuántas filas. Es el dato que falta para decidir si confirmar o revertir."/>
+                <TextBlock Style="{StaticResource Codigo}"    Text="Para volver a verificarlas: ALTER TABLE [esquema].[tabla] WITH CHECK CHECK CONSTRAINT ALL;"/>
+                <TextBlock Style="{StaticResource Nota}"      Text="La pestaña 'Retenciones' queda vacía con este modo, y es correcto: no retiene nada. Su informe equivalente es la columna 'Cascada (≥)' del análisis."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Pegado en SSMS, el bloque del paso 3 corre UNA sola vez: el loop lo maneja la aplicación. Los marcadores '-- QA:LOOP-INICIO' y '-- QA:LOOP-FIN' lo delimitan; repetilo a mano hasta que no borre nada."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="El freno del 90% no aplica a este modo y aparece deshabilitado: acá se borran TODAS las bajas por diseño, así que en cualquier tabla donde eso sea la mayoría el freno cortaría una limpieza correcta. Lo que hace de red es la estimación del análisis, el resumen del log y el rollback — los tres antes de confirmar."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="El esquema es un límite duro"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El selector 'Esquema' no es sólo un filtro de la lista: define hasta dónde puede llegar la limpieza. Nada fuera del esquema elegido se borra ni se modifica, y a esas tablas ni siquiera se les suspende la validación de FK."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Si una fila del esquema elegido está referenciada desde otro esquema, esa fila NO se elimina: el DELETE lleva una guarda que la retiene. El resto de la limpieza corre normal."/>
+                <TextBlock Style="{StaticResource Codigo}"    Text="AND NOT EXISTS (SELECT 1 FROM [dbo].[Auditoria] h WHERE h.[IdPregunta] = [SIEP].[MPreguntas].[IdPregunta])"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• La columna 'Retenidas' del análisis cuenta esas filas, y el detalle dice qué tabla de afuera las retiene. Para poder eliminarlas hay que incluir ese otro esquema en el alcance."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Con el selector en '(Todos)' el alcance es la base entera y la cascada cruza esquemas sin restricción."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Tip: como las tablas de otros esquemas conservan sus FK activas, el motor queda de red de seguridad — si una guarda fallara, el DELETE da error y se revierte todo en vez de dejar una referencia colgando."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Las FK se matchean por nombre calificado (esquema.tabla), así que dos tablas homónimas en esquemas distintos —por ejemplo SIEP.Estado y dbo.Estado— se tratan como lo que son: tablas distintas."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Nota: este modo está pensado para MS SQL. En Postgres 'SET CONSTRAINTS ALL DEFERRED' sólo afecta constraints DEFERRABLE, y en DB2 los ALTER salen comentados: en esos motores hay que ajustar el script a mano."/>
                 <TextBlock Style="{StaticResource Subtitulo}" Text="Flujo de trabajo"/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="1. Configurar campos de baja → 2. Analizar (solo lectura) → 3. Generar Script → 4. Revisar script → 5. Ejecutar."/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• El paso 'Ejecutar Script' abre una transacción. Al terminar pedirá confirmación de COMMIT; si cancelás, se hace ROLLBACK automático."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Antes de pedir esa confirmación, el log muestra cuántas filas eliminó cada tabla y el total. Son números medidos durante la corrida, dentro de la transacción: el alcance real, no la estimación del análisis. Si algo no cuadra, respondé que no y no se confirma nada."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Ese resumen es el lugar donde conviene revisar: la columna 'Cascada (≥)' del análisis cuenta un solo nivel de FK, así que el borrado real puede alcanzar bastante más de lo que anticipa."/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• El script también es editable manualmente en la pestaña 'Script SQL' antes de ejecutarlo."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Depuración de relaciones truncadas"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Tildá 'Depurar relaciones truncadas' para que el script elimine las filas huérfanas: las que apuntan por FK a un padre que ya no existe."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El barrido encadena: al borrar una fila huérfana, las que la referenciaban quedan huérfanas a su vez y también se van, hasta que la cadena cierra. Una pasada sola alcanza porque la captura recorre de padres a hijos."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Las tablas sin relaciones —catálogos fijos como Provincias o TiposDoc— nunca se tocan: el barrido sólo condena filas identificadas por una FK rota, así que un catálogo no puede entrar aunque nadie lo use."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El alcance son TODAS las tablas tildadas, tengan condición de baja o no: una tabla puede no tener nada que dar de baja y aun así estar colgando."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Sin referencia no es lo mismo que referencia rota"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Una fila con la FK en NULL no referencia a nadie: es una fila suelta legítima y NO se borra. Sólo se borra la que referencia a alguien que no existe."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• 'Tratar 0 y cadena vacía como sin referencia' (tildado por omisión) extiende ese criterio a los centinelas. Las bases derivadas de Magic usan 0 o '' en vez de NULL, y sin esta opción esas filas contarían como rotas y se irían."/>
+                <TextBlock Style="{StaticResource Codigo}"    Text="WHERE h.[IdSector] IS NOT NULL AND h.[IdSector] &lt;&gt; 0 AND NOT EXISTS (SELECT 1 FROM [SIEP].[Sector] p WHERE p.[Id] = h.[IdSector])"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• En una FK compuesta alcanza que UNA columna sea nula para que la restricción no se verifique: esa fila tampoco es huérfana."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• La solapa 'Relaciones truncadas' lista una fila por FK con filas colgando: tabla hija, columnas, tabla padre, cuántas filas y algunos valores huérfanos de ejemplo. Miralo antes de generar el script."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Una FK cuyo padre está en otro esquema se informa pero NO se depura, y aparece en gris con 'Fuera de alcance'. El límite de esquema vale también acá."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El barrido reusa el mismo freno del 90% y termina con una verificación: si alguna FK sigue rota después de borrar, el script aborta con 'QUEDAN HUERFANOS' y revierte todo."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Tip: el flujo típico después de traer producción a desarrollo es tildar las tres cosas juntas — condiciones de baja, depuración de truncadas y reordenamiento de IDs. Corren en ese orden y en una sola transacción."/>
+
                 <TextBlock Style="{StaticResource Subtitulo}" Text="Reordenamiento de IDs"/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• Activá 'Reordenar IDs' para compactar los valores de la clave primaria y eliminar huecos."/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• El reordenamiento actualiza primero las FKs en tablas hijas y luego los PKs en las tablas padre (orden topológico)."/>
-                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Para columnas IDENTITY en SQL Server, el script incluye instrucciones adicionales y comentarios con el flujo necesario."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Sólo aplica a tablas con PK de una columna: ROW_NUMBER() produce un entero y se asigna a una única columna."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Las tablas con PK compuesta o sin PK quedan fuera, y el script lo dice con una línea '-- OMITIDO del reordenamiento'."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Corre después de la depuración de huérfanos, para que los IDs se compacten sobre lo que realmente quedó."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Se le suspende la validación de FK a toda tabla que el remapeo escribe, esté tildada o no: el UPDATE alcanza a cualquier hija del grafo, y una hija fuera de la selección hacía fallar el paso."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="PK con IDENTITY (SQL Server)"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Una columna IDENTITY no admite UPDATE, así que el script rehace la tabla: copia las filas con el ID ya mapeado a una temporal, vacía la tabla y las reinserta con SET IDENTITY_INSERT."/>
+                <TextBlock Style="{StaticResource Codigo}"    Text="SET IDENTITY_INSERT [SIEP].[Empleado] ON;  →  INSERT ... SELECT ... FROM #new_SIEP_Empleado;  →  OFF"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Después del reordenamiento se reposiciona el contador con DBCC CHECKIDENT ... RESEED, para que el próximo INSERT tome el número siguiente y no reabra un hueco."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Cuidado: este camino hace DELETE + INSERT, así que dispara los triggers de la tabla. Si la tabla tiene triggers de auditoría, revisá qué van a registrar."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Si la tabla tiene columnas que no se pueden insertar —calculadas, timestamp/rowversion— queda OMITIDA del reordenamiento entera, con el motivo en el script. No se emite ningún UPDATE parcial: dejar las hijas remapeadas contra un padre que no se renumeró sería peor que no hacer nada."/>
                 <TextBlock Style="{StaticResource Nota}"      Text="Tip: antes de ejecutar en producción, probá el flujo completo contra una base de datos de desarrollo o backup."/>
                 <TextBlock Style="{StaticResource Nota}"      Text="Tip: el script generado incluye ROLLBACK por defecto; para confirmar los cambios hay que confirmar el COMMIT en la ventana de ejecución."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Al ejecutar desde la ventana, el BEGIN TRANSACTION / COMMIT / ROLLBACK que trae el script se ignoran —el log los marca como tales— porque la transacción la abre la aplicación y quien decide es el diálogo de confirmación. Esas líneas son para cuando pegás el script en SSMS."/>
+
+                <!-- ══ RESTAURAR BACKUP ════════════════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}"    Text="♻ Restaurar Backup"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Botón '♻ Restaurar Backup', en la barra de selección múltiple del árbol de esquemas, al lado de '💾 Backup Esquema'."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Acepta los archivos .sql generados por '💾 Backup Esquema'. No hace falta seleccionar tablas: la lista sale del propio script."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• La restauración va SIEMPRE contra la conexión activa de la barra superior, no contra la conexión con la que se generó el backup."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Confirmación previa"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Antes de tocar nada se muestra un resumen: archivo, fecha de generación, conexión de origen, conexión de destino, cantidad de tablas y de sentencias (DELETE / INSERT)."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Avisa si el backup se generó contra otra conexión distinta de la activa, y si el archivo no tiene la firma de un backup de QueryAnalyzer."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Atención: restaurar BORRA el contenido actual de esas tablas y lo reemplaza por el del backup. Ese diálogo es el último punto para cancelar sin costo."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Cómo se ejecuta"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• FASE 1 (deshabilitar FK) y FASE 3 (rehabilitar FK) corren FUERA de la transacción, porque son opciones de sesión del motor."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• FASE 2 (los DELETE y los INSERT) corre DENTRO de una única transacción: si algo falla se hace ROLLBACK completo y la base queda intacta."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• La FASE 3 se ejecuta siempre, incluso después de un ROLLBACK: las FK nunca quedan deshabilitadas por un error."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Todo corre sobre una única conexión, que es lo que requieren SET IDENTITY_INSERT, session_replication_role y PRAGMA foreign_keys."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El BEGIN TRAN / COMMIT que trae el texto se ignora: la transacción la maneja QueryAnalyzer para poder revertir."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El progreso se ve en la barra de ejecución y el detalle en el panel de mensajes. Se puede frenar con '⏹ Cancelar', que también hace ROLLBACK."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Si todo termina bien se confirma el COMMIT automáticamente y se informa la cantidad de sentencias y el tiempo."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Atención: las columnas binarias (VARBINARY, BLOB, imágenes) no se guardan en el backup — se escriben como NULL. Una restauración deja esas columnas vacías."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Tip: probá siempre la restauración contra una base de desarrollo antes de correrla en producción."/>
+
+                <!-- ══ COLUMNA DE NUMERACIÓN ═══════════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}"    Text="🔢 Columna de numeración (Nº)"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Los grids de resultado muestran una columna 'Nº' a la izquierda con la numeración correlativa de las filas."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Tiene color propio para distinguirla de un vistazo, y lo mantiene aunque la fila esté seleccionada o el mouse esté encima."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Queda fija al hacer scroll horizontal, así que sigue visible en consultas con muchas columnas."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• No forma parte de los datos: no aparece en 'Copiar fila', 'Copiar todo', la exportación a Excel/CSV ni en los UPDATE que genera el guardado de cambios."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Al ordenar por una columna la numeración se recalcula sobre el nuevo orden."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Configuración"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Se activa o desactiva en Preferencias → General → 'Mostrar columna de numeración de filas (Nº) en los resultados'. Viene activada por defecto."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El color se cambia en Preferencias → pestañas 'Tema Claro' y 'Tema Oscuro', con los dos brushes dedicados."/>
+                <TextBlock Style="{StaticResource Codigo}"    Text="BrushNroFilaBG = fondo de la columna     BrushNroFilaFG = color del número"/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Tip: al destildar la opción, las pestañas de resultado ya abiertas ocultan la columna al instante. Al volver a activarla, las pestañas abiertas sin columna la muestran recién en la próxima consulta."/>
 
                 <!-- ══ ACTUALIZACIONES ═════════════════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="🔄 Actualizaciones"/>

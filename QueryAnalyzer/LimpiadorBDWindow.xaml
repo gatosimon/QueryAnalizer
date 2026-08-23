@@ -118,15 +118,36 @@
                             </Grid.ColumnDefinitions>
                             <Label Grid.Column="0" Content="Conflictos FK:" VerticalAlignment="Center"/>
                             <ComboBox x:Name="cbModoConflicto" Grid.Column="1"
-                                      ToolTip="Qué hacer cuando hay hijos activos que referencian a padres dados de baja">
+                                      SelectionChanged="cbModoConflicto_SelectionChanged"
+                                      ToolTip="Qué hacer cuando hay hijos activos que referencian a padres dados de baja. 'Borrado en cascada' los elimina físicamente en vez de marcarlos, y alcanza tablas que no tildaste.">
                                 <ComboBoxItem Content="Bloquear" Tag="Bloquear"/>
                                 <ComboBoxItem Content="Baja en cascada" Tag="BajaEnCascada"/>
                                 <ComboBoxItem Content="Ignorar (omitir conflictivos)" Tag="Ignorar"/>
+                                <ComboBoxItem Content="Borrado en cascada (sin bajas lógicas)" Tag="BorradoEnCascada"/>
+                                <ComboBoxItem Tag="BorradoSeguro"
+                                              Content="Borrado seguro (respeta las FK, no arrastra)"
+                                              ToolTip="Borra físicamente una fila dada de baja SÓLO si ninguna fila viva la referencia. No alcanza tablas que no tildaste. Las filas en baja que todavía tengan hijos vivos quedan sin borrar: eso es lo esperado, no un error."/>
+                                <ComboBoxItem Tag="BorradoIterativo"
+                                              Content="Borrado iterativo (⚠ arrastra filas activas)"
+                                              ToolTip="Suspende las FK, borra TODAS las bajas lógicas sin mirar quién las referencia, y después barre en loop las filas que quedaron sin conectar con nada, hasta que no quede ninguna. ATENCIÓN: borra filas ACTIVAS — una fila viva que sólo apuntaba a registros dados de baja queda apuntando a la nada y se elimina. Una fila que sigue enganchada por algún otro dato sobrevive. Al terminar te muestra qué FK quedaron violadas, antes de que confirmes."/>
                             </ComboBox>
                         </Grid>
+                        <CheckBox x:Name="chkDepurarHuerfanos"
+                                  Content="Depurar relaciones truncadas" Margin="0,0,0,2"
+                                  ToolTip="Elimina las filas cuya FK apunta a un padre que ya no existe, y arrastra a las que queden huérfanas por ese borrado, hasta cerrar la cadena. Las tablas sin relaciones (catálogos) no se tocan."/>
+                        <CheckBox x:Name="chkCentinelas" IsChecked="True" Margin="16,0,0,6"
+                                  IsEnabled="{Binding IsChecked, ElementName=chkDepurarHuerfanos}"
+                                  Content="Tratar 0 y '' como 'sin referencia'"
+                                  ToolTip="Las bases derivadas de Magic usan 0 o cadena vacía en vez de NULL cuando no hay referencia. Destildado, una FK en 0 cuenta como referencia rota y la fila se borra."/>
+
                         <CheckBox x:Name="chkReordenarGlobal"
                                   Content="Reordenar IDs (compactar huecos)" Margin="0,0,0,6"
-                                  ToolTip="Renumerar los IDs para eliminar los huecos dejados por los registros eliminados"/>
+                                  ToolTip="Renumerar los IDs para eliminar los huecos dejados por los registros eliminados. Si la PK es IDENTITY, la tabla se rehace con SET IDENTITY_INSERT."/>
+
+                        <!-- El ToolTip lo pone cbModoConflicto_SelectionChanged: cambia según el modo,
+                             y el modo iterativo además lo deshabilita. -->
+                        <CheckBox x:Name="chkFrenoSeguridad"
+                                  Content="Frenar si una tabla pierde más del 90% de sus filas" Margin="0,0,0,6"/>
 
                         <!-- Constructor de condiciones de baja global -->
                         <TextBlock Text="Condición de baja global:" Margin="0,0,0,3"
@@ -152,19 +173,37 @@
                                 Margin="0,4,0,4" Height="24" Padding="8,0"
                                 Click="btnAgregarCondGlobal_Click"
                                 ToolTip="Agregar una condición de baja al grupo global"/>
-                        <Button Content="🔍 Detectar campos automáticamente" HorizontalAlignment="Stretch"
-                                Margin="0,0,0,0" Click="btnDetectar_Click"
-                                ToolTip="Detecta BajaUsuario, BajaFecha, IsDeleted, Activo y configura condiciones automáticamente"/>
+                        <DockPanel Margin="0,0,0,0">
+                            <TextBlock DockPanel.Dock="Left" Text="Unir con:" VerticalAlignment="Center"
+                                       FontSize="10" Margin="0,0,4,0"
+                                       Foreground="{DynamicResource BrushFGMuted}"/>
+                            <ComboBox x:Name="cbCombinadorDetectar" DockPanel.Dock="Left" Width="60"
+                                      Margin="0,0,6,0" SelectedIndex="0"
+                                      Background="{DynamicResource BrushControlBG}"
+                                      Foreground="{DynamicResource BrushFG}"
+                                      BorderBrush="{DynamicResource BrushBorder}"
+                                      ToolTip="Cómo se unen entre sí las condiciones detectadas cuando la tabla tiene más de un campo de baja (ej: BajaUsuario y BajaFecha)">
+                                <ComboBoxItem Content="AND"/>
+                                <ComboBoxItem Content="OR"/>
+                            </ComboBox>
+                            <Button x:Name="btnDetectar"
+                                    Content="🔍 Detectar campos automáticamente" HorizontalAlignment="Stretch"
+                                    Click="btnDetectar_Click"
+                                    ToolTip="Detecta BajaUsuario, BajaFecha, IsDeleted, Activo y la clave primaria de cada tabla"/>
+                        </DockPanel>
                     </StackPanel>
                 </GroupBox>
 
                 <!-- Filtro por esquema -->
-                <DockPanel DockPanel.Dock="Top" Margin="0,6,0,2">
+                <DockPanel DockPanel.Dock="Top" Margin="0,6,0,0">
                     <Label Content="Esquema:" DockPanel.Dock="Left" VerticalAlignment="Center"/>
                     <ComboBox x:Name="cbEsquema" DockPanel.Dock="Left"
-                              ToolTip="Filtrar la lista de tablas por esquema (solo afecta la vista)"
+                              ToolTip="Define el alcance de TODA la operación: detección, aplicación de condiciones, análisis y script sólo tocan el esquema elegido"
                               SelectionChanged="cbEsquema_SelectionChanged"/>
                 </DockPanel>
+                <TextBlock x:Name="txtAlcance" DockPanel.Dock="Top" Margin="0,2,0,2"
+                           FontSize="10" Foreground="{DynamicResource BrushFGMuted}"
+                           Text="Alcance: (Todos) — 0 tabla(s), 0 incluida(s)"/>
 
                 <!-- Botones de tabla -->
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,2,0,2">
@@ -192,7 +231,7 @@
                             </GridViewColumn>
                             <GridViewColumn Header="Tabla"    Width="120" DisplayMemberBinding="{Binding NombreCompleto}"/>
                             <GridViewColumn Header="Condición" Width="160" DisplayMemberBinding="{Binding ResumenCondiciones}"/>
-                            <GridViewColumn Header="PK"       Width="55"  DisplayMemberBinding="{Binding CampoPK}"/>
+                            <GridViewColumn Header="PK"       Width="110" DisplayMemberBinding="{Binding ResumenPK}"/>
                         </GridView>
                     </ListView.View>
                 </ListView>
@@ -207,7 +246,7 @@
                 <TabControl x:Name="tabResultado" DockPanel.Dock="Top" Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=DockPanel}}">
 
                     <!-- Tab Análisis -->
-                    <TabItem Header="Análisis">
+                    <TabItem x:Name="tabAnalisis" Header="Análisis">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*"/>
@@ -219,8 +258,11 @@
                                     <DataGridTextColumn Header="Tabla" Binding="{Binding NombreCompleto}" Width="180"/>
                                     <DataGridTextColumn Header="En baja" Binding="{Binding RegistrosBaja}" Width="70"/>
                                     <DataGridTextColumn Header="Activos" Binding="{Binding RegistrosActivos}" Width="70"/>
-                                    <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="100"/>
-                                    <DataGridTextColumn Header="Detalle conflictos" Binding="{Binding ConflictosTexto}" Width="*"/>
+                                    <DataGridTextColumn Header="Cascada (≥)" Binding="{Binding CascadaEstimada}" Width="80"/>
+                                    <DataGridTextColumn Header="Retenidas" Binding="{Binding RetenidasPorExterno}" Width="70"/>
+                                    <DataGridTextColumn Header="Huérfanos" Binding="{Binding Huerfanos}" Width="75"/>
+                                    <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="140"/>
+                                    <DataGridTextColumn Header="Detalle" Binding="{Binding ConflictosTexto}" Width="*"/>
                                 </DataGrid.Columns>
                                 <DataGrid.RowStyle>
                                     <Style TargetType="DataGridRow">
@@ -230,6 +272,9 @@
                                                 <Setter Property="Foreground" Value="#E05050"/>
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding Estado}" Value="Cascada">
+                                                <Setter Property="Foreground" Value="#C8A020"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Estado}" Value="Cascada (fuera de selección)">
                                                 <Setter Property="Foreground" Value="#C8A020"/>
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding Estado}" Value="Se omite">
@@ -249,8 +294,104 @@
                         </Grid>
                     </TabItem>
 
+                    <!-- Tab Relaciones truncadas -->
+                    <TabItem x:Name="tabTruncadas" Header="Relaciones truncadas">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <DataGrid x:Name="dgTruncadas" Grid.Row="0" IsReadOnly="True"
+                                      AutoGenerateColumns="False">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Tabla hija"  Binding="{Binding TablaHija}"  Width="170"/>
+                                    <DataGridTextColumn Header="Columnas"    Binding="{Binding Columnas}"   Width="160"/>
+                                    <DataGridTextColumn Header="Tabla padre" Binding="{Binding TablaPadre}" Width="170"/>
+                                    <DataGridTextColumn Header="Filas rotas" Binding="{Binding FilasRotas}" Width="80"/>
+                                    <DataGridTextColumn Header="Valores huérfanos" Binding="{Binding Ejemplos}" Width="150"/>
+                                    <DataGridTextColumn Header="Alcance"     Binding="{Binding Alcance}"    Width="*"/>
+                                </DataGrid.Columns>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow">
+                                        <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding FueraDeAlcance}" Value="True">
+                                                <Setter Property="Foreground" Value="{DynamicResource BrushFGMuted}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                            </DataGrid>
+
+                            <Border Grid.Row="1" Background="{DynamicResource BrushPanelBG}"
+                                    BorderBrush="{DynamicResource BrushBorder}" BorderThickness="0,1,0,0"
+                                    Padding="6,4" MinHeight="40">
+                                <TextBlock x:Name="txtSinTruncadas" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource BrushFGMuted}" FontSize="11"
+                                           Text="Sin relaciones truncadas. Tildá 'Depurar relaciones truncadas' en la configuración global y volvé a analizar para que este informe se llene."/>
+                            </Border>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem x:Name="tabRetenciones" Header="Retenciones">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <DataGrid x:Name="dgRetenciones" Grid.Row="0" IsReadOnly="True"
+                                      AutoGenerateColumns="False"
+                                      MouseDoubleClick="dgRetenciones_MouseDoubleClick">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="No se puede borrar de" Binding="{Binding TablaRetenida}"   Width="170"/>
+                                    <DataGridTextColumn Header="Filas"                 Binding="{Binding FilasRetenidas}"  Width="60"/>
+                                    <DataGridTextColumn Header="La retiene"            Binding="{Binding TablaQueRetiene}" Width="170"/>
+                                    <DataGridTextColumn Header="Columnas"              Binding="{Binding Columnas}"        Width="150"/>
+                                    <DataGridTextColumn Header="Motivo"                Binding="{Binding Motivo}"          Width="120"/>
+                                    <DataGridTextColumn Header="Qué hacer"             Binding="{Binding QueHacer}"        Width="*"/>
+                                </DataGrid.Columns>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow">
+                                        <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+                                        <!-- Los mensajes ODBC no entran en la columna: van completos acá. -->
+                                        <Setter Property="ToolTip" Value="{Binding QueHacer}"/>
+                                        <Style.Triggers>
+                                            <!-- Sólo lo accionable va destacado; el resto pide una decisión. -->
+                                            <DataTrigger Binding="{Binding EsAccionable}" Value="False">
+                                                <Setter Property="Foreground" Value="{DynamicResource BrushFGMuted}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                            </DataGrid>
+
+                            <Border Grid.Row="1" Background="{DynamicResource BrushPanelBG}"
+                                    BorderBrush="{DynamicResource BrushBorder}" BorderThickness="0,1,0,0"
+                                    Padding="6,4" MinHeight="40">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                        <!-- ShowOnDisabled: sin esto WPF oculta el tooltip justo cuando
+                                             el botón está apagado, que es cuando hace falta explicar. -->
+                                        <Button x:Name="btnIncluirRetenedoras" Content="✚ Incluir las tablas que retienen"
+                                                Click="btnIncluirRetenedoras_Click" Padding="8,3" Margin="0,0,6,0"
+                                                ToolTipService.ShowOnDisabled="True"
+                                                ToolTip="Tilda las tablas de las filas 'Cadena incompleta' y les detecta los campos de baja. Cada tabla sigue borrando sólo sus propias bajas: no se arrastra nada. Después volvé a analizar."/>
+                                        <Button x:Name="btnVerQueRetiene" Content="🔍 Ver qué la retiene"
+                                                Click="btnVerQueRetiene_Click" Padding="8,3"
+                                                ToolTip="Abre en la pestaña 'Script SQL' la consulta que devuelve las filas que están reteniendo, para poder mirarlas antes de decidir."/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="txtSinRetenciones" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource BrushFGMuted}" FontSize="11"
+                                               Text="Este informe se llena con el modo 'Borrado seguro'. Muestra qué filas dadas de baja NO se van a borrar y por qué: 'Cadena incompleta' se resuelve incluyendo la tabla que retiene; 'Datos vivos' es una decisión de negocio."/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </TabItem>
+
                     <!-- Tab Script -->
-                    <TabItem Header="Script SQL">
+                    <TabItem x:Name="tabScript" Header="Script SQL">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>

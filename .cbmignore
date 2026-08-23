@@ -1,0 +1,32 @@
+# Excluye del indexado de codebase-memory-mcp.
+# Sintaxis gitignore. Necesario porque .gitignore NO excluye bin/ obj/ packages/
+# y el codigo generado por WPF (*.g.cs) duplicaria cada clase en el grafo.
+
+# Artefactos de build y codigo generado por WPF
+bin/
+obj/
+packages/
+.vs/
+
+# Instalador y binarios distribuibles
+A instalar/
+InstaladorQueryAnalyzer/bin/
+InstaladorQueryAnalyzer/obj/
+
+# Backups muertos: trackeados por git pero NO incluidos en el .csproj
+# (no compilan). Declaran las mismas clases MainWindow / PreferenciasWindow
+# que los archivos reales, por eso hay que sacarlos del grafo.
+QueryAnalyzer/MainWindow1.xaml.cs
+QueryAnalyzer/MainWindow2.xaml.cs
+QueryAnalyzer/PreferenciasWindow1.xaml.cs
+QueryAnalyzer/MainWindow1.xaml
+QueryAnalyzer/MainWindow2.xaml
+QueryAnalyzer/PreferenciasWindow1.xaml
+
+# Assets no indexables
+Imagenes/
+*.exe
+*.pdb
+*.dll
+*.baml
+*.msi

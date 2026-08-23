@@ -535,7 +535,7 @@ namespace QueryAnalyzer
         // Fase FK disable / enable — por motor
         // ─────────────────────────────────────────────────────────────────────
 
-        private static void AgregarScriptFaseDeshabilitarFKs(
+        public static void AgregarScriptFaseDeshabilitarFKs(
             StringBuilder sb, TipoMotor motor, List<TablaTransfer> tablas)
         {
             sb.AppendLine("-- ═══ FASE 1: Deshabilitar FK constraints ═══");
@@ -556,7 +556,7 @@ namespace QueryAnalyzer
             }
         }
 
-        private static void AgregarScriptFaseRehabilitarFKs(
+        public static void AgregarScriptFaseRehabilitarFKs(
             StringBuilder sb, TipoMotor motor, List<TablaTransfer> tablas)
         {
             sb.AppendLine("-- ═══ FASE 3: Rehabilitar FK constraints ═══");
@@ -664,12 +664,19 @@ namespace QueryAnalyzer
             return $"INSERT INTO {nombreTabla} ({colStr}){ov} VALUES ({valStr})";
         }
 
-        private static void EjecutarDml(OdbcConnection conn, OdbcTransaction tx, string sql)
+        /// <summary>
+        /// Ejecuta una sentencia DML. <paramref name="onComando"/> permite al llamador
+        /// quedarse con el OdbcCommand en curso para poder cancelarlo desde otro hilo.
+        /// </summary>
+        internal static void EjecutarDml(OdbcConnection conn, OdbcTransaction tx, string sql,
+                                         Action<OdbcCommand> onComando = null)
         {
             using (var cmd = new OdbcCommand(sql, conn))
             {
                 if (tx != null) cmd.Transaction = tx;
-                cmd.ExecuteNonQuery();
+                onComando?.Invoke(cmd);
+                try { cmd.ExecuteNonQuery(); }
+                finally { onComando?.Invoke(null); }
             }
         }
 

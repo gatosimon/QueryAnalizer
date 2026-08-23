@@ -168,8 +168,26 @@ namespace QueryAnalyzer
         private ResourceDictionary LeerTemaDesdeDisco(string archivo)
         {
             string ruta = System.IO.Path.Combine(ThemesFolder, archivo);
+
+            ResourceDictionary tema;
             using (var stream = System.IO.File.OpenRead(ruta))
-                return (ResourceDictionary)System.Windows.Markup.XamlReader.Load(stream);
+                tema = (ResourceDictionary)System.Windows.Markup.XamlReader.Load(stream);
+
+            // El .xaml en disco puede ser de una version anterior de la app y no tener
+            // los brushes agregados despues (ExtraerTemaADisco solo escribe si el archivo
+            // no existe). Sin esto un DynamicResource nuevo no resuelve y queda sin color.
+            try
+            {
+                var embebido = new ResourceDictionary
+                {
+                    Source = new Uri($"pack://application:,,,/{archivo}", UriKind.Absolute)
+                };
+                foreach (var key in embebido.Keys)
+                    if (!tema.Contains(key)) tema.Add(key, embebido[key]);
+            }
+            catch { }
+
+            return tema;
         }
 
         /// <summary>
@@ -246,6 +264,68 @@ namespace QueryAnalyzer
                     hs.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(6, 4, 6, 4)));
                     hs.Setters.Add(new Setter(DataGridColumnHeader.SeparatorBrushProperty, (System.Windows.Media.Brush)this.FindResource("BrushBorder")));
                     dg.ColumnHeaderStyle = hs;
+                }
+            }
+        }
+
+        // ── Columna de numeración de filas ───────────────────────────────────
+
+        /// <summary>
+        /// Columna virtual "Nº" que se antepone al grid de resultados.
+        /// NO pertenece al DataTable: por eso no aparece en "Copiar fila",
+        /// "Copiar todo", la exportación a Excel ni en el guardado de cambios.
+        /// El número lo pone LoadingRow en DataGridRow.Header (ver CrearGrillaResultado).
+        /// </summary>
+        private DataGridTemplateColumn CrearColumnaNroFila()
+        {
+            var tbHeader = new TextBlock { Text = "Nº", TextAlignment = TextAlignment.Center };
+            tbHeader.SetResourceReference(TextBlock.ForegroundProperty, "BrushHeaderFG");
+
+            var celda = new FrameworkElementFactory(typeof(TextBlock));
+            celda.SetBinding(TextBlock.TextProperty, new Binding("Header")
+            {
+                RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(DataGridRow), 1)
+            });
+            celda.SetValue(TextBlock.TextAlignmentProperty, TextAlignment.Right);
+            celda.SetValue(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center);
+
+            // El Background a nivel CELDA gana sobre el de la fila, así que la columna
+            // conserva su color propio incluso bajo los triggers IsMouseOver / IsSelected
+            // de ResultGridRowStyle: es lo que la hace identificable de inmediato.
+            var estiloCelda = new Style(typeof(DataGridCell));
+            estiloCelda.Setters.Add(new Setter(DataGridCell.BackgroundProperty,
+                new DynamicResourceExtension("BrushNroFilaBG")));
+            estiloCelda.Setters.Add(new Setter(DataGridCell.ForegroundProperty,
+                new DynamicResourceExtension("BrushNroFilaFG")));
+            estiloCelda.Setters.Add(new Setter(DataGridCell.BorderThicknessProperty, new Thickness(0)));
+            estiloCelda.Setters.Add(new Setter(DataGridCell.PaddingProperty, new Thickness(4, 0, 6, 0)));
+            estiloCelda.Setters.Add(new Setter(DataGridCell.FontWeightProperty, FontWeights.SemiBold));
+
+            return new DataGridTemplateColumn
+            {
+                Header        = tbHeader,
+                CellTemplate  = new DataTemplate { VisualTree = celda },
+                CellStyle     = estiloCelda,
+                IsReadOnly    = true,
+                CanUserSort   = false,
+                CanUserResize = false,
+                Width         = new DataGridLength(46)
+            };
+        }
+
+        /// <summary>
+        /// Muestra u oculta la columna "Nº" en las pestañas de resultado ya abiertas.
+        /// Se identifica por ser la única DataGridTemplateColumn: las columnas
+        /// autogeneradas desde un DataView siempre son Text o CheckBox, nunca template.
+        /// </summary>
+        private void ActualizarColumnaNroFilas(bool visible)
+        {
+            foreach (TabItem tab in tcResults.Items)
+            {
+                if (tab.Content is DataGrid dg && dg.Columns.Count > 0 &&
+                    dg.Columns[0] is DataGridTemplateColumn colNro)
+                {
+                    colNro.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
                 }
             }
         }
@@ -596,6 +676,9 @@ namespace QueryAnalyzer
             return string.Join("\r\n", lineasLimpias);
         }
 
+        /// Firma del encabezado que emite LimpiadorBDService.GenerarScript.
+        private const string FirmaScriptLimpiador = "LIMPIADOR DE BD — Generado por QueryAnalyzer";
+
         private async void BtnExecute_Click(object sender, RoutedEventArgs e)
         {
             await Ejecutar();
@@ -635,6 +718,27 @@ namespace QueryAnalyzer
                 return;
             }
 
+            // ── Guardarraíl: script del Limpiador de BD ───────────────────
+            // Se busca sobre el texto crudo: LimpiarConsulta ya sacó los comentarios,
+            // y el encabezado del Limpiador es justamente un comentario.
+            if (sqlHistorial.IndexOf(FirmaScriptLimpiador, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                var resp = MessageBox.Show(
+                    "Este script fue generado por el Limpiador de BD.\n\n" +
+                    "Conviene ejecutarlo desde el botón 'Ejecutar Script' de la ventana del Limpiador: " +
+                    "ahí se corre dentro de una transacción con confirmación explícita de COMMIT, " +
+                    "y podés revisar el resultado antes de confirmar.\n\n" +
+                    "¿Ejecutarlo igual acá?",
+                    "Script del Limpiador de BD",
+                    MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+
+                if (resp != MessageBoxResult.Yes)
+                {
+                    AppendMessage("Ejecución cancelada. Abrí el script desde la ventana del Limpiador de BD.");
+                    return;
+                }
+            }
+
             // ── Activar indicador de progreso y cancelación ───────────────
             _ctsCancelar = new System.Threading.CancellationTokenSource();
             int maxFilas = _configApp.MaxFilasResultado;
@@ -643,8 +747,37 @@ namespace QueryAnalyzer
             long totalRows = 0;
             long totalColumns = 0;
 
+            // Un lote de varias sentencias va sobre UNA sola conexión, para que las
+            // transacciones y las tablas temporales sobrevivan de una sentencia a la
+            // siguiente. Con una sola sentencia no hay nada que compartir.
+            System.Data.Odbc.OdbcConnection conexionLote = null;
+
             try
             {
+                if (validQueries.Count > 1)
+                {
+                    try
+                    {
+                        conexionLote = new System.Data.Odbc.OdbcConnection(connStr);
+                        conexionLote.Open();
+
+                        if (conexionActual?.Motor == TipoMotor.POSTGRES)
+                            using (var cmdSt = new System.Data.Odbc.OdbcCommand("SET statement_timeout = 0", conexionLote))
+                                cmdSt.ExecuteNonQuery();
+
+                        AppendMessage($"Lote de {validQueries.Count} sentencias sobre una única conexión (las transacciones y las tablas temporales se mantienen).");
+                    }
+                    catch (Exception exConn)
+                    {
+                        // Sin conexión compartida el lote igual corre, pero sentencia por
+                        // sentencia: avisar, porque cambia lo que el script puede asumir.
+                        try { conexionLote?.Dispose(); } catch { }
+                        conexionLote = null;
+                        AppendMessage($"No se pudo abrir una conexión única para el lote ({exConn.Message}). " +
+                                      "Cada sentencia usará su propia conexión: las transacciones y las tablas temporales NO van a funcionar.");
+                    }
+                }
+
                 // 🔹 Capturamos los parámetros en una lista tipo pila
                 List<QueryParameter> parametrosTotales = null;
                 await Dispatcher.InvokeAsync(() =>
@@ -708,7 +841,7 @@ namespace QueryAnalyzer
                     // 🔹 Extraemos los parámetros de esta consulta según la pila
                     var parametrosConsulta = ExtraerParametrosParaConsulta(sqlIndividual, parametrosTotales, ref posicionParametro);
 
-                    var (dt, queryEx, truncado, esNoQuery) = await ExecuteQueryAsync(connStr, sqlIndividual, parametrosConsulta, maxFilas);
+                    var (dt, queryEx, truncado, esNoQuery) = await ExecuteQueryAsync(connStr, sqlIndividual, parametrosConsulta, maxFilas, conexionLote);
 
                     if (queryEx != null)
                     {
@@ -718,7 +851,7 @@ namespace QueryAnalyzer
                         if (conexionActual?.Motor == TipoMotor.MS_SQL)
                         {
                             var res = await IntentarResolverEsquemasAsync(
-                                sqlIndividual, connStr, parametrosConsulta, queryEx.Message);
+                                sqlIndividual, connStr, parametrosConsulta, queryEx.Message, conexionLote);
 
                             if (res.resuelto)
                             {
@@ -1007,6 +1140,16 @@ namespace QueryAnalyzer
                             }
                         };
 
+                        // Columna "Nº": se agrega ANTES del ItemsSource. Con
+                        // AutoGenerateColumns=true WPF conserva las columnas manuales y
+                        // ANEXA las autogeneradas, así que esta queda en el índice 0.
+                        if (_configApp.MostrarNumeroFila && !esNoQuery)
+                        {
+                            dataGrid.Columns.Add(CrearColumnaNroFila());
+                            dataGrid.FrozenColumnCount = 1;   // queda fija en el scroll horizontal
+                            dataGrid.LoadingRow += (s, ev) => ev.Row.Header = ev.Row.GetIndex() + 1;
+                        }
+
                         // ItemsSource se asigna DESPUÉS de suscribir AutoGeneratingColumn,
                         // así WPF ya tiene el handler activo cuando genera las columnas.
                         dataGrid.ItemsSource = dt.DefaultView;
@@ -1027,7 +1170,17 @@ namespace QueryAnalyzer
                                     Dispatcher.InvokeAsync(ActualizarBarraGuardar);
                             };
                             dt.RowDeleted += (s, ev) =>
+                            {
                                 Dispatcher.InvokeAsync(ActualizarBarraGuardar);
+                                // LoadingRow no se vuelve a disparar para las filas ya
+                                // materializadas: hay que forzar el refresh para renumerar.
+                                // Refresh() lanza si hay una edición de celda en curso.
+                                if (_configApp.MostrarNumeroFila)
+                                    Dispatcher.InvokeAsync(() =>
+                                    {
+                                        try { dataGrid.Items.Refresh(); } catch { }
+                                    });
+                            };
                         }
 
                         // Encabezado del tab
@@ -1079,6 +1232,24 @@ namespace QueryAnalyzer
             }
             finally
             {
+                // Cerrar la conexión del lote pase lo que pase (fin normal, error o cancelación).
+                // Si el script dejó una transacción abierta —BEGIN sin COMMIT—, cerrarla la
+                // revierte, que es el comportamiento seguro.
+                if (conexionLote != null)
+                {
+                    try
+                    {
+                        if (conexionLote.State != System.Data.ConnectionState.Closed)
+                            conexionLote.Close();
+                    }
+                    catch (Exception exCierre)
+                    {
+                        await Dispatcher.InvokeAsync(() =>
+                            AppendMessage("Aviso al cerrar la conexión del lote: " + exCierre.Message));
+                    }
+                    finally { try { conexionLote.Dispose(); } catch { } }
+                }
+
                 // Siempre restaurar el estado de los botones, incluso si hubo excepción o cancelación
                 SetEstadoEjecutando(false);
             }
@@ -1783,8 +1954,32 @@ namespace QueryAnalyzer
         }
 
         /// <param name="maxFilas">Límite de filas a leer (0 = sin límite). Previene OOM en tablas grandes.</param>
+        /// <summary>
+        /// Cierra el reader de la sentencia recién ejecutada cuando la conexión es compartida.
+        /// Sin esto, la sentencia siguiente del lote falla con "Connection is busy with results
+        /// for another command": el reader abierto retiene la conexión.
+        /// Nunca cierra la conexión — es del llamador.
+        /// </summary>
+        private static void CerrarReaderSiCompartida(DataBase db, System.Data.Odbc.OdbcConnection conexionCompartida)
+        {
+            if (db == null || conexionCompartida == null) return;
+            try
+            {
+                if (db.Reader != null && !db.Reader.IsClosed) db.Reader.Close();
+            }
+            catch { }
+        }
+
+        /// <param name="conexionCompartida">
+        /// Conexión abierta por el llamador para ejecutar todo un lote sobre una sola sesión.
+        /// Es lo que hace que las transacciones y las tablas temporales funcionen: con una
+        /// conexión por sentencia, SQL Server corre sp_reset_connection al reciclarla del pool
+        /// y borra las #temp además de revertir cualquier transacción abierta.
+        /// Null → conexión propia, como en las llamadas de una sola sentencia.
+        /// </param>
         private async Task<(DataTable dt, Exception error, bool truncado, bool esNoQuery)> ExecuteQueryAsync(
-            string connStr, string sql, List<QueryParameter> parametros, int maxFilas = 0)
+            string connStr, string sql, List<QueryParameter> parametros, int maxFilas = 0,
+            System.Data.Odbc.OdbcConnection conexionCompartida = null)
         {
             // Capturar el motor antes de entrar al hilo de background (conexionActual es mutable).
             TipoMotor motorActual = conexionActual?.Motor ?? TipoMotor.MS_SQL;
@@ -1793,16 +1988,20 @@ namespace QueryAnalyzer
             {
                 var dt = new DataTable();
                 bool truncado = false;
+                DataBase DB = null;
 
                 try
                 {
-                    DataBase DB = new DataBase(connStr, false);
+                    DB = conexionCompartida != null
+                        ? new DataBase(conexionCompartida)
+                        : new DataBase(connStr, false);
 
                     // ── PostgreSQL: deshabilitar statement_timeout del servidor ──────
                     // El servidor puede tener un statement_timeout corto (ej. 30 s) que
                     // cancela consultas en tablas grandes con el error 57014.
                     // SET statement_timeout = 0 lo desactiva para esta sesión.
-                    if (motorActual == TipoMotor.POSTGRES)
+                    // Con conexión compartida ya se hizo una vez al abrirla.
+                    if (motorActual == TipoMotor.POSTGRES && conexionCompartida == null)
                     {
                         DB.CommandText = "SET statement_timeout = 0";
                         DB.NonQuery();
@@ -1929,12 +2128,16 @@ namespace QueryAnalyzer
                 catch (Exception err)
                 {
                     _cmdActivo = null;
+                    CerrarReaderSiCompartida(DB, conexionCompartida);
                     return (dt, err, truncado, false);
                 }
                 finally
                 {
                     // Limpiar referencia al comando activo (sea éxito, error o cancelación)
                     _cmdActivo = null;
+                    // La conexión compartida queda abierta para la sentencia siguiente:
+                    // cerrarla es responsabilidad del llamador del lote.
+                    CerrarReaderSiCompartida(DB, conexionCompartida);
                 }
 
                 return (dt, null, truncado, false);
@@ -4683,7 +4886,7 @@ namespace QueryAnalyzer
         {
             if (conexionActual == null)
             {
-                MessageBox.Show("No hay conexión activa.", "Scripts INSERT", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("No hay conexión activa.", "Backup Esquema", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -4693,20 +4896,36 @@ namespace QueryAnalyzer
 
             if (nodos.Count == 0)
             {
-                MessageBox.Show("No hay tablas seleccionadas (las vistas no generan INSERT).", "Scripts INSERT",
+                MessageBox.Show("No hay tablas seleccionadas (las vistas no se resguardan).", "Backup Esquema",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             // Extraer nombres en el hilo UI antes de pasar al hilo de fondo
-            var nombresTablas = nodos
+            var tablas = nodos
                 .Select(n =>
                 {
                     string h = ObtenerHeaderText(n);
                     string nombre = ((NodoTablaTag)n.Tag).Nombre;
-                    return h.Contains(".") ? h : nombre;
+                    string completo = h.Contains(".") ? h : nombre;
+
+                    int p = completo.LastIndexOf('.');
+                    return p > 0
+                        ? new TablaTransfer { Schema = completo.Substring(0, p), Nombre = completo.Substring(p + 1) }
+                        : new TablaTransfer { Nombre = completo };
                 })
                 .ToList();
+
+            string nombreConexionUi = conexionActual.Nombre;
+            var sfd = new Microsoft.Win32.SaveFileDialog
+            {
+                Title            = "Guardar script de backup",
+                Filter           = "Scripts SQL (*.sql)|*.sql",
+                FileName         = $"backup_{nombreConexionUi}_{DateTime.Now:yyyyMMdd_HHmmss}.sql",
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+            };
+            if (sfd.ShowDialog() != true) return;
+            string rutaDestino = sfd.FileName;
 
             btnGenerarInserts.IsEnabled = false;
             btnGenerarInserts.Content = "⏳ Generando...";
@@ -4716,15 +4935,37 @@ namespace QueryAnalyzer
                 string connStr        = ConexionesManager.GetConnectionString(conexionActual);
                 var    motor          = conexionActual.Motor;
                 string nombreConexion = conexionActual.Nombre;
-                int    total          = nombresTablas.Count;
+                int    total          = tablas.Count;
 
-                string resultado = await System.Threading.Tasks.Task.Run(() =>
+                var resultado = await System.Threading.Tasks.Task.Run(() =>
                 {
-                    var sb      = new System.Text.StringBuilder();
-                    var detalle = new System.Collections.Generic.List<(string Nombre, int Filas, string MensajeError)>();
-
-                    foreach (string nombreCompleto in nombresTablas)
+                    // 1. Resolver el orden de restauración a partir de las FK.
+                    //    Las FK de una tabla hacia sí misma (jerarquías: empleado.jefe_id →
+                    //    empleado) no condicionan el orden ENTRE tablas; si se dejan pasar,
+                    //    Kahn nunca les baja el inDegree y las marca como ciclo sin motivo.
+                    Func<string, string> soloNombre = s =>
                     {
+                        int i = s.LastIndexOf('.');
+                        return i >= 0 ? s.Substring(i + 1) : s;
+                    };
+                    var fks = PasadorDatosService.ObtenerFKsEntreTablas(connStr, motor, tablas)
+                        .Where(fk => !string.Equals(soloNombre(fk.TablaOrigen),
+                                                    soloNombre(fk.TablaDestino),
+                                                    StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+                    var (ordenInsert, ciclicas) = PasadorDatosService.OrdenarPorDependencias(tablas, fks);
+                    var ordenDelete = Enumerable.Reverse(ordenInsert).ToList();
+
+                    // 2. Metadata: columnas IDENTITY y columnas no insertables (computed / rowversion)
+                    var metadata = PasadorDatosService.ObtenerMetadataTablas(connStr, motor, tablas);
+
+                    // 3. Leer los datos de cada tabla
+                    var datos   = new Dictionary<string, DataTable>(StringComparer.OrdinalIgnoreCase);
+                    var detalle = new List<(string Nombre, int Filas, string MensajeError)>();
+
+                    foreach (var tabla in ordenInsert)
+                    {
+                        string nombreCompleto = tabla.NombreCompleto;
                         try
                         {
                             var DB = new DataBase(connStr, false);
@@ -4733,54 +4974,298 @@ namespace QueryAnalyzer
                             DB.DataAdapter.Fill(dt);
                             DB.CloseConnection();
 
+                            datos[nombreCompleto] = dt;
                             detalle.Add((nombreCompleto, dt.Rows.Count, null));
-
-                            sb.AppendLine($"-- ═══════════════════════════════════════════════");
-                            sb.AppendLine($"-- Tabla: {nombreCompleto}  ({dt.Rows.Count} filas)");
-                            sb.AppendLine($"-- ═══════════════════════════════════════════════");
-                            sb.AppendLine(ScriptHelper.GenerarScriptInsert(dt, nombreCompleto, conDelete: true));
                         }
                         catch (Exception ex)
                         {
                             detalle.Add((nombreCompleto, 0, ex.Message));
-                            sb.AppendLine($"-- ERROR en {nombreCompleto}: {ex.Message}");
-                            sb.AppendLine();
                         }
                     }
 
-                    // Encabezado con resumen — se antepone al cuerpo
+                    // 4. Armar el script restaurable
+                    var sb = new System.Text.StringBuilder();
+
                     int errores = detalle.Count(d => d.MensajeError != null);
-                    var sbH = new System.Text.StringBuilder();
-                    sbH.AppendLine($"-- ╔══════════════════════════════════════════════════════╗");
-                    sbH.AppendLine($"-- ║  Scripts INSERT — Resumen                            ║");
-                    sbH.AppendLine($"-- ║  Conexión : {nombreConexion,-42}║");
-                    sbH.AppendLine($"-- ║  Generado : {DateTime.Now:yyyy-MM-dd HH:mm:ss}                       ║");
-                    sbH.AppendLine($"-- ║  Tablas   : {total} procesadas, {errores} con error{new string(' ', Math.Max(0, 25 - total.ToString().Length - errores.ToString().Length))}║");
-                    sbH.AppendLine($"-- ╠══════════════════════════════════════════════════════╣");
+                    int totalFilas = detalle.Sum(d => d.Filas);
+
+                    sb.AppendLine("-- ══════════════════════════════════════════════════════════");
+                    sb.AppendLine("--  BACKUP DE ESQUEMA — script restaurable");
+                    sb.AppendLine("-- ══════════════════════════════════════════════════════════");
+                    sb.AppendLine($"--  Conexión : {nombreConexion}");
+                    sb.AppendLine($"--  Generado : {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                    sb.AppendLine($"--  Tablas   : {total} ({errores} con error) — {totalFilas} filas");
+                    sb.AppendLine("--");
+                    sb.AppendLine("--  Ejecutar este script contra la MISMA base la deja tal como");
+                    sb.AppendLine("--  estaba: vacía las tablas y reinserta todo el contenido.");
+                    sb.AppendLine("-- ──────────────────────────────────────────────────────────");
+                    sb.AppendLine("--  Orden de restauración (padres primero):");
                     for (int i = 0; i < detalle.Count; i++)
                     {
                         var (nom, filas, err) = detalle[i];
-                        string estado = err != null ? $"  ERROR → {err}" : $"  → {filas,7} filas";
-                        sbH.AppendLine($"-- ║  {i + 1,2}. {nom,-30}{estado,-21}║");
+                        string estado = err != null ? $"ERROR → {err}" : $"{filas} filas";
+                        sb.AppendLine($"--    {i + 1,3}. {nom}  ({estado})");
                     }
-                    sbH.AppendLine($"-- ╚══════════════════════════════════════════════════════╝");
-                    sbH.AppendLine();
+                    if (ciclicas.Count > 0)
+                    {
+                        sb.AppendLine("--");
+                        sb.AppendLine("--  Estas tablas forman un ciclo de FK entre sí, así que no existe un");
+                        sb.AppendLine("--  orden válido entre ellas y quedaron al final. NO afecta a este");
+                        sb.AppendLine("--  backup: el script deshabilita las FK antes de los DELETE/INSERT.");
+                        sb.AppendLine("--  Solo importa si ejecutás el script por partes o sin la FASE 1.");
+                        foreach (string c in ciclicas)
+                            sb.AppendLine($"--    • {c}");
+                    }
+                    sb.AppendLine("-- ══════════════════════════════════════════════════════════");
+                    sb.AppendLine();
 
-                    return sbH.ToString() + sb.ToString();
+                    PasadorDatosService.AgregarScriptFaseDeshabilitarFKs(sb, motor, ordenDelete);
+
+                    sb.AppendLine();
+                    sb.AppendLine("-- ═══ FASE 2: DML ═══");
+                    sb.AppendLine("BEGIN TRAN");
+                    sb.AppendLine();
+                    sb.AppendLine("  -- DELETE en orden reverso FK (hijas primero)");
+                    foreach (var tabla in ordenDelete)
+                        sb.AppendLine($"  DELETE FROM {tabla.NombreCompleto};");
+
+                    sb.AppendLine();
+                    sb.AppendLine("  -- INSERT en orden FK (padres primero)");
+                    foreach (var tabla in ordenInsert)
+                    {
+                        string nombreCompleto = tabla.NombreCompleto;
+                        if (!datos.TryGetValue(nombreCompleto, out DataTable dt))
+                        {
+                            sb.AppendLine($"  -- ⚠ {nombreCompleto}: no se pudo leer, sin INSERTs.");
+                            continue;
+                        }
+                        if (dt.Rows.Count == 0)
+                        {
+                            sb.AppendLine($"  -- {nombreCompleto}: sin filas.");
+                            continue;
+                        }
+
+                        var meta = metadata.ContainsKey(nombreCompleto) ? metadata[nombreCompleto] : null;
+                        bool overriding = (motor == TipoMotor.POSTGRES || motor == TipoMotor.DB2)
+                                          && meta?.TieneIdentityAlways == true;
+                        bool identityInsert = motor == TipoMotor.MS_SQL && meta?.TieneIdentity == true;
+
+                        sb.AppendLine();
+                        sb.AppendLine($"  -- {nombreCompleto} ({dt.Rows.Count} filas)");
+                        if (identityInsert)
+                            sb.AppendLine($"  SET IDENTITY_INSERT {nombreCompleto} ON;");
+
+                        sb.Append(ScriptHelper.GenerarScriptInsert(
+                            dt, nombreCompleto, conDelete: false,
+                            meta?.ColumnasExcluidas, overriding));
+
+                        if (identityInsert)
+                            sb.AppendLine($"  SET IDENTITY_INSERT {nombreCompleto} OFF;");
+                    }
+
+                    sb.AppendLine();
+                    sb.AppendLine("COMMIT");
+                    sb.AppendLine();
+                    PasadorDatosService.AgregarScriptFaseRehabilitarFKs(sb, motor, ordenInsert);
+
+                    return new { Script = sb.ToString(), Errores = errores, Filas = totalFilas };
                 });
 
-                new ScriptResultWindow(resultado, motor) { Owner = this }.Show();
-                AppendMessage($"Scripts INSERT generados para {total} tabla(s).");
+                System.IO.File.WriteAllText(rutaDestino, resultado.Script, System.Text.Encoding.UTF8);
+
+                new ScriptResultWindow(resultado.Script, motor) { Owner = this }.Show();
+
+                AppendMessage($"Backup generado: {total} tabla(s), {resultado.Filas} fila(s)" +
+                              (resultado.Errores > 0 ? $", {resultado.Errores} con error" : "") +
+                              $" → {rutaDestino}");
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al generar scripts: " + ex.Message, "Scripts INSERT",
+                MessageBox.Show("Error al generar el backup: " + ex.Message, "Backup Esquema",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
-                btnGenerarInserts.Content = "📋 Scripts INSERT";
+                btnGenerarInserts.Content = "💾 Backup Esquema";
                 ActualizarContadorSeleccion();
+            }
+        }
+
+        // ── Restaurar backup ─────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Lee un .sql generado por "💾 Backup Esquema" y lo ejecuta contra la conexión
+        /// activa. A diferencia de pegar el script en el editor, respeta las fases:
+        /// las FK se deshabilitan/rehabilitan fuera de la transacción y el DML corre
+        /// dentro de una única transacción con rollback ante error.
+        /// </summary>
+        private async void btnRestaurarBackup_Click(object sender, RoutedEventArgs e)
+        {
+            if (conexionActual == null)
+            {
+                MessageBox.Show("No hay conexión activa.", "Restaurar Backup",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var ofd = new Microsoft.Win32.OpenFileDialog
+            {
+                Title            = "Elegir script de backup",
+                Filter           = "Scripts SQL (*.sql)|*.sql|Todos los archivos (*.*)|*.*",
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+            };
+            if (ofd.ShowDialog() != true) return;
+            string rutaBackup = ofd.FileName;
+
+            btnRestaurarBackup.IsEnabled = false;
+            btnRestaurarBackup.Content   = "⏳ Leyendo...";
+
+            try
+            {
+                // El .sql puede pesar cientos de MB: leer y parsear fuera del hilo de UI.
+                PlanRestauracion plan = await System.Threading.Tasks.Task.Run(() =>
+                    RestauradorBackupService.ParsearBackup(
+                        System.IO.File.ReadAllText(rutaBackup, System.Text.Encoding.UTF8)));
+
+                if (plan.Sentencias.Count == 0)
+                {
+                    MessageBox.Show("El archivo no contiene ninguna sentencia ejecutable.",
+                        "Restaurar Backup", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (!ConfirmarRestauracion(rutaBackup, plan)) return;
+
+                await EjecutarRestauracionAsync(plan);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al leer el script de backup:\n" + ex.Message,
+                    "Restaurar Backup", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                btnRestaurarBackup.Content   = "♻ Restaurar Backup";
+                btnRestaurarBackup.IsEnabled = true;
+            }
+        }
+
+        /// <summary>Diálogo previo: es la última chance de echarse atrás sin costo.</summary>
+        private bool ConfirmarRestauracion(string rutaBackup, PlanRestauracion plan)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("Archivo : " + System.IO.Path.GetFileName(rutaBackup));
+            if (plan.Generado != null)       sb.AppendLine("Generado: " + plan.Generado);
+            if (plan.ConexionOrigen != null) sb.AppendLine("Origen  : " + plan.ConexionOrigen);
+            sb.AppendLine("Destino : " + conexionActual.Nombre);
+            sb.AppendLine();
+
+            if (plan.ConexionOrigen != null &&
+                !string.Equals(plan.ConexionOrigen, conexionActual.Nombre, StringComparison.OrdinalIgnoreCase))
+            {
+                sb.AppendLine("⚠ El backup se generó contra OTRA conexión (" + plan.ConexionOrigen + ").");
+                sb.AppendLine();
+            }
+            if (!plan.FirmaValida)
+            {
+                sb.AppendLine("⚠ El archivo no tiene la firma de un backup de QueryAnalyzer.");
+                sb.AppendLine("   Se ejecutará igual, pero puede no respetar las fases FK.");
+                sb.AppendLine();
+            }
+
+            sb.AppendLine($"Tablas    : {plan.Tablas.Count}");
+            sb.AppendLine($"Sentencias: {plan.Sentencias.Count}  ({plan.TotalDeletes} DELETE, {plan.TotalInserts} INSERT)");
+            if (plan.Tablas.Count > 0)
+            {
+                sb.AppendLine();
+                foreach (string t in plan.Tablas.Take(15)) sb.AppendLine("   • " + t);
+                if (plan.Tablas.Count > 15) sb.AppendLine($"   … y {plan.Tablas.Count - 15} más");
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("Esto BORRA el contenido actual de esas tablas y lo reemplaza por el");
+            sb.AppendLine("del backup. Ante cualquier error se hace ROLLBACK completo.");
+            if (plan.FirmaValida)
+            {
+                sb.AppendLine();
+                sb.AppendLine("Nota: las columnas binarias (VARBINARY/BLOB) no se guardan en el");
+                sb.AppendLine("backup y quedarán en NULL tras la restauración.");
+            }
+            sb.AppendLine();
+            sb.AppendLine("¿Continuar?");
+
+            return MessageBox.Show(sb.ToString(), "Restaurar Backup",
+                       MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
+        }
+
+        private async System.Threading.Tasks.Task EjecutarRestauracionAsync(PlanRestauracion plan)
+        {
+            string connStr = ConexionesManager.GetConnectionString(conexionActual);
+
+            _ctsCancelar = new System.Threading.CancellationTokenSource();
+            var token = _ctsCancelar.Token;
+
+            SetEstadoEjecutando(true);
+            progEjecucion.IsIndeterminate = false;
+            progEjecucion.Minimum         = 0;
+            progEjecucion.Maximum         = plan.Sentencias.Count;
+            progEjecucion.Value           = 0;
+
+            AppendMessage($"♻ Restaurando backup: {plan.Sentencias.Count} sentencia(s) sobre '{conexionActual.Nombre}'...");
+
+            var reloj = System.Diagnostics.Stopwatch.StartNew();
+
+            var progreso = new Progress<ProgresoRestauracion>(p =>
+            {
+                progEjecucion.Value = p.Completadas;
+                if (!string.IsNullOrEmpty(p.UltimaSentencia))
+                    AppendMessage($"[{p.Completadas}/{p.Total}] {p.UltimaSentencia}");
+            });
+
+            try
+            {
+                var resultado = await System.Threading.Tasks.Task.Run(() =>
+                    RestauradorBackupService.Restaurar(
+                        connStr, plan,
+                        p => ((IProgress<ProgresoRestauracion>)progreso).Report(p),
+                        cmd => _cmdActivo = cmd,
+                        token));
+
+                reloj.Stop();
+
+                foreach (string adv in resultado.Advertencias)
+                    AppendMessage("⚠ " + adv);
+
+                if (resultado.Exitoso)
+                    AppendMessage($"✓ COMMIT — restauración completa: {resultado.Completadas} sentencia(s) " +
+                                  $"en {reloj.Elapsed.TotalSeconds:N1} s.");
+                else if (resultado.Cancelado)
+                    AppendMessage("⏹ Cancelado — se hizo ROLLBACK. La base quedó intacta.");
+                else
+                    AppendMessage($"✗ ROLLBACK — la base quedó intacta.\n{resultado.Error}");
+
+                if (!resultado.Exitoso)
+                    MessageBox.Show(
+                        resultado.Cancelado
+                            ? "Restauración cancelada. Se hizo ROLLBACK: la base quedó intacta."
+                            : "La restauración falló y se hizo ROLLBACK. La base quedó intacta.\n\n" + resultado.Error,
+                        "Restaurar Backup", MessageBoxButton.OK,
+                        resultado.Cancelado ? MessageBoxImage.Information : MessageBoxImage.Error);
+            }
+            catch (Exception ex)
+            {
+                AppendMessage("✗ Error inesperado durante la restauración: " + ex.Message);
+                MessageBox.Show("Error inesperado durante la restauración:\n" + ex.Message,
+                    "Restaurar Backup", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                _cmdActivo = null;
+                progEjecucion.Value           = 0;
+                progEjecucion.IsIndeterminate = true;   // el resto de la app la usa así
+                SetEstadoEjecutando(false);
+                _ctsCancelar?.Dispose();
+                _ctsCancelar = null;
             }
         }
 
@@ -4963,6 +5448,12 @@ namespace QueryAnalyzer
             ventana.ConfigGuardada += cfg =>
             {
                 _configApp = cfg;
+
+                // Mostrar/ocultar la columna Nº en las pestañas ya abiertas.
+                // Si estaba desactivada al ejecutar, la columna no existe y recién
+                // aparece en la próxima consulta (igual que ResultadosEditables).
+                ActualizarColumnaNroFilas(cfg.MostrarNumeroFila);
+
                 // Aplicar cambio de tema si es necesario
                 bool oscuroNuevo = cfg.TemaOscuro;
                 if (oscuroNuevo != _modoOscuro)
@@ -7220,7 +7711,8 @@ namespace QueryAnalyzer
         private async Task<(bool resuelto, string sqlCorregido, DataTable dt, Dictionary<string, string> reemplazos)>
             IntentarResolverEsquemasAsync(
                 string sql, string connStr,
-                List<QueryParameter> parametros, string mensajeError)
+                List<QueryParameter> parametros, string mensajeError,
+                System.Data.Odbc.OdbcConnection conexionCompartida = null)
         {
             var empty = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -7259,7 +7751,9 @@ namespace QueryAnalyzer
             foreach (var kvp in unicos)
                 AppendMessage($"✅ Tabla '{kvp.Key}' → [{kvp.Value}].[{kvp.Key}]  (corrección automática). Re-ejecutando...");
 
-            var (dtRetry, exRetry, _, _) = await ExecuteQueryAsync(connStr, sqlCorregido, parametros);
+            // La re-ejecución va sobre la conexión del lote: si la sentencia usaba una tabla
+            // temporal o dependía de la transacción abierta, en otra sesión fallaría igual.
+            var (dtRetry, exRetry, _, _) = await ExecuteQueryAsync(connStr, sqlCorregido, parametros, 0, conexionCompartida);
             if (exRetry != null)
             {
                 AppendMessage($"Error en re-ejecución con esquema corregido: {exRetry.Message}");

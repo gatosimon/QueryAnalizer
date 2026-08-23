@@ -17,3 +17,8 @@ Thumbs.db
 
 # Claude AI
 .claude/
+.mcp.json
+
+# Historial de versiones del AutoUpdater: son copias del .exe y sus DLLs,
+# pesadas y regenerables. No las versionamos.
+QueryAnalyzer/bin/*/UpdateHistory/
