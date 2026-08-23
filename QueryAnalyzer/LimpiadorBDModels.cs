@@ -250,9 +250,14 @@ namespace QueryAnalyzer
     {
         public bool DepurarHuerfanos { get; set; }
         /// <summary>
-        /// Trata 0 y cadena vacía como "sin referencia" en vez de "referencia rota". Las bases
-        /// derivadas de Magic usan centinelas en lugar de NULL: sin esto el barrido se lleva
-        /// filas perfectamente válidas.
+        /// Trata 0 y cadena vacía como "sin referencia" en vez de "referencia rota". Hay esquemas
+        /// que usan esos valores en lugar de NULL para decir "acá no hay nada": sin esta opción, el
+        /// barrido sale a buscar el padre 0, no lo encuentra y se lleva filas perfectamente válidas.
+        ///
+        /// Ojo con el caso opuesto, que es distinto y NO lo cubre esta opción: cuando el 0 sí
+        /// corresponde a una fila real —un registro placeholder tipo "Sin Sección"— el padre existe
+        /// y el barrido nunca marca la fila como rota. Lo que hace falta ahí es no borrar el
+        /// placeholder, y de eso se ocupa la guarda de PK 0 del modo iterativo.
         /// </summary>
         public bool CentinelasComoSinReferencia { get; set; } = true;
         /// <summary>
@@ -272,6 +277,16 @@ namespace QueryAnalyzer
         public bool   EsIdentity { get; set; }
         /// <summary>Calculada o rowversion: no se puede insertar, bloquea el camino IDENTITY_INSERT.</summary>
         public bool   NoInsertable { get; set; }
+
+        /// <summary>
+        /// La columna admite NULL. Es lo que distingue una relación OBLIGATORIA de una opcional: si
+        /// una FK es NOT NULL, el esquema declara que la fila no puede existir sin ese padre, y
+        /// encontrarla rota basta para condenarla. Una FK nullable rota no dice nada por sí sola.
+        ///
+        /// Arranca en true a propósito: si el catálogo no trae el dato, la columna se toma como
+        /// opcional y no condena a nadie. El default falla del lado de conservar filas.
+        /// </summary>
+        public bool   EsNullable { get; set; } = true;
 
         private static readonly HashSet<string> Numericos = new HashSet<string>(
             new[] { "int", "bigint", "smallint", "tinyint", "decimal", "numeric", "money",

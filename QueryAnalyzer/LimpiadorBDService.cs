@@ -112,7 +112,8 @@ namespace QueryAnalyzer
                         // están en la vista estándar, y necesito los tres datos en una sola pasada.
                         sql = @"SELECT s.name, t.name, c.name, ty.name, c.is_identity,
                                        CASE WHEN c.is_computed = 1 OR ty.name IN ('timestamp','rowversion')
-                                            THEN 1 ELSE 0 END
+                                            THEN 1 ELSE 0 END,
+                                       c.is_nullable
                                 FROM sys.columns c
                                 JOIN sys.tables   t  ON c.object_id = t.object_id
                                 JOIN sys.schemas  s  ON t.schema_id = s.schema_id
@@ -123,7 +124,8 @@ namespace QueryAnalyzer
                         sql = @"SELECT table_schema, table_name, column_name, data_type,
                                        CASE WHEN is_identity = 'YES' OR column_default LIKE 'nextval%'
                                             THEN 1 ELSE 0 END,
-                                       CASE WHEN is_generated = 'ALWAYS' THEN 1 ELSE 0 END
+                                       CASE WHEN is_generated = 'ALWAYS' THEN 1 ELSE 0 END,
+                                       CASE WHEN is_nullable = 'YES' THEN 1 ELSE 0 END
                                 FROM information_schema.columns
                                 WHERE table_schema NOT IN ('pg_catalog','information_schema')
                                 ORDER BY table_schema, table_name, ordinal_position";
@@ -131,7 +133,8 @@ namespace QueryAnalyzer
                     case TipoMotor.DB2:
                         sql = @"SELECT TABSCHEMA, TABNAME, COLNAME, TYPENAME,
                                        CASE WHEN IDENTITY = 'Y' THEN 1 ELSE 0 END,
-                                       CASE WHEN GENERATED <> ' ' THEN 1 ELSE 0 END
+                                       CASE WHEN GENERATED <> ' ' THEN 1 ELSE 0 END,
+                                       CASE WHEN NULLS = 'Y' THEN 1 ELSE 0 END
                                 FROM SYSCAT.COLUMNS
                                 ORDER BY TABSCHEMA, TABNAME, COLNO";
                         break;
@@ -149,7 +152,12 @@ namespace QueryAnalyzer
                                     lista.Add(new ColumnaInfoLimpiador
                                     {
                                         Nombre = dbT.Reader["name"].ToString(),
-                                        Tipo   = dbT.Reader["type"].ToString()
+                                        Tipo   = dbT.Reader["type"].ToString(),
+                                        // El PRAGMA informa lo contrario: notnull = 1 significa
+                                        // NOT NULL, así que la nulabilidad va invertida.
+                                        EsNullable = dbT.Reader["notnull"] == null ||
+                                                     dbT.Reader["notnull"] == DBNull.Value ||
+                                                     Convert.ToInt32(dbT.Reader["notnull"]) == 0
                                     });
                                 if (lista.Count > 0) resultado[tabla] = lista;
                             }
@@ -174,7 +182,10 @@ namespace QueryAnalyzer
                             Nombre       = db.Reader[2].ToString().Trim(),
                             Tipo         = db.IsDBNull(3) ? "" : db.Reader[3].ToString().Trim(),
                             EsIdentity   = !db.IsDBNull(4) && Convert.ToInt32(db.Reader[4]) == 1,
-                            NoInsertable = !db.IsDBNull(5) && Convert.ToInt32(db.Reader[5]) == 1
+                            NoInsertable = !db.IsDBNull(5) && Convert.ToInt32(db.Reader[5]) == 1,
+                            // Sin dato del catálogo queda nullable, o sea opcional: una FK que no
+                            // se puede confirmar obligatoria nunca condena a su fila.
+                            EsNullable   = db.IsDBNull(6) || Convert.ToInt32(db.Reader[6]) == 1
                         });
                     }
                 }
@@ -200,6 +211,64 @@ namespace QueryAnalyzer
             var db = new DataBase(_connStr);
             try
             {
+                // En MS SQL el catálogo propio va PRIMERO, antes que los metadatos ODBC. Los dos
+                // caminos alternativos tienen puntos ciegos que acá se pagan caro: un grafo de FKs
+                // incompleto no se nota —no falla nada— pero deja filas rotas sin detectar, porque
+                // el barrido sólo puede condenar por una relación que conoce.
+                //
+                //  • GetSchema("ForeignKeys") depende de lo que implemente el driver, y como abajo
+                //    alcanza con que devuelva UNA fila para quedarse con ella, un resultado parcial
+                //    se adopta como si fuera completo.
+                //  • INFORMATION_SCHEMA es una vista de compatibilidad ANSI y sólo muestra objetos
+                //    sobre los que el usuario tiene permisos.
+                //
+                // sys.foreign_keys no tiene ninguno de los dos problemas y además trae el nombre del
+                // constraint y el orden de columnas, que son justo lo que hace falta para armar bien
+                // una FK compuesta.
+                if (_conn.Motor == TipoMotor.MS_SQL)
+                {
+                    try
+                    {
+                        // Sin filtro de esquema a propósito: el módulo necesita también las FKs
+                        // ENTRANTES desde otros esquemas, que son las que retienen filas que no se
+                        // pueden borrar (ver ReferenciasExternas). El recorte por esquema se hace
+                        // río abajo, cuando ya se sabe cuál es el alcance.
+                        db.CommandText = @"SELECT s1.name, t1.name, c1.name,
+                                                  s2.name, t2.name, c2.name, fk.name
+                                           FROM sys.foreign_keys fk
+                                           JOIN sys.foreign_key_columns fkc ON fkc.constraint_object_id = fk.object_id
+                                           JOIN sys.tables  t1 ON t1.object_id = fk.parent_object_id
+                                           JOIN sys.schemas s1 ON s1.schema_id = t1.schema_id
+                                           JOIN sys.columns c1 ON c1.object_id = fkc.parent_object_id
+                                                              AND c1.column_id = fkc.parent_column_id
+                                           JOIN sys.tables  t2 ON t2.object_id = fk.referenced_object_id
+                                           JOIN sys.schemas s2 ON s2.schema_id = t2.schema_id
+                                           JOIN sys.columns c2 ON c2.object_id = fkc.referenced_object_id
+                                                              AND c2.column_id = fkc.referenced_column_id
+                                           ORDER BY s1.name, fk.name, fkc.constraint_column_id";
+                        while (db.Read())
+                        {
+                            string to = db.Reader[1].ToString().Trim();
+                            string po = db.Reader[4].ToString().Trim();
+                            string fn = db.IsDBNull(6) ? "" : db.Reader[6].ToString().Trim();
+                            resultado.Add(new FKRelacionLimpiador
+                            {
+                                SchemaOrigen   = db.IsDBNull(0) ? "" : db.Reader[0].ToString().Trim(),
+                                TablaOrigen    = to,
+                                ColumnaOrigen  = db.Reader[2].ToString().Trim(),
+                                SchemaDestino  = db.IsDBNull(3) ? "" : db.Reader[3].ToString().Trim(),
+                                TablaDestino   = po,
+                                ColumnaDestino = db.Reader[5].ToString().Trim(),
+                                // Mismo fallback que los otros caminos: sin nombre, ClaveFK usaría
+                                // una cadena vacía y mezclaría constraints distintos en un grupo.
+                                NombreFK       = string.IsNullOrEmpty(fn) ? $"{to}→{po}" : fn
+                            });
+                        }
+                        if (resultado.Count > 0) return Deduplicar(resultado);
+                    }
+                    catch { resultado.Clear(); }
+                }
+
                 try
                 {
                     var fkSchema = db.GetSchema("ForeignKeys");
@@ -324,14 +393,19 @@ namespace QueryAnalyzer
             }
             catch { }
             finally { db.CloseConnection(); }
-            // Dedup por nombre calificado: duplicados acá se traducen en sentencias repetidas
-            // río abajo, y un remapeo de IDs repetido corrompe los datos.
-            return resultado
+            return Deduplicar(resultado);
+        }
+
+        /// <summary>
+        /// Dedup por nombre calificado: duplicados acá se traducen en sentencias repetidas río
+        /// abajo, y un remapeo de IDs repetido corrompe los datos.
+        /// </summary>
+        private static List<FKRelacionLimpiador> Deduplicar(List<FKRelacionLimpiador> relaciones)
+            => relaciones
                 .GroupBy(r => $"{r.NombreFK}|{r.OrigenCompleto}|{r.ColumnaOrigen}|{r.DestinoCompleto}|{r.ColumnaDestino}",
                          StringComparer.OrdinalIgnoreCase)
                 .Select(g => g.First())
                 .ToList();
-        }
 
         // ── Claves primarias ──────────────────────────────────────────────
 
@@ -550,13 +624,18 @@ namespace QueryAnalyzer
 
                     // "Activa" = no cumple la condición de baja propia. Sin condición configurada,
                     // toda la tabla cuenta como activa: nada de ella se borra en el paso 2.
-                    string soloActivas = resolver.TryGetValue(nombre, out var cfg) && cfg.TieneCondiciones
+                    resolver.TryGetValue(nombre, out var cfg);
+                    string soloActivas = cfg != null && cfg.TieneCondiciones
                         ? $"NOT ({CondicionBajaHelper.ToCondicionSql(cfg.CondicionesBaja, QuoteCampoAlias("h"))}) AND "
                         : "";
 
+                    // La misma guarda que el script: sin ella la estimación contaría filas que el
+                    // barrido nunca va a tocar, y el informe prometería un borrado mayor que el real.
+                    string placeholder = GuardaPlaceholder(cfg, info, "h");
+
                     try
                     {
-                        db.CommandText = $"SELECT COUNT(*) FROM {Quote(nombre)} h WHERE {soloActivas}{expr}";
+                        db.CommandText = $"SELECT COUNT(*) FROM {Quote(nombre)} h WHERE {soloActivas}{expr}{placeholder}";
                         int cant = Convert.ToInt32(db.Scalar());
                         if (cant == 0) continue;
 
@@ -1034,21 +1113,35 @@ namespace QueryAnalyzer
         }
 
         /// <summary>
-        /// Expresión de "esta fila no conecta con NADA", para el modo BorradoIterativo. Es la
-        /// contracara de <see cref="ExprHuerfanaPorFK"/>, que alcanza con una sola FK rota: acá se
-        /// exigen todas, y por eso es mucho más conservadora.
+        /// Expresión que condena una fila en el barrido del modo BorradoIterativo. Son dos motivos
+        /// unidos por OR, y hacen falta los dos:
+        ///
+        ///  (A) Se rompió una relación OBLIGATORIA. Si la FK es NOT NULL, el esquema declara que la
+        ///      fila no puede existir sin ese padre: encontrarla apuntando a la nada alcanza para
+        ///      condenarla. Es lo que resuelve las tablas de vínculo — una entrada de
+        ///      PreguntasPorCuestionario a la que le falta la pregunta ya no vincula nada, por más
+        ///      que el cuestionario siga existiendo.
+        ///
+        ///  (B) No conecta con NADA. El criterio conservador: todos los datos que apuntan a algo
+        ///      están rotos. Es el que cubre las entidades con FK opcionales, donde que falte un
+        ///      padre no invalida la fila — una Persona no deja de existir porque su IdSector
+        ///      apunte a un sector borrado.
+        ///
+        /// Sin (A) sobreviven los vínculos a medio romper; sin (B) se escapan las filas que perdieron
+        /// todas sus referencias opcionales. Con (A) sola, además, una FK nullable rota nunca
+        /// condenaría, que es justamente lo que se quiere.
         ///
         /// Las FKs se agrupan por EL DATO —el juego de columnas de origen—, no por constraint. Si
         /// IdPregunta apunta a Preguntas y también a PreguntasHistoricas, ese es un solo dato con
         /// dos destinos posibles, y encontrarlo en cualquiera de los dos lo deja conectado.
         ///
-        /// Un dato vacío (NULL, o centinela si la opción está tildada) se IGNORA: no apuntar a nada
-        /// no es prueba de estar roto. De ahí el "NOT (conRef) OR …" de cada término, que lo deja
-        /// pasar sin opinar.
+        /// Un dato vacío (NULL, o centinela si la opción está tildada) se IGNORA en los dos motivos:
+        /// no apuntar a nada no es prueba de estar roto. Por eso (A) exige "apunta a algo" antes de
+        /// condenar, y (B) lleva el "NOT (conRef) OR …" que deja pasar el término sin opinar.
         ///
-        /// Y hace falta que al menos un dato apunte a algo — la guarda que abre la expresión. Sin
-        /// ella, una fila con todas sus FKs en NULL satisface todos los términos por vacuidad y se
-        /// borraría, cuando es justamente el caso donde no hay ninguna evidencia de rotura.
+        /// En (B) hace falta además que al menos un dato apunte a algo. Sin esa guarda, una fila con
+        /// todas sus FKs en NULL satisface todos los términos por vacuidad y se borraría, cuando es
+        /// justamente el caso donde no hay ninguna evidencia de rotura.
         ///
         /// Devuelve null si la tabla no tiene FKs salientes dentro del límite: un catálogo suelto
         /// no participa del barrido y su DELETE no se emite.
@@ -1085,14 +1178,16 @@ namespace QueryAnalyzer
                          StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            var apuntaAAlgo = new List<string>();
-            var terminos    = new List<string>();
+            var apuntaAAlgo   = new List<string>();
+            var terminos      = new List<string>();
+            var obligatorios  = new List<string>();
 
             foreach (var dato in porDato)
             {
                 // Todas las FKs del dato comparten las columnas de origen, así que cualquiera
-                // sirve para armar el "apunta a algo".
-                string conRef = ExprConReferencia(dato.First(), info, centinelas, alias);
+                // sirve para armar el "apunta a algo" y para juzgar la obligatoriedad.
+                var muestra   = dato.First();
+                string conRef = ExprConReferencia(muestra, info, centinelas, alias);
                 apuntaAAlgo.Add($"({conRef})");
 
                 var enNinguno = dato.Select(cols =>
@@ -1101,13 +1196,61 @@ namespace QueryAnalyzer
                     bool simula = bajaPadre != null && bajaPadre.TryGetValue(cols[0].DestinoCompleto, out cb);
                     string vivo = simula ? $" AND NOT ({cb})" : "";
                     return $"NOT EXISTS (SELECT 1 FROM {Quote(cols[0].DestinoCompleto)} p WHERE {JoinFK(cols, "p", alias)}{vivo})";
-                });
+                }).ToList();
 
-                terminos.Add($"(NOT ({conRef}) OR ({string.Join(" AND ", enNinguno)}))");
+                string rotoEnTodos = string.Join(" AND ", enNinguno);
+
+                // (B): el dato vacío no opina; el que apunta tiene que estar roto en todos sus destinos.
+                terminos.Add($"(NOT ({conRef}) OR ({rotoEnTodos}))");
+
+                // (A): sólo si la relación es obligatoria. En una FK compuesta basta que UNA columna
+                // admita NULL para que el constraint pueda no verificarse (MATCH SIMPLE), así que se
+                // exigen todas NOT NULL. Sin dato del catálogo, EsNullable arranca en true y el dato
+                // queda como opcional: no condena.
+                bool esObligatorio = muestra.All(f =>
+                {
+                    var ci = InfoDe(info, f.OrigenCompleto, f.ColumnaOrigen);
+                    return ci != null && !ci.EsNullable;
+                });
+                if (esObligatorio)
+                    obligatorios.Add($"(({conRef}) AND ({rotoEnTodos}))");
             }
 
-            return $"(({string.Join(" OR ", apuntaAAlgo)})" +
-                   $"\n       AND {string.Join("\n       AND ", terminos)})";
+            string noConectaConNada =
+                $"(({string.Join(" OR ", apuntaAAlgo)})" +
+                $"\n       AND {string.Join("\n       AND ", terminos)})";
+
+            if (!obligatorios.Any()) return noConectaConNada;
+
+            return $"(\n       {string.Join("\n       OR ", obligatorios)}" +
+                   $"\n       OR {noConectaConNada}\n      )";
+        }
+
+        /// <summary>
+        /// Guarda que preserva el registro placeholder: la fila cuya PK vale 0 no se borra nunca,
+        /// esté dada de baja o no.
+        ///
+        /// El 0 no siempre es una marca de "sin dato": en muchas bases existe como fila real, un
+        /// registro tipo "Sin Sección" o "No aplica" al que apuntan las filas que necesitan una
+        /// referencia sin contenido útil. Es un registro de sistema, y borrarlo arrastra todo lo que
+        /// lo usa: pasó con "Sin Seccion" (IdSeccion 0), que se llevó puestas 41 filas activas de
+        /// PreguntasPorCuestionario. El detalle perverso es que basta con que alguien le haya puesto
+        /// fecha de baja para que el borrado lo alcance como a cualquier otra fila.
+        ///
+        /// Se emite siempre que se pueda: donde no exista una fila con PK 0, la condición no cambia
+        /// nada. Sólo aplica a PK de una columna numérica — con PK compuesta o de texto no hay un
+        /// "registro cero" que reconocer.
+        /// </summary>
+        private string GuardaPlaceholder(
+            TablaConfigLimpiador cfg,
+            Dictionary<string, List<ColumnaInfoLimpiador>> info,
+            string calificador)
+        {
+            if (cfg == null || !cfg.PKSimple) return "";
+            string pk = cfg.CamposPK[0];
+            var ci = InfoDe(info, cfg.NombreCompleto, pk);
+            if (ci == null || !ci.EsNumerico) return "";
+            return $"\n      AND {calificador}.{QuoteCampo(pk)} <> 0";
         }
 
         /// <summary>
@@ -2038,6 +2181,10 @@ namespace QueryAnalyzer
             sb.AppendLine("-- la validación. Sólo las tablas tildadas con condición de baja.");
             sb.AppendLine("-- Este modo NO usa el freno del 90%: se lleva todo lo que está de baja, y en una");
             sb.AppendLine("-- tabla donde eso es la mayoría el freno cortaría una limpieza correcta.");
+            sb.AppendLine("--");
+            sb.AppendLine("-- ÚNICA EXCEPCIÓN: la fila cuya PK vale 0 NO se borra, esté dada de baja o no.");
+            sb.AppendLine("-- Es el registro placeholder ('Sin Seccion', 'No aplica') al que apuntan las filas");
+            sb.AppendLine("-- que necesitan una referencia sin contenido. Borrarlo arrastra todo lo que lo usa.");
             sb.AppendLine();
 
             if (!conCondicion.Any())
@@ -2050,15 +2197,22 @@ namespace QueryAnalyzer
             {
                 string q = Quote(cfg.NombreCompleto);
                 sb.AppendLine($"DELETE FROM {q} WHERE {condPorTabla[cfg.NombreCompleto]}" +
+                              $"{GuardaPlaceholder(cfg, infoCols, q)}" +
                               $"{GuardasExternasAlias(cfg.NombreCompleto, externas, q)};");
             }
             sb.AppendLine();
 
             // ── PASO 3: barrer lo desconectado, en loop ─────────────────
-            sb.AppendLine("-- ── PASO 3: Eliminar lo que quedó totalmente desconectado ─────────────");
-            sb.AppendLine("-- Una fila se borra sólo si NINGUNO de sus datos encuentra con quién conectarse.");
-            sb.AppendLine("-- Si sigue enganchada por un dato, sobrevive aunque otro esté roto.");
+            sb.AppendLine("-- ── PASO 3: Eliminar lo que perdió sus relaciones ─────────────────────");
+            sb.AppendLine("-- Una fila cae por cualquiera de estos dos motivos:");
+            sb.AppendLine("--   (A) se rompió una relación OBLIGATORIA (FK NOT NULL): el esquema dice que la");
+            sb.AppendLine("--       fila no puede existir sin ese padre, así que sin él es basura. Es lo que");
+            sb.AppendLine("--       limpia los vínculos a los que les falta un extremo.");
+            sb.AppendLine("--   (B) no conecta con NADA: todos los datos que apuntan a algo están rotos.");
+            sb.AppendLine("-- Una FK OPCIONAL (nullable) rota no alcanza por sí sola: la fila sigue siendo");
+            sb.AppendLine("-- válida sin ese padre, y por eso sólo cuenta para (B).");
             sb.AppendLine("-- Un dato vacío (NULL o centinela) no cuenta ni a favor ni en contra.");
+            sb.AppendLine("-- La fila con PK 0 tampoco se toca acá: el placeholder se preserva siempre.");
             sb.AppendLine($"-- Centinelas 0 y '' tratados como 'sin referencia': {(centinelas ? "SÍ" : "NO")}.");
             sb.AppendLine("--");
             sb.AppendLine("-- Ejecutado desde QueryAnalyzer, este bloque se REPITE hasta que una vuelta entera");
@@ -2072,7 +2226,10 @@ namespace QueryAnalyzer
                 string expr = ExprDesconectadaTotal(nombre, relaciones, infoCols, centinelas, Quote(nombre), limite);
                 if (expr == null) continue;   // sin FKs salientes: un catálogo suelto no participa
                 string q = Quote(nombre);
-                sb.AppendLine($"DELETE FROM {q} WHERE {expr}{GuardasExternasAlias(nombre, externas, q)};");
+                resolver.TryGetValue(nombre, out var cfgTabla);
+                sb.AppendLine($"DELETE FROM {q} WHERE {expr}" +
+                              $"{GuardaPlaceholder(cfgTabla, infoCols, q)}" +
+                              $"{GuardasExternasAlias(nombre, externas, q)};");
                 emitidos++;
             }
             if (emitidos == 0)
@@ -2083,8 +2240,9 @@ namespace QueryAnalyzer
 
             // ── PASO 4: devolver la validación ─────────────────────────
             sb.AppendLine("-- ── PASO 4: Rehabilitar las constraints ───────────────────────────────");
-            sb.AppendLine("-- SIN revalidar lo que ya está: el criterio del paso 3 deja a propósito las filas");
-            sb.AppendLine("-- rotas por un dato pero sanas por otro, así que revalidar revertiría la corrida.");
+            sb.AppendLine("-- SIN revalidar lo que ya está: el paso 3 conserva a propósito las filas que sólo");
+            sb.AppendLine("-- perdieron una referencia OPCIONAL, así que puede quedar alguna FK nullable violada");
+            sb.AppendLine("-- y revalidar revertiría la corrida entera por eso.");
             sb.AppendLine("-- Las FK que queden violadas se informan al terminar, antes de que confirmes.");
             sb.AppendLine();
             sb.Append(RehabilitarConstraints(tablasCierre.Select(n => resolver[n]).ToList(), revalidar: false));
