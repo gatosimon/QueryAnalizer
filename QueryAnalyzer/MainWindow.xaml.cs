@@ -314,6 +314,43 @@ namespace QueryAnalyzer
         }
 
         /// <summary>
+        /// Resalta una DataGridRow "fijada" por click en la celda Nº. Se usa un valor local
+        /// (no un Setter de estilo) porque el local value tiene más prioridad que los triggers
+        /// de IsMouseOver/IsSelected de ResultGridRowStyle, así el resaltado no se pierde al
+        /// pasar el mouse o al navegar entre celdas. SetResourceReference (y no FindResource)
+        /// para que siga respondiendo a cambios de tema mientras está fijada.
+        /// </summary>
+        private void AplicarPinFila(DataGridRow row)
+        {
+            row.SetResourceReference(DataGridRow.BackgroundProperty, "BrushSelected");
+            row.SetResourceReference(DataGridRow.ForegroundProperty, "BrushSelectedFG");
+        }
+
+        private void QuitarPinFila(DataGridRow row)
+        {
+            row.ClearValue(DataGridRow.BackgroundProperty);
+            row.ClearValue(DataGridRow.ForegroundProperty);
+        }
+
+        /// <summary>
+        /// Estilo de celda para columnas de datos autogeneradas: alineación según el tipo
+        /// (ver AutoGeneratingColumn) y, si la columna está "fijada" por click en su cabecera,
+        /// fondo/letra resaltados. Se reconstruye entero en cada toggle porque un Style ya
+        /// aplicado a celdas queda sellado (no se pueden agregar Setters después).
+        /// </summary>
+        private Style ConstruirEstiloCeldaColumna(TextAlignment alineacion, bool fijada)
+        {
+            var estilo = new Style(typeof(DataGridCell));
+            estilo.Setters.Add(new Setter(TextBlock.TextAlignmentProperty, alineacion));
+            if (fijada)
+            {
+                estilo.Setters.Add(new Setter(DataGridCell.BackgroundProperty, new DynamicResourceExtension("BrushSelected")));
+                estilo.Setters.Add(new Setter(DataGridCell.ForegroundProperty, new DynamicResourceExtension("BrushSelectedFG")));
+            }
+            return estilo;
+        }
+
+        /// <summary>
         /// Muestra u oculta la columna "Nº" en las pestañas de resultado ya abiertas.
         /// Se identifica por ser la única DataGridTemplateColumn: las columnas
         /// autogeneradas desde un DataView siempre son Text o CheckBox, nunca template.
@@ -894,6 +931,14 @@ namespace QueryAnalyzer
                         headerStyle.Setters.Add(new Setter(DataGridColumnHeader.SeparatorBrushProperty, (System.Windows.Media.Brush)this.FindResource("BrushBorder")));
 
                         bool esEditable = _configApp.ResultadosEditables && !esNoQuery;
+
+                        // Estado de fila/columna "fijada" (resaltado persistente por click en
+                        // la celda Nº o en la cabecera de columna). Independiente de la
+                        // selección normal de celdas/filas para que no se pierda al navegar.
+                        object filaFijada = null;
+                        DataGridColumn columnaFijada = null;
+                        var alineacionPorColumna = new Dictionary<DataGridColumn, TextAlignment>();
+
                         var dataGrid = new DataGrid
                         {
                             IsReadOnly = !esEditable,
@@ -910,12 +955,39 @@ namespace QueryAnalyzer
                                 : DataGridSelectionUnit.FullRow
                         };
 
-                        // Click simple: selecciona la fila (solo en modo solo lectura)
+                        // Click simple: selecciona la fila (solo en modo solo lectura) y,
+                        // si es sobre la celda Nº, fija/desfija el resaltado de toda la fila
+                        // (funciona en ambos modos, lectura y edición).
                         dataGrid.PreviewMouseLeftButtonDown += (s, mouseEvent) =>
                         {
-                            if (esEditable) return;
                             var clickedElement = mouseEvent.OriginalSource as DependencyObject;
                             var cell = FindVisualParent<DataGridCell>(clickedElement);
+
+                            if (cell != null && cell.Column is DataGridTemplateColumn && mouseEvent.ClickCount == 1)
+                            {
+                                var filaClick = FindVisualParent<DataGridRow>(cell);
+                                if (filaClick != null)
+                                {
+                                    object item = filaClick.Item;
+                                    if (Equals(filaFijada, item))
+                                    {
+                                        QuitarPinFila(filaClick);
+                                        filaFijada = null;
+                                    }
+                                    else
+                                    {
+                                        if (filaFijada != null)
+                                        {
+                                            var filaAnterior = dataGrid.ItemContainerGenerator.ContainerFromItem(filaFijada) as DataGridRow;
+                                            if (filaAnterior != null) QuitarPinFila(filaAnterior);
+                                        }
+                                        filaFijada = item;
+                                        AplicarPinFila(filaClick);
+                                    }
+                                }
+                            }
+
+                            if (esEditable) return;
                             if (cell != null && mouseEvent.ClickCount == 1)
                             {
                                 var row = FindVisualParent<DataGridRow>(cell);
@@ -924,6 +996,30 @@ namespace QueryAnalyzer
                                     dataGrid.SelectedItem = row.Item;
                                     dataGrid.CurrentCell = new DataGridCellInfo(cell);
                                 }
+                            }
+                        };
+
+                        // Click en cabecera de columna: además de ordenar (comportamiento
+                        // nativo, no se cancela), fija/desfija el resaltado de toda la columna.
+                        dataGrid.Sorting += (s, sortEvent) =>
+                        {
+                            var col = sortEvent.Column;
+                            if (columnaFijada == col)
+                            {
+                                var al = alineacionPorColumna.TryGetValue(col, out var a1) ? a1 : TextAlignment.Left;
+                                col.CellStyle = ConstruirEstiloCeldaColumna(al, false);
+                                columnaFijada = null;
+                            }
+                            else
+                            {
+                                if (columnaFijada != null)
+                                {
+                                    var alAnterior = alineacionPorColumna.TryGetValue(columnaFijada, out var a2) ? a2 : TextAlignment.Left;
+                                    columnaFijada.CellStyle = ConstruirEstiloCeldaColumna(alAnterior, false);
+                                }
+                                var alNueva = alineacionPorColumna.TryGetValue(col, out var a3) ? a3 : TextAlignment.Left;
+                                col.CellStyle = ConstruirEstiloCeldaColumna(alNueva, true);
+                                columnaFijada = col;
                             }
                         };
 
@@ -1120,9 +1216,9 @@ namespace QueryAnalyzer
                                 tipo == typeof(DateTime) ||
                                 tipo == typeof(TimeSpan);
 
-                            var estilo = new Style(typeof(DataGridCell));
-                            estilo.Setters.Add(new Setter(TextBlock.TextAlignmentProperty, aDerecha ? TextAlignment.Right : TextAlignment.Left));
-                            ev.Column.CellStyle = estilo;
+                            var alineacion = aDerecha ? TextAlignment.Right : TextAlignment.Left;
+                            alineacionPorColumna[ev.Column] = alineacion;
+                            ev.Column.CellStyle = ConstruirEstiloCeldaColumna(alineacion, false);
 
                             if (esEditable)
                             {
@@ -1147,7 +1243,16 @@ namespace QueryAnalyzer
                         {
                             dataGrid.Columns.Add(CrearColumnaNroFila());
                             dataGrid.FrozenColumnCount = 1;   // queda fija en el scroll horizontal
-                            dataGrid.LoadingRow += (s, ev) => ev.Row.Header = ev.Row.GetIndex() + 1;
+                            dataGrid.LoadingRow += (s, ev) =>
+                            {
+                                ev.Row.Header = ev.Row.GetIndex() + 1;
+                                // El contenedor puede venir reciclado (virtualización): hay que
+                                // reafirmar o limpiar el resaltado según si es la fila fijada.
+                                if (Equals(ev.Row.Item, filaFijada))
+                                    AplicarPinFila(ev.Row);
+                                else
+                                    QuitarPinFila(ev.Row);
+                            };
                         }
 
                         // ItemsSource se asigna DESPUÉS de suscribir AutoGeneratingColumn,
