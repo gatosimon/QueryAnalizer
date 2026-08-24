@@ -375,7 +375,7 @@ namespace QueryAnalyzer
                         FileName        = $"backup_B_{DateTime.Now:yyyyMMdd_HHmm}.sql",
                         InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
                     };
-                    if (dlg.ShowDialog() != true) return;
+                    if (dlg.ShowDialog(this) != true) return;
                     backupRutaArchivo = dlg.FileName;
                 }
                 else
@@ -386,7 +386,7 @@ namespace QueryAnalyzer
                         Description         = "Seleccioná la carpeta donde guardar los archivos de backup (uno por tabla)",
                         ShowNewFolderButton = true
                     };
-                    if (fbd.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+                    if (fbd.ShowDialog(this.OwnerWin32()) != System.Windows.Forms.DialogResult.OK) return;
                     backupRutaCarpeta = fbd.SelectedPath;
                 }
             }
@@ -527,17 +527,16 @@ namespace QueryAnalyzer
             if (string.IsNullOrEmpty(_ultimoResultado?.ScriptTransferencia)) return;
             var conA = ObtenerConexion(cmbConexionA);
             new ScriptResultWindow(_ultimoResultado.ScriptTransferencia, conA?.Motor ?? TipoMotor.MS_SQL)
-                { Owner = this }.Show();
+                .Mostrar(this);
         }
 
         private void btnVerBackup_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(_ultimoResultado?.BackupScript)) return;
             var conB = ObtenerConexion(cmbConexionB);
-            var win = new ScriptResultWindow(_ultimoResultado.BackupScript, conB?.Motor ?? TipoMotor.MS_SQL)
-                { Owner = this };
+            var win = new ScriptResultWindow(_ultimoResultado.BackupScript, conB?.Motor ?? TipoMotor.MS_SQL);
             win.Title = "Backup de Base B (estado previo)";
-            win.Show();
+            win.Mostrar(this);
         }
 
         // ── Guardar a archivo ─────────────────────────────────────────────────
@@ -553,7 +552,7 @@ namespace QueryAnalyzer
                 FileName         = $"transferencia_{DateTime.Now:yyyyMMdd_HHmm}.sql",
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
             };
-            if (dlg.ShowDialog() != true) return;
+            if (dlg.ShowDialog(this) != true) return;
             File.WriteAllText(dlg.FileName, _ultimoResultado.ScriptTransferencia, Encoding.UTF8);
             Log($"✓ Script guardado en: {dlg.FileName}");
             System.Diagnostics.Process.Start(dlg.FileName);
@@ -567,7 +566,7 @@ namespace QueryAnalyzer
                 Description         = "Seleccioná la carpeta donde guardar los archivos SQL (uno por tabla)",
                 ShowNewFolderButton = true
             };
-            if (fbd.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+            if (fbd.ShowDialog(this.OwnerWin32()) != System.Windows.Forms.DialogResult.OK) return;
 
             int guardados = 0;
             foreach (var kv in _ultimoResultado.ScriptsPorTabla)

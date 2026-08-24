@@ -430,7 +430,7 @@ namespace QueryAnalyzer
                 Filter = "Base de datos SQLite (*.db)|*.db|Todos los archivos (*.*)|*.*"
             };
 
-            if (dlg.ShowDialog() == true)
+            if (dlg.ShowDialog(this) == true)
                 cmbServidor.Text = dlg.FileName;
         }
 

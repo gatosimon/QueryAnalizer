@@ -145,6 +145,7 @@
     <Compile Include="TableDesignerService.cs" />
     <Compile Include="TableDesignerWindow.xaml.cs" />
     <Compile Include="UpdateHelper.cs" />
+    <Compile Include="VentanasHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml" />

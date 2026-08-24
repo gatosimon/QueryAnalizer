@@ -240,7 +240,7 @@ namespace QueryAnalyzer
                 dlg.AnyColor      = true;
                 dlg.AllowFullOpen = true;
 
-                if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                if (dlg.ShowDialog(this.OwnerWin32()) == System.Windows.Forms.DialogResult.OK)
                 {
                     var c = dlg.Color;
                     entrada.AplicarHex($"#{c.R:X2}{c.G:X2}{c.B:X2}");

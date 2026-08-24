@@ -618,7 +618,7 @@ namespace QueryAnalyzer
                 DefaultExt = "html",
                 FileName   = $"comparacion_{DateTime.Now:yyyyMMdd_HHmm}"
             };
-            if (dlg.ShowDialog() != true) return;
+            if (dlg.ShowDialog(this) != true) return;
 
             try
             {

@@ -1316,8 +1316,8 @@ namespace QueryAnalyzer
                         nombreTablaDefecto = ExtraerNombreTablaDesdeSQL(ti.Sql);
                 }
 
-                var dlg = new ExportarDialog(nombreTablaDefecto) { Owner = this };
-                if (dlg.ShowDialog() != true) return;
+                var dlg = new ExportarDialog(nombreTablaDefecto);
+                if (dlg.MostrarModal(this) != true) return;
 
                 var svc = new ExcelService();
 
@@ -1333,7 +1333,7 @@ namespace QueryAnalyzer
                         FileName         = "ResultadosConsultas.xlsx",
                         InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
                     };
-                    if (sfd.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+                    if (sfd.ShowDialog(this.OwnerWin32()) != System.Windows.Forms.DialogResult.OK) return;
 
                     svc.GuardarArchivo(bytes, sfd.FileName);
                     AppendMessage($"Excel generado en: {sfd.FileName}");
@@ -1355,7 +1355,7 @@ namespace QueryAnalyzer
                             FileName         = svc.SanitizarNombreArchivo(primer.Key) + ".csv",
                             InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
                         };
-                        if (sfd.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+                        if (sfd.ShowDialog(this.OwnerWin32()) != System.Windows.Forms.DialogResult.OK) return;
 
                         string csv = svc.CrearCsv(primer.Value, dlg.IncluirEncabezados);
                         System.IO.File.WriteAllText(sfd.FileName, csv, utf8Bom);
@@ -1370,7 +1370,7 @@ namespace QueryAnalyzer
                             Description         = "Seleccionar carpeta donde guardar los archivos CSV",
                             ShowNewFolderButton = true
                         };
-                        if (fbd.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+                        if (fbd.ShowDialog(this.OwnerWin32()) != System.Windows.Forms.DialogResult.OK) return;
 
                         foreach (var hoja in hojas)
                         {
@@ -1398,7 +1398,7 @@ namespace QueryAnalyzer
                             FileName         = svc.SanitizarNombreArchivo(primer.Key) + ".json",
                             InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
                         };
-                        if (sfd.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+                        if (sfd.ShowDialog(this.OwnerWin32()) != System.Windows.Forms.DialogResult.OK) return;
 
                         string json = svc.CrearJson(primer.Value);
                         System.IO.File.WriteAllText(sfd.FileName, json, utf8);
@@ -1412,7 +1412,7 @@ namespace QueryAnalyzer
                             Description         = "Seleccionar carpeta donde guardar los archivos JSON",
                             ShowNewFolderButton = true
                         };
-                        if (fbd.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+                        if (fbd.ShowDialog(this.OwnerWin32()) != System.Windows.Forms.DialogResult.OK) return;
 
                         foreach (var hoja in hojas)
                         {
@@ -1447,7 +1447,7 @@ namespace QueryAnalyzer
 
                     string script = ScriptHelper.GenerarScriptInsert(dt, dlg.NombreTabla, dlg.IncluirDelete);
                     var motorActual = conexionActual?.Motor ?? TipoMotor.MS_SQL;
-                    new ScriptResultWindow(script, motorActual) { Owner = this }.Show();
+                    new ScriptResultWindow(script, motorActual).Mostrar(this);
                     AppendMessage($"Script INSERT generado: {dt.Rows.Count} filas → tabla '{dlg.NombreTabla}'.");
                 }
             }
@@ -2624,12 +2624,9 @@ namespace QueryAnalyzer
                 return;
             }
 
-            var dlg = new GuardarConsultaDialog(contenido, conexionActual?.Nombre ?? "")
-            {
-                Owner = this
-            };
+            var dlg = new GuardarConsultaDialog(contenido, conexionActual?.Nombre ?? "");
 
-            if (dlg.ShowDialog() == true && dlg.Resultado != null)
+            if (dlg.MostrarModal(this) == true && dlg.Resultado != null)
             {
                 var todas = CargarTodasLasConsultasGuardadas();
                 todas.Add(dlg.Resultado);
@@ -2721,8 +2718,8 @@ namespace QueryAnalyzer
             var cg = lstMisConsultas.SelectedItem as QueryAnalyzer.Models.ConsultaGuardada;
             if (cg == null) return;
 
-            var dlg = new GuardarConsultaDialog(cg) { Owner = this };
-            if (dlg.ShowDialog() != true || dlg.Resultado == null) return;
+            var dlg = new GuardarConsultaDialog(cg);
+            if (dlg.MostrarModal(this) != true || dlg.Resultado == null) return;
 
             // Reemplazar la entrada antigua (misma fecha = misma consulta)
             var todas = CargarTodasLasConsultasGuardadas();
@@ -2868,7 +2865,7 @@ namespace QueryAnalyzer
         private void BtnEditConn_Click(object sender, RoutedEventArgs e)
         {
             DatosConexion datosConexion = new DatosConexion(conexionActual);
-            datosConexion.ShowDialog();
+            datosConexion.MostrarModal(this);
             RefrescarConexionesFiltradas();
             // Restaurar la selección al mismo ítem (puede haber cambiado el nombre)
             foreach (var item in cbConnectionName.Items)
@@ -2888,7 +2885,7 @@ namespace QueryAnalyzer
         private void BtnNewConn_Click(object sender, RoutedEventArgs e)
         {
             DatosConexion datosConexion = new DatosConexion();
-            datosConexion.ShowDialog();
+            datosConexion.MostrarModal(this);
             RefrescarConexionesFiltradas();
             // Seleccionar la conexión recién creada (guardada en conexionActual por DatosConexion)
             foreach (var item in cbConnectionName.Items)
@@ -4793,7 +4790,7 @@ namespace QueryAnalyzer
             btnCancelar.Click += (s, ev) => dlg.Close();
             pnlBotones.Children.Add(btnCancelar);
 
-            dlg.ShowDialog();
+            dlg.MostrarModal(this);
         }
 
         // ════════════════════════════════════════════════════════════════
@@ -4924,7 +4921,7 @@ namespace QueryAnalyzer
                 FileName         = $"backup_{nombreConexionUi}_{DateTime.Now:yyyyMMdd_HHmmss}.sql",
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
             };
-            if (sfd.ShowDialog() != true) return;
+            if (sfd.ShowDialog(this) != true) return;
             string rutaDestino = sfd.FileName;
 
             btnGenerarInserts.IsEnabled = false;
@@ -5073,7 +5070,7 @@ namespace QueryAnalyzer
 
                 System.IO.File.WriteAllText(rutaDestino, resultado.Script, System.Text.Encoding.UTF8);
 
-                new ScriptResultWindow(resultado.Script, motor) { Owner = this }.Show();
+                new ScriptResultWindow(resultado.Script, motor).Mostrar(this);
 
                 AppendMessage($"Backup generado: {total} tabla(s), {resultado.Filas} fila(s)" +
                               (resultado.Errores > 0 ? $", {resultado.Errores} con error" : "") +
@@ -5114,7 +5111,7 @@ namespace QueryAnalyzer
                 Filter           = "Scripts SQL (*.sql)|*.sql|Todos los archivos (*.*)|*.*",
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
             };
-            if (ofd.ShowDialog() != true) return;
+            if (ofd.ShowDialog(this) != true) return;
             string rutaBackup = ofd.FileName;
 
             btnRestaurarBackup.IsEnabled = false;
@@ -5335,8 +5332,8 @@ namespace QueryAnalyzer
             }
 
             // Pedir nombre de la isla
-            var dlg = new NombreConjuntoDialog { Owner = this };
-            if (dlg.ShowDialog() != true || string.IsNullOrWhiteSpace(dlg.NombreIngresado))
+            var dlg = new NombreConjuntoDialog();
+            if (dlg.MostrarModal(this) != true || string.IsNullOrWhiteSpace(dlg.NombreIngresado))
                 return;
 
             string nombre = dlg.NombreIngresado.Trim();
@@ -5444,7 +5441,7 @@ namespace QueryAnalyzer
 
         private void BtnPreferencias_Click(object sender, RoutedEventArgs e)
         {
-            var ventana = new PreferenciasWindow { Owner = this };
+            var ventana = new PreferenciasWindow();
             ventana.ConfigGuardada += cfg =>
             {
                 _configApp = cfg;
@@ -5465,27 +5462,23 @@ namespace QueryAnalyzer
                     btnToggleTema.Content = _modoOscuro ? "☀" : "🌙";
                 }
             };
-            ventana.ShowDialog();
+            ventana.MostrarModal(this);
             AplicarTema();
         }
         // ── Drivers ODBC ─────────────────────────────────────────────────────────
         private void BtnDriversOdbc_Click(object sender, RoutedEventArgs e)
         {
-            var ventana = new InstaladorDriversWindow { Owner = this };
-            ventana.ShowDialog();
+            new InstaladorDriversWindow().MostrarModal(this);
         }
 
         private void BtnAyuda_Click(object sender, RoutedEventArgs e)
         {
-            var ayuda = new AyudaWindow { Owner = this };
-            ayuda.Show();
+            new AyudaWindow().Mostrar(this);
         }
 
         private void btnComparador_Click(object sender, RoutedEventArgs e)
         {
-            var w = new ComparadorWindow(ConexionesManager.Cargar());
-            w.Owner = this;
-            w.Show();
+            new ComparadorWindow(ConexionesManager.Cargar()).Mostrar(this);
         }
 
         private void btnPasadorDatos_Click(object sender, RoutedEventArgs e)
@@ -5494,8 +5487,7 @@ namespace QueryAnalyzer
                 ConexionesManager.Cargar(),
                 new Dictionary<string, NodoTablaTag>(_seleccionPersistente),
                 conexionActual);
-            w.Owner = this;
-            w.Show();
+            w.Mostrar(this);
         }
 
         private void btnLimpiadorBD_Click(object sender, RoutedEventArgs e)
@@ -5505,9 +5497,7 @@ namespace QueryAnalyzer
                 MessageBox.Show("Seleccioná una conexión activa antes de usar el Limpiador de BD.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
-            var w = new LimpiadorBDWindow(conexionActual, GetConnectionString());
-            w.Owner = this;
-            w.Show();
+            new LimpiadorBDWindow(conexionActual, GetConnectionString()).Mostrar(this);
         }
 
         /// <summary>
@@ -5709,7 +5699,7 @@ namespace QueryAnalyzer
                 FileName = nombreSugerido,
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
             };
-            if (sfd.ShowDialog() != true) return;
+            if (sfd.ShowDialog(this) != true) return;
 
             btnDocumentar.IsEnabled = false;
             AppendMessage($"Documentando {nodosVisibles.Count} tabla(s)/vista(s)" +
@@ -5784,7 +5774,7 @@ namespace QueryAnalyzer
                 FileName = nombreSugerido,
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
             };
-            if (sfd.ShowDialog() != true) return;
+            if (sfd.ShowDialog(this) != true) return;
 
             AppendMessage($"Documentando {etiqueta.ToLower()} {tabla}...");
 
@@ -5818,9 +5808,9 @@ namespace QueryAnalyzer
             string tablaCalificada = !string.IsNullOrEmpty(schema)
                 ? schema + "." + tabla
                 : tabla;
-            var w = new TableDesignerWindow(conexionActual, tablaCalificada) { Owner = this };
+            var w = new TableDesignerWindow(conexionActual, tablaCalificada);
             scriptDiseño = string.Empty;
-            w.ShowDialog();
+            w.MostrarModal(this);
 
             if (scriptDiseño.Length > 0)
             {

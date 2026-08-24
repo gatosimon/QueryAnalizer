@@ -398,8 +398,7 @@ namespace QueryAnalyzer
         private void AbrirEditorTabla(TablaConfigLimpiador cfg)
         {
             var dlg = new LimpiadorTablaDialog(cfg, _svc);
-            dlg.Owner = this;
-            if (dlg.ShowDialog() == true)
+            if (dlg.MostrarModal(this) == true)
             {
                 lvTablas.Items.Refresh();
                 ActualizarAlcance();
