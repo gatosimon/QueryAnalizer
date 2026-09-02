@@ -1491,44 +1491,21 @@ namespace QueryAnalyzer
                 else if (dlg.FormatoSeleccionado == FormatoExportacion.Json)
                 {
                     // ── JSON ─────────────────────────────────────────────────
-                    var utf8 = new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
-
-                    if (hojas.Count == 1)
+                    // No se escribe nada a disco todavía: el JSON se muestra en un
+                    // visor donde el usuario elige copiarlo o guardarlo.
+                    var documentos = new Dictionary<string, string>();
+                    int filasJson = 0;
+                    foreach (var hoja in hojas)
                     {
-                        var primer = hojas.First();
-                        var sfd = new System.Windows.Forms.SaveFileDialog
-                        {
-                            Title            = "Guardar JSON",
-                            Filter           = "JSON (*.json)|*.json",
-                            FileName         = svc.SanitizarNombreArchivo(primer.Key) + ".json",
-                            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
-                        };
-                        if (sfd.ShowDialog(this.OwnerWin32()) != System.Windows.Forms.DialogResult.OK) return;
-
-                        string json = svc.CrearJson(primer.Value);
-                        System.IO.File.WriteAllText(sfd.FileName, json, utf8);
-                        AppendMessage($"JSON generado en: {sfd.FileName}");
-                        System.Diagnostics.Process.Start(sfd.FileName);
+                        documentos[hoja.Key] = svc.CrearJson(hoja.Value);
+                        filasJson += hoja.Value.Rows.Count;
                     }
-                    else
-                    {
-                        var fbd = new System.Windows.Forms.FolderBrowserDialog
-                        {
-                            Description         = "Seleccionar carpeta donde guardar los archivos JSON",
-                            ShowNewFolderButton = true
-                        };
-                        if (fbd.ShowDialog(this.OwnerWin32()) != System.Windows.Forms.DialogResult.OK) return;
 
-                        foreach (var hoja in hojas)
-                        {
-                            string nombre = svc.SanitizarNombreArchivo(hoja.Key) + ".json";
-                            string ruta   = System.IO.Path.Combine(fbd.SelectedPath, nombre);
-                            string json   = svc.CrearJson(hoja.Value);
-                            System.IO.File.WriteAllText(ruta, json, utf8);
-                        }
-                        AppendMessage($"{hojas.Count} archivos JSON generados en: {fbd.SelectedPath}");
-                        System.Diagnostics.Process.Start(fbd.SelectedPath);
-                    }
+                    new JsonResultWindow(documentos, AppendMessage).Mostrar(this);
+
+                    AppendMessage(documentos.Count == 1
+                        ? $"JSON generado: {filasJson} filas."
+                        : $"JSON generado: {documentos.Count} resultados, {filasJson} filas en total.");
                 }
                 else
                 {
@@ -2420,6 +2397,12 @@ namespace QueryAnalyzer
                                 try { afectadas = db.Reader?.RecordsAffected ?? -1; } catch { }
                                 if (afectadas == 0) filasSinAfectar++;
                             }
+
+                            // Cierra el reader de esta sentencia antes de ejecutar la siguiente sobre
+                            // el mismo Command: el setter de CommandText en CapiDL.DataBase descarta
+                            // la referencia sin cerrarlo, y el driver ODBC rechaza reutilizar la
+                            // conexión mientras el reader anterior sigue abierto.
+                            try { if (db.Reader != null && !db.Reader.IsClosed) db.Reader.Close(); } catch { }
                         }
 
                         if (filasSinAfectar > 0)

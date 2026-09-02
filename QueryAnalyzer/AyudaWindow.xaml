@@ -219,9 +219,12 @@
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Codificación: UTF-8 con BOM, para apertura directa en Excel sin problemas de acentos."/>
 
                 <TextBlock Style="{StaticResource Subtitulo}" Text="{}{ } JSON (.json)"/>
-                <TextBlock Style="{StaticResource Cuerpo}" Text="• Genera un archivo JSON con un array de objetos: una entrada por fila del resultado activo (la pestaña seleccionada)."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Genera un array de objetos: una entrada por fila, con una clave por columna."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Los nombres de columna se usan como claves. Tipos preservados: números sin comillas, booleanos como true/false, fechas en formato ISO 8601, nulos como null."/>
-                <TextBlock Style="{StaticResource Cuerpo}" Text="• Si hay un solo resultado se pide el nombre del archivo; si hay varios se elige la carpeta destino y se genera un .json por pestaña."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• El JSON no se guarda automáticamente: se muestra en una ventana con un editor donde se puede revisar y modificar antes de decidir qué hacer con él."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• 'Copiar al portapapeles': copia el contenido del editor tal como está en pantalla."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• 'Guardar archivo...': pide nombre y ubicación y guarda el resultado mostrado (UTF-8 sin BOM)."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Si hay varias pestañas de resultados, un selector arriba permite cambiar entre ellas y 'Guardar todos...' escribe un .json por pestaña en la carpeta elegida."/>
                 <TextBlock Style="{StaticResource Nota}"   Text="Útil para integrar datos con APIs o herramientas que consumen JSON directamente."/>
 
                 <TextBlock Style="{StaticResource Subtitulo}" Text="🗃 SQL Script (INSERT)"/>
@@ -234,7 +237,7 @@
                 <TextBlock Style="{StaticResource Subtitulo}" Text="☑ Incluir encabezados"/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Opción disponible en los formatos Excel y CSV. Si está marcada, la primera fila contiene los nombres de las columnas."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• En JSON esta opción no aplica: los nombres de columna siempre se incluyen como claves de cada objeto."/>
-                <TextBlock Style="{StaticResource Nota}"   Text="Los archivos generados (Excel, CSV y JSON) se abren automáticamente con la aplicación predeterminada al terminar la exportación."/>
+                <TextBlock Style="{StaticResource Nota}"   Text="Los archivos generados de Excel y CSV se abren automáticamente con la aplicación predeterminada al terminar la exportación. El JSON, en cambio, se muestra en su propia ventana y sólo se guarda si se elige 'Guardar archivo...'."/>
 
                 <!-- ══ MENÚ CONTEXTUAL DE TABLA ═══════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="🖱 Menú contextual de tabla / vista"/>

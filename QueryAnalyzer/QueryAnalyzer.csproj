@@ -104,6 +104,9 @@
     <Compile Include="ComparadorWindow.xaml.cs">
       <DependentUpon>ComparadorWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="JsonResultWindow.xaml.cs">
+      <DependentUpon>JsonResultWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="LimpiadorBDModels.cs" />
     <Compile Include="LimpiadorBDService.cs" />
     <Compile Include="LimpiadorBDWindow.xaml.cs">
@@ -195,6 +198,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="InstaladorDriversWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="JsonResultWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

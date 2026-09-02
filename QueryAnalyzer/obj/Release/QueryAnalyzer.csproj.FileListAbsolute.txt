@@ -1,6 +1,5 @@
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\QueryAnalyzer.exe
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\QueryAnalyzer.pdb
-C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\CapiDL.dll
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\DocumentFormat.OpenXml.dll
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\ICSharpCode.AvalonEdit.dll
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\Npgsql.dll
@@ -46,3 +45,5 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnaly
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.csproj.CopyComplete
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.exe
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.pdb
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\JsonResultWindow.baml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\JsonResultWindow.g.cs
