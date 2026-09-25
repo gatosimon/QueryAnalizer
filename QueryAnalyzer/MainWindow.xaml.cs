@@ -1527,8 +1527,9 @@ namespace QueryAnalyzer
                         return;
                     }
 
-                    string script = ScriptHelper.GenerarScriptInsert(dt, dlg.NombreTabla, dlg.IncluirDelete);
                     var motorActual = conexionActual?.Motor ?? TipoMotor.MS_SQL;
+                    string script = ScriptHelper.GenerarScriptInsert(dt, dlg.NombreTabla, dlg.IncluirDelete,
+                        motor: motorActual);
                     new ScriptResultWindow(script, motorActual).Mostrar(this);
                     AppendMessage($"Script INSERT generado: {dt.Rows.Count} filas → tabla '{dlg.NombreTabla}'.");
                 }
@@ -5142,7 +5143,7 @@ namespace QueryAnalyzer
 
                         sb.Append(ScriptHelper.GenerarScriptInsert(
                             dt, nombreCompleto, conDelete: false,
-                            meta?.ColumnasExcluidas, overriding));
+                            meta?.ColumnasExcluidas, overriding, motor));
 
                         if (identityInsert)
                             sb.AppendLine($"  SET IDENTITY_INSERT {nombreCompleto} OFF;");

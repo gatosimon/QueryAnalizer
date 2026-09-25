@@ -179,5 +179,13 @@ Al crear un par `.xaml` + `.xaml.cs`:
 
 ## Git
 
-- **Prohibido cualquier comando git de escritura** (commit, push, branch, reset, etc.)
-- Solo lectura si hace falta (`git log`, `git status`, `git diff`)
+- Git de escritura **solo** al ejecutar el flujo "subí todo" (commit + push). Fuera de ese flujo, solo lectura (`git log`, `git status`, `git diff`); nada de branch, reset, rebase, tag, etc.
+
+### Flujo "subí todo"
+1. Subir versión en `Properties/AssemblyInfo.cs` (`AssemblyVersion` y `AssemblyFileVersion`): +1 al último número con acarreo (1.1.3.0 → 1.1.3.1; 1.1.3.9 → 1.1.4.0).
+2. Compilar Release (MSBuild, ver Stack). Si hay errores, cortar.
+3. `git add -A` → `git commit` (título `FIX:`/`FEAT:` + notas) → `git push`.
+4. Copiar `bin\Release\QueryAnalyzer.exe` a `C:\Users\ssnunez\Desktop\BORRADERO\QueryAnalyzerUpdates` (sobrescribe).
+5. En esa carpeta, crear `update-X.X.X.X.zip` con solo `QueryAnalyzer.exe`.
+6. Copiar `version.xml` → `version-X.X.X.X.xml`, completar `<Version>`, `<DownloadUrl>` (`https://github.com/gatosimon/QueryAnalyzerUpdates/releases/download/vX.X.X.X/update-X.X.X.X.zip`) y `<ReleaseNotes>` (notas en lenguaje simple separadas por `\n` literal, sin acentos). Guardarlo también como `version.xml` (UTF-8 sin BOM).
+7. Devolver al usuario: la versión y las notas.

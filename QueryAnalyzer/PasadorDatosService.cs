@@ -223,7 +223,7 @@ namespace QueryAnalyzer
         // ─────────────────────────────────────────────────────────────────────
 
         public static string GenerarBackupScript(
-            string connStrB, List<TablaTransfer> ordenDelete,
+            string connStrB, List<TablaTransfer> ordenDelete, TipoMotor motorB,
             Action<string> onProgress = null)
         {
             var sb = new StringBuilder();
@@ -245,7 +245,7 @@ namespace QueryAnalyzer
                     DB.CloseConnection();
 
                     sb.AppendLine($"-- ═══ {tabla.NombreCompleto}  ({dt.Rows.Count} filas) ═══");
-                    sb.AppendLine(ScriptHelper.GenerarScriptInsert(dt, tabla.NombreCompleto, conDelete: false));
+                    sb.AppendLine(ScriptHelper.GenerarScriptInsert(dt, tabla.NombreCompleto, conDelete: false, motor: motorB));
                     sb.AppendLine();
                 }
                 catch (Exception ex)
@@ -258,7 +258,7 @@ namespace QueryAnalyzer
         }
 
         public static Dictionary<string, string> GenerarBackupPorTabla(
-            string connStrB, List<TablaTransfer> ordenDelete,
+            string connStrB, List<TablaTransfer> ordenDelete, TipoMotor motorB,
             Action<string> onProgress = null)
         {
             var scripts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -274,7 +274,7 @@ namespace QueryAnalyzer
                     DB.CloseConnection();
                     scripts[tabla.NombreCompleto] =
                         $"-- BACKUP {tabla.NombreCompleto} ({dt.Rows.Count} filas) — {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
-                        ScriptHelper.GenerarScriptInsert(dt, tabla.NombreCompleto, conDelete: false);
+                        ScriptHelper.GenerarScriptInsert(dt, tabla.NombreCompleto, conDelete: false, motor: motorB);
                 }
                 catch (Exception ex)
                 {
@@ -365,7 +365,7 @@ namespace QueryAnalyzer
 
                 string scriptTabla = ScriptHelper.GenerarScriptInsert(
                     dtA, tabla.NombreCompleto, conDelete: false,
-                    meta?.ColumnasExcluidas, overriding);
+                    meta?.ColumnasExcluidas, overriding, motorB);
                 resultado.ScriptsPorTabla[tabla.NombreCompleto] = scriptTabla;
                 sbScript.AppendLine(scriptTabla);
 
@@ -437,7 +437,7 @@ namespace QueryAnalyzer
 
                     foreach (DataRow row in dtA.Rows)
                     {
-                        string sql = BuildInsertSql(tabla.NombreCompleto, dtA, row, meta?.ColumnasExcluidas, overriding);
+                        string sql = BuildInsertSql(tabla.NombreCompleto, dtA, row, meta?.ColumnasExcluidas, overriding, motorB);
                         onSql?.Invoke(sql);
                         EjecutarDml(dbB.Connection, tx, sql);
                         onStep?.Invoke(++pasoActual, totalFilas);
@@ -653,13 +653,13 @@ namespace QueryAnalyzer
 
         private static string BuildInsertSql(
             string nombreTabla, DataTable dt, DataRow row,
-            HashSet<string> excluidas, bool overriding)
+            HashSet<string> excluidas, bool overriding, TipoMotor motor)
         {
             var cols = dt.Columns.Cast<DataColumn>()
                 .Where(c => excluidas == null || !excluidas.Contains(c.ColumnName))
                 .ToList();
             string colStr = string.Join(", ", cols.Select(c => c.ColumnName));
-            string valStr = string.Join(", ", cols.Select(c => ScriptHelper.EscaparValorSql(row[c])));
+            string valStr = string.Join(", ", cols.Select(c => ScriptHelper.EscaparValorSql(row[c], motor)));
             string ov = overriding ? " OVERRIDING SYSTEM VALUE" : "";
             return $"INSERT INTO {nombreTabla} ({colStr}){ov} VALUES ({valStr})";
         }

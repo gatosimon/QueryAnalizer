@@ -442,7 +442,7 @@ namespace QueryAnalyzer
                     if (backupRutaArchivo != null)
                     {
                         ReportLog("Generando backup de B...");
-                        backupScript = PasadorDatosService.GenerarBackupScript(connStrB, ordenDelete, ReportLog);
+                        backupScript = PasadorDatosService.GenerarBackupScript(connStrB, ordenDelete, motorB, ReportLog);
                         try
                         {
                             File.WriteAllText(backupRutaArchivo, backupScript, Encoding.UTF8);
@@ -453,7 +453,7 @@ namespace QueryAnalyzer
                     else if (backupRutaCarpeta != null)
                     {
                         ReportLog("Generando backup de B (por tabla)...");
-                        backupPorTablaDict = PasadorDatosService.GenerarBackupPorTabla(connStrB, ordenDelete, ReportLog);
+                        backupPorTablaDict = PasadorDatosService.GenerarBackupPorTabla(connStrB, ordenDelete, motorB, ReportLog);
                         int guardados = 0;
                         foreach (var kv in backupPorTablaDict)
                         {
