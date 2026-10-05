@@ -655,7 +655,7 @@ namespace QueryAnalyzer
 
             if (totalActivas > 0)
                 result.Advertencias.Add(
-                    $"⚠ Este modo se lleva al menos {totalActivas} fila(s) ACTIVAS que quedarían " +
+                    $"Este modo se lleva al menos {totalActivas} fila(s) ACTIVAS que quedarían " +
                     "apuntando a registros borrados. Es un piso: el barrido repite hasta que no queda " +
                     "nada, y cada vuelta puede desconectar más. Revisá la columna \"Cascada estimada\".");
             else
@@ -1038,7 +1038,7 @@ namespace QueryAnalyzer
 
             var sinPK = configuradas.Where(c => !c.TienePK).Select(c => c.NombreCompleto).ToList();
             if (sinPK.Any())
-                result.Advertencias.Add($"Sin PK detectada ({sinPK.Count}): {string.Join(", ", sinPK)}. Usá '🔍 Detectar campos automáticamente' o cargala a mano (doble clic en la tabla).");
+                result.Advertencias.Add($"Sin PK detectada ({sinPK.Count}): {string.Join(", ", sinPK)}. Usá 'Detectar campos automáticamente' o cargala a mano (doble clic en la tabla).");
 
             var compuestasReorden = configuradas.Where(c => c.ReordenarIds && !c.PKSimple).Select(c => c.NombreCompleto).ToList();
             if (compuestasReorden.Any())
@@ -1375,7 +1375,7 @@ namespace QueryAnalyzer
             var errores = result.Truncadas.Where(t => t.Error != null).ToList();
             if (errores.Any())
                 result.Advertencias.Add(
-                    $"⚠ {errores.Count} relación(es) no se pudieron evaluar (ver columna 'Alcance'): " +
+                    $"{errores.Count} relación(es) no se pudieron evaluar (ver columna 'Alcance'): " +
                     $"{string.Join(", ", errores.Select(t => t.TablaHija).Distinct(StringComparer.OrdinalIgnoreCase))}. " +
                     "Esas FKs quedan fuera del barrido.");
 
@@ -1385,9 +1385,9 @@ namespace QueryAnalyzer
             {
                 result.HayConflictosBloquantes = true;
                 result.Advertencias.Add(
-                    $"⛔ {sinPK.Count} tabla(s) con huérfanos no tienen PK detectada y sin eso no se puede armar " +
+                    $"{sinPK.Count} tabla(s) con huérfanos no tienen PK detectada y sin eso no se puede armar " +
                     $"su conjunto de borrado: {string.Join(", ", sinPK)}. " +
-                    "Usá '🔍 Detectar campos automáticamente' o cargá la PK a mano (doble clic en la tabla).");
+                    "Usá 'Detectar campos automáticamente' o cargá la PK a mano (doble clic en la tabla).");
             }
 
             if (_conn.Motor != TipoMotor.MS_SQL)
@@ -1585,7 +1585,7 @@ namespace QueryAnalyzer
 
                 if (noResueltos.Any())
                     result.Advertencias.Add(
-                        $"⚠ {noResueltos.Count} tabla(s) del arrastre no están en el catálogo cargado: " +
+                        $"{noResueltos.Count} tabla(s) del arrastre no están en el catálogo cargado: " +
                         $"{string.Join(", ", noResueltos.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))}. " +
                         "Quedan FUERA del script y hay que revisarlas a mano.");
 
@@ -1600,9 +1600,9 @@ namespace QueryAnalyzer
                 {
                     result.HayConflictosBloquantes = true;
                     result.Advertencias.Add(
-                        $"⛔ {sinPKNecesaria.Count} tabla(s) del alcance no tienen PK detectada y sin eso no se " +
+                        $"{sinPKNecesaria.Count} tabla(s) del alcance no tienen PK detectada y sin eso no se " +
                         $"puede armar su conjunto de borrado: {string.Join(", ", sinPKNecesaria)}. " +
-                        "Usá '🔍 Detectar campos automáticamente' o cargá la PK a mano (doble clic en la tabla). " +
+                        "Usá 'Detectar campos automáticamente' o cargá la PK a mano (doble clic en la tabla). " +
                         "No se genera el script hasta resolverlo — antes que adivinar, no borrar.");
                 }
 
@@ -1622,7 +1622,7 @@ namespace QueryAnalyzer
 
             var sinPK = configuradas.Where(c => !c.TienePK).Select(c => c.NombreCompleto).ToList();
             if (sinPK.Any())
-                result.Advertencias.Add($"Sin PK detectada ({sinPK.Count}): {string.Join(", ", sinPK)}. Usá '🔍 Detectar campos automáticamente' o cargala a mano (doble clic en la tabla).");
+                result.Advertencias.Add($"Sin PK detectada ({sinPK.Count}): {string.Join(", ", sinPK)}. Usá 'Detectar campos automáticamente' o cargala a mano (doble clic en la tabla).");
 
             var compuestasReorden = configuradas.Where(c => c.ReordenarIds && !c.PKSimple).Select(c => c.NombreCompleto).ToList();
             if (compuestasReorden.Any())
@@ -1671,7 +1671,7 @@ namespace QueryAnalyzer
             if (modo == ModoConflicto.BorradoIterativo)
             {
                 sb.AppendLine("--");
-                sb.AppendLine("-- ⚠ ESTE MODO BORRA FILAS ACTIVAS. Una fila viva que sólo apuntaba a registros");
+                sb.AppendLine("-- ESTE MODO BORRA FILAS ACTIVAS. Una fila viva que sólo apuntaba a registros");
                 sb.AppendLine("--   dados de baja queda apuntando a la nada y se elimina en el paso 3.");
             }
             sb.AppendLine("-- REVISAR CUIDADOSAMENTE ANTES DE EJECUTAR");
@@ -1986,7 +1986,7 @@ namespace QueryAnalyzer
 
             if (sinPK.Any())
             {
-                sb.AppendLine("-- ⚠ SIN PK: no hay con qué identificar las filas, así que estas tablas");
+                sb.AppendLine("-- SIN PK: no hay con qué identificar las filas, así que estas tablas");
                 sb.AppendLine("--   quedaron FUERA del script. Revisalas a mano:");
                 foreach (var c in sinPK.OrderBy(x => x.NombreCompleto, StringComparer.OrdinalIgnoreCase))
                     sb.AppendLine($"--   • {c.NombreCompleto}");
@@ -2151,7 +2151,7 @@ namespace QueryAnalyzer
 
             if (noResueltos.Any())
             {
-                sb.AppendLine("-- ⚠ SIN RESOLVER: estas tablas del cierre no están en el catálogo cargado,");
+                sb.AppendLine("-- SIN RESOLVER: estas tablas del cierre no están en el catálogo cargado,");
                 sb.AppendLine("--   así que quedaron FUERA del script. Revisalas a mano:");
                 foreach (var n in noResueltos.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
                     sb.AppendLine($"--   • {n}");
@@ -2159,7 +2159,7 @@ namespace QueryAnalyzer
             }
             if (externas.Any())
             {
-                sb.AppendLine($"-- ⚠ LÍMITE DE ESQUEMA: {externas.Count} tabla(s) están referenciadas desde fuera.");
+                sb.AppendLine($"-- LÍMITE DE ESQUEMA: {externas.Count} tabla(s) están referenciadas desde fuera.");
                 sb.AppendLine("--   Esas FK no se suspenden —son de otro esquema— así que siguen activas y las");
                 sb.AppendLine("--   filas que protegen NO se borran. Es la única guarda que sobrevive en este modo.");
                 foreach (var kv in externas.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
@@ -2348,7 +2348,7 @@ namespace QueryAnalyzer
 
             if (noResueltos.Any())
             {
-                sb.AppendLine("-- ⚠ SIN RESOLVER: estas tablas del arrastre no están en el catálogo cargado,");
+                sb.AppendLine("-- SIN RESOLVER: estas tablas del arrastre no están en el catálogo cargado,");
                 sb.AppendLine("--   así que quedaron FUERA del script. Revisalas a mano:");
                 foreach (var n in noResueltos.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
                     sb.AppendLine($"--   • {n}");
@@ -2356,7 +2356,7 @@ namespace QueryAnalyzer
             }
             if (externas.Any())
             {
-                sb.AppendLine($"-- ⚠ LÍMITE DE ESQUEMA: {externas.Count} tabla(s) del alcance están referenciadas desde");
+                sb.AppendLine($"-- LÍMITE DE ESQUEMA: {externas.Count} tabla(s) del alcance están referenciadas desde");
                 sb.AppendLine("--   fuera. Esas filas NO entran al conjunto y las tablas de afuera no se tocan.");
                 foreach (var kv in externas.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
                     sb.AppendLine($"--   • {kv.Key} ← {string.Join(", ", kv.Value.Select(g => g.First().OrigenCompleto).Distinct(StringComparer.OrdinalIgnoreCase))}");
@@ -2364,7 +2364,7 @@ namespace QueryAnalyzer
             }
             if (enCiclo.Any())
             {
-                sb.AppendLine($"-- ⚠ CICLO DE FK: {enCiclo.Count} tabla(s) forman ciclo, así que no hay orden válido.");
+                sb.AppendLine($"-- CICLO DE FK: {enCiclo.Count} tabla(s) forman ciclo, así que no hay orden válido.");
                 sb.AppendLine("--   Sólo a ellas se les suspende la validación; el resto borra con las FK activas.");
                 foreach (var n in enCiclo.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
                     sb.AppendLine($"--   • {n}");
@@ -2450,12 +2450,12 @@ namespace QueryAnalyzer
             sb.AppendLine("-- que queden huérfanas por ese borrado, hasta que la cadena cierre.");
             sb.AppendLine($"-- Centinelas 0 y '' tratados como 'sin referencia': {(opciones.CentinelasComoSinReferencia ? "SÍ" : "NO")}.");
             if (!opciones.CentinelasComoSinReferencia)
-                sb.AppendLine("-- ⚠ Con esta opción destildada, una FK en 0 cuenta como referencia rota y la fila se borra.");
+                sb.AppendLine("-- Con esta opción destildada, una FK en 0 cuenta como referencia rota y la fila se borra.");
             sb.AppendLine();
 
             if (fksFuera.Any())
             {
-                sb.AppendLine("-- ⚠ FUERA DEL LÍMITE DE ESQUEMA: estas FKs apuntan a un padre de otro esquema.");
+                sb.AppendLine("-- FUERA DEL LÍMITE DE ESQUEMA: estas FKs apuntan a un padre de otro esquema.");
                 sb.AppendLine("--   Se informan pero NO se depuran. Para incluirlas, ampliá el alcance.");
                 foreach (var g in fksFuera)
                 {

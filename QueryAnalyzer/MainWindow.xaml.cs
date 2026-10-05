@@ -29,7 +29,6 @@ namespace QueryAnalyzer
     {
         private static readonly string HISTORY_FILE = Path.Combine(App.AppDataFolder, "query_history.txt");
         private static readonly string HISTORIAL_XML = Path.Combine(App.AppDataFolder, "historial.xml");
-        private bool iniciarColapasado = true;
         private CancellationTokenSource _explorarCTS;
         // Filtros del explorador (persisten entre llamadas a CargarEsquema)
         private string _filtroTipo = "BOTH";   // "BOTH" | "TABLE" | "VIEW"
@@ -109,6 +108,7 @@ namespace QueryAnalyzer
             BloquearUI(true);
             InicializarTemas();
             ConfigurarMenuContextualAvalonEdit();
+            InicializarRediseno();
 
             // Intellisense: suscripción a eventos de AvalonEdit
             txtQuery.TextArea.TextEntering += TxtQuery_TextEntering;
@@ -141,7 +141,9 @@ namespace QueryAnalyzer
             _temaClaro = LeerTemaDesdeDisco("ThemeLight.xaml");
             _temaOscuro = LeerTemaDesdeDisco("ThemeDark.xaml");
 
-            AplicarTema(_temaClaro);
+            // Recordar el tema elegido la ultima vez (antes siempre arrancaba en claro)
+            try { _modoOscuro = ConfigManager.ObtenerConfiguracion().TemaOscuro; } catch { }
+            AplicarTema();
         }
 
         /// <summary>
@@ -151,7 +153,21 @@ namespace QueryAnalyzer
         private void ExtraerTemaADisco(string archivo)
         {
             string destino = System.IO.Path.Combine(ThemesFolder, archivo);
-            if (System.IO.File.Exists(destino)) return;
+            if (System.IO.File.Exists(destino))
+            {
+                // Paleta nueva de la app: si el archivo guardado es de una version anterior
+                // (o no tiene version) se lo reemplaza, dejando una copia .bak con sus colores.
+                int version = 0;
+                try
+                {
+                    var m = System.Text.RegularExpressions.Regex.Match(
+                        System.IO.File.ReadAllText(destino), "x:Key=\"ThemeVersion\">\\s*(\\d+)");
+                    if (m.Success) version = int.Parse(m.Groups[1].Value);
+                }
+                catch { }
+                if (version >= PreferenciasWindow.VersionTemas) return;
+                System.IO.File.Copy(destino, destino + ".bak", true);
+            }
 
             // Leer el recurso embebido y escribirlo en disco
             var uri = new Uri($"pack://application:,,,/{archivo}", UriKind.Absolute);
@@ -215,6 +231,20 @@ namespace QueryAnalyzer
                 txtQuery.Foreground = (System.Windows.Media.Brush)tema["BrushEditorFG"];
             }
 
+            // Los controles de ModernWpf siguen el mismo modo claro/oscuro y el mismo acento que la paleta propia
+            bool oscuro = ReferenceEquals(tema, _temaOscuro);
+            AplicarColoresSql(oscuro);
+            ModernWpf.ThemeManager.Current.ApplicationTheme =
+                oscuro ? ModernWpf.ApplicationTheme.Dark : ModernWpf.ApplicationTheme.Light;
+            if (tema["BrushAccent"] is System.Windows.Media.SolidColorBrush acento)
+                ModernWpf.ThemeManager.Current.AccentColor = acento.Color;
+
+            // Icono del boton de tema (muestra la accion contraria al modo actual) y texto de la barra de estado
+            icoTemaLuna.Visibility = oscuro ? Visibility.Collapsed : Visibility.Visible;
+            icoTemaSol.Visibility = oscuro ? Visibility.Visible : Visibility.Collapsed;
+            txtModoTema.Text = oscuro ? "Modo oscuro" : "Modo claro";
+            AplicarFondosEntradas(tema);
+
             ActualizarHeadersGrillas();
         }
 
@@ -231,6 +261,15 @@ namespace QueryAnalyzer
             _modoOscuro = !_modoOscuro;
 
             AplicarTema();
+
+            // Recordar la eleccion para el proximo inicio
+            try
+            {
+                var cfg = ConfigManager.ObtenerConfiguracion();
+                cfg.TemaOscuro = _modoOscuro;
+                ConfigManager.GuardarConfiguracion(cfg);
+            }
+            catch { }
         }
 
         private void AplicarTema()
@@ -242,7 +281,6 @@ namespace QueryAnalyzer
                 _temaClaro = LeerTemaDesdeDisco("ThemeLight.xaml");
 
             AplicarTema(_modoOscuro ? _temaOscuro : _temaClaro);
-            btnToggleTema.Content = _modoOscuro ? "☀" : "🌙";
         }
 
         /// <summary>
@@ -257,7 +295,7 @@ namespace QueryAnalyzer
                 if (tab.Content is DataGrid dg)
                 {
                     var hs = new Style(typeof(DataGridColumnHeader));
-                    hs.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Center));
+                    hs.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Left));
                     hs.Setters.Add(new Setter(Control.BackgroundProperty, (System.Windows.Media.Brush)this.FindResource("BrushHeaderBG")));
                     hs.Setters.Add(new Setter(Control.ForegroundProperty, (System.Windows.Media.Brush)this.FindResource("BrushHeaderFG")));
                     hs.Setters.Add(new Setter(Control.FontWeightProperty, FontWeights.SemiBold));
@@ -439,6 +477,73 @@ namespace QueryAnalyzer
             txtQuery.ContextMenu = contextMenu;
         }
 
+        /// <summary>
+        /// Cuadros de texto y combos: ModernWpf los pinta (casi negro en oscuro) con recursos propios.
+        /// Se sobreescriben a nivel de aplicacion con los pinceles BrushInput* de la paleta, para que se vean
+        /// en un tono acorde al resto de la ventana y se puedan editar desde Preferencias.
+        /// </summary>
+        private void AplicarFondosEntradas(ResourceDictionary tema)
+        {
+            Func<string, System.Windows.Media.Brush> pincel = clave =>
+                tema.Contains(clave) ? tema[clave] as System.Windows.Media.Brush : null;
+
+            var normal = pincel("BrushInputBG");
+            var hover = pincel("BrushInputHoverBG");
+            var foco = pincel("BrushInputFocusBG");
+            var menu = pincel("BrushMenuBG");
+            if (normal == null || hover == null || foco == null) return;
+
+            var r = Application.Current.Resources;
+            r["TextControlBackground"] = normal;
+            r["TextControlBackgroundPointerOver"] = hover;
+            r["TextControlBackgroundFocused"] = foco;
+            r["ComboBoxBackground"] = normal;
+            r["ComboBoxBackgroundPointerOver"] = hover;
+            r["ComboBoxBackgroundPressed"] = foco;
+            r["ComboBoxBackgroundFocused"] = foco;
+            if (menu != null) r["ComboBoxDropDownBackground"] = menu;
+
+            // Bordes suaves: un tono apenas distinto del fondo; el foco sigue marcandose con el acento de ModernWpf
+            var borde = pincel("BrushControlBorder");
+            var bordeHover = pincel("BrushControlBorderHover");
+            if (borde != null)
+            {
+                r["TextControlBorderBrush"] = borde;
+                r["ComboBoxBorderBrush"] = borde;
+                r["ButtonBorderBrush"] = borde;
+            }
+            if (bordeHover != null)
+            {
+                r["TextControlBorderBrushPointerOver"] = bordeHover;
+                r["ComboBoxBorderBrushPointerOver"] = bordeHover;
+                r["ButtonBorderBrushPointerOver"] = bordeHover;
+            }        }
+        /// <summary>
+        /// El resaltado SQL usa colores fijos pensados para fondo claro; en modo oscuro se cambian
+        /// por una paleta legible sobre fondo oscuro.
+        /// </summary>
+        private void AplicarColoresSql(bool oscuro)
+        {
+            var def = txtQuery.SyntaxHighlighting;
+            if (def == null) return;
+
+            Action<string, string, string> poner = (nombre, claro, oscuroHex) =>
+            {
+                var c = def.GetNamedColor(nombre);
+                if (c == null) return;
+                var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(oscuro ? oscuroHex : claro);
+                c.Foreground = new SimpleHighlightingBrush(color);
+            };
+
+            poner("String",    "#FF0000", "#CE9178");
+            poner("Comment",   "#008000", "#6A9955");
+            poner("Keyword",   "#0000FF", "#569CD6");
+            poner("Function",  "#FF00FF", "#C586C0");
+            poner("Connector", "#0094FF", "#4FC1FF");
+
+            txtQuery.TextArea.TextView.Redraw();
+        }
+
         private void RegistrarResaltadoSQL()
         {
             // Definición XML manual para asegurar que funcione sin archivos externos
@@ -496,17 +601,27 @@ namespace QueryAnalyzer
                 TxtQuery_KeyDown(this, e);
                 e.Handled = true;
             }
+            else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.B)
+            {
+                AlternarPanelLateral();
+                e.Handled = true;
+            }
+            else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.T)
+            {
+                if (tcConsultas.IsEnabled) NuevaPestana();
+                e.Handled = true;
+            }
+            else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.W)
+            {
+                if (tcConsultas.IsEnabled) CerrarPestana(_pestanaActual);
+                e.Handled = true;
+            }
         }
 
         protected override void OnActivated(EventArgs e)
         {
             base.OnActivated(e);
-            if (iniciarColapasado)
-            {
-                btnExpandirColapsar_Click(this, e as RoutedEventArgs);
-                btnToggleDerecho_Click(this, e as RoutedEventArgs);
-                iniciarColapasado = false;
-            }
+
         }
 
         private void CargarTipos()
@@ -579,6 +694,7 @@ namespace QueryAnalyzer
             if (cbConnectionName.SelectedItem is Conexion conexion)
             {
                 conexionActual = conexion;
+                ActualizarEstadoConexion();
                 BloquearUI(false);
                 AppendMessage($"Conexión seleccionada: {conexion.Motor}");
 
@@ -682,6 +798,8 @@ namespace QueryAnalyzer
             btnExecute.IsEnabled = !ejecutando;
             btnExecuteScalar.IsEnabled = !ejecutando;
             btnCancelarQuery.IsEnabled = ejecutando;
+            tcConsultas.IsEnabled = !ejecutando;
+            btnNuevaPestana.IsEnabled = !ejecutando;
             progEjecucion.Visibility = ejecutando ? Visibility.Visible : Visibility.Collapsed;
             lblEjecutando.Visibility = ejecutando ? Visibility.Visible : Visibility.Collapsed;
         }
@@ -692,7 +810,7 @@ namespace QueryAnalyzer
             _ctsCancelar?.Cancel();
             // 2. Cancelar el comando ODBC activo (corta el ExecuteReader en el hilo de fondo).
             _cmdActivo?.Cancel();
-            AppendMessage("⏹ Cancelación solicitada...");
+            AppendMessage("Cancelación solicitada...");
         }
 
         private void TxtQuery_KeyDown(object sender, KeyEventArgs e)
@@ -743,6 +861,7 @@ namespace QueryAnalyzer
                 return;
             }
 
+            MarcarPestanaSincronizada();
             tcResults.Items.Clear();
             AppendMessage($"Ejecutando... ({DateTime.Now})");
 
@@ -923,7 +1042,7 @@ namespace QueryAnalyzer
                     {
                         // 1. Definir el estilo para centrar los encabezados
                         var headerStyle = new Style(typeof(DataGridColumnHeader));
-                        headerStyle.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Center));
+                        headerStyle.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Left));
                         headerStyle.Setters.Add(new Setter(Control.BackgroundProperty, (System.Windows.Media.Brush)this.FindResource("BrushHeaderBG")));
                         headerStyle.Setters.Add(new Setter(Control.ForegroundProperty, (System.Windows.Media.Brush)this.FindResource("BrushHeaderFG")));
                         headerStyle.Setters.Add(new Setter(Control.FontWeightProperty, FontWeights.SemiBold));
@@ -1136,7 +1255,7 @@ namespace QueryAnalyzer
                         {
                             cellContextMenu.Items.Add(new Separator());
 
-                            var menuEliminarFila = new MenuItem { Header = "🗑 Eliminar fila" };
+                            var menuEliminarFila = new MenuItem { Header = "Eliminar fila" };
                             AplicarEstiloMenuItem(menuEliminarFila);
                             menuEliminarFila.Click += (s, x) =>
                             {
@@ -1145,7 +1264,7 @@ namespace QueryAnalyzer
                             };
                             cellContextMenu.Items.Add(menuEliminarFila);
 
-                            var menuInsertarFila = new MenuItem { Header = "➕ Insertar fila vacía" };
+                            var menuInsertarFila = new MenuItem { Header = "Insertar fila vacía" };
                             AplicarEstiloMenuItem(menuInsertarFila);
                             menuInsertarFila.Click += (s, x) =>
                             {
@@ -1228,7 +1347,7 @@ namespace QueryAnalyzer
                                 headerMenu.Opened += (ms, me) =>
                                 {
                                     bool marcada = columnasClaveManual.Contains(colName, StringComparer.OrdinalIgnoreCase);
-                                    mnuMarcar.Header = marcada ? "🔑 Quitar columna clave" : "🔑 Marcar como columna clave";
+                                    mnuMarcar.Header = marcada ? "Quitar columna clave" : "Marcar como columna clave";
                                 };
                                 mnuMarcar.Click += (ms, me) => ToggleColumnaClaveManual(colName, tbHeader, columnasClaveManual);
                                 headerMenu.Items.Add(mnuMarcar);
@@ -1291,11 +1410,10 @@ namespace QueryAnalyzer
                         // Encabezado del tab
                         string editMark = esEditable ? "✎ " : "";
                         string tabHeader = esNoQuery
-                            ? $"Resultado {i + 1} — comando ejecutado ({FormatoNumero(elapsedMicroseconds)} µs)"
+                            ? $"Resultado {i + 1} \u00b7 comando ejecutado \u00b7 {FormatoDuracion(elapsedMicroseconds)}"
                             : truncado
-                                ? $"⚠ Resultado {i + 1} ({dt.Columns.Count} cols, {dt.Rows.Count} filas TRUNCADAS, {FormatoNumero(elapsedMicroseconds)} µs)"
-                                : $"{editMark}Resultado {i + 1} ({dt.Columns.Count} cols, {dt.Rows.Count} filas, {FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds / 1000000)}) s)";
-
+                                ? $"Resultado {i + 1} \u00b7 {dt.Rows.Count} filas truncadas \u00b7 {FormatoDuracion(elapsedMicroseconds)}"
+                                : $"{editMark}Resultado {i + 1} \u00b7 {dt.Rows.Count} filas \u00b7 {FormatoDuracion(elapsedMicroseconds)}";
                         var tabItem = new TabItem { Header = tabHeader, Content = dataGrid };
                         if (esEditable)
                             tabItem.Tag = new TabInfo { Table = dt, Sql = sqlIndividual, ConnStr = connStr, ColumnasClaveManual = columnasClaveManual };
@@ -1304,7 +1422,7 @@ namespace QueryAnalyzer
                         if (esNoQuery)
                             AppendMessage($"Consulta {i + 1} ejecutada en {FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds / 1000000)}) s");
                         else if (truncado)
-                            AppendMessage($"⚠ Resultado truncado a {dt.Rows.Count} filas (límite en Preferencias). " +
+                            AppendMessage($"Resultado truncado a {dt.Rows.Count} filas (límite en Preferencias). " +
                                           $"Usá LIMIT/TOP/FETCH en la consulta, o aumentá el límite en Preferencias → Límite de filas.");
                         else
                             AppendMessage($"Consulta {i + 1} exitosa. {dt.Rows.Count} filas devueltas en {FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds / 1000000)}) s");
@@ -1319,14 +1437,16 @@ namespace QueryAnalyzer
 
                 txtColumnCount.Text = totalColumns.ToString();
                 txtRowCount.Text = totalRows.ToString();
-                txtTiempoDeEjecucion.Text = $"{FormatoNumero(totalElapsedMicroseconds)} µs ({FormatoNumero(totalElapsedMicroseconds / 1000000)}) s";
+                txtTiempoDeEjecucion.Text = FormatoDuracion(totalElapsedMicroseconds);
 
                 await Dispatcher.InvokeAsync(() =>
                 {
                     string resumen = _ctsCancelar.IsCancellationRequested
-                        ? "⏹ Ejecución cancelada por el usuario."
+                        ? "Ejecución cancelada por el usuario."
                         : $"Ejecución total finalizada. {validQueries.Count} consultas ejecutadas en {FormatoNumero(totalElapsedMicroseconds)} µs ({FormatoNumero(totalElapsedMicroseconds / 1000000)}) s";
                     AppendMessage(resumen);
+                    if (!_ctsCancelar.IsCancellationRequested && tcResults.Items.Count > 0)
+                        ActualizarEstadoConexion(true);
                     if (tcResults.Items.Count > 0)
                         tcResults.SelectedIndex = 0;
                 });
@@ -1558,6 +1678,8 @@ namespace QueryAnalyzer
             try
             {
                 txtMessages.Text = string.Empty;
+                _cantMensajes = 0;
+                txtBadgeMensajes.Text = "0";
             }
             catch (Exception ex)
             {
@@ -2248,7 +2370,7 @@ namespace QueryAnalyzer
                 sw.Stop();
                 double elapsedMicroseconds = sw.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
 
-                txtTiempoDeEjecucion.Text = $"{FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds / 1000000)}) s";
+                txtTiempoDeEjecucion.Text = FormatoDuracion(elapsedMicroseconds);
 
                 await Dispatcher.InvokeAsync(() =>
                     AppendMessage($"Resultado del escalar: {(result?.ToString() ?? "(null) en {}")} en {FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds / 1000000)}) s"));
@@ -2291,7 +2413,7 @@ namespace QueryAnalyzer
                     if (modified > 0) parts.Add($"{modified} modificada{(modified > 1 ? "s" : "")}");
                     if (added    > 0) parts.Add($"{added} nueva{(added > 1 ? "s" : "")}");
                     if (deleted  > 0) parts.Add($"{deleted} eliminada{(deleted > 1 ? "s" : "")}");
-                    lblCambiosPendientes.Text = $"● {string.Join(", ", parts)} sin guardar";
+                    lblCambiosPendientes.Text = $"{string.Join(", ", parts)} sin guardar";
                     barGuardarCambios.Visibility = Visibility.Visible;
                     return;
                 }
@@ -2307,13 +2429,13 @@ namespace QueryAnalyzer
             {
                 columnasClaveManual.RemoveAll(c => c.Equals(colName, StringComparison.OrdinalIgnoreCase));
                 tbHeader.FontWeight = FontWeights.Normal;
-                tbHeader.Text = tbHeader.Text.Replace("🔑 ", "");
+                tbHeader.Text = tbHeader.Text.Replace("", "");
             }
             else
             {
                 columnasClaveManual.Add(colName);
                 tbHeader.FontWeight = FontWeights.Bold;
-                tbHeader.Text = "🔑 " + tbHeader.Text;
+                tbHeader.Text = "" + tbHeader.Text;
             }
             ActualizarBarraGuardar();
         }
@@ -2516,6 +2638,8 @@ namespace QueryAnalyzer
 
             txtMessages.AppendText($"[{DateTime.Now:HH:mm:ss}] {text}\n");
             txtMessages.ScrollToEnd();
+            _cantMensajes++;
+            txtBadgeMensajes.Text = _cantMensajes.ToString();
         }
 
         private static T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
@@ -2581,7 +2705,7 @@ namespace QueryAnalyzer
                         Usuario = conexionActual.Usuario,
                         Contrasena = conexionActual.Contrasena
                     } : null,
-                    Consulta = sqlCompleto, // 🔹 todas las consultas en un solo string
+                    Consulta = sqlCompleto, // todas las consultas en un solo string
                     Parametros = new List<string[]>(),
                     Fecha = DateTime.Now
                 };
@@ -2721,7 +2845,8 @@ namespace QueryAnalyzer
                 todas.Add(dlg.Resultado);
                 GuardarTodasLasConsultasGuardadas(todas);
                 RefrescarListaMisConsultas();
-                AppendMessage($"✅ Consulta '{dlg.Resultado.Titulo}' guardada correctamente.");
+                RenombrarPestanaActual(dlg.Resultado.Titulo);
+                AppendMessage($"Consulta '{dlg.Resultado.Titulo}' guardada correctamente.");
             }
         }
 
@@ -2755,6 +2880,7 @@ namespace QueryAnalyzer
                 // Usar Document.Text (API interna de AvalonEdit) para garantizar
                 // que el contenido se establece aunque el Text property tenga caché
                 txtQuery.Document.Text = cg.Consulta ?? string.Empty;
+                RenombrarPestanaActual(cg.Titulo);
 
                 try { SincronizarParametros(); }
                 catch { /* sin conexión activa — ignorar */ }
@@ -2820,7 +2946,7 @@ namespace QueryAnalyzer
 
             GuardarTodasLasConsultasGuardadas(todas);
             RefrescarListaMisConsultas();
-            AppendMessage($"✏️ Consulta '{dlg.Resultado.Titulo}' actualizada.");
+            AppendMessage($"Consulta '{dlg.Resultado.Titulo}' actualizada.");
         }
 
         /// <summary>Elimina la consulta guardada seleccionada (con confirmación).</summary>
@@ -2840,7 +2966,7 @@ namespace QueryAnalyzer
             todas.RemoveAll(c => c.Titulo == cg.Titulo && c.Fecha == cg.Fecha);
             GuardarTodasLasConsultasGuardadas(todas);
             RefrescarListaMisConsultas();
-            AppendMessage($"🗑 Consulta '{cg.Titulo}' eliminada.");
+            AppendMessage($"Consulta '{cg.Titulo}' eliminada.");
         }
 
         /// <summary>Delete = eliminar; F2 = editar; Enter = cargar en editor.</summary>
@@ -2889,37 +3015,6 @@ namespace QueryAnalyzer
             }
         }
 
-        /// <summary>Colapsa / expande la sección Mis Consultas del panel derecho.</summary>
-        private void btnToggleMisConsultas_Click(object sender, RoutedEventArgs e)
-        {
-            // Misma lógica que Parámetros/Historial: se colapsa/expande la fila de
-            // la SECCIÓN completa (header + contenido) hacia el alto natural del
-            // header, para que el espacio liberado vuelva a las demás secciones.
-            var rowSeccion = grdDerecho.RowDefinitions[4]; // sección Mis Consultas completa
-            var rowSplitter = grdDerecho.RowDefinitions[3]; // splitter Historial/Mis Consultas
-            double altoHeader = dockHeaderMisConsultas.ActualHeight;
-
-            if (!_misConsultasColapsado)
-            {
-                if (rowSeccion.ActualHeight > altoHeader)
-                    _misConsultasAlturaExpandida = rowSeccion.ActualHeight;
-                rowSeccion.Height = new GridLength(altoHeader, GridUnitType.Pixel);
-                _misConsultasColapsado = true;
-                btnToggleMisConsultas.Content = "▲";
-            }
-            else
-            {
-                rowSeccion.Height = new GridLength(
-                    _misConsultasAlturaExpandida > altoHeader ? _misConsultasAlturaExpandida : 120,
-                    GridUnitType.Pixel);
-                _misConsultasColapsado = false;
-                btnToggleMisConsultas.Content = "▼";
-            }
-
-            rowSplitter.Height = (_historialColapsado || _misConsultasColapsado)
-                ? new GridLength(0)
-                : new GridLength(5);
-        }
 
         // ────────────────────────────────────────────────────────
         // Resto del código (Explorador, botones, etc.) sin cambios estructurales
@@ -2941,12 +3036,12 @@ namespace QueryAnalyzer
                     DataBase DB = new DataBase(conn);
                     if (DB.Test())
                     {
-                        Dispatcher.Invoke(() => AppendMessage("Conexión exitosa."));
+                        Dispatcher.Invoke(() => { AppendMessage("Conexi\u00f3n exitosa."); ActualizarEstadoConexion(true); });
                     }
                 }
                 catch (Exception ex)
                 {
-                    Dispatcher.Invoke(() => AppendMessage("Conexión fallida: " + ex.Message));
+                    Dispatcher.Invoke(() => { AppendMessage("Conexi\u00f3n fallida: " + ex.Message); ActualizarEstadoConexion(false); });
                 }
             });
         }
@@ -3026,26 +3121,11 @@ namespace QueryAnalyzer
             //var oddRowBrush = new System.Windows.Media.SolidColorBrush(oddRowColor);
             // 🎨 FIN DE MODIFICACIÓN
 
-            // 🖼️ INICIO DE MODIFICACIÓN: Cargar íconos
-            var tablaIconUri = new Uri("pack://application:,,,/Assets/tabla.png");
-            var columnaIconUri = new Uri("pack://application:,,,/Assets/columna.png");
-            var columnaClaveIconUri = new Uri("pack://application:,,,/Assets/columnaClave.png");
-            var claveIconUri = new Uri("pack://application:,,,/Assets/clave.png");
-            var vistaIconUri = new Uri("pack://application:,,,/Assets/vista.png"); // 👈 NUEVO
-
-            var tablaIcon = new System.Windows.Media.Imaging.BitmapImage(tablaIconUri);
-            var columnaIcon = new System.Windows.Media.Imaging.BitmapImage(columnaIconUri);
-            var columnaClaveIcon = new System.Windows.Media.Imaging.BitmapImage(columnaClaveIconUri);
-            var claveIcon = new System.Windows.Media.Imaging.BitmapImage(claveIconUri);
-            var vistaIcon = new System.Windows.Media.Imaging.BitmapImage(vistaIconUri); // 👈 NUEVO
-            int tamañoIconos = 20;
-            // 🖼️ FIN DE MODIFICACIÓN
-
             await Task.Run(() =>
             {
                 try
                 {
-                    Cargar(new string[] { "TABLE", "VIEW" }, filtrado, tablasConsulta, tvCargar, connStr, tablaIcon, columnaIcon, columnaClaveIcon, claveIcon, vistaIcon, tamañoIconos, token);
+                    Cargar(new string[] { "TABLE", "VIEW" }, filtrado, tablasConsulta, tvCargar, connStr, token);
                 }
                 catch (TaskCanceledException)
                 {
@@ -3064,7 +3144,7 @@ namespace QueryAnalyzer
             });
         }
 
-        private void Cargar(string[] tiposTabla, string filtrado, List<string> tablasConsulta, TreeView tvCargar, string connStr, System.Windows.Media.Imaging.BitmapImage tablaIcon, System.Windows.Media.Imaging.BitmapImage columnaIcon, System.Windows.Media.Imaging.BitmapImage columnaClaveIcon, System.Windows.Media.Imaging.BitmapImage claveIcon, System.Windows.Media.Imaging.BitmapImage vistaIcon, int tamañoIconos, CancellationToken token)
+        private void Cargar(string[] tiposTabla, string filtrado, List<string> tablasConsulta, TreeView tvCargar, string connStr, CancellationToken token)
         {
             // ── PASO 1: hilo de fondo — solo datos, sin tocar la UI ──────────────────
             DataBase DB = new DataBase(connStr);
@@ -3153,13 +3233,7 @@ namespace QueryAnalyzer
                         chkNodo.Unchecked += (cs, ce) => { _seleccionPersistente.Remove(headerText); ActualizarContadorSeleccion(); };
                         tablaHeader.Children.Add(chkNodo);
 
-                        tablaHeader.Children.Add(new System.Windows.Controls.Image
-                        {
-                            Source = capTipo == "VIEW" ? vistaIcon : tablaIcon,
-                            Width  = tamañoIconos,
-                            Height = tamañoIconos,
-                            Margin = new System.Windows.Thickness(0, 0, 5, 0)
-                        });
+                        tablaHeader.Children.Add(CrearIconoNodo(capTipo == "VIEW" ? "IconEye" : "IconTable", "BrushAccent"));
                         tablaHeader.Children.Add(new System.Windows.Controls.TextBlock { Text = headerText });
 
                         var tablaNode = new TreeViewItem { Header = tablaHeader, Tag = new NodoTablaTag(capTabla, capTipo) };
@@ -3176,8 +3250,7 @@ namespace QueryAnalyzer
                                 try
                                 {
                                     await Task.Run(() => CargarDetallesTabla(
-                                        nodo, capSchema, capTabla, capTipo, connStr,
-                                        columnaIcon, columnaClaveIcon, claveIcon, tamañoIconos));
+                                        nodo, capSchema, capTabla, capTipo, connStr));
                                 }
                                 catch (Exception ex)
                                 {
@@ -3219,8 +3292,8 @@ namespace QueryAnalyzer
 
                         bool esVista = capTipo == "VIEW";
 
-                        agregarSelect("🔟 SELECT TOP 10", () => GenerarSelectTop10(capSchema, capTabla));
-                        agregarSelect("✔ SELECT (todas las cols)", () =>
+                        agregarSelect("SELECT TOP 10", () => GenerarSelectTop10(capSchema, capTabla));
+                        agregarSelect("SELECT (todas las cols)", () =>
                         {
                             DB = new DataBase(connStr);
                             var colNames = ObtenerNombresColumnas(DB, capSchema, capTabla);
@@ -3230,47 +3303,47 @@ namespace QueryAnalyzer
 
                         if (!esVista)
                         {
-                            agregarOpcion("🧱 CREATE TABLE", () =>
+                            agregarOpcion("CREATE TABLE", () =>
                             {
                                 DB = new DataBase(connStr);
                                 return GenerarCreateTable(capSchema, capTabla,
                                     DB.GetSchema("Columns", new string[] { null, capSchema, capTabla }));
                             });
-                            agregarOpcion("✏️ ALTER TABLE (add col)", () => GenerarAlterTableAddColumn(capSchema, capTabla));
-                            agregarOpcion("⚰ DROP TABLE",             () => GenerarDropTable(capSchema, capTabla));
+                            agregarOpcion("ALTER TABLE (add col)", () => GenerarAlterTableAddColumn(capSchema, capTabla));
+                            agregarOpcion("DROP TABLE",             () => GenerarDropTable(capSchema, capTabla));
                             ctxMenu.Items.Add(new Separator());
-                            agregarOpcion("➕ INSERT INTO", () =>
+                            agregarOpcion("INSERT INTO", () =>
                             {
                                 DB = new DataBase(connStr);
                                 return GenerarInsert(capSchema, capTabla,
                                     DB.GetSchema("Columns", new string[] { null, capSchema, capTabla }));
                             });
-                            agregarOpcion("✏️ UPDATE ... SET", () =>
+                            agregarOpcion("UPDATE ... SET", () =>
                             {
                                 DB = new DataBase(connStr);
                                 return GenerarUpdate(capSchema, capTabla,
                                     DB.GetSchema("Columns", new string[] { null, capSchema, capTabla }));
                             });
-                            agregarOpcion("🗑 DELETE FROM",   () => GenerarDelete(capSchema, capTabla));
+                            agregarOpcion("DELETE FROM",   () => GenerarDelete(capSchema, capTabla));
                             ctxMenu.Items.Add(new Separator());
-                            agregarOpcion("🔑 CREATE INDEX",  () => GenerarCreateIndex(capSchema, capTabla));
-                            agregarOpcion("💣 DROP INDEX",    () => GenerarDropIndex(capSchema, capTabla));
-                            agregarSelect("📊 COUNT(*)",       () => GenerarCount(capSchema, capTabla));
-                            agregarOpcion("⚙ DESIGN",         () => Diseñar(capSchema, capTabla));
+                            agregarOpcion("CREATE INDEX",  () => GenerarCreateIndex(capSchema, capTabla));
+                            agregarOpcion("DROP INDEX",    () => GenerarDropIndex(capSchema, capTabla));
+                            agregarSelect("COUNT(*)",       () => GenerarCount(capSchema, capTabla));
+                            agregarOpcion("DESIGN",         () => Diseñar(capSchema, capTabla));
                         }
                         else
                         {
-                            agregarOpcion("🧱 CREATE VIEW",     () => GenerarCreateView(capSchema, capTabla));
-                            agregarOpcion("🔍 VIEW DEFINITION", () => GenerarViewDefinition(capSchema, capTabla));
+                            agregarOpcion("CREATE VIEW",     () => GenerarCreateView(capSchema, capTabla));
+                            agregarOpcion("VIEW DEFINITION", () => GenerarViewDefinition(capSchema, capTabla));
                             if (motorActual == TipoMotor.MS_SQL || motorActual == TipoMotor.POSTGRES)
-                                agregarOpcion("✏️ ALTER VIEW",  () => GenerarAlterView(capSchema, capTabla));
-                            agregarOpcion("🗑 DROP VIEW",        () => GenerarDropView(capSchema, capTabla));
+                                agregarOpcion("ALTER VIEW",  () => GenerarAlterView(capSchema, capTabla));
+                            agregarOpcion("DROP VIEW",        () => GenerarDropView(capSchema, capTabla));
                             ctxMenu.Items.Add(new Separator());
-                            agregarSelect("📊 COUNT(*)",          () => GenerarCount(capSchema, capTabla));
+                            agregarSelect("COUNT(*)",          () => GenerarCount(capSchema, capTabla));
                         }
 
                         ctxMenu.Items.Add(new Separator());
-                        var menuDocTabla = new MenuItem { Header = $"📝 Documentar {capTabla}" };
+                        var menuDocTabla = new MenuItem { Header = $"Documentar {capTabla}" };
                         AplicarEstiloMenuItem(menuDocTabla);
                         menuDocTabla.Click += async (s, ev) =>
                         {
@@ -3299,7 +3372,7 @@ namespace QueryAnalyzer
         /// Carga columnas, PKs e índices de una tabla específica cuando el usuario expande su nodo.
         /// Se ejecuta en un hilo de fondo y actualiza la UI vía Dispatcher.
         /// </summary>
-        private void CargarDetallesTabla(TreeViewItem tablaNode, string schema, string nombreTabla, string tipo, string connStr, System.Windows.Media.Imaging.BitmapImage columnaIcon, System.Windows.Media.Imaging.BitmapImage columnaClaveIcon, System.Windows.Media.Imaging.BitmapImage claveIcon, int tamañoIconos)
+        private void CargarDetallesTabla(TreeViewItem tablaNode, string schema, string nombreTabla, string tipo, string connStr)
         {
             DataBase DB = new DataBase(connStr);
             var columnas = DB.GetSchema("Columns", new string[] { null, schema, nombreTabla });
@@ -3430,13 +3503,7 @@ namespace QueryAnalyzer
                     // 🖼️ INICIO DE MODIFICACIÓN: nodo de columna con icono (clave o normal)
                     bool esClavePrimaria = columnasClaveSet.Contains(colName);
                     var colHeader = new StackPanel { Orientation = Orientation.Horizontal };
-                    colHeader.Children.Add(new System.Windows.Controls.Image
-                    {
-                        Source = esClavePrimaria ? columnaClaveIcon : columnaIcon,
-                        Width = tamañoIconos,
-                        Height = tamañoIconos,
-                        Margin = new System.Windows.Thickness(0, 0, 5, 0)
-                    });
+                    colHeader.Children.Add(esClavePrimaria ? CrearIconoNodo("IconKey", "BrushWarning") : CrearIconoNodo("IconColumnField", "BrushFGMuted"));
                     colHeader.Children.Add(new System.Windows.Controls.TextBlock
                     {
                         Text = $"{colName} ({tipoCompleto}{(string.IsNullOrEmpty(aceptaNulos) ? string.Empty : $", {aceptaNulos}")}{(string.IsNullOrEmpty(defecto) ? string.Empty : $", DEFAULT {defecto}")})"
@@ -3450,6 +3517,8 @@ namespace QueryAnalyzer
             });
 
             // ── Carga de claves foráneas (solo tablas) ───────────────────────────
+            RenovarConexionSiSqlite(ref DB, connStr);
+
             if (tipo == "TABLE")
             {
                 try
@@ -3516,7 +3585,7 @@ namespace QueryAnalyzer
                         {
                             Dispatcher.Invoke(() =>
                             {
-                                var fkRaiz = new TreeViewItem { Header = "🔗 Claves foráneas" };
+                                var fkRaiz = NodoConIcono("IconLink", "BrushAccent", "Claves for\u00e1neas");
 
                                 if (conexionActual.Motor == TipoMotor.SQLite)
                                 {
@@ -3528,10 +3597,7 @@ namespace QueryAnalyzer
                                     {
                                         string refTab = g.First()["table"].ToString();
                                         var cols = g.Select(r => $"{r["from"]} → {r["to"]}");
-                                        fkRaiz.Items.Add(new TreeViewItem
-                                        {
-                                            Header = $"FK → {refTab}  ({string.Join(", ", cols)})"
-                                        });
+                                        fkRaiz.Items.Add(NodoConIcono("IconLink", "BrushFGMuted", $"FK → {refTab}  ({string.Join(", ", cols)})"));
                                     }
                                 }
                                 else
@@ -3554,10 +3620,7 @@ namespace QueryAnalyzer
                                                 ? r["LocalCol"].ToString()
                                                 : $"{r["LocalCol"]} → {rc}";
                                         });
-                                        fkRaiz.Items.Add(new TreeViewItem
-                                        {
-                                            Header = $"{fkNom}  ⟶  {refTabFull}  ({string.Join(", ", cols)})"
-                                        });
+                                        fkRaiz.Items.Add(NodoConIcono("IconLink", "BrushFGMuted", $"{fkNom}  ⟶  {refTabFull}  ({string.Join(", ", cols)})"));
                                     }
                                 }
 
@@ -3575,6 +3638,8 @@ namespace QueryAnalyzer
             // Vistas: solo MS SQL admite vistas indexadas; los demás las omiten.
             bool mostrarIndices = tipo == "TABLE"
                 || (tipo == "VIEW" && conexionActual.Motor == TipoMotor.MS_SQL);
+
+            RenovarConexionSiSqlite(ref DB, connStr);
 
             if (mostrarIndices)
             {
@@ -3653,17 +3718,19 @@ namespace QueryAnalyzer
                         {
                             string idxNom = idxRow["NAME"].ToString();
                             string unique = idxRow["UNIQUE"].ToString();
-                            DB.CommandText = $"PRAGMA index_info('{idxNom}')";
+                            var dbIdx = new DataBase(connStr);
+                            dbIdx.CommandText = $"PRAGMA index_info('{idxNom}')";
                             bool tieneCols = false;
-                            while (DB.Read())
+                            while (dbIdx.Read())
                             {
                                 tieneCols = true;
                                 var nr = rowsConCol.NewRow();
                                 nr["IndexName"] = idxNom;
-                                nr["ColumnName"] = DB.Reader["name"].ToString();
+                                nr["ColumnName"] = dbIdx.Reader["name"].ToString();
                                 nr["IsUnique"] = unique;
                                 rowsConCol.Rows.Add(nr);
                             }
+                            try { dbIdx.CloseConnection(); } catch { }
                             if (!tieneCols)
                             {
                                 var nr = rowsConCol.NewRow();
@@ -3680,7 +3747,7 @@ namespace QueryAnalyzer
                     {
                         Dispatcher.Invoke(() =>
                         {
-                            var indiceRaiz = new TreeViewItem { Header = "📇 Índices" };
+                            var indiceRaiz = NodoConIcono("IconIndex", "BrushAccent", "\u00cdndices");
 
                             // Columna de nombre de índice según motor
                             string idxCol = conexionActual.Motor == TipoMotor.SQLite
@@ -3719,22 +3786,15 @@ namespace QueryAnalyzer
                                         break;
                                 }
 
-                                string icono = esPK ? "🗝️" : esUnique ? "🔒" : "📇";
-                                string etiq = esPK ? " [PK]"
+                                                                string etiq = esPK ? " [PK]"
                                              : esUnique ? " [UNIQUE]"
                                              : (!string.IsNullOrEmpty(tipoDesc) ? $" [{tipoDesc}]" : "");
 
                                 var indiceHeader = new StackPanel { Orientation = Orientation.Horizontal };
-                                indiceHeader.Children.Add(new System.Windows.Controls.Image
-                                {
-                                    Source = claveIcon,
-                                    Width = tamañoIconos,
-                                    Height = tamañoIconos,
-                                    Margin = new System.Windows.Thickness(0, 0, 5, 0)
-                                });
+                                indiceHeader.Children.Add(esPK ? CrearIconoNodo("IconKey", "BrushWarning") : esUnique ? CrearIconoNodo("IconLock", "BrushSuccess") : CrearIconoNodo("IconIndex", "BrushFGMuted"));
                                 indiceHeader.Children.Add(new System.Windows.Controls.TextBlock
                                 {
-                                    Text = $"{icono} {nombreIndice}{etiq}"
+                                    Text = $"{nombreIndice}{etiq}"
                                 });
                                 var nodoIndice = new TreeViewItem { Header = indiceHeader };
 
@@ -3750,10 +3810,7 @@ namespace QueryAnalyzer
                                     else if (fila.Table.Columns.Contains("ColOrder"))
                                         desc = fila["ColOrder"]?.ToString() == "D";
 
-                                    nodoIndice.Items.Add(new TreeViewItem
-                                    {
-                                        Header = $"  {colNom}  {(desc ? "DESC" : "ASC")}"
-                                    });
+                                    nodoIndice.Items.Add(NodoConIcono("IconColumnField", "BrushFGMuted", $"{colNom}  {(desc ? "DESC" : "ASC")}"));
                                 }
 
                                 indiceRaiz.Items.Add(nodoIndice);
@@ -4661,7 +4718,7 @@ namespace QueryAnalyzer
             lbTablas.SetResourceReference(ListBox.BorderBrushProperty, "BrushBorder");
             foreach (var t in tablas)
             {
-                string icono = t.Tipo == "VIEW" ? "👁 " : "🗂 ";
+                string icono = t.Tipo == "VIEW" ? "[vista] " : "";
                 string nombre = string.IsNullOrEmpty(t.Schema) ? t.Nombre : $"{t.Schema}.{t.Nombre}";
                 lbTablas.Items.Add(new ListBoxItem { Content = icono + nombre });
             }
@@ -4692,7 +4749,7 @@ namespace QueryAnalyzer
                 lbRels.Items.Add(new ListBoxItem
                 {
                     Content = "(sin FKs detectadas)",
-                    Foreground = Brushes.Gray,
+                    Opacity = 0.6,
                     FontStyle = FontStyles.Italic,
                 });
             }
@@ -4704,7 +4761,7 @@ namespace QueryAnalyzer
                     string cols = string.Join(", ", g.Select(r => $"{r.LocalCol}={r.RefCol}"));
                     lbRels.Items.Add(new ListBoxItem
                     {
-                        Content = $"🔗 {primer.LocalTabla} → {primer.RefTabla} ({cols})",
+                        Content = $"{primer.LocalTabla} → {primer.RefTabla} ({cols})",
                         ToolTip = g.Key,
                     });
                 }
@@ -5014,7 +5071,7 @@ namespace QueryAnalyzer
             string rutaDestino = sfd.FileName;
 
             btnGenerarInserts.IsEnabled = false;
-            btnGenerarInserts.Content = "⏳ Generando...";
+            btnGenerarInserts.Header = "Generando...";
 
             try
             {
@@ -5122,7 +5179,7 @@ namespace QueryAnalyzer
                         string nombreCompleto = tabla.NombreCompleto;
                         if (!datos.TryGetValue(nombreCompleto, out DataTable dt))
                         {
-                            sb.AppendLine($"  -- ⚠ {nombreCompleto}: no se pudo leer, sin INSERTs.");
+                            sb.AppendLine($"  -- {nombreCompleto}: no se pudo leer, sin INSERTs.");
                             continue;
                         }
                         if (dt.Rows.Count == 0)
@@ -5172,7 +5229,7 @@ namespace QueryAnalyzer
             }
             finally
             {
-                btnGenerarInserts.Content = "💾 Backup Esquema";
+                btnGenerarInserts.Header = "Backup de esquema";
                 ActualizarContadorSeleccion();
             }
         }
@@ -5204,7 +5261,7 @@ namespace QueryAnalyzer
             string rutaBackup = ofd.FileName;
 
             btnRestaurarBackup.IsEnabled = false;
-            btnRestaurarBackup.Content   = "⏳ Leyendo...";
+            btnRestaurarBackup.Header   = "Leyendo...";
 
             try
             {
@@ -5231,7 +5288,7 @@ namespace QueryAnalyzer
             }
             finally
             {
-                btnRestaurarBackup.Content   = "♻ Restaurar Backup";
+                btnRestaurarBackup.Header   = "Restaurar backup...";
                 btnRestaurarBackup.IsEnabled = true;
             }
         }
@@ -5249,12 +5306,12 @@ namespace QueryAnalyzer
             if (plan.ConexionOrigen != null &&
                 !string.Equals(plan.ConexionOrigen, conexionActual.Nombre, StringComparison.OrdinalIgnoreCase))
             {
-                sb.AppendLine("⚠ El backup se generó contra OTRA conexión (" + plan.ConexionOrigen + ").");
+                sb.AppendLine("El backup se generó contra OTRA conexión (" + plan.ConexionOrigen + ").");
                 sb.AppendLine();
             }
             if (!plan.FirmaValida)
             {
-                sb.AppendLine("⚠ El archivo no tiene la firma de un backup de QueryAnalyzer.");
+                sb.AppendLine("El archivo no tiene la firma de un backup de QueryAnalyzer.");
                 sb.AppendLine("   Se ejecutará igual, pero puede no respetar las fases FK.");
                 sb.AppendLine();
             }
@@ -5297,7 +5354,7 @@ namespace QueryAnalyzer
             progEjecucion.Maximum         = plan.Sentencias.Count;
             progEjecucion.Value           = 0;
 
-            AppendMessage($"♻ Restaurando backup: {plan.Sentencias.Count} sentencia(s) sobre '{conexionActual.Nombre}'...");
+            AppendMessage($"Restaurando backup: {plan.Sentencias.Count} sentencia(s) sobre '{conexionActual.Nombre}'...");
 
             var reloj = System.Diagnostics.Stopwatch.StartNew();
 
@@ -5320,13 +5377,13 @@ namespace QueryAnalyzer
                 reloj.Stop();
 
                 foreach (string adv in resultado.Advertencias)
-                    AppendMessage("⚠ " + adv);
+                    AppendMessage("" + adv);
 
                 if (resultado.Exitoso)
                     AppendMessage($"✓ COMMIT — restauración completa: {resultado.Completadas} sentencia(s) " +
                                   $"en {reloj.Elapsed.TotalSeconds:N1} s.");
                 else if (resultado.Cancelado)
-                    AppendMessage("⏹ Cancelado — se hizo ROLLBACK. La base quedó intacta.");
+                    AppendMessage("Cancelado — se hizo ROLLBACK. La base quedó intacta.");
                 else
                     AppendMessage($"✗ ROLLBACK — la base quedó intacta.\n{resultado.Error}");
 
@@ -5548,7 +5605,6 @@ namespace QueryAnalyzer
                     if (_modoOscuro) _temaOscuro = LeerTemaDesdeDisco("ThemeDark.xaml");
                     else _temaClaro = LeerTemaDesdeDisco("ThemeLight.xaml");
                     AplicarTema(_modoOscuro ? _temaOscuro : _temaClaro);
-                    btnToggleTema.Content = _modoOscuro ? "☀" : "🌙";
                 }
             };
             ventana.MostrarModal(this);
@@ -5991,17 +6047,7 @@ namespace QueryAnalyzer
         /// </summary>
         private void RecargarNodoTabla(TreeViewItem nodoTabla, string schema, string nombreTabla)
         {
-            var columnaIcon = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/columna.png"));
-            var columnaClaveIcon = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/columnaClave.png"));
-            var claveIcon = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/clave.png"));
-            int tamañoIconos = 20;
-
-            // Freeze para que los bitmaps sean seguros entre hilos
-            columnaIcon.Freeze();
-            columnaClaveIcon.Freeze();
-            claveIcon.Freeze();
-
-            string connStr = GetConnectionString();
+                        string connStr = GetConnectionString();
 
             // ── Clave del fix ──────────────────────────────────────────────────────
             // 1. Limpiamos los hijos existentes.
@@ -6029,8 +6075,7 @@ namespace QueryAnalyzer
                     CargarDetallesTabla(
                         nodoTabla, schema, nombreTabla,
                         "TABLE",
-                        connStr,
-                        columnaIcon, columnaClaveIcon, claveIcon, tamañoIconos);
+                        connStr);
                 }
                 catch (Exception ex)
                 {
@@ -6201,20 +6246,7 @@ namespace QueryAnalyzer
 
             string connStr = GetConnectionString();
 
-            var tablaIconUri = new Uri("pack://application:,,,/Assets/tabla.png");
-            var columnaIconUri = new Uri("pack://application:,,,/Assets/columna.png");
-            var columnaClaveIconUri = new Uri("pack://application:,,,/Assets/columnaClave.png");
-            var claveIconUri = new Uri("pack://application:,,,/Assets/clave.png");
-            var vistaIconUri = new Uri("pack://application:,,,/Assets/vista.png");
-
-            var tablaIcon = new System.Windows.Media.Imaging.BitmapImage(tablaIconUri);
-            var columnaIcon = new System.Windows.Media.Imaging.BitmapImage(columnaIconUri);
-            var columnaClaveIcon = new System.Windows.Media.Imaging.BitmapImage(columnaClaveIconUri);
-            var claveIcon = new System.Windows.Media.Imaging.BitmapImage(claveIconUri);
-            var vistaIcon = new System.Windows.Media.Imaging.BitmapImage(vistaIconUri);
-            int tamañoIconos = 20;
-
-            // Lista de schemas encontrados, para luego poblar cbSchema
+                        // Lista de schemas encontrados, para luego poblar cbSchema
             var schemasEncontrados = new List<string>();
 
             await Task.Run(() =>
@@ -6225,9 +6257,7 @@ namespace QueryAnalyzer
 
                     // Usamos el Cargar() existente que ya sabe dibujar los nodos.
                     // Si hay una búsqueda activa, limitamos al conjunto de tablas encontradas.
-                    Cargar(tipos, string.Empty, _resultadoBusqueda, tvSchema, connStr,
-                           tablaIcon, columnaIcon, columnaClaveIcon, claveIcon, vistaIcon,
-                           tamañoIconos, token);
+                    Cargar(tipos, string.Empty, _resultadoBusqueda, tvSchema, connStr, token);
 
                     // Recopilar schemas de los nodos ya creados (corremos en UI thread vía Invoke)
                     Dispatcher.Invoke(() =>
@@ -6254,6 +6284,49 @@ namespace QueryAnalyzer
             PoblarCbSchema(schemasEncontrados);
         }
 
+        /// <summary>
+        /// SQLite: el DataReader de la lectura anterior queda abierto sobre el mismo comando y las consultas
+        /// siguientes fallan ("Ya hay un DataReader abierto"). Antes de leer claves foraneas e indices se usa una conexion nueva.
+        /// </summary>
+        private void RenovarConexionSiSqlite(ref DataBase DB, string connStr)
+        {
+            if (conexionActual == null || conexionActual.Motor != TipoMotor.SQLite) return;
+            try { DB.CloseConnection(); } catch { }
+            DB = new DataBase(connStr);
+        }
+        // -- Iconos vectoriales del arbol del explorador -----------------------------
+        // Se ti??en con un pincel de la paleta (SetResourceReference), asi cambian con el tema claro/oscuro.
+
+        private FrameworkElement CrearIconoNodo(string clave, string pincel)
+        {
+            if (!Dispatcher.CheckAccess())
+                return (FrameworkElement)Dispatcher.Invoke(new Func<FrameworkElement>(() => CrearIconoNodo(clave, pincel)));
+
+            var icono = new System.Windows.Shapes.Path
+            {
+                Data = (Geometry)FindResource(clave),
+                Width = 16,
+                Height = 16,
+                Stretch = Stretch.None,
+                StrokeThickness = 1.3,
+                StrokeLineJoin = PenLineJoin.Round,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 6, 0)
+            };
+            icono.SetResourceReference(System.Windows.Shapes.Shape.StrokeProperty, pincel);
+            return icono;
+        }
+
+        /// <summary>Nodo del arbol con icono + texto. El texto queda en el primer TextBlock del header, como espera el resto del codigo.</summary>
+        private TreeViewItem NodoConIcono(string clave, string pincel, string texto)
+        {
+            var header = new StackPanel { Orientation = Orientation.Horizontal };
+            header.Children.Add(CrearIconoNodo(clave, pincel));
+            header.Children.Add(new TextBlock { Text = texto, VerticalAlignment = VerticalAlignment.Center });
+            return new TreeViewItem { Header = header };
+        }
         /// <summary>
         /// Extrae el texto visible (primer TextBlock) del header de un TreeViewItem de tabla.
         /// </summary>
@@ -6465,200 +6538,415 @@ namespace QueryAnalyzer
             return nombre.Trim().ToUpperInvariant();
         }
 
-        private bool isCollapsed = false;
-        private double expandedWidth = 0;
-        private double collapsedWidth = 0;
-
-        private void btnExpandirColapsar_Click(object sender, RoutedEventArgs e)
-        {
-            ExpandirColapasar();
-        }
-
-        // ── Colapsar / expandir el panel derecho completo ────────────────────────
-        private bool _derechoColapsado = false;
-        private double _derechoAnchoExpandido = 0;
-
-        private void btnToggleDerecho_Click(object sender, RoutedEventArgs e)
-        {
-            // Column 3 del Grid padre = grdDerecho
-            var colDef = ((Grid)grdDerecho.Parent).ColumnDefinitions[3];
-
-            if (!_derechoColapsado)
-                _derechoAnchoExpandido = grdDerecho.ActualWidth;
-
-            double from = colDef.ActualWidth;
-            double to = _derechoColapsado ? _derechoAnchoExpandido : 0;
-
-            var anim = new GridLengthAnimation
-            {
-                From = new GridLength(from, GridUnitType.Pixel),
-                To = new GridLength(to, GridUnitType.Pixel),
-                Duration = new Duration(TimeSpan.FromMilliseconds(250)),
-                FillBehavior = FillBehavior.Stop
-            };
-
-            anim.Completed += (s, _) =>
-            {
-                colDef.Width = new GridLength(to, GridUnitType.Pixel);
-                _derechoColapsado = !_derechoColapsado;
-                btnToggleDerecho.Content = _derechoColapsado ? "<<" : ">>";
-            };
-
-            colDef.BeginAnimation(ColumnDefinition.WidthProperty, anim);
-        }
-
-        // ── Colapsar / expandir panel de Log ─────────────────────────────────────
-        private bool _logColapsado = false;
-        private double _logAlturaExpandida = 100; // px guardados antes de colapsar
-
-        private void btnToggleLog_Click(object sender, RoutedEventArgs e)
-        {
-            var rowLog = grdRaiz.RowDefinitions[3]; // fila del panel log en el grid raíz
-            var rowSplitter = grdRaiz.RowDefinitions[2]; // GridSplitter sobre el log
-
-            if (!_logColapsado)
-            {
-                // ── Colapsar ──────────────────────────────────────────────
-                // Guardar la altura actual (en píxeles) antes de colapsar
-                if (rowLog.ActualHeight > 0)
-                    _logAlturaExpandida = rowLog.ActualHeight;
-
-                // Ocultar el contenido del TextBox; la fila se ajusta sola al header (Auto)
-                txtMessages.Visibility = Visibility.Collapsed;
-                rowLog.Height = GridLength.Auto;
-                rowSplitter.Height = new GridLength(0);
-
-                _logColapsado = true;
-                btnToggleLog.Content = "▲";
-            }
-            else
-            {
-                // ── Expandir ──────────────────────────────────────────────
-                // Restaurar primero la fila y el splitter, luego mostrar el contenido
-                rowLog.Height = new GridLength(_logAlturaExpandida, GridUnitType.Pixel);
-                rowSplitter.Height = new GridLength(5);
-                txtMessages.Visibility = Visibility.Visible;
-
-                _logColapsado = false;
-                btnToggleLog.Content = "▼";
-            }
-        }
-
-        // ── Colapsar / expandir Parámetros ───────────────────────────────────────
-        private bool _paramsColapsado = false;
-        private double _paramsAlturaExpandida = 0;
-
-        private void btnToggleParams_Click(object sender, RoutedEventArgs e)
-        {
-            // Se anima la fila de la SECCIÓN (header + contenido), no la del contenido
-            // a solas: así el espacio liberado lo recupera el resto de las secciones
-            // ("*") y el header conserva siempre su alto natural (Auto).
-            var rowSeccion = grdDerecho.RowDefinitions[0]; // sección Parámetros completa
-            var rowSplitter = grdDerecho.RowDefinitions[1]; // fila del splitter Parámetros/Historial
-            double altoHeader = dockHeaderParams.ActualHeight;
-
-            if (!_paramsColapsado)
-                _paramsAlturaExpandida = rowSeccion.ActualHeight;
-
-            double to = _paramsColapsado ? _paramsAlturaExpandida : altoHeader;
-
-            AnimarFila(rowSeccion, to, () =>
-            {
-                _paramsColapsado = !_paramsColapsado;
-                btnToggleParams.Content = _paramsColapsado ? "▼" : "▲";
-                rowSplitter.Height = (_paramsColapsado || _historialColapsado)
-                    ? new GridLength(0)
-                    : new GridLength(5);
-            });
-        }
-
-        // ── Colapsar / expandir Historial ────────────────────────────────────────
-        private bool _historialColapsado = false;
-        private double _historialAlturaExpandida = 0;
-
-        // ── Ctrl+K chord (Ctrl+K,C = comentar; Ctrl+K,U = descomentar) ───────
+        // Ctrl+K chord (Ctrl+K,C = comentar; Ctrl+K,U = descomentar)
         private bool _ctrlKPresionado = false;
 
-        private void btnToggleHistorial_Click(object sender, RoutedEventArgs e)
+        // ====================================================================
+        //  Rediseno: riel, panel lateral, panel inferior y barra de estado
+        // ====================================================================
+
+        private bool _lateralVisible = true;
+        private double _anchoLateral = 300;
+        private int _cantMensajes = 0;
+
+        private void InicializarRediseno()
         {
-            // Misma lógica que Parámetros: se anima la fila de la sección completa
-            // (grdDerecho.RowDefinitions[2]), no la fila de contenido dentro de la
-            // sección, para que el espacio liberado vuelva a repartirse entre las
-            // demás secciones ("*") y el header nunca cambie de tamaño.
-            var rowSeccion = grdDerecho.RowDefinitions[2]; // sección Historial completa
-            var rowSplitterPrev = grdDerecho.RowDefinitions[1]; // splitter Parámetros/Historial
-            var rowSplitterNext = grdDerecho.RowDefinitions[3]; // splitter Historial/Mis Consultas
-            double altoHeader = dockHeaderHistorial.ActualHeight;
+            // Posicion del cursor del editor en la barra de estado
+            txtQuery.TextArea.Caret.PositionChanged += (s, e) =>
+                txtPosicionCursor.Text = $"Ln {txtQuery.TextArea.Caret.Line}, Col {txtQuery.TextArea.Caret.Column}";
 
-            if (!_historialColapsado)
-                _historialAlturaExpandida = rowSeccion.ActualHeight;
+            // Contador de resultados en la pestana "Resultados"
+            ((System.Collections.Specialized.INotifyCollectionChanged)tcResults.Items).CollectionChanged +=
+                (s, e) => txtBadgeResultados.Text = tcResults.Items.Count.ToString();
 
-            double to = _historialColapsado ? _historialAlturaExpandida : altoHeader;
+            ActualizarBadgeParametros();
+            ActualizarEstadoConexion();
+            InicializarPestanas();
+        }
 
-            AnimarFila(rowSeccion, to, () =>
-            {
-                _historialColapsado = !_historialColapsado;
-                btnToggleHistorial.Content = _historialColapsado ? "▲" : "▼";
-                rowSplitterPrev.Height = (_paramsColapsado || _historialColapsado)
-                    ? new GridLength(0)
-                    : new GridLength(5);
-                rowSplitterNext.Height = (_historialColapsado || _misConsultasColapsado)
-                    ? new GridLength(0)
-                    : new GridLength(5);
-            });
+        private void ActualizarBadgeParametros()
+        {
+            txtBadgeParametros.Text = (Parametros?.Count ?? 0).ToString();
         }
 
         /// <summary>
-        /// Anima el Height de una RowDefinition hacia <paramref name="to"/> píxeles
-        /// y ejecuta <paramref name="onCompleted"/> al terminar.
+        /// Barra de estado: conexion seleccionada y resultado de la ultima prueba o ejecucion.
+        /// ok = null (sin probar, gris), true (verde) o false (rojo).
         /// </summary>
-        private void AnimarFila(RowDefinition fila, double to, Action onCompleted)
+        private void ActualizarEstadoConexion(bool? ok = null)
         {
-            double from = fila.ActualHeight;
-            var anim = new GridLengthAnimation
+            var c = conexionActual;
+            if (c == null)
             {
-                From = new GridLength(from, GridUnitType.Pixel),
-                To = new GridLength(to, GridUnitType.Pixel),
-                Duration = new Duration(TimeSpan.FromMilliseconds(200)),
-                FillBehavior = FillBehavior.Stop
-            };
-            anim.Completed += (s, _) =>
-            {
-                fila.Height = new GridLength(to, GridUnitType.Pixel);
-                onCompleted();
-            };
-            fila.BeginAnimation(RowDefinition.HeightProperty, anim);
-        }
-
-        private void ExpandirColapasar()
-        {
-            if (!isCollapsed)
-            {
-                expandedWidth = grdExplorador.ActualWidth;
+                txtEstadoConexion.Text = "Sin conexi\u00f3n";
+                txtEstadoDetalle.Text = "Eleg\u00ed un driver y una conexi\u00f3n";
+                elpEstadoConexion.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, "BrushFGMuted");
+                return;
             }
-            var colDef = ((Grid)grdExplorador.Parent).ColumnDefinitions[0]; // solo la columna del TreeView
-
-            double from = colDef.ActualWidth;
-            double to = isCollapsed ? expandedWidth : collapsedWidth;
-
-            var anim = new GridLengthAnimation
-            {
-                From = new GridLength(from, GridUnitType.Pixel),
-                To = new GridLength(to, GridUnitType.Pixel),
-                Duration = new Duration(TimeSpan.FromMilliseconds(250)),
-                FillBehavior = FillBehavior.Stop
-            };
-
-            anim.Completed += (s, _) =>
-            {
-                colDef.Width = new GridLength(to, GridUnitType.Pixel);
-                isCollapsed = !isCollapsed;
-                btnExpandirColapsar.Content = isCollapsed ? ">>" : "<<";
-            };
-
-            colDef.BeginAnimation(ColumnDefinition.WidthProperty, anim);
+            txtEstadoConexion.Text = c.Nombre;
+            txtEstadoDetalle.Text = c.Motor.ToString().Replace("_", " ");
+            string clave = ok == true ? "BrushSuccess" : ok == false ? "BrushDanger" : "BrushFGMuted";
+            elpEstadoConexion.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, clave);
         }
 
+        /// <summary>Duracion legible: micro, milisegundos o segundos segun la magnitud.</summary>
+        private string FormatoDuracion(double microsegundos)
+        {
+            if (microsegundos < 1000) return $"{microsegundos:N0} \u00b5s";
+            double ms = microsegundos / 1000.0;
+            if (ms < 10000) return $"{ms:N0} ms";
+            return $"{ms / 1000.0:N1} s";
+        }
+
+        // -- Riel de vistas: Explorador / Mis consultas / Historial ---------
+        private ToggleButton _ultimaVistaLateral;
+        private int _versionAnimLateral;
+
+        // Pulsar el icono de la vista activa oculta el panel; pulsar otro cambia de vista
+        private void Riel_Click(object sender, RoutedEventArgs e)
+        {
+            var tb = (ToggleButton)sender;
+            if (tb.IsChecked != true) { OcultarPanelLateral(); return; }
+            SeleccionarVistaLateral(tb);
+        }
+
+        private void SeleccionarVistaLateral(ToggleButton tb)
+        {
+            _ultimaVistaLateral = tb;
+            foreach (var otro in new[] { tbRielExplorador, tbRielConsultas, tbRielHistorial })
+                otro.IsChecked = ReferenceEquals(otro, tb);
+
+            vistaExplorador.Visibility = ReferenceEquals(tb, tbRielExplorador) ? Visibility.Visible : Visibility.Collapsed;
+            vistaConsultas.Visibility = ReferenceEquals(tb, tbRielConsultas) ? Visibility.Visible : Visibility.Collapsed;
+            vistaHistorial.Visibility = ReferenceEquals(tb, tbRielHistorial) ? Visibility.Visible : Visibility.Collapsed;
+            MostrarPanelLateral(true);
+        }
+
+        private void OcultarPanelLateral()
+        {
+            foreach (var tb in new[] { tbRielExplorador, tbRielConsultas, tbRielHistorial }) tb.IsChecked = false;
+            MostrarPanelLateral(false);
+        }
+
+        /// <summary>Ctrl+B: oculta el panel, o lo vuelve a mostrar con la ultima vista que tenia.</summary>
+        private void AlternarPanelLateral()
+        {
+            if (_lateralVisible) OcultarPanelLateral();
+            else SeleccionarVistaLateral(_ultimaVistaLateral ?? tbRielExplorador);
+        }
+
+        private void BtnColapsarLateral_Click(object sender, RoutedEventArgs e) { OcultarPanelLateral(); }
+
+        private void splitLateral_DoubleClick(object sender, MouseButtonEventArgs e) { OcultarPanelLateral(); }
+
+        private void MostrarPanelLateral(bool mostrar)
+        {
+            if (mostrar == _lateralVisible) return;
+            _lateralVisible = mostrar;
+            int version = ++_versionAnimLateral;
+
+            if (!mostrar)
+            {
+                if (colLateral.ActualWidth > 0) _anchoLateral = colLateral.ActualWidth;
+                colLateral.MinWidth = 0;
+                AnimarAnchoLateral(0, () =>
+                {
+                    if (version != _versionAnimLateral) return;
+                    panelLateral.Visibility = Visibility.Collapsed;
+                    splitLateral.Visibility = Visibility.Collapsed;
+                    colSplitLateral.Width = new GridLength(0);
+                });
+            }
+            else
+            {
+                double desde = colLateral.ActualWidth > 0 && panelLateral.Visibility == Visibility.Visible ? colLateral.ActualWidth : 0;
+                colLateral.MinWidth = 0;
+                colLateral.Width = new GridLength(desde);
+                panelLateral.Visibility = Visibility.Visible;
+                splitLateral.Visibility = Visibility.Visible;
+                colSplitLateral.Width = new GridLength(5);
+                AnimarAnchoLateral(_anchoLateral, () =>
+                {
+                    if (version != _versionAnimLateral) return;
+                    colLateral.MinWidth = 230;
+                });
+            }
+        }
+
+        private void AnimarAnchoLateral(double hasta, Action alTerminar)
+        {
+            double desde = colLateral.ActualWidth;
+            int version = _versionAnimLateral;
+            var anim = new GridLengthAnimation
+            {
+                From = new GridLength(desde, GridUnitType.Pixel),
+                To = new GridLength(hasta, GridUnitType.Pixel),
+                Duration = new Duration(TimeSpan.FromMilliseconds(160)),
+                FillBehavior = FillBehavior.Stop
+            };
+            anim.Completed += (s, e) =>
+            {
+                if (version != _versionAnimLateral) return;   // otra animacion tomo el control
+                colLateral.Width = new GridLength(hasta, GridUnitType.Pixel);
+                if (alTerminar != null) alTerminar();
+            };
+            colLateral.BeginAnimation(ColumnDefinition.WidthProperty, anim);
+        }
+
+        // -- Selector segmentado Todas / Tablas / Vistas (mueve el combo oculto) --
+        private void TipoSeg_Checked(object sender, RoutedEventArgs e)
+        {
+            if (cbTipoObjeto == null) return;   // se dispara durante InitializeComponent
+            if (sender is RadioButton rb && int.TryParse(rb.Tag as string, out int idx))
+                cbTipoObjeto.SelectedIndex = idx;
+        }
+
+        // -- Menus desplegables de botones ------------------------------------
+        private void AbrirMenuDeBoton(Button btn)
+        {
+            if (btn == null || btn.ContextMenu == null) return;
+            btn.ContextMenu.PlacementTarget = btn;
+            btn.ContextMenu.Placement = PlacementMode.Bottom;
+            btn.ContextMenu.IsOpen = true;
+        }
+
+        private void BtnHerramientas_Click(object sender, RoutedEventArgs e) { AbrirMenuDeBoton(sender as Button); }
+        private void BtnSeleccionar_Click(object sender, RoutedEventArgs e) { AbrirMenuDeBoton(sender as Button); }
+        private void BtnAcciones_Click(object sender, RoutedEventArgs e) { AbrirMenuDeBoton(sender as Button); }
+
+        // -- Islas de tablas (seccion plegable del explorador) -----------------
+        private void BtnIslas_Click(object sender, RoutedEventArgs e)
+        {
+            bool abierto = tbIslas.IsChecked == true;
+            panelIslas.Visibility = abierto ? Visibility.Visible : Visibility.Collapsed;
+            icoIslas.Data = (Geometry)FindResource(abierto ? "IconChevronDown" : "IconChevronRight");
+        }
+
+        // -- Panel inferior ----------------------------------------------------
+        private void tcPanelInferior_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // Los SelectionChanged de tcResults y de las grillas suben hasta aca: solo interesa el propio
+            if (!ReferenceEquals(e.OriginalSource, tcPanelInferior)) return;
+            if (tcPanelInferior.SelectedIndex == 2) txtMessages.ScrollToEnd();
+        }
+
+        // -- Pestanas de consulta ----------------------------------------------------
+        // Hay un unico editor (txtQuery), una unica grilla de resultados (tcResults) y una unica
+        // grilla de parametros: al cambiar de pestana se guarda el estado de la que se deja y se
+        // carga el de la nueva. Mientras se ejecuta una consulta la tira de pestanas queda bloqueada
+        // para que los resultados no caigan en otra pestana.
+
+        private sealed class PestanaConsulta
+        {
+            public string Titulo;
+            public ICSharpCode.AvalonEdit.Document.TextDocument Documento;
+            public List<QueryParameter> Parametros = new List<QueryParameter>();
+            public List<TabItem> Resultados = new List<TabItem>();
+            public int ResultadoSeleccionado = -1;
+            public string Columnas = "0", Filas = "0", Tiempo = "0";
+            /// <summary>Texto en la ultima ejecucion o guardado: sirve para mostrar el punto de "modificada".</summary>
+            public string TextoReferencia = "";
+            public TabItem Tab;
+            public TextBlock TxtTitulo;
+            public System.Windows.Shapes.Ellipse Punto;
+        }
+
+        private PestanaConsulta _pestanaActual;
+        private bool _cambiandoPestana;
+        private int _contadorPestanas;
+
+        private void InicializarPestanas()
+        {
+            // La primera pestana adopta el documento que ya tiene el editor
+            var p = CrearPestana(txtQuery.Document, null);
+            tcConsultas.Items.Add(p.Tab);
+            _pestanaActual = p;
+            _cambiandoPestana = true;
+            try { tcConsultas.SelectedItem = p.Tab; }
+            finally { _cambiandoPestana = false; }
+        }
+
+        private PestanaConsulta CrearPestana(ICSharpCode.AvalonEdit.Document.TextDocument doc, string titulo)
+        {
+            var p = new PestanaConsulta();
+            _contadorPestanas++;
+            p.Titulo = titulo ?? ("Consulta " + _contadorPestanas);
+            p.Documento = doc ?? new ICSharpCode.AvalonEdit.Document.TextDocument();
+            p.TextoReferencia = p.Documento.Text;
+
+            var estiloIcono = (Style)FindResource("Ic");
+            var icono = new System.Windows.Shapes.Path
+            {
+                Style = estiloIcono,
+                Data = (Geometry)FindResource("IconTable"),
+                Margin = new Thickness(0, 0, 8, 0)
+            };
+            p.TxtTitulo = new TextBlock
+            {
+                Text = p.Titulo,
+                VerticalAlignment = VerticalAlignment.Center,
+                MaxWidth = 180,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+            p.Punto = new System.Windows.Shapes.Ellipse
+            {
+                Width = 7,
+                Height = 7,
+                Margin = new Thickness(8, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+                Visibility = Visibility.Collapsed,
+                ToolTip = "Modificada desde la \u00faltima ejecuci\u00f3n o guardado"
+            };
+            p.Punto.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, "BrushWarning");
+
+            var cerrar = new Button
+            {
+                Style = (Style)FindResource("IconButton"),
+                Width = 22,
+                Height = 22,
+                MinWidth = 0,
+                MinHeight = 0,
+                Margin = new Thickness(6, 0, 0, 0),
+                ToolTip = "Cerrar consulta (Ctrl+W)",
+                Tag = p,
+                Content = new System.Windows.Shapes.Path { Style = estiloIcono, Data = (Geometry)FindResource("IconClose") }
+            };
+            cerrar.Click += CerrarPestana_Click;
+
+            var header = new StackPanel { Orientation = Orientation.Horizontal };
+            header.Children.Add(icono);
+            header.Children.Add(p.TxtTitulo);
+            header.Children.Add(p.Punto);
+            header.Children.Add(cerrar);
+
+            p.Tab = new TabItem { Header = header, Tag = p };
+            p.Documento.TextChanged += (s, e) => ActualizarPuntoPestana(p);
+            return p;
+        }
+
+        private void ActualizarPuntoPestana(PestanaConsulta p)
+        {
+            bool modificada = !string.Equals(p.Documento.Text, p.TextoReferencia, StringComparison.Ordinal);
+            p.Punto.Visibility = modificada ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void MarcarPestanaSincronizada()
+        {
+            if (_pestanaActual == null) return;
+            _pestanaActual.TextoReferencia = _pestanaActual.Documento.Text;
+            ActualizarPuntoPestana(_pestanaActual);
+        }
+
+        private void RenombrarPestanaActual(string titulo)
+        {
+            if (_pestanaActual == null || string.IsNullOrWhiteSpace(titulo)) return;
+            _pestanaActual.Titulo = titulo;
+            _pestanaActual.TxtTitulo.Text = titulo;
+            MarcarPestanaSincronizada();
+        }
+
+        private void GuardarEstadoPestana(PestanaConsulta p)
+        {
+            p.Resultados = tcResults.Items.Cast<TabItem>().ToList();
+            p.ResultadoSeleccionado = tcResults.SelectedIndex;
+            p.Parametros = Parametros;
+            p.Columnas = txtColumnCount.Text;
+            p.Filas = txtRowCount.Text;
+            p.Tiempo = txtTiempoDeEjecucion.Text;
+        }
+
+        private void CargarEstadoPestana(PestanaConsulta p)
+        {
+            tcResults.Items.Clear();
+            foreach (var r in p.Resultados) tcResults.Items.Add(r);
+            if (tcResults.Items.Count > 0)
+                tcResults.SelectedIndex = (p.ResultadoSeleccionado >= 0 && p.ResultadoSeleccionado < tcResults.Items.Count)
+                    ? p.ResultadoSeleccionado : 0;
+
+            Parametros = p.Parametros;
+            gridParams.ItemsSource = Parametros;
+            ActualizarBadgeParametros();
+
+            txtQuery.Document = p.Documento;
+            txtColumnCount.Text = p.Columnas;
+            txtRowCount.Text = p.Filas;
+            txtTiempoDeEjecucion.Text = p.Tiempo;
+
+            // Las grillas de otras pestanas pueden haberse creado con los colores del otro tema
+            ActualizarHeadersGrillas();
+            ActualizarBarraGuardar();
+        }
+
+        private void tcConsultas_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!ReferenceEquals(e.OriginalSource, tcConsultas)) return;
+            if (_cambiandoPestana) return;
+
+            var nueva = (tcConsultas.SelectedItem as TabItem)?.Tag as PestanaConsulta;
+            if (nueva == null || ReferenceEquals(nueva, _pestanaActual)) return;
+
+            _cambiandoPestana = true;
+            try
+            {
+                if (_pestanaActual != null) GuardarEstadoPestana(_pestanaActual);
+                CargarEstadoPestana(nueva);
+                _pestanaActual = nueva;
+            }
+            finally { _cambiandoPestana = false; }
+
+            txtQuery.Focus();
+        }
+
+        private void btnNuevaPestana_Click(object sender, RoutedEventArgs e)
+        {
+            NuevaPestana();
+        }
+
+        private void NuevaPestana()
+        {
+            var p = CrearPestana(null, null);
+            tcConsultas.Items.Add(p.Tab);
+            tcConsultas.SelectedItem = p.Tab;
+        }
+
+        private void CerrarPestana_Click(object sender, RoutedEventArgs e)
+        {
+            e.Handled = true;
+            var p = (sender as Button)?.Tag as PestanaConsulta;
+            CerrarPestana(p);
+        }
+
+        private void CerrarPestana(PestanaConsulta p)
+        {
+            if (p == null) return;
+
+            bool conCambios = !string.Equals(p.Documento.Text, p.TextoReferencia, StringComparison.Ordinal)
+                              && !string.IsNullOrWhiteSpace(p.Documento.Text);
+            if (conCambios)
+            {
+                var r = MessageBox.Show(this,
+                    "La consulta \"" + p.Titulo + "\" tiene cambios que no se ejecutaron ni se guardaron.\n\n\u00bfCerrarla igual?",
+                    "Cerrar consulta", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (r != MessageBoxResult.Yes) return;
+            }
+
+            if (tcConsultas.Items.Count == 1)
+            {
+                // Siempre queda una consulta abierta: se reemplaza por una nueva y vacia
+                var nueva = CrearPestana(null, null);
+                tcConsultas.Items.Add(nueva.Tab);
+                tcConsultas.SelectedItem = nueva.Tab;
+                tcConsultas.Items.Remove(p.Tab);
+                return;
+            }
+
+            if (ReferenceEquals(p, _pestanaActual))
+            {
+                int idx = tcConsultas.Items.IndexOf(p.Tab);
+                tcConsultas.SelectedIndex = idx > 0 ? idx - 1 : 1;
+            }
+            tcConsultas.Items.Remove(p.Tab);
+        }
         private void txtQuery_KeyUp(object sender, KeyEventArgs e)
         {
             // Detecta: '?', Backspace, Delete o Pegar (Ctrl+V)
@@ -6693,6 +6981,7 @@ namespace QueryAnalyzer
             Parametros.Clear();
             foreach (var p in nuevaLista) Parametros.Add(p);
             gridParams.Items.Refresh();
+            ActualizarBadgeParametros();
         }
 
         public class ContextoParametro
@@ -7816,7 +8105,7 @@ namespace QueryAnalyzer
                 {
                     hayInfo = true;
                     string listaEsquemas = string.Join(", ", kvp.Value.Select(s => $"[{s}]"));
-                    AppendMessage($"ℹ️  La tabla '{kvp.Key}' existe en varios esquemas: {listaEsquemas}. " +
+                    AppendMessage($"La tabla '{kvp.Key}' existe en varios esquemas: {listaEsquemas}. " +
                                   $"Agregá el prefijo de esquema deseado a la consulta.");
                 }
             }
@@ -7828,7 +8117,7 @@ namespace QueryAnalyzer
             string sqlCorregido = AgregarEsquemasAlSQL(sql, unicos);
 
             foreach (var kvp in unicos)
-                AppendMessage($"✅ Tabla '{kvp.Key}' → [{kvp.Value}].[{kvp.Key}]  (corrección automática). Re-ejecutando...");
+                AppendMessage($"Tabla '{kvp.Key}' → [{kvp.Value}].[{kvp.Key}]  (corrección automática). Re-ejecutando...");
 
             // La re-ejecución va sobre la conexión del lote: si la sentencia usaba una tabla
             // temporal o dependía de la transacción abierta, en otra sesión fallaría igual.
@@ -8277,7 +8566,7 @@ public class SqlKeywordCompletionItem : ICSharpCode.AvalonEdit.CodeCompletion.IC
 //                if (tab.Content is DataGrid dg)
 //                {
 //                    var hs = new Style(typeof(DataGridColumnHeader));
-//                    hs.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Center));
+//                    hs.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Left));
 //                    hs.Setters.Add(new Setter(Control.BackgroundProperty, (System.Windows.Media.Brush)this.FindResource("BrushHeaderBG")));
 //                    hs.Setters.Add(new Setter(Control.ForegroundProperty, (System.Windows.Media.Brush)this.FindResource("BrushHeaderFG")));
 //                    hs.Setters.Add(new Setter(Control.FontWeightProperty, FontWeights.SemiBold));
@@ -8731,7 +9020,7 @@ public class SqlKeywordCompletionItem : ICSharpCode.AvalonEdit.CodeCompletion.IC
 //                    {
 //                        // 1. Definir el estilo para centrar los encabezados
 //                        var headerStyle = new Style(typeof(DataGridColumnHeader));
-//                        headerStyle.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Center));
+//                        headerStyle.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Left));
 //                        headerStyle.Setters.Add(new Setter(Control.BackgroundProperty, (System.Windows.Media.Brush)this.FindResource("BrushHeaderBG")));
 //                        headerStyle.Setters.Add(new Setter(Control.ForegroundProperty, (System.Windows.Media.Brush)this.FindResource("BrushHeaderFG")));
 //                        headerStyle.Setters.Add(new Setter(Control.FontWeightProperty, FontWeights.SemiBold));
@@ -8975,7 +9264,7 @@ public class SqlKeywordCompletionItem : ICSharpCode.AvalonEdit.CodeCompletion.IC
 
 //                txtColumnCount.Text = totalColumns.ToString();
 //                txtRowCount.Text = totalRows.ToString();
-//                txtTiempoDeEjecucion.Text = $"{FormatoNumero(totalElapsedMicroseconds)} µs ({FormatoNumero(totalElapsedMicroseconds / 1000000)}) s";
+//                txtTiempoDeEjecucion.Text = FormatoDuracion(totalElapsedMicroseconds);
 
 //                await Dispatcher.InvokeAsync(() =>
 //                {
@@ -9274,7 +9563,7 @@ public class SqlKeywordCompletionItem : ICSharpCode.AvalonEdit.CodeCompletion.IC
 //                sw.Stop();
 //                double elapsedMicroseconds = sw.ElapsedTicks * (1000000.0 / Stopwatch.Frequency);
 
-//                txtTiempoDeEjecucion.Text = $"{FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds / 1000000)}) s";
+//                txtTiempoDeEjecucion.Text = FormatoDuracion(elapsedMicroseconds);
 
 //                await Dispatcher.InvokeAsync(() =>
 //                    AppendMessage($"Resultado del escalar: {(result?.ToString() ?? "(null) en {}")} en {FormatoNumero(elapsedMicroseconds)} µs ({FormatoNumero(elapsedMicroseconds / 1000000)}) s"));
@@ -11311,7 +11600,7 @@ public class SqlKeywordCompletionItem : ICSharpCode.AvalonEdit.CodeCompletion.IC
 //            lbTablas.SetResourceReference(ListBox.BorderBrushProperty, "BrushBorder");
 //            foreach (var t in tablas)
 //            {
-//                string icono = t.Tipo == "VIEW" ? "👁 " : "🗂 ";
+//                string icono = t.Tipo == "VIEW" ? "[vista] " : "";
 //                string nombre = string.IsNullOrEmpty(t.Schema) ? t.Nombre : $"{t.Schema}.{t.Nombre}";
 //                lbTablas.Items.Add(new ListBoxItem { Content = icono + nombre });
 //            }
@@ -11342,7 +11631,7 @@ public class SqlKeywordCompletionItem : ICSharpCode.AvalonEdit.CodeCompletion.IC
 //                lbRels.Items.Add(new ListBoxItem
 //                {
 //                    Content = "(sin FKs detectadas)",
-//                    Foreground = Brushes.Gray,
+//                    Opacity = 0.6,
 //                    FontStyle = FontStyles.Italic,
 //                });
 //            }
@@ -13905,7 +14194,7 @@ public class SqlKeywordCompletionItem : ICSharpCode.AvalonEdit.CodeCompletion.IC
 //                {
 //                    hayInfo = true;
 //                    string listaEsquemas = string.Join(", ", kvp.Value.Select(s => $"[{s}]"));
-//                    AppendMessage($"ℹ️  La tabla '{kvp.Key}' existe en varios esquemas: {listaEsquemas}. " +
+//                    AppendMessage($"La tabla '{kvp.Key}' existe en varios esquemas: {listaEsquemas}. " +
 //                                  $"Agregá el prefijo de esquema deseado a la consulta.");
 //                }
 //            }

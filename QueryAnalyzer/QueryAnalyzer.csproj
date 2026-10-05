@@ -73,8 +73,17 @@
     <Reference Include="System.Threading.Tasks.Extensions, Version=4.1.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Threading.Tasks.Extensions.4.3.0\lib\portable-net45+win8+wp8+wpa81\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
-    <Reference Include="System.ValueTuple, Version=4.0.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.ValueTuple.4.3.0\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
+    <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ValueTuple.4.5.0\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ModernWpf, Version=0.9.6.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\ModernWpfUI.0.9.6\lib\net45\ModernWpf.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ModernWpf.Controls, Version=0.9.6.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\ModernWpfUI.0.9.6\lib\net45\ModernWpf.Controls.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
@@ -84,6 +93,7 @@
     <Reference Include="System.Xaml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Iconos.cs" />
     <Compile Include="App.xaml.cs" />
     <Compile Include="AyudaWindow.xaml.cs">
       <DependentUpon>AyudaWindow.xaml</DependentUpon>
@@ -209,6 +219,18 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Controles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Styles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Icons.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Resource Include="ThemeDark.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -225,6 +247,15 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\AutoUpdater.exe" />
+    <EmbeddedResource Include="..\packages\ModernWpfUI.0.9.6\lib\net45\ModernWpf.dll">
+      <LogicalName>Embedded.ModernWpf.dll</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\packages\ModernWpfUI.0.9.6\lib\net45\ModernWpf.Controls.dll">
+      <LogicalName>Embedded.ModernWpf.Controls.dll</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\packages\System.ValueTuple.4.5.0\lib\netstandard1.0\System.ValueTuple.dll">
+      <LogicalName>Embedded.System.ValueTuple.dll</LogicalName>
+    </EmbeddedResource>
     <Resource Include="Assets\Logo.ico" />
     <Resource Include="Assets\clave.png" />
     <Resource Include="Assets\columna.png" />

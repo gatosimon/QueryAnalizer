@@ -99,7 +99,7 @@ namespace QueryAnalyzer
             fila.Children.Add(cbComb);
 
             // Botón quitar
-            var btnQ = new Button { Content = "✕", Width = 22, Height = 22, Padding = new Thickness(0), Margin = new Thickness(0) };
+            var btnQ = new Button { Content = "\u00d7", Width = 22, Height = 22, Padding = new Thickness(0), Margin = new Thickness(0) };
             btnQ.SetResourceReference(Button.BackgroundProperty, "BrushBtnBG");
             btnQ.SetResourceReference(Button.ForegroundProperty, "BrushFG");
             btnQ.SetResourceReference(Button.BorderBrushProperty, "BrushBtnBorder");

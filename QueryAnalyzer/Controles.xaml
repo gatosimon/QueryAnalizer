@@ -1,0 +1,168 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Estilos compactos sobre los de ModernWpf (XamlControlsResources en App.xaml). -->
+    <Style TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="Padding"   Value="10,2"/>
+        <Setter Property="FontSize"  Value="12"/>
+    </Style>
+
+    <Style TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">
+        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="Padding"   Value="8,2"/>
+        <Setter Property="FontSize"  Value="12"/>
+    </Style>
+
+    <Style TargetType="ComboBox" BasedOn="{StaticResource DefaultComboBoxStyle}">
+        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="Padding"   Value="8,2"/>
+        <Setter Property="FontSize"  Value="12"/>
+        <!-- ModernWpf alinea los combos a la izquierda; en estas ventanas llenan su celda -->
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    </Style>
+
+    <!-- Los CheckBox de ModernWpf miden 120 px como minimo; en el arbol del explorador no hace falta -->
+    <Style TargetType="CheckBox" BasedOn="{StaticResource DefaultCheckBoxStyle}">
+        <Setter Property="MinWidth"  Value="0"/>
+        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="Padding"   Value="8,0,0,0"/>
+    </Style>
+
+    <Style TargetType="GridSplitter">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <Style TargetType="TreeView">
+        <Setter Property="Background"      Value="Transparent"/>
+        <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+    <Style TargetType="TreeViewItem">
+        <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding"    Value="2,3"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TreeViewItem">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <Border x:Name="Bd"
+                                Grid.Row="0"
+                                CornerRadius="6"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Expander: el trigger IsChecked rota la flecha dentro de su propio template -->
+                                <ToggleButton x:Name="Expander"
+                                              Grid.Column="0"
+                                              Focusable="False"
+                                              IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"
+                                              ClickMode="Press">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Background="Transparent" Width="16" Height="16">
+                                                <Path x:Name="Arrow"
+                                                      Data="M 2 0 L 8 6 L 2 12"
+                                                      Stroke="{DynamicResource BrushFGMuted}"
+                                                      StrokeThickness="1.5"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <!-- La rotación vive DENTRO del template del ToggleButton,
+                                                     así no hay referencias cruzadas entre templates -->
+                                                <Trigger Property="IsChecked" Value="True">
+                                                    <Setter TargetName="Arrow" Property="Data" Value="M 0 2 L 6 8 L 12 2"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <ContentPresenter x:Name="PART_Header"
+                                                  Grid.Column="1"
+                                                  ContentSource="Header"
+                                                  VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <ItemsPresenter x:Name="ItemsHost"
+                                        Grid.Row="1"
+                                        Margin="16,0,0,0"
+                                        Visibility="Collapsed"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsExpanded" Value="True">
+                            <Setter TargetName="ItemsHost" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="HasItems" Value="False">
+                            <Setter TargetName="Expander" Property="Visibility" Value="Hidden"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushTreeHover}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushTreeSel}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource BrushSelectedFG}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="DataGrid">
+        <Setter Property="Background"               Value="{DynamicResource BrushControlBG}"/>
+        <Setter Property="Foreground"               Value="{DynamicResource BrushFG}"/>
+        <Setter Property="BorderThickness"          Value="0"/>
+        <Setter Property="RowBackground"            Value="{DynamicResource BrushControlBG}"/>
+        <Setter Property="AlternatingRowBackground" Value="{DynamicResource BrushAltRowBG}"/>
+        <Setter Property="GridLinesVisibility"      Value="Horizontal"/>
+        <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource BrushSplitter}"/>
+        <Setter Property="VerticalGridLinesBrush"   Value="{DynamicResource BrushSplitter}"/>
+        <Setter Property="RowHeight"                Value="26"/>
+    </Style>
+    <Style TargetType="DataGridCell">
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
+        <Setter Property="Padding"         Value="10,0"/>
+        <Style.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background"  Value="{DynamicResource BrushSelected}"/>
+                <Setter Property="Foreground"  Value="{DynamicResource BrushSelectedFG}"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    <Style TargetType="DataGridColumnHeader">
+        <Setter Property="Background"                 Value="{DynamicResource BrushHeaderBG}"/>
+        <Setter Property="Foreground"                 Value="{DynamicResource BrushHeaderFG}"/>
+        <Setter Property="FontWeight"                 Value="SemiBold"/>
+        <Setter Property="BorderBrush"                Value="{DynamicResource BrushSplitter}"/>
+        <Setter Property="BorderThickness"            Value="0,0,1,1"/>
+        <Setter Property="Padding"                    Value="8,6"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+    </Style>
+    <Style TargetType="DataGridRowHeader">
+        <Setter Property="Background" Value="{DynamicResource BrushAltRowBG}"/>
+        <Setter Property="Width"      Value="0"/>
+    </Style>
+
+    <Style TargetType="RadioButton" BasedOn="{StaticResource DefaultRadioButtonStyle}">
+        <Setter Property="MinWidth"  Value="0"/>
+        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="Padding"   Value="8,0,0,0"/>
+    </Style>
+
+    <!-- Label no hereda el Foreground de la ventana: se lo damos desde la paleta -->
+    <Style TargetType="Label">
+        <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+        <Setter Property="Padding"    Value="0,2,4,2"/>
+    </Style>
+</ResourceDictionary>

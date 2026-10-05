@@ -237,7 +237,7 @@ namespace QueryAnalyzer
         private void chkSoloScript_Changed(object sender, RoutedEventArgs e)
         {
             if (btnEjecutar == null) return;
-            btnEjecutar.Content = chkSoloScript.IsChecked == true ? "📄 Generar script" : "▶ Ejecutar transferencia";
+            btnEjecutar.Content = chkSoloScript.IsChecked == true ? "Generar script" : "Ejecutar transferencia";
         }
 
         // ── Analizar FKs ──────────────────────────────────────────────────────
@@ -282,7 +282,7 @@ namespace QueryAnalyzer
                     if (ciclicas.Count > 0)
                     {
                         sb.AppendLine();
-                        sb.AppendLine("⚠ Ciclos FK (orden parcial):");
+                        sb.AppendLine("Ciclos FK (orden parcial):");
                         foreach (var c in ciclicas) sb.AppendLine($"  • {c}");
                     }
 
@@ -309,7 +309,7 @@ namespace QueryAnalyzer
                     if (externas.Count > 0)
                     {
                         sb.AppendLine();
-                        sb.AppendLine("⚠ FK cruzadas con tablas fuera del conjunto:");
+                        sb.AppendLine("FK cruzadas con tablas fuera del conjunto:");
                         foreach (var w in externas) sb.AppendLine($"  • {w}");
                         sb.AppendLine("  → Se desactivarán constraints temporalmente durante la transferencia.");
                     }
@@ -448,7 +448,7 @@ namespace QueryAnalyzer
                             File.WriteAllText(backupRutaArchivo, backupScript, Encoding.UTF8);
                             ReportLog($"✓ Backup guardado: {backupRutaArchivo}");
                         }
-                        catch (Exception exB) { ReportLog($"⚠ No se pudo guardar backup: {exB.Message}"); }
+                        catch (Exception exB) { ReportLog($"No se pudo guardar backup: {exB.Message}"); }
                     }
                     else if (backupRutaCarpeta != null)
                     {
@@ -493,7 +493,7 @@ namespace QueryAnalyzer
                     Log($"✗ Error: {_ultimoResultado.Error}");
 
                 foreach (var adv in _ultimoResultado.Advertencias)
-                    Log($"⚠ {adv}");
+                    Log($"{adv}");
 
                 ActualizarSentenciaActual("");
                 ActualizarProgreso(
@@ -506,9 +506,9 @@ namespace QueryAnalyzer
                 btnGuardarPorTabla.IsEnabled  = _ultimoResultado?.ScriptsPorTabla?.Count > 0;
 
                 if (backupRutaArchivo != null && File.Exists(backupRutaArchivo))
-                    Log($"📁 Backup disponible en: {backupRutaArchivo}");
+                    Log($"Backup disponible en: {backupRutaArchivo}");
                 if (_logFilePath != null)
-                    Log($"📋 Log físico guardado en: {_logFilePath}");
+                    Log($"Log físico guardado en: {_logFilePath}");
             }
             catch (Exception ex)
             {
@@ -618,8 +618,8 @@ namespace QueryAnalyzer
             cmbConexionB.IsEnabled   = !busy;
             lstTablas.IsEnabled      = !busy;
             btnEjecutar.Content = busy
-                ? "⏳ Procesando..."
-                : (chkSoloScript.IsChecked == true ? "📄 Generar script" : "▶ Ejecutar transferencia");
+                ? "Procesando..."
+                : (chkSoloScript.IsChecked == true ? "Generar script" : "Ejecutar transferencia");
         }
     }
 }

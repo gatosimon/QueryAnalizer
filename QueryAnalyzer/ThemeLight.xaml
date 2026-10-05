@@ -2,69 +2,50 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- ── PALETA CLARA ─────────────────────────────────────────── -->
-    <SolidColorBrush x:Key="BrushWindowBG"   Color="White"/>
-    <SolidColorBrush x:Key="BrushPanelBG"    Color="White"/>
-    <SolidColorBrush x:Key="BrushControlBG"  Color="White"/>
-    <SolidColorBrush x:Key="BrushAltRowBG"   Color="AliceBlue"/>
-    <SolidColorBrush x:Key="BrushBorder"     Color="#CCCCCC"/>
-    <SolidColorBrush x:Key="BrushSplitter"   Color="#DDDDDD"/>
-    <SolidColorBrush x:Key="BrushFG"         Color="#1A1A1A"/>
-    <SolidColorBrush x:Key="BrushFGMuted"    Color="#555555"/>
-    <SolidColorBrush x:Key="BrushHover"      Color="DodgerBlue"/>
-    <SolidColorBrush x:Key="BrushSelected"   Color="#A7C7FF"/>
-    <SolidColorBrush x:Key="BrushSelectedFG" Color="Black"/>
-    <SolidColorBrush x:Key="BrushAccent"     Color="#0078D4"/>
-    <SolidColorBrush x:Key="BrushHeaderBG"   Color="DimGray"/>
-    <SolidColorBrush x:Key="BrushHeaderFG"   Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="BrushBtnBG"      Color="#F0F0F0"/>
-    <SolidColorBrush x:Key="BrushBtnBorder"  Color="#AAAAAA"/>
-    <SolidColorBrush x:Key="BrushTreeHover"  Color="#E8F0FE"/>
-    <SolidColorBrush x:Key="BrushTreeSel"    Color="#A7C7FF"/>
-    <SolidColorBrush x:Key="BrushTabSelBG"   Color="#0078D4"/>
-    <SolidColorBrush x:Key="BrushTabSelBdr"  Color="#0078D4"/>
-    <SolidColorBrush x:Key="BrushTabSelFG"   Color="#F0F0F0"/>
+    <SolidColorBrush x:Key="BrushWindowBG"   Color="#F3F3F3"/>
+    <SolidColorBrush x:Key="BrushPanelBG"    Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BrushControlBG"  Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BrushAltRowBG"   Color="#F7F7F7"/>
+    <SolidColorBrush x:Key="BrushBorder"     Color="#D1D1D1"/>
+    <SolidColorBrush x:Key="BrushSplitter"   Color="#E0E0E0"/>
+    <SolidColorBrush x:Key="BrushFG"         Color="#1B1B1B"/>
+    <SolidColorBrush x:Key="BrushFGMuted"    Color="#616161"/>
+    <SolidColorBrush x:Key="BrushHover"      Color="#E9E9E9"/>
+    <SolidColorBrush x:Key="BrushSelected"   Color="#CCE4F7"/>
+    <SolidColorBrush x:Key="BrushSelectedFG" Color="#1B1B1B"/>
+    <SolidColorBrush x:Key="BrushAccent"     Color="#0067C0"/>
+    <SolidColorBrush x:Key="BrushHeaderBG"   Color="#F0F0F0"/>
+    <SolidColorBrush x:Key="BrushHeaderFG"   Color="#1B1B1B"/>
+    <SolidColorBrush x:Key="BrushBtnBG"      Color="#FBFBFB"/>
+    <SolidColorBrush x:Key="BrushBtnBorder"  Color="#D1D1D1"/>
+    <SolidColorBrush x:Key="BrushTreeHover"  Color="#EEEEEE"/>
+    <SolidColorBrush x:Key="BrushTreeSel"    Color="#CCE4F7"/>
+    <SolidColorBrush x:Key="BrushTabSelBG"   Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BrushTabSelBdr"  Color="#0067C0"/>
+    <SolidColorBrush x:Key="BrushTabSelFG"   Color="#0067C0"/>
     <SolidColorBrush x:Key="BrushMenuBG"     Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="BrushMenuHover"  Color="#A7C7FF"/>
-    <SolidColorBrush x:Key="BrushSeparator"  Color="#DDDDDD"/>
-    <SolidColorBrush x:Key="BrushEditor"     Color="White"/>
-    <SolidColorBrush x:Key="BrushEditorFG"   Color="#1A1A1A"/>
-    <SolidColorBrush x:Key="BrushRowHover"   Color="#FFD800"/>
-    <SolidColorBrush x:Key="BrushNroFilaBG"  Color="#D6E4F7"/>
-    <SolidColorBrush x:Key="BrushNroFilaFG"  Color="#1A3A5C"/>
+    <SolidColorBrush x:Key="BrushMenuHover"  Color="#EAEAEA"/>
+    <SolidColorBrush x:Key="BrushSeparator"  Color="#E0E0E0"/>
+    <SolidColorBrush x:Key="BrushEditor"     Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BrushEditorFG"   Color="#1B1B1B"/>
+    <SolidColorBrush x:Key="BrushRowHover"   Color="#E8F1FA"/>
+    <SolidColorBrush x:Key="BrushNroFilaBG"  Color="#EDEDED"/>
+    <SolidColorBrush x:Key="BrushNroFilaFG"  Color="#616161"/>
+    <SolidColorBrush x:Key="BrushDanger"     Color="#C42B1C"/>
+    <SolidColorBrush x:Key="BrushSuccess"    Color="#0F7B0F"/>
+    <SolidColorBrush x:Key="BrushWarning"    Color="#9D5D00"/>
+    <SolidColorBrush x:Key="BrushAccentFG"   Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BrushDangerBG"   Color="#FDE7E9"/>
+    <SolidColorBrush x:Key="BrushSuccessBG"  Color="#DFF6DD"/>
+    <SolidColorBrush x:Key="BrushWarningBG"  Color="#FFF4CE"/>
+    <SolidColorBrush x:Key="BrushInputBG"      Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BrushInputHoverBG" Color="#F7F7F7"/>
+    <SolidColorBrush x:Key="BrushInputFocusBG" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BrushControlBorder"      Color="#DCDCDC"/>
+    <SolidColorBrush x:Key="BrushControlBorderHover" Color="#C8C8C8"/>
+
+    <!-- Version de la paleta. Debe coincidir con PreferenciasWindow.VersionTemas:
+         si el archivo en %AppData%\QueryAnalyzer\Themes tiene una menor, se reemplaza (con backup .bak). -->
+    <x:String x:Key="ThemeVersion">5</x:String>
 
 </ResourceDictionary>
-
-    <!--<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-
-    --><!-- ── PALETA CLARA ─────────────────────────────────────────── --><!--
-    <SolidColorBrush x:Key="BrushWindowBG"   Color="White"/>
-    <SolidColorBrush x:Key="BrushPanelBG"    Color="White"/>
-    <SolidColorBrush x:Key="BrushControlBG"  Color="White"/>
-    <SolidColorBrush x:Key="BrushAltRowBG"   Color="AliceBlue"/>
-    <SolidColorBrush x:Key="BrushBorder"     Color="#CCCCCC"/>
-    <SolidColorBrush x:Key="BrushSplitter"   Color="#DDDDDD"/>
-    <SolidColorBrush x:Key="BrushFG"         Color="#1A1A1A"/>
-    <SolidColorBrush x:Key="BrushFGMuted"    Color="#555555"/>
-    <SolidColorBrush x:Key="BrushHover"      Color="DodgerBlue"/>
-    <SolidColorBrush x:Key="BrushSelected"   Color="#A7C7FF"/>
-    <SolidColorBrush x:Key="BrushSelectedFG" Color="Black"/>
-    <SolidColorBrush x:Key="BrushAccent"     Color="#0078D4"/>
-    <SolidColorBrush x:Key="BrushHeaderBG"   Color="DimGray"/>
-    <SolidColorBrush x:Key="BrushHeaderFG"   Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="BrushBtnBG"      Color="#F0F0F0"/>
-    <SolidColorBrush x:Key="BrushBtnBorder"  Color="#AAAAAA"/>
-    <SolidColorBrush x:Key="BrushTreeHover"  Color="#E8F0FE"/>
-    <SolidColorBrush x:Key="BrushTreeSel"    Color="#0078D4"/>
-    <SolidColorBrush x:Key="BrushTabSelBG"   Color="#FFD800"/>
-    <SolidColorBrush x:Key="BrushTabSelBdr"  Color="#0078D4"/>
-    <SolidColorBrush x:Key="BrushTabSelFG"   Color="#F0F0F0"/>
-    <SolidColorBrush x:Key="BrushMenuBG"     Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="BrushMenuHover"  Color="#A7C7FF"/>
-    <SolidColorBrush x:Key="BrushSeparator"  Color="#DDDDDD"/>
-    <SolidColorBrush x:Key="BrushEditor"     Color="White"/>
-    <SolidColorBrush x:Key="BrushEditorFG"   Color="#1A1A1A"/>
-    <SolidColorBrush x:Key="BrushRowHover"   Color="#FFD800"/>
-    <x:String x:Key="ThemeToggleIcon">&#x1F319;</x:String>
-
-</ResourceDictionary>-->

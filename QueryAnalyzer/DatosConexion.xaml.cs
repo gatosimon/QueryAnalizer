@@ -116,7 +116,7 @@ namespace QueryAnalyzer
                     txtContrasenaRevelada.Text       = "";
                     txtContrasenaRevelada.Visibility = Visibility.Collapsed;
                     txtContrasena.Visibility         = Visibility.Visible;
-                    btnTogglePass.Content            = "👁";
+                    btnTogglePass.Content            = Iconos.Crear("IconEye");
                 }
 
                 txtBaseDatos.Text        = "";
@@ -518,7 +518,7 @@ namespace QueryAnalyzer
                     : TipoMotor.MS_SQL;
 
                 var sb = new System.Text.StringBuilder();
-                sb.AppendLine($"🔌 Conexión: {txtNombre.Text.Trim()}");
+                sb.AppendLine($"Conexión: {txtNombre.Text.Trim()}");
                 sb.AppendLine($"Motor: {motor}");
 
                 if (chkUsarConnectionString.IsChecked == true)
@@ -602,7 +602,7 @@ namespace QueryAnalyzer
                 txtContrasenaRevelada.Text       = txtContrasena.Password;
                 txtContrasena.Visibility         = Visibility.Collapsed;
                 txtContrasenaRevelada.Visibility = Visibility.Visible;
-                btnTogglePass.Content            = "🙈";
+                btnTogglePass.Content            = Iconos.Crear("IconEyeOff");
                 txtContrasenaRevelada.Focus();
             }
             else
@@ -610,7 +610,7 @@ namespace QueryAnalyzer
                 txtContrasena.Password           = txtContrasenaRevelada.Text;
                 txtContrasenaRevelada.Visibility = Visibility.Collapsed;
                 txtContrasena.Visibility         = Visibility.Visible;
-                btnTogglePass.Content            = "👁";
+                btnTogglePass.Content            = Iconos.Crear("IconEye");
                 txtContrasena.Focus();
             }
         }

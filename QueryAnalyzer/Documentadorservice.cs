@@ -502,7 +502,7 @@ WHERE TABNAME = '{tabla.ToUpper()}'{schemaFilter}";
 
             // ── Fila 2: Nombre + tipo ──────────────────────────────────────────────
             string etiquetaTipo = (info.Tipo == "V" || info.Tipo == "VIEW" ||
-                                   info.Tipo == "view") ? "Vista 👁" : "Tabla 📊​";
+                                   info.Tipo == "view") ? "Vista " : "Tabla ";
             table.AppendChild(CrearFilaFusion(
                 $"Nombre: {info.Nombre}    [{etiquetaTipo}]",
                 totalAncho, anchos.Length,
@@ -635,7 +635,7 @@ WHERE TABNAME = '{tabla.ToUpper()}'{schemaFilter}";
                     new Bold(),
                     new Color { Val = "7F6000" },
                     new FontSize { Val = "18" }),
-                new Text("📝 Descripción:  ") { Space = SpaceProcessingModeValues.Preserve }
+                new Text("Descripción:  ") { Space = SpaceProcessingModeValues.Preserve }
             ));
 
             // Texto de descripción en color marrón oscuro

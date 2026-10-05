@@ -4,7 +4,6 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\DocumentFo
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\ICSharpCode.AvalonEdit.dll
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\Npgsql.dll
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\System.Threading.Tasks.Extensions.dll
-C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\System.ValueTuple.dll
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\ICSharpCode.AvalonEdit.xml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\Npgsql.xml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\bin\Release\System.Threading.Tasks.Extensions.xml
@@ -47,3 +46,7 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnaly
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\QueryAnalyzer.pdb
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\JsonResultWindow.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\JsonResultWindow.g.cs
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\App.baml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\Styles.baml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\Icons.baml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\Controles.baml

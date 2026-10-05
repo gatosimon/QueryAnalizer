@@ -23,10 +23,6 @@ namespace QueryAnalyzer
         private string        _bdNombreB;
 
         // Colores de estado
-        private static readonly SolidColorBrush ColorSoloA    = new SolidColorBrush(Color.FromRgb(70,  130, 210)); // azul
-        private static readonly SolidColorBrush ColorSoloB    = new SolidColorBrush(Color.FromRgb(210,  60,  60)); // rojo
-        private static readonly SolidColorBrush ColorDif      = new SolidColorBrush(Color.FromRgb(220, 140,  30)); // naranja
-        private static readonly SolidColorBrush ColorIgual    = null; // usa el foreground heredado
 
         public ComparadorWindow(Dictionary<string, Conexion> conexiones)
         {
@@ -524,6 +520,9 @@ namespace QueryAnalyzer
             };
         }
 
+        /// <summary>Pincel de la paleta activa (cambia con el tema).</summary>
+        private SolidColorBrush Pincel(string clave) { return TryFindResource(clave) as SolidColorBrush; }
+
         private TreeViewItem CrearNodoDiff(DiffEstado estado, string texto, double? fontSize)
         {
             string prefijo;
@@ -531,13 +530,13 @@ namespace QueryAnalyzer
             switch (estado)
             {
                 case DiffEstado.SoloEnA:
-                    prefijo = "→ "; color = ColorSoloA; break;
+                    prefijo = "→ "; color = Pincel("BrushAccent"); break;
                 case DiffEstado.SoloEnB:
-                    prefijo = "← "; color = ColorSoloB; break;
+                    prefijo = "← "; color = Pincel("BrushDanger"); break;
                 case DiffEstado.Diferente:
-                    prefijo = "⚠ "; color = ColorDif;   break;
+                    prefijo = "\u2260 "; color = Pincel("BrushWarning"); break;
                 default:
-                    prefijo = "✓ "; color = ColorIgual; break;
+                    prefijo = "✓ "; color = null; break;
             }
 
             var tb = new TextBlock { Text = prefijo + texto };
@@ -689,14 +688,14 @@ pre{font-size:11px;white-space:pre-wrap;word-break:break-all;background:#f8f8f8;
 
             sb.AppendLine($"<h1>Comparación de Bases de Datos</h1>");
             sb.AppendLine($@"<div class='meta'>
-  <span>🅰 <strong>{H(conA)}</strong> — {H(bdA)} [{H(schA)}]</span>
-  <span>🅱 <strong>{H(conB)}</strong> — {H(bdB)} [{H(schB)}]</span>
-  <span>📅 {DateTime.Now:dd/MM/yyyy HH:mm}</span>
-  <span>⚠ <strong>{totalDif}</strong> diferencia(s)</span>
+  <span>A: <strong>{H(conA)}</strong> — {H(bdA)} [{H(schA)}]</span>
+  <span>B: <strong>{H(conB)}</strong> — {H(bdB)} [{H(schB)}]</span>
+  <span>{DateTime.Now:dd/MM/yyyy HH:mm}</span>
+  <span><strong>{totalDif}</strong> diferencia(s)</span>
 </div>");
 
             // ── Tablas
-            HtmlSeccion(sb, "📋 Tablas", res.Tablas.Count,
+            HtmlSeccion(sb, "Tablas", res.Tablas.Count,
                 res.Tablas.Count(t => t.Estado == DiffEstado.Igual),
                 res.Tablas.Count(t => t.Estado == DiffEstado.SoloEnA),
                 res.Tablas.Count(t => t.Estado == DiffEstado.SoloEnB),
@@ -738,7 +737,7 @@ pre{font-size:11px;white-space:pre-wrap;word-break:break-all;background:#f8f8f8;
             sb.AppendLine("</section>");
 
             // ── Vistas
-            HtmlSeccion(sb, "👁 Vistas", res.Vistas.Count,
+            HtmlSeccion(sb, "Vistas", res.Vistas.Count,
                 res.Vistas.Count(v => v.Estado == DiffEstado.Igual),
                 res.Vistas.Count(v => v.Estado == DiffEstado.SoloEnA),
                 res.Vistas.Count(v => v.Estado == DiffEstado.SoloEnB),
@@ -766,7 +765,7 @@ pre{font-size:11px;white-space:pre-wrap;word-break:break-all;background:#f8f8f8;
             sb.AppendLine("</section>");
 
             // ── Índices
-            HtmlSeccion(sb, "🔑 Índices", res.Indices.Count,
+            HtmlSeccion(sb, "Índices", res.Indices.Count,
                 res.Indices.Count(i => i.Estado == DiffEstado.Igual),
                 res.Indices.Count(i => i.Estado == DiffEstado.SoloEnA),
                 res.Indices.Count(i => i.Estado == DiffEstado.SoloEnB),
@@ -790,7 +789,7 @@ pre{font-size:11px;white-space:pre-wrap;word-break:break-all;background:#f8f8f8;
             // ── Datos
             if (res.Datos.Count > 0)
             {
-                HtmlSeccion(sb, "📊 Datos", res.Datos.Count,
+                HtmlSeccion(sb, "Datos", res.Datos.Count,
                     res.Datos.Count(d => d.Estado == DiffEstado.Igual), 0, 0,
                     res.Datos.Count(d => d.Estado != DiffEstado.Igual));
                 sb.AppendLine("<table><thead><tr><th>Tabla</th><th>Estado</th><th>Filas A</th><th>Filas B</th></tr></thead><tbody>");

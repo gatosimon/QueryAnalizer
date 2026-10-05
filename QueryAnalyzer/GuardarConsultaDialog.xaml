@@ -1,63 +1,25 @@
 <Window x:Class="QueryAnalyzer.GuardarConsultaDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.modernwpf.com/2019"
         Title="Guardar consulta"
         Height="440" Width="560"
         MinHeight="340" MinWidth="420"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResizeWithGrip"
         Background="{DynamicResource BrushWindowBG}"
-        Foreground="{DynamicResource BrushFG}">
+        Foreground="{DynamicResource BrushFG}"
+        ui:WindowHelper.UseModernWindowStyle="True">
 
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="ThemeLight.xaml"/>
+                <ResourceDictionary Source="Styles.xaml"/>
+                <ResourceDictionary Source="Controles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <Style TargetType="TextBlock">
-                <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
                 <Setter Property="TextWrapping" Value="Wrap"/>
-            </Style>
-            <Style TargetType="TextBox">
-                <Setter Property="Background"     Value="{DynamicResource BrushControlBG}"/>
-                <Setter Property="Foreground"     Value="{DynamicResource BrushFG}"/>
-                <Setter Property="BorderBrush"    Value="{DynamicResource BrushBorder}"/>
-                <Setter Property="CaretBrush"     Value="{DynamicResource BrushFG}"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Padding"        Value="4,3"/>
-            </Style>
-            <Style TargetType="Button">
-                <Setter Property="Background"      Value="{DynamicResource BrushBtnBG}"/>
-                <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
-                <Setter Property="BorderBrush"     Value="{DynamicResource BrushBtnBorder}"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Padding"         Value="16,4"/>
-                <Setter Property="Cursor"          Value="Hand"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="3"
-                                    Padding="{TemplateBinding Padding}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="{DynamicResource BrushAccent}"/>
-                                    <Setter Property="Foreground" Value="White"/>
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="True">
-                                    <Setter Property="Opacity" Value="0.8"/>
-                                </Trigger>
-                                <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Opacity" Value="0.4"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
             </Style>
         </ResourceDictionary>
     </Window.Resources>
@@ -121,7 +83,7 @@
         <!-- Botones -->
         <StackPanel Grid.Row="10" Orientation="Horizontal"
                     HorizontalAlignment="Right">
-            <Button x:Name="btnGuardar" Content="💾 Guardar"
+            <Button x:Name="btnGuardar" Content="Guardar"
                     IsDefault="True"
                     Click="btnGuardar_Click"/>
             <Button Content="Cancelar"

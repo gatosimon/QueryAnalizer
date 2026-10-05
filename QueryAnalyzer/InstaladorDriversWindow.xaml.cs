@@ -29,9 +29,14 @@ namespace QueryAnalyzer
         public string EstadoTexto  => _estadoTexto;
 
         public Brush ColorEstado =>
-            _colorEstadoStr == "green"
-                ? new SolidColorBrush(Color.FromRgb(0x4C, 0xAF, 0x50))
-                : new SolidColorBrush(Color.FromRgb(0xF4, 0x43, 0x36));
+            Pincel(_colorEstadoStr == "green" ? "BrushSuccess" : "BrushDanger", _colorEstadoStr == "green" ? Brushes.SeaGreen : Brushes.IndianRed);
+
+        /// <summary>Pincel de la paleta activa (la ventana principal tiene el tema vigente).</summary>
+        private static Brush Pincel(string clave, Brush respaldo)
+        {
+            var w = System.Windows.Application.Current != null ? System.Windows.Application.Current.MainWindow : null;
+            return (w != null ? w.TryFindResource(clave) as Brush : null) ?? respaldo;
+        }
 
         // ── Visibilidades de los botones ──────────────────────────────────────
         // Mostrar el botón siempre que el driver sea de tipo Bundle y no esté instalado,
@@ -58,13 +63,13 @@ namespace QueryAnalyzer
         {
             if (_info.EstaInstalado)
             {
-                _iconoEstado    = "✔";
+                _iconoEstado    = "\u2713";
                 _colorEstadoStr = "green";
                 _estadoTexto    = "Instalado";
             }
             else
             {
-                _iconoEstado    = "✖";
+                _iconoEstado    = "\u2717";
                 _colorEstadoStr = "red";
                 _estadoTexto    = "No instalado";
             }
@@ -130,9 +135,9 @@ namespace QueryAnalyzer
             }
 
             if (faltantes == 0)
-                txtEstado.Text = $"✔ Todos los drivers están instalados ({instalados} de {_vms.Count}).";
+                txtEstado.Text = $"Todos los drivers están instalados ({instalados} de {_vms.Count}).";
             else
-                txtEstado.Text = $"⚠ {faltantes} driver(s) no instalado(s). " +
+                txtEstado.Text = $"{faltantes} driver(s) no instalado(s). " +
                                  $"Haga clic en \"Instalar\" o \"Descargar\" según corresponda.";
         }
 
@@ -147,7 +152,7 @@ namespace QueryAnalyzer
             var driver = vm.Info;
 
             _instalandoEnCurso = true;
-            txtEstado.Text = $"⏳ Instalando {driver.Nombre}... aguarde.";
+            txtEstado.Text = $"Instalando {driver.Nombre}... aguarde.";
             SetBotonesHabilitados(false);
 
             var (exitCode, error) = await OdbcDriverManager.InstalarAsync(driver);
@@ -169,18 +174,18 @@ namespace QueryAnalyzer
 
             if (exitCode == 0)
             {
-                txtEstado.Text = $"✔ {driver.Nombre} instalado correctamente. " +
+                txtEstado.Text = $"{driver.Nombre} instalado correctamente. " +
                                  "Puede ser necesario reiniciar la aplicación.";
             }
             else if (exitCode == -2)
             {
-                txtEstado.Text = "⚠ Instalación cancelada (UAC rechazado).";
+                txtEstado.Text = "Instalación cancelada (UAC rechazado).";
             }
             else
             {
                 txtEstado.Text = string.IsNullOrEmpty(error)
-                    ? $"⚠ El instalador finalizó con código {exitCode}. Verifique manualmente."
-                    : $"⚠ Error al instalar: {error}";
+                    ? $"El instalador finalizó con código {exitCode}. Verifique manualmente."
+                    : $"Error al instalar: {error}";
             }
 
             ActualizarBannerEstado();

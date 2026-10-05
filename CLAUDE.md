@@ -188,4 +188,5 @@ Al crear un par `.xaml` + `.xaml.cs`:
 4. Copiar `bin\Release\QueryAnalyzer.exe` a `C:\Users\ssnunez\Desktop\BORRADERO\QueryAnalyzerUpdates` (sobrescribe).
 5. En esa carpeta, crear `update-X.X.X.X.zip` con solo `QueryAnalyzer.exe`.
 6. Copiar `version.xml` → `version-X.X.X.X.xml`, completar `<Version>`, `<DownloadUrl>` (`https://github.com/gatosimon/QueryAnalyzerUpdates/releases/download/vX.X.X.X/update-X.X.X.X.zip`) y `<ReleaseNotes>` (notas en lenguaje simple separadas por `\n` literal, sin acentos). Guardarlo también como `version.xml` (UTF-8 sin BOM).
-7. Devolver al usuario: la versión y las notas.
+7. Publicar el Release en `gatosimon/QueryAnalyzerUpdates`: `powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Users\ssnunez\.claude\scripts\qa_publicar_release.ps1" -Version X.X.X.X`. El script crea el tag `vX.X.X.X` desde main, con título "Versión X.X.X.X", las notas como descripción y los dos archivos adjuntos (zip y `version.xml`); lo marca como latest y verifica. Usa el token de Git Credential Manager y el proxy corporativo. Si el release ya existe, aborta. El modo automático de Claude Code bloquea este paso: hay que salir del modo automático para correrlo.
+8. Devolver al usuario: la versión y las notas.

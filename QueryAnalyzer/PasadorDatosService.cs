@@ -513,12 +513,12 @@ namespace QueryAnalyzer
                 }
                 catch (Exception ex)
                 {
-                    onProgress?.Invoke($"  ⚠ {tabla.NombreCompleto}: no se pudo verificar ({ex.Message})");
+                    onProgress?.Invoke($"  {tabla.NombreCompleto}: no se pudo verificar ({ex.Message})");
                 }
             }
             onProgress?.Invoke(todoOk
                 ? "✓ Verificación completada: A y B están consistentes."
-                : "⚠ Verificación completada con diferencias. Revisar advertencias.");
+                : "Verificación completada con diferencias. Revisar advertencias.");
         }
 
         private static long ContarFilas(string connStr, string nombreCompleto)

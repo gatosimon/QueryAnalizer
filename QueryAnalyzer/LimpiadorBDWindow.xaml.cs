@@ -211,7 +211,7 @@ namespace QueryAnalyzer
             fila.Children.Add(cbComb);
 
             // Botón quitar
-            var btnQ = new Button { Content = "✕", Width = 22, Height = 22, Padding = new Thickness(0), Margin = new Thickness(0) };
+            var btnQ = new Button { Content = "\u00d7", Width = 22, Height = 22, Padding = new Thickness(0), Margin = new Thickness(0) };
             btnQ.SetResourceReference(Button.BackgroundProperty, "BrushBtnBG");
             btnQ.SetResourceReference(Button.ForegroundProperty, "BrushFG");
             btnQ.SetResourceReference(Button.BorderBrushProperty, "BrushBtnBorder");
@@ -416,7 +416,7 @@ namespace QueryAnalyzer
             {
                 MessageBox.Show(
                     $"No hay ninguna tabla incluida dentro del alcance actual ({(string.IsNullOrEmpty(_schemaFiltro) ? "(Todos)" : _schemaFiltro)}).\n\n" +
-                    "Tildá las tablas que querés limpiar, o usá '☑ Todas'.",
+                    "Tildá las tablas que querés limpiar, o usá 'Todas'.",
                     "Aviso", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
@@ -440,7 +440,7 @@ namespace QueryAnalyzer
                 tabResultado.SelectedItem = tabAnalisis;
                 string adv;
                 if (_analisis.HayConflictosBloquantes)
-                    adv = "⚠ Hay conflictos bloqueantes. Revisá las advertencias antes de generar el script.";
+                    adv = "Hay conflictos bloqueantes. Revisá las advertencias antes de generar el script.";
                 else if (modo == ModoConflicto.BorradoEnCascada)
                 {
                     // En este modo no hay estado "OK": las tablas quedan en "Baja" o en "Cascada".
@@ -564,7 +564,7 @@ namespace QueryAnalyzer
             sb.Append($"{validas.Count} relación(es) retienen {filas} baja(s): ");
             sb.Append($"{vivos} por datos vivos · {enCadena} retenida(s) en cadena · {cadenas} cadena(s) incompleta(s).");
             if (conError > 0)
-                sb.Append($" | ⚠ {conError} relación(es) no se pudieron calcular: el mensaje del motor está en la columna 'Qué hacer'.");
+                sb.Append($" | {conError} relación(es) no se pudieron calcular: el mensaje del motor está en la columna 'Qué hacer'.");
 
             if (accionables == 0)
             {
@@ -650,11 +650,11 @@ namespace QueryAnalyzer
 
                 var msg = new StringBuilder($"{t.Result} de {objetivo.Count} tabla(s) incluidas y configuradas. Volvé a analizar para ver la cadena ya cerrada.");
                 if (fueraDeEsquema.Any())
-                    msg.Append($" | ⚠ {fueraDeEsquema.Count} quedan fuera del alcance por el filtro de esquema " +
+                    msg.Append($" | {fueraDeEsquema.Count} quedan fuera del alcance por el filtro de esquema " +
                                $"({string.Join(", ", fueraDeEsquema.Select(c => c.NombreCompleto).Take(3))}" +
                                $"{(fueraDeEsquema.Count > 3 ? "…" : "")}): poné el selector en '(Todos)'.");
                 if (noEncontradas.Any())
-                    msg.Append($" | ⚠ {noEncontradas.Count} no están en el catálogo cargado: {string.Join(", ", noEncontradas.Take(3))}.");
+                    msg.Append($" | {noEncontradas.Count} no están en el catálogo cargado: {string.Join(", ", noEncontradas.Take(3))}.");
                 SetEstado(msg.ToString());
             }, TaskScheduler.FromCurrentSynchronizationContext());
         }
@@ -762,14 +762,14 @@ namespace QueryAnalyzer
 
                 if (!prog.Exitoso)
                 {
-                    txtEstadoEjecucion.Text = $"❌ Error: {prog.Error}";
-                    txtLog.AppendText($"\n❌ ROLLBACK automático. Error: {prog.Error}\n");
+                    txtEstadoEjecucion.Text = $"Error: {prog.Error}";
+                    txtLog.AppendText($"\nROLLBACK automático. Error: {prog.Error}\n");
                     btnGenerarScript.IsEnabled = true;
                     btnEjecutar.IsEnabled = true;
                     return;
                 }
 
-                txtLog.AppendText("\n✅ Ejecución completada. Transacción pendiente.\n");
+                txtLog.AppendText("\nEjecución completada. Transacción pendiente.\n");
                 pbar.Value = 100;
 
                 // El alcance real, medido durante la corrida. Es lo único que permite revisar el
@@ -790,7 +790,7 @@ namespace QueryAnalyzer
                     txtLog.AppendText(ResumirFKsVioladas(violadas));
                     int conFilas = violadas.Count(f => f.Error == null && f.FilasViolando > 0);
                     if (conFilas > 0)
-                        avisoFK = $"\n\n⚠ Quedan {conFilas} FK violada(s), " +
+                        avisoFK = $"\n\nQuedan {conFilas} FK violada(s), " +
                                   $"{violadas.Where(f => f.Error == null).Sum(f => f.FilasViolando):N0} fila(s) en total. " +
                                   "Sus constraints quedan sin verificar. Está en el log.";
                 }
@@ -809,16 +809,16 @@ namespace QueryAnalyzer
                     try
                     {
                         _svc.ConfirmarCommit();
-                        txtEstadoEjecucion.Text = "✅ COMMIT confirmado.";
-                        txtLog.AppendText("✅ COMMIT realizado.\n");
+                        txtEstadoEjecucion.Text = "COMMIT confirmado.";
+                        txtLog.AppendText("COMMIT realizado.\n");
                         SetEstado("Operación completada con éxito.");
                         btnGenerarScript.IsEnabled = false;
                         btnEjecutar.IsEnabled = false;
                     }
                     catch (Exception ex)
                     {
-                        txtEstadoEjecucion.Text = $"❌ El COMMIT falló: {ex.Message}";
-                        txtLog.AppendText($"\n❌ El COMMIT falló: {ex.Message}\n");
+                        txtEstadoEjecucion.Text = $"El COMMIT falló: {ex.Message}";
+                        txtLog.AppendText($"\nEl COMMIT falló: {ex.Message}\n");
                         SetEstado("El COMMIT falló. Revisá el log.");
                         btnGenerarScript.IsEnabled = true;
                         btnEjecutar.IsEnabled = true;
@@ -829,14 +829,14 @@ namespace QueryAnalyzer
                     try
                     {
                         _svc.CancelarRollback();
-                        txtEstadoEjecucion.Text = "↩ ROLLBACK realizado. No se modificaron datos.";
-                        txtLog.AppendText("↩ ROLLBACK realizado.\n");
+                        txtEstadoEjecucion.Text = "ROLLBACK realizado. No se modificaron datos.";
+                        txtLog.AppendText("ROLLBACK realizado.\n");
                         SetEstado("Operación revertida.");
                     }
                     catch (Exception ex)
                     {
-                        txtEstadoEjecucion.Text = $"❌ El ROLLBACK falló: {ex.Message}";
-                        txtLog.AppendText($"\n❌ El ROLLBACK falló: {ex.Message}\n");
+                        txtEstadoEjecucion.Text = $"El ROLLBACK falló: {ex.Message}";
+                        txtLog.AppendText($"\nEl ROLLBACK falló: {ex.Message}\n");
                         SetEstado("El ROLLBACK falló. Revisá el log.");
                     }
                     btnGenerarScript.IsEnabled = true;
