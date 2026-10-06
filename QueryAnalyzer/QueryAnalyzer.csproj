@@ -94,6 +94,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Iconos.cs" />
+    <Compile Include="DialogoMensajeWindow.xaml.cs">
+      <DependentUpon>DialogoMensajeWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="App.xaml.cs" />
     <Compile Include="AyudaWindow.xaml.cs">
       <DependentUpon>AyudaWindow.xaml</DependentUpon>
@@ -224,6 +227,14 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Styles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="DialogoMensajeWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ScrollBars.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

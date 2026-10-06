@@ -22,6 +22,21 @@ namespace QueryAnalyzer
         {
             // Debe registrarse antes de InitializeComponent: el XAML de App ya referencia ModernWpf
             AppDomain.CurrentDomain.AssemblyResolve += ResolverEnsambladoEmbebido;
+
+            // Las pestanas de la app son Focusable=False (para no robarle el foco al editor) y WPF solo selecciona
+            // una pestana al click a traves del foco: sin esto no se podian elegir con el mouse.
+            EventManager.RegisterClassHandler(typeof(System.Windows.Controls.TabItem),
+                UIElement.PreviewMouseLeftButtonDownEvent, new System.Windows.Input.MouseButtonEventHandler(SeleccionarPestanaConClick));
+        }
+
+        private static void SeleccionarPestanaConClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var tab = sender as System.Windows.Controls.TabItem;
+            if (tab == null || tab.Focusable || !tab.IsEnabled || tab.IsSelected) return;
+            // Un click en un boton de la pestana (por ejemplo cerrarla) no debe cambiar la pestana activa
+            for (var o = e.OriginalSource as DependencyObject; o != null && !ReferenceEquals(o, tab); o = System.Windows.Media.VisualTreeHelper.GetParent(o))
+                if (o is System.Windows.Controls.Primitives.ButtonBase) return;
+            tab.SetCurrentValue(System.Windows.Controls.Primitives.Selector.IsSelectedProperty, true);
         }
 
         private static Assembly ResolverEnsambladoEmbebido(object sender, ResolveEventArgs args)
@@ -78,8 +93,8 @@ namespace QueryAnalyzer
 
             base.OnStartup(e);
 
-            // Si CheckForUpdates devuelve false, se aplicó una actualización
-            // y la versión nueva ya fue relanzada. No continuar con esta instancia.
+            // Si CheckForUpdates devuelve false, se aplicï¿½ una actualizaciï¿½n
+            // y la versiï¿½n nueva ya fue relanzada. No continuar con esta instancia.
             if (!UpdateHelper.CheckForUpdates("https://github.com/gatosimon/QueryAnalyzerUpdates/releases/latest/download/version.xml"))
                 return;
         }

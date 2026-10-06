@@ -4,6 +4,7 @@
 - WPF .NET Framework 4.5, x86, C#
 - Acceso a datos: `CapiDL.dll` (clase `DataBase`, ODBC 32-bit)
 - Conexiones: `ConexionesManager` + `ConfigManager` (persiste en `config.xml`)
+- UI: ModernWpfUI 0.9.6 (net45) + AvalonEdit. Las DLLs de terceros van **embebidas** como recursos `Embedded.<nombre>.dll` y se cargan con `AssemblyResolve` en `App()` (`App.xaml.cs`); por eso el ZIP de update lleva solo el `.exe`. Toda DLL nueva debe agregarse igual (`<Private>False</Private>` + `EmbeddedResource` con `LogicalName`), si no el update no la entrega.
 - Build: MSBuild `C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe`
   - `/p:Configuration=Release` (sin `/p:Platform` — la solución no tiene config x86 separada)
 
@@ -13,17 +14,26 @@
 
 Toda ventana secundaria DEBE incluir estos tres elementos:
 
-### 1. En el XAML — MergedDictionaries con ThemeLight como initial value
+### 1. En el XAML — tema + estilos compartidos + estilo ModernWpf
 ```xml
-<Window.Resources>
-  <ResourceDictionary>
-    <ResourceDictionary.MergedDictionaries>
-      <ResourceDictionary Source="ThemeLight.xaml"/>
-    </ResourceDictionary.MergedDictionaries>
-    <!-- estilos locales usando DynamicResource -->
-  </ResourceDictionary>
-</Window.Resources>
+<Window ...
+        xmlns:ui="http://schemas.modernwpf.com/2019"
+        Background="{DynamicResource BrushWindowBG}"
+        Foreground="{DynamicResource BrushFG}"
+        ui:WindowHelper.UseModernWindowStyle="True">
+  <Window.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="ThemeLight.xaml"/>   <!-- slot [0]: lo reemplaza AplicarTemaActual -->
+        <ResourceDictionary Source="Styles.xaml"/>       <!-- estilos base compartidos -->
+        <ResourceDictionary Source="Controles.xaml"/>    <!-- botones compuestos, etc. -->
+      </ResourceDictionary.MergedDictionaries>
+      <!-- estilos locales usando DynamicResource -->
+    </ResourceDictionary>
+  </Window.Resources>
 ```
+- `Styles.xaml` y `Controles.xaml` van en **cada ventana**, no en `App.xaml` (los `BasedOn` no resuelven diccionarios hermanos a nivel aplicación). `Icons.xaml` sí está en `App.xaml`.
+- No redefinir estilos de TextBox/Button/ComboBox/etc. en la ventana: heredan de ModernWpf + `Styles.xaml`.
 
 ### 2. En el code-behind — AplicarTemaActual() en el constructor
 ```csharp
@@ -88,6 +98,26 @@ BorderBrush="{DynamicResource BrushBorder}"
 | `BrushEditor`        | Fondo del editor SQL (AvalonEdit)          |
 | `BrushEditorFG`      | Texto del editor SQL                       |
 | `BrushRowHover`      | Hover en fila de DataGrid                  |
+| `BrushDanger` / `BrushDangerBG`   | Errores, acciones destructivas (texto / fondo suave) |
+| `BrushSuccess` / `BrushSuccessBG` | Éxito, estado correcto                |
+| `BrushWarning` / `BrushWarningBG` | Advertencias                          |
+| `BrushAccentFG`      | Texto sobre fondo de acento                |
+
+Hay además brushes `Input*` y `ControlBorder(+Hover)` (fondos y bordes suaves de TextBox/ComboBox) que `AplicarFondosEntradas` en `MainWindow.xaml.cs` vuelca a los recursos de ModernWpf. Mirar `ThemeLight.xaml` para la lista completa.
+
+**Al agregar o cambiar un brush:** editar `ThemeLight.xaml`, `ThemeDark.xaml` **y** los valores por defecto de `PreferenciasWindow.xaml.cs`, y subir `ThemeVersion` / `PreferenciasWindow.VersionTemas` (hoy 5); sin eso, quien ya tiene los temas en `%AppData%\QueryAnalyzer\Themes\` no recibe el cambio (se reemplazan dejando un `.bak`).
+
+### Mensajes, scrollbars y cambio de tema
+- **Mensajes:** usar siempre `MessageBox.Show(...)` tal cual (misma firma que WPF). Dentro del namespace `QueryAnalyzer` resuelve a `DialogoMensajeWindow.xaml(.cs)` (diálogo con el diseño y el tema de la app), no al cuadro clásico de Windows. **Nunca** `System.Windows.MessageBox` / `System.Windows.Forms.MessageBox` calificados. El actualizador tiene su propio `MessageBox` equivalente (`DialogoTema.cs`). Los diálogos del sistema (abrir/guardar archivo, carpeta) no se pueden reemplazar.
+- **ScrollBars:** hay un único estilo implícito global en `ScrollBars.xaml` (fino, sin flechas, pulgar redondeado con `BrushFGMuted`), cargado en `App.xaml` después de ModernWpf. No definir otros ni usar barras clásicas; si un control trae su propia barra (WinForms en el actualizador) se reemplaza por uno propio (`NotasControl`).
+- **Pestañas (`TabItem`):** los estilos son `Focusable=False`; `App.xaml.cs` registra un handler de clase que las selecciona con el click (WPF solo selecciona por foco). No quitarlo.
+- **Menús desplegables de botones:** abrirlos con `AbrirMenuDeBoton` (alterna abrir/cerrar; sin eso el click que lo cierra lo reabre).
+- **Cambio claro/oscuro:** cada recurso que se cambia por separado en `Application.Resources` recorre todo el árbol (~0,2 s con 1500 tablas). Agrupar los cambios de recursos en UN `ResourceDictionary` y reemplazarlo de una vez (ver `AplicarFondosEntradas`), y no tocar `ThemeManager.AccentColor` en cada alternancia. `BtnToggleTema_Click` muestra el aviso `overlayTema` antes del trabajo pesado.
+
+### Iconos y emojis
+- **Sin emojis** en la UI, en los textos de `AyudaWindow` ni en los documentos exportados (HTML/Excel/etc.).
+- Iconos vectoriales: geometrías en `Icons.xaml`, creación por código con `Iconos.Crear(clave)` (`Iconos.cs`); se tiñen con el `Foreground` del control, así que siguen el tema.
+- **Colores fijos prohibidos**: usar los brushes de la paleta (incluidos `BrushDanger/Success/Warning`).
 
 ---
 
@@ -171,7 +201,8 @@ Al crear un par `.xaml` + `.xaml.cs`:
 - Manifest URL hardcodeada en `App.xaml.cs`: `https://github.com/gatosimon/QueryAnalyzerUpdates/releases/latest/download/version.xml`
 - Versión local: `update_marker.xml` (campo `InstalledVersion`)
 - Versión actual del ensamblado: `AssemblyInfo.cs` (`AssemblyVersion` / `AssemblyFileVersion`)
-- ZIP de update: debe incluir **todas las DLLs** de `bin\Release\` (no solo el `.exe`)
+- ZIP de update: solo `QueryAnalyzer.exe`, porque las DLLs (CapiDL, ModernWpf, AvalonEdit, etc.) van embebidas en el exe (ver Stack). Si alguna DLL deja de estar embebida, el ZIP debe incluirla.
+- El actualizador es un proyecto aparte (`C:\Users\ssnunez\source\repos\AutoUpdater`, su propio repo); `Resources\AutoUpdater.exe` de esta solución es una copia de su build Release. Sigue el tema claro/oscuro leyendo `TemaOscuro` de `%AppData%\<app>\config.xml`; si cambia su paleta, mantenerla alineada con `ThemeLight/ThemeDark.xaml`.
 - Archivos a **NO incluir** en el ZIP: `conexiones.xml`, `update_marker.xml`, `.pdb`
 - Flujo de publicación: compilar → armar ZIP → subir ZIP a GitHub Release → actualizar `version.xml` → subir `version.xml` como asset del release marcado como "latest"
 

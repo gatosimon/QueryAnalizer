@@ -260,7 +260,8 @@
 
                 <!-- ══ TEMAS ═══════════════════════════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="Temas (claro / oscuro)"/>
-                <TextBlock Style="{StaticResource Cuerpo}" Text="• Botón luna / sol de la barra superior: alterna entre modo oscuro y claro. La elección se recuerda al volver a abrir la aplicación."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Botón luna / sol de la barra superior: alterna entre modo oscuro y claro. La elección se recuerda al volver a abrir la aplicación. Mientras se aplica el cambio aparece un aviso 'Cambiando a modo…' con un indicador girando (con muchas tablas cargadas puede tardar un instante)."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Los avisos y confirmaciones de la aplicación, las barras de desplazamiento (finas y redondeadas) y el actualizador usan el mismo diseño y siguen el modo elegido."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Los colores del editor SQL también cambian con el tema, para que las palabras clave se lean bien en ambos modos."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Los archivos de tema se guardan en:"/>
                 <TextBlock Style="{StaticResource Codigo}" Text="%APPDATA%\QueryAnalyzer\Themes\ThemeLight.xaml"/>
@@ -530,7 +531,8 @@
                 <TextBlock Style="{StaticResource Nota}"      Text="Mientras una consulta se está ejecutando no se puede cambiar de pestaña, para que los resultados lleguen siempre a la pestaña correcta."/>
 
                 <TextBlock Style="{StaticResource Subtitulo}" Text="Panel inferior y barra de estado"/>
-                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El panel inferior tiene tres pestañas: Resultados, Parámetros y Mensajes. El número junto al nombre indica cuántos resultados, parámetros y mensajes hay."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El panel inferior tiene tres pestañas: Resultados, Parámetros y Mensajes. El número junto al nombre indica cuántos resultados, parámetros y mensajes hay. Se cambia de pestaña con un click."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• En 'Parámetros' no hace falta cargar filas a mano: al escribir un '?' en la consulta aparece la fila correspondiente, en el mismo orden, para completar su valor."/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• La barra de estado, abajo, muestra la conexión elegida (el punto se pone verde tras una prueba o ejecución correcta y rojo si la prueba falla), las filas y el tiempo de la última ejecución, la posición del cursor y el modo claro u oscuro."/>
 
                 <!-- ══ ACTUALIZACIONES ═════════════════════════════════════ -->

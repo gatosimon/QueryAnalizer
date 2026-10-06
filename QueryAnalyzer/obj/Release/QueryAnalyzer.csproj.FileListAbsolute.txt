@@ -50,3 +50,6 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\App.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\Styles.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\Icons.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\Controles.baml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\DialogoMensajeWindow.baml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\ScrollBars.baml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\DialogoMensajeWindow.g.cs

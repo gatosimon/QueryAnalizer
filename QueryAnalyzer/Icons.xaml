@@ -67,5 +67,8 @@
     <Geometry x:Key="IconEyeOff">M1.5,8 C3,5.5 5.3,3.8 8,3.8 C10.7,3.8 13,5.5 14.5,8 C13,10.5 10.7,12.2 8,12.2 C5.3,12.2 3,10.5 1.5,8 Z M2.5,13.5 L13.5,2.5</Geometry>
     <Geometry x:Key="IconLock">M4.5,7 H11.5 V13 H4.5 Z M6,7 V5 A2,2 0 0 1 10,5 V7</Geometry>
     <Geometry x:Key="IconRestore">M2.5,8 A5.5,5.5 0 1 1 4.3,12 M2.5,13 V10 H5.5 M8,5 V8.2 L10,9.5</Geometry>
+    <Geometry x:Key="IconInfo">M2,8 A6,6 0 1 0 14,8 A6,6 0 1 0 2,8 Z M8,7.3 V11.2 M8,4.8 V4.9</Geometry>
+    <Geometry x:Key="IconWarning">M8,2.5 L14.3,13.3 H1.7 Z M8,6.6 V9.6 M8,11.5 V11.6</Geometry>
+    <Geometry x:Key="IconError">M2,8 A6,6 0 1 0 14,8 A6,6 0 1 0 2,8 Z M5.9,5.9 L10.1,10.1 M10.1,5.9 L5.9,10.1</Geometry>
 
 </ResourceDictionary>

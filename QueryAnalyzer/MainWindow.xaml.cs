@@ -236,8 +236,14 @@ namespace QueryAnalyzer
             AplicarColoresSql(oscuro);
             ModernWpf.ThemeManager.Current.ApplicationTheme =
                 oscuro ? ModernWpf.ApplicationTheme.Dark : ModernWpf.ApplicationTheme.Light;
-            if (tema["BrushAccent"] is System.Windows.Media.SolidColorBrush acento)
-                ModernWpf.ThemeManager.Current.AccentColor = acento.Color;
+            // El acento de ModernWpf se fija una sola vez (con el del tema claro): ModernWpf deriva solo las variantes
+            // mas claras para el modo oscuro, y cambiarlo en cada alternancia costaba mas de un segundo.
+            if (!_acentoModernWpfAplicado)
+            {
+                _acentoModernWpfAplicado = true;
+                var baseAcento = (_temaClaro != null && _temaClaro.Contains("BrushAccent") ? _temaClaro["BrushAccent"] : tema["BrushAccent"]) as System.Windows.Media.SolidColorBrush;
+                if (baseAcento != null) ModernWpf.ThemeManager.Current.AccentColor = baseAcento.Color;
+            }
 
             // Icono del boton de tema (muestra la accion contraria al modo actual) y texto de la barra de estado
             icoTemaLuna.Visibility = oscuro ? Visibility.Collapsed : Visibility.Visible;
@@ -256,20 +262,54 @@ namespace QueryAnalyzer
             btn.ContextMenu.IsOpen = true;
         }
 
+        private bool _cambiandoTema;
+
         private void BtnToggleTema_Click(object sender, RoutedEventArgs e)
         {
-            _modoOscuro = !_modoOscuro;
+            if (_cambiandoTema) return;
+            _cambiandoTema = true;
+            bool aOscuro = !_modoOscuro;
 
-            AplicarTema();
+            // Cambiar el tema recorre todo el arbol visual y puede tardar un momento con muchos datos cargados:
+            // primero se muestra el aviso (con su indicador girando) y recien despues, ya dibujado, se aplica el cambio.
+            txtOverlayTema.Text = aOscuro ? "Cambiando a modo oscuro…" : "Cambiando a modo claro…";
+            overlayTema.Visibility = Visibility.Visible;
+            Mouse.OverrideCursor = Cursors.Wait;
 
-            // Recordar la eleccion para el proximo inicio
-            try
+            // Se fuerza el dibujado del aviso y se espera un instante para que el indicador empiece a girar
+            // (su animacion corre en el hilo de render y sigue moviendose aunque la interfaz este ocupada)
+            overlayTema.UpdateLayout();
+            Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Render, new Action(() => { }));
+            var espera = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(180) };
+            espera.Tick += (s, ev) =>
             {
-                var cfg = ConfigManager.ObtenerConfiguracion();
-                cfg.TemaOscuro = _modoOscuro;
-                ConfigManager.GuardarConfiguracion(cfg);
-            }
-            catch { }
+                espera.Stop();
+                try
+                {
+                    _modoOscuro = aOscuro;
+                    AplicarTema();
+
+                    // Recordar la eleccion para el proximo inicio
+                    try
+                    {
+                        var cfg = ConfigManager.ObtenerConfiguracion();
+                        cfg.TemaOscuro = _modoOscuro;
+                        ConfigManager.GuardarConfiguracion(cfg);
+                    }
+                    catch { }
+                }
+                finally
+                {
+                    // El aviso se quita cuando el nuevo tema ya terminó de dibujarse
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        overlayTema.Visibility = Visibility.Collapsed;
+                        Mouse.OverrideCursor = null;
+                        _cambiandoTema = false;
+                    }), System.Windows.Threading.DispatcherPriority.ContextIdle);
+                }
+            };
+            espera.Start();
         }
 
         private void AplicarTema()
@@ -493,7 +533,9 @@ namespace QueryAnalyzer
             var menu = pincel("BrushMenuBG");
             if (normal == null || hover == null || foco == null) return;
 
-            var r = Application.Current.Resources;
+            // Todos los recursos van en UN diccionario que se reemplaza de una sola vez: cada recurso suelto que se
+            // cambia en Application.Resources recorre el arbol completo (con 1500 tablas cargadas eran ~3 segundos).
+            var r = new ResourceDictionary();
             r["TextControlBackground"] = normal;
             r["TextControlBackgroundPointerOver"] = hover;
             r["TextControlBackgroundFocused"] = foco;
@@ -517,7 +559,18 @@ namespace QueryAnalyzer
                 r["TextControlBorderBrushPointerOver"] = bordeHover;
                 r["ComboBoxBorderBrushPointerOver"] = bordeHover;
                 r["ButtonBorderBrushPointerOver"] = bordeHover;
-            }        }
+            }
+
+            var fusionados = Application.Current.Resources.MergedDictionaries;
+            int pos = _fondosEntradas == null ? -1 : fusionados.IndexOf(_fondosEntradas);
+            if (pos >= 0) fusionados[pos] = r;
+            else fusionados.Add(r);   // ultimo = mayor prioridad que los recursos de ModernWpf
+            _fondosEntradas = r;
+        }
+
+        private ResourceDictionary _fondosEntradas;
+        private bool _acentoModernWpfAplicado;
+
         /// <summary>
         /// El resaltado SQL usa colores fijos pensados para fondo claro; en modo oscuro se cambian
         /// por una paleta legible sobre fondo oscuro.
@@ -6702,12 +6755,28 @@ namespace QueryAnalyzer
         }
 
         // -- Menus desplegables de botones ------------------------------------
+        // Un click fuera del menu lo cierra en el MouseDown y el Click del boton llega recien al soltar:
+        // sin este control el mismo click que lo cierra lo volveria a abrir (el menu nunca se "pliega").
+        private ContextMenu _menuCerrado;
+        private DateTime _menuCerradoEn;
+
+        private void MenuDeBoton_Closed(object sender, RoutedEventArgs e)
+        {
+            _menuCerrado = sender as ContextMenu;
+            _menuCerradoEn = DateTime.UtcNow;
+        }
+
         private void AbrirMenuDeBoton(Button btn)
         {
             if (btn == null || btn.ContextMenu == null) return;
-            btn.ContextMenu.PlacementTarget = btn;
-            btn.ContextMenu.Placement = PlacementMode.Bottom;
-            btn.ContextMenu.IsOpen = true;
+            var menu = btn.ContextMenu;
+            if (menu.IsOpen) { menu.IsOpen = false; return; }
+            if (ReferenceEquals(menu, _menuCerrado) && (DateTime.UtcNow - _menuCerradoEn).TotalMilliseconds < 400) return;
+            menu.Closed -= MenuDeBoton_Closed;
+            menu.Closed += MenuDeBoton_Closed;
+            menu.PlacementTarget = btn;
+            menu.Placement = PlacementMode.Bottom;
+            menu.IsOpen = true;
         }
 
         private void BtnHerramientas_Click(object sender, RoutedEventArgs e) { AbrirMenuDeBoton(sender as Button); }
