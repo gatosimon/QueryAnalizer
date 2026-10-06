@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.modernwpf.com/2019"
         Title="Transferencia de Datos entre Bases"
-        Width="1050" MinWidth="750" MinHeight="600"
+        Width="1280" Height="820" MinWidth="960" MinHeight="640"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BrushWindowBG}"
         Foreground="{DynamicResource BrushFG}"
@@ -17,12 +17,10 @@
                 <ResourceDictionary Source="Controles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-            <Style TargetType="TextBlock">
-            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid Margin="8">
+    <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>  <!-- Selectores A / B -->
             <RowDefinition Height="*"/>     <!-- Tablas + Opciones -->
@@ -51,11 +49,11 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Label Grid.Row="0" Grid.Column="0" Content="Motor:"/>
+                    <Label Grid.Row="0" Grid.Column="0" Content="Motor:" VerticalAlignment="Center"/>
                     <ComboBox x:Name="cmbMotorA" Grid.Row="0" Grid.Column="1" Margin="0,2"
                               SelectionChanged="cmbMotorA_SelectionChanged"/>
 
-                    <Label Grid.Row="1" Grid.Column="0" Content="Conexión:"/>
+                    <Label Grid.Row="1" Grid.Column="0" Content="Conexión:" VerticalAlignment="Center"/>
                     <ComboBox x:Name="cmbConexionA" Grid.Row="1" Grid.Column="1" Margin="0,2"/>
                 </Grid>
             </GroupBox>
@@ -77,11 +75,11 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Label Grid.Row="0" Grid.Column="0" Content="Motor:"/>
+                    <Label Grid.Row="0" Grid.Column="0" Content="Motor:" VerticalAlignment="Center"/>
                     <ComboBox x:Name="cmbMotorB" Grid.Row="0" Grid.Column="1" Margin="0,2"
                               SelectionChanged="cmbMotorB_SelectionChanged"/>
 
-                    <Label Grid.Row="1" Grid.Column="0" Content="Conexión:"/>
+                    <Label Grid.Row="1" Grid.Column="0" Content="Conexión:" VerticalAlignment="Center"/>
                     <ComboBox x:Name="cmbConexionB" Grid.Row="1" Grid.Column="1" Margin="0,2"/>
                 </Grid>
             </GroupBox>
@@ -91,7 +89,7 @@
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="260"/>
+                <ColumnDefinition Width="400"/>
             </Grid.ColumnDefinitions>
 
             <!-- Lista de tablas -->
@@ -103,18 +101,15 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <DockPanel Grid.Row="0" Margin="0,0,0,4">
-                        <Button DockPanel.Dock="Right" Content="Quitar selec."
-                                Padding="6,0" Height="22" FontSize="10"
+                    <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                        <Button DockPanel.Dock="Right" Content="Quitar seleccionadas"
                                 Click="btnQuitarSeleccionadas_Click"
                                 ToolTip="Quitar las tablas seleccionadas de la lista"/>
-                        <Button DockPanel.Dock="Right" Content="✓ Todas" Margin="0,0,4,0"
-                                Padding="6,0" Height="22" FontSize="10"
+                        <Button DockPanel.Dock="Right" Content="Todas" Margin="0,0,6,0"
                                 Click="btnMarcarTodas_Click"/>
-                        <Button DockPanel.Dock="Right" Content="Ninguna" Margin="0,0,4,0"
-                                Padding="6,0" Height="22" FontSize="10"
+                        <Button DockPanel.Dock="Right" Content="Ninguna" Margin="0,0,6,0"
                                 Click="btnDesmarcarTodas_Click"/>
-                        <TextBlock VerticalAlignment="Center" FontSize="10"
+                        <TextBlock VerticalAlignment="Center" FontSize="12"
                                    Foreground="{DynamicResource BrushFGMuted}"
                                    x:Name="txtContadorTablas" Text="0 tablas"/>
                     </DockPanel>
@@ -131,13 +126,14 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <DockPanel Grid.Row="2" Margin="0,4,0,0">
-                        <Button DockPanel.Dock="Right" Content="+" Width="26" Height="24"
-                                FontSize="14" Padding="0"
+                    <DockPanel Grid.Row="2" Margin="0,8,0,0">
+                        <Button DockPanel.Dock="Right" Width="34" Padding="0"
                                 Click="btnAgregarTablaManual_Click"
-                                ToolTip="Agregar tabla a la lista"/>
-                        <TextBox x:Name="txtAgregarTabla" Height="24" FontSize="10"
-                                 Margin="0,0,4,0"
+                                ToolTip="Agregar tabla a la lista">
+                            <Path Style="{StaticResource Ic}" Data="{StaticResource IconPlus}"/>
+                        </Button>
+                        <TextBox x:Name="txtAgregarTabla"
+                                 Margin="0,0,6,0"
                                  ToolTip="schema.tabla — presioná + para agregar"
                                  KeyDown="txtAgregarTabla_KeyDown"/>
                     </DockPanel>
@@ -145,9 +141,9 @@
             </GroupBox>
 
             <!-- Opciones + Advertencias FK -->
-            <StackPanel Grid.Column="1">
-                <GroupBox Header="Opciones" Margin="0,0,0,4">
-                    <StackPanel Margin="2">
+            <Grid Grid.Column="1"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                <GroupBox Header="Opciones" Margin="4,0,0,8">
+                    <StackPanel>
                         <CheckBox x:Name="chkBackup"
                                   Content="Generar backup de B antes de vaciar"
                                   IsChecked="True"/>
@@ -159,16 +155,16 @@
                                   IsChecked="False"
                                   Checked="chkSoloScript_Changed"
                                   Unchecked="chkSoloScript_Changed"/>
-                        <Separator Margin="0,6"/>
+                        <Rectangle Height="1" Margin="0,8" Fill="{DynamicResource BrushBorder}"/>
                         <Button x:Name="btnAnalizarFKs"
                                 Content="Analizar dependencias FK"
-                                Margin="0,2"
+                                HorizontalAlignment="Left"
                                 Click="btnAnalizarFKs_Click"
                                 ToolTip="Detecta el orden correcto de INSERT/DELETE y avisa sobre FKs cruzadas"/>
                     </StackPanel>
                 </GroupBox>
 
-                <GroupBox Header="Orden de tablas / Advertencias" MinHeight="100">
+                <GroupBox Grid.Row="1" Header="Orden de tablas / Advertencias" MinHeight="140" Margin="4,0,0,0">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <TextBox x:Name="txtAdvertencias"
                                  IsReadOnly="True"
@@ -176,11 +172,11 @@
                                  BorderThickness="0"
                                  Background="Transparent"
                                  Foreground="{DynamicResource BrushFG}"
-                                 FontSize="11"
+                                 FontSize="12"
                                  Text="Presioná 'Analizar FK' para ver el orden recomendado."/>
                     </ScrollViewer>
                 </GroupBox>
-            </StackPanel>
+            </Grid>
         </Grid>
 
         <!-- ══ ROW 2: SQL actual + Barra de progreso ═══════════════════════════════ -->
@@ -216,7 +212,7 @@
                        HorizontalAlignment="Right"
                        VerticalAlignment="Center"
                        Margin="8,0,0,0"
-                       FontSize="11"
+                       FontSize="12"
                        Foreground="{DynamicResource BrushFGMuted}"
                        Text=""/>
         </Grid>
@@ -231,23 +227,23 @@
                          BorderThickness="0"
                          Foreground="{DynamicResource BrushFG}"
                          FontFamily="Consolas"
-                         FontSize="11"
+                         FontSize="12"
                          Text=""/>
             </ScrollViewer>
         </GroupBox>
 
         <!-- ══ ROW 4: Botones ══════════════════════════════════════════════════════ -->
-        <DockPanel Grid.Row="4" LastChildFill="False">
+        <DockPanel Grid.Row="4" LastChildFill="False" Margin="0,4,0,0">
             <Button x:Name="btnEjecutar"
                     DockPanel.Dock="Left"
                     Content="Ejecutar transferencia"
-                    Width="180"
+                    MinWidth="180"
                     Click="btnEjecutar_Click"
                     ToolTip="Transfiere los datos de A hacia B con las opciones seleccionadas"/>
             <Button x:Name="btnVerScript"
                     DockPanel.Dock="Left"
                     Content="Ver script"
-                    Width="110"
+                    MinWidth="110"
                     Margin="8,0,0,0"
                     IsEnabled="False"
                     Click="btnVerScript_Click"
@@ -255,7 +251,7 @@
             <Button x:Name="btnGuardarUnArchivo"
                     DockPanel.Dock="Left"
                     Content="Guardar un archivo"
-                    Width="150"
+                    MinWidth="150"
                     Margin="8,0,0,0"
                     IsEnabled="False"
                     Click="btnGuardarUnArchivo_Click"
@@ -263,7 +259,7 @@
             <Button x:Name="btnGuardarPorTabla"
                     DockPanel.Dock="Left"
                     Content="Guardar por tabla"
-                    Width="150"
+                    MinWidth="150"
                     Margin="8,0,0,0"
                     IsEnabled="False"
                     Click="btnGuardarPorTabla_Click"
@@ -271,14 +267,14 @@
             <Button x:Name="btnVerBackup"
                     DockPanel.Dock="Left"
                     Content="Ver backup"
-                    Width="110"
+                    MinWidth="110"
                     Margin="8,0,0,0"
                     IsEnabled="False"
                     Click="btnVerBackup_Click"
                     ToolTip="Ver el script de backup del estado previo de B"/>
             <Button DockPanel.Dock="Right"
                     Content="Cerrar"
-                    Width="80"
+                    MinWidth="90"
                     Click="btnCerrar_Click"/>
         </DockPanel>
     </Grid>

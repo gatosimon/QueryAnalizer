@@ -19,17 +19,10 @@
                 <ResourceDictionary Source="Styles.xaml"/>
                 <ResourceDictionary Source="Controles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-
-            <Style TargetType="TextBlock">
-            </Style>
-
-            <Style TargetType="ScrollViewer">
-                <Setter Property="Background" Value="{DynamicResource BrushWindowBG}"/>
-            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid Margin="14">
+    <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>  <!-- encabezado -->
             <RowDefinition Height="*"/>     <!-- lista drivers -->

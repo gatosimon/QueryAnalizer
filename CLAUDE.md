@@ -110,6 +110,7 @@ Hay además brushes `Input*` y `ControlBorder(+Hover)` (fondos y bordes suaves d
 ### Mensajes, scrollbars y cambio de tema
 - **Mensajes:** usar siempre `MessageBox.Show(...)` tal cual (misma firma que WPF). Dentro del namespace `QueryAnalyzer` resuelve a `DialogoMensajeWindow.xaml(.cs)` (diálogo con el diseño y el tema de la app), no al cuadro clásico de Windows. **Nunca** `System.Windows.MessageBox` / `System.Windows.Forms.MessageBox` calificados. El actualizador tiene su propio `MessageBox` equivalente (`DialogoTema.cs`). Los diálogos del sistema (abrir/guardar archivo, carpeta) no se pueden reemplazar.
 - **ScrollBars:** hay un único estilo implícito global en `ScrollBars.xaml` (fino, sin flechas, pulgar redondeado con `BrushFGMuted`), cargado en `App.xaml` después de ModernWpf. No definir otros ni usar barras clásicas; si un control trae su propia barra (WinForms en el actualizador) se reemplaza por uno propio (`NotasControl`).
+- **Controles compartidos (`Controles.xaml`):** `CheckBox` y `RadioButton` tienen plantilla propia (caja de 18 px, texto centrado con la caja; no usar `Padding`/`MinHeight` para "alinearlos"), `GroupBox` es una tarjeta con título, `ListBox` lleva marco, y las grillas salen del estilo `DataGrid`/`DataGridCell`/`DataGridColumnHeader` de ese archivo (filas de 26 px, alternadas, encabezado `BrushHeaderBG`). **No** redefinir esos estilos en cada ventana: en la ventana solo van estilos de estado (p. ej. `DataGridRow` con `BasedOn="{StaticResource DefaultDataGridRowStyle}"`). En grillas: `ElementStyle="{StaticResource GridTexto}"` en las `DataGridTextColumn` (texto centrado verticalmente) y `ElementStyle="{StaticResource GridCheckBox}"` en las `DataGridCheckBoxColumn`; si un estilo local de `CheckBox` no lleva `BasedOn`, pierde el aspecto compartido. Listas con casillas: `DataGrid` con `DataGridTemplateColumn`, no `ListView`/`GridView`. Pestañas: `BottomTabControl` + `BottomTab` (`Styles.xaml`). Botones: tamaño estándar (sin `Height`/`FontSize`/`Padding` fijos) y `MinWidth` en vez de `Width`; íconos con `Path Style="{StaticResource Ic}"`, nunca emojis ni caracteres sueltos como íconos.
 - **Pestañas (`TabItem`):** los estilos son `Focusable=False`; `App.xaml.cs` registra un handler de clase que las selecciona con el click (WPF solo selecciona por foco). No quitarlo.
 - **Menús desplegables de botones:** abrirlos con `AbrirMenuDeBoton` (alterna abrir/cerrar; sin eso el click que lo cierra lo reabre).
 - **Cambio claro/oscuro:** cada recurso que se cambia por separado en `Application.Resources` recorre todo el árbol (~0,2 s con 1500 tablas). Agrupar los cambios de recursos en UN `ResourceDictionary` y reemplazarlo de una vez (ver `AplicarFondosEntradas`), y no tocar `ThemeManager.AccentColor` en cada alternancia. `BtnToggleTema_Click` muestra el aviso `overlayTema` antes del trabajo pesado.
@@ -213,7 +214,13 @@ Al crear un par `.xaml` + `.xaml.cs`:
 - Git de escritura **solo** al ejecutar el flujo "subí todo" (commit + push). Fuera de ese flujo, solo lectura (`git log`, `git status`, `git diff`); nada de branch, reset, rebase, tag, etc.
 
 ### Flujo "subí todo"
-1. Subir versión en `Properties/AssemblyInfo.cs` (`AssemblyVersion` y `AssemblyFileVersion`): +1 al último número con acarreo (1.1.3.0 → 1.1.3.1; 1.1.3.9 → 1.1.4.0).
+1. Poner la versión en `Properties/AssemblyInfo.cs` (`AssemblyVersion` y `AssemblyFileVersion`) con el esquema **`YY.M.d.N`** (desde la 26.10.6.0), un número por posición y sin ceros a la izquierda:
+   - `YY`: los dos últimos dígitos del año actual (2026 → `26`).
+   - `M`: el mes actual, 1 o 2 dígitos (octubre → `10`, marzo → `3`).
+   - `d`: el día actual, 1 o 2 dígitos (6 → `6`, 27 → `27`).
+   - `N`: el incremental del día, 0 a 99. Empieza en `0` con la primera publicación del día y sube de a 1 en cada publicación posterior del mismo día; al cambiar el día vuelve a `0`.
+   - Ejemplos: primera del 6/10/2026 → `26.10.6.0`; segunda del mismo día → `26.10.6.1`; primera del 7/10/2026 → `26.10.7.0`.
+   - Para saber el incremental, mirar la versión actual de `AssemblyInfo.cs`: si ya tiene la fecha de hoy, sumar 1 al último número; si no, usar `0`.
 2. Compilar Release (MSBuild, ver Stack). Si hay errores, cortar.
 3. `git add -A` → `git commit` (título `FIX:`/`FEAT:` + notas) → `git push`.
 4. Copiar `bin\Release\QueryAnalyzer.exe` a `C:\Users\ssnunez\Desktop\BORRADERO\QueryAnalyzerUpdates` (sobrescribe).

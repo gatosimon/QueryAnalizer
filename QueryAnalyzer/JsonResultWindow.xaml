@@ -21,12 +21,10 @@
 
 
 
-            <Style TargetType="TextBlock">
-            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid Margin="8">
+    <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -60,13 +58,13 @@
                        Foreground="{DynamicResource BrushFGMuted}"/>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Copiar al portapapeles" Padding="10,4"
+                <Button Content="Copiar al portapapeles"
                         Margin="0,0,8,0" Click="Copiar_Click"/>
-                <Button Content="Guardar archivo..." Padding="10,4"
+                <Button Content="Guardar archivo..."
                         Margin="0,0,8,0" Click="Guardar_Click"/>
-                <Button x:Name="btnGuardarTodos" Content="Guardar todos..." Padding="10,4"
+                <Button x:Name="btnGuardarTodos" Content="Guardar todos..."
                         Margin="0,0,8,0" Click="GuardarTodos_Click"/>
-                <Button Content="Cerrar" Padding="10,4"
+                <Button Content="Cerrar"
                         IsCancel="True" Click="Cerrar_Click"/>
             </StackPanel>
         </DockPanel>

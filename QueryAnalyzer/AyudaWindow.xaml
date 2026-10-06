@@ -539,6 +539,7 @@
                 <TextBlock Style="{StaticResource Titulo}" Text="Actualizaciones"/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• La versión instalada se muestra en la barra superior (esquina derecha)."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Las actualizaciones se verifican y aplican automáticamente al iniciar (si hay nueva versión disponible)."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Los números de versión indican la fecha de publicación: año.mes.día.número del día. Por ejemplo, 26.10.6.0 es la primera versión publicada el 6 de octubre de 2026 y 26.10.6.1 la segunda de ese mismo día."/>
 
                 <!-- Espaciado final -->
                 <Border Height="16"/>

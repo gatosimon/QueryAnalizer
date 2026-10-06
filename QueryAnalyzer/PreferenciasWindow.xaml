@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.modernwpf.com/2019"
         Title="Preferencias"
-        Width="620" Height="580"
-        MinWidth="520" MinHeight="460"
+        Width="700" Height="600"
+        MinWidth="620" MinHeight="480"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResizeWithGrip"
         Background="{DynamicResource BrushWindowBG}"
@@ -20,8 +20,6 @@
                 <ResourceDictionary Source="Controles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-            <Style TargetType="TextBlock">
-            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -31,13 +29,11 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TabControl Grid.Row="0"
-                    Background="{DynamicResource BrushWindowBG}"
-                    BorderBrush="{DynamicResource BrushBorder}">
+        <TabControl Grid.Row="0" Style="{StaticResource BottomTabControl}">
 
             <!-- ── Tab: General ─────────────────────────────────────────── -->
-            <TabItem Header="General">
-                <Grid Margin="8">
+            <TabItem Header="General" Style="{StaticResource BottomTab}">
+                <Grid Margin="8,12,8,8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -108,8 +104,8 @@
             </TabItem>
 
             <!-- ── Tab: Tema Claro ───────────────────────────────────────── -->
-            <TabItem Header="Tema Claro">
-                <Grid Margin="8">
+            <TabItem Header="Tema Claro" Style="{StaticResource BottomTab}">
+                <Grid Margin="8,12,8,8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
@@ -177,8 +173,8 @@
             </TabItem>
 
             <!-- ── Tab: Tema Oscuro ──────────────────────────────────────── -->
-            <TabItem Header="Tema Oscuro">
-                <Grid Margin="8">
+            <TabItem Header="Tema Oscuro" Style="{StaticResource BottomTab}">
+                <Grid Margin="8,12,8,8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>

@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.modernwpf.com/2019"
         Title="Configurar tabla"
-        Width="480" SizeToContent="Height"
+        Width="560" SizeToContent="Height"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BrushWindowBG}"
@@ -17,13 +17,11 @@
                 <ResourceDictionary Source="Styles.xaml"/>
                 <ResourceDictionary Source="Controles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-            <Style TargetType="TextBlock">
-            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
-    <StackPanel Margin="14">
-        <TextBlock x:Name="lblTitulo" FontWeight="Bold" FontSize="13" Margin="0,0,0,10"/>
+    <StackPanel Margin="24,20,24,20">
+        <TextBlock x:Name="lblTitulo" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,14"/>
 
         <!-- Condiciones de baja -->
         <TextBlock Text="Condición de baja:" Margin="0,0,0,3"
@@ -37,46 +35,43 @@
                 <ColumnDefinition Width="70"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="Campo"      FontSize="10" Foreground="{DynamicResource BrushFGMuted}"/>
-            <TextBlock Grid.Column="1" Text="Operador"   FontSize="10" Foreground="{DynamicResource BrushFGMuted}"/>
-            <TextBlock Grid.Column="2" Text="Valor"      FontSize="10" Foreground="{DynamicResource BrushFGMuted}"/>
-            <TextBlock Grid.Column="3" Text="Val.cascada" FontSize="10" Foreground="{DynamicResource BrushFGMuted}"/>
+            <TextBlock Grid.Column="0" Text="Campo"      FontSize="11" Foreground="{DynamicResource BrushFGMuted}"/>
+            <TextBlock Grid.Column="1" Text="Operador"   FontSize="11" Foreground="{DynamicResource BrushFGMuted}"/>
+            <TextBlock Grid.Column="2" Text="Valor"      FontSize="11" Foreground="{DynamicResource BrushFGMuted}"/>
+            <TextBlock Grid.Column="3" Text="Val.cascada" FontSize="11" Foreground="{DynamicResource BrushFGMuted}"/>
         </Grid>
         <ScrollViewer MaxHeight="160" VerticalScrollBarVisibility="Auto" Margin="0,0,0,2">
             <StackPanel x:Name="spCondiciones"/>
         </ScrollViewer>
         <Button Content="Agregar condición" HorizontalAlignment="Left"
-                Height="24" Padding="6,0" Margin="0,0,0,8"
+                Margin="0,6,0,12"
                 Click="btnAgregarCond_Click"/>
 
         <!-- PK y opciones -->
-        <Grid Margin="0,0,0,6">
+        <Grid Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="110"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Label Grid.Column="0" Content="Campos PK:" VerticalAlignment="Center"/>
             <DockPanel Grid.Column="1">
-                <ComboBox x:Name="cbPK" DockPanel.Dock="Left" Width="120"
+                <ComboBox x:Name="cbPK" DockPanel.Dock="Left" Width="150"
                           ToolTip="Elegí una columna y presioná + para agregarla a la PK"/>
-                <Button x:Name="btnAgregarPK" DockPanel.Dock="Left" Content="+" Width="26"
-                        Margin="2,0,4,0" Click="btnAgregarPK_Click"
-                        ToolTip="Agregar la columna seleccionada a la clave primaria"/>
+                <Button x:Name="btnAgregarPK" DockPanel.Dock="Left" Width="34" Padding="0"
+                        Margin="6,0,8,0" Click="btnAgregarPK_Click"
+                        ToolTip="Agregar la columna seleccionada a la clave primaria"><Path Style="{StaticResource Ic}" Data="{StaticResource IconPlus}"/></Button>
                 <TextBox x:Name="txtPK" VerticalContentAlignment="Center"
-                         Background="{DynamicResource BrushControlBG}"
-                         Foreground="{DynamicResource BrushFG}"
-                         BorderBrush="{DynamicResource BrushBorder}"
                          ToolTip="Columnas de la PK separadas por coma, en orden. Compuesta: 'Sucursal, Numero'"/>
             </DockPanel>
         </Grid>
 
-        <CheckBox x:Name="chkReordenar" Content="Reordenar IDs" Margin="0,0,0,4"
+        <CheckBox x:Name="chkReordenar" Content="Reordenar IDs" Margin="0,0,0,2"
                   ToolTip="Compactar los IDs de esta tabla eliminando huecos"/>
         <CheckBox x:Name="chkIncluir"   Content="Incluir en la operación" Margin="0,0,0,0"/>
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
-            <Button Content="Aceptar" Margin="0,0,6,0" IsDefault="True" Click="btnAceptar_Click"/>
-            <Button Content="Cancelar" IsCancel="True" Click="btnCancelar_Click"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="Aceptar" MinWidth="90" Margin="0,0,8,0" IsDefault="True" Click="btnAceptar_Click"/>
+            <Button Content="Cancelar" MinWidth="90" IsCancel="True" Click="btnCancelar_Click"/>
         </StackPanel>
     </StackPanel>
 </Window>

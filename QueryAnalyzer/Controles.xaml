@@ -22,11 +22,131 @@
         <Setter Property="HorizontalAlignment" Value="Stretch"/>
     </Style>
 
-    <!-- Los CheckBox de ModernWpf miden 120 px como minimo; en el arbol del explorador no hace falta -->
+    <!-- CheckBox y RadioButton propios: misma caja de 18 px en toda la aplicacion y texto siempre centrado con la caja
+         (en los de ModernWpf el texto queda mas arriba cuando se les saca el relleno superior) -->
     <Style TargetType="CheckBox" BasedOn="{StaticResource DefaultCheckBoxStyle}">
         <Setter Property="MinWidth"  Value="0"/>
-        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="MinHeight" Value="26"/>
         <Setter Property="Padding"   Value="8,0,0,0"/>
+        <Setter Property="VerticalContentAlignment"   Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <Grid x:Name="Raiz" Background="Transparent" SnapsToDevicePixels="True">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border x:Name="Caja" Width="18" Height="18" CornerRadius="5" BorderThickness="1.2"
+                                VerticalAlignment="Center"
+                                Background="{DynamicResource BrushInputBG}" BorderBrush="{DynamicResource BrushFGMuted}">
+                            <Grid>
+                                <Path x:Name="Marca" Width="16" Height="16" Stretch="None" Visibility="Collapsed"
+                                      Data="M3.6,8.4 L6.9,11.7 L12.4,4.9"
+                                      Stroke="{DynamicResource BrushAccentFG}" StrokeThickness="1.9"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
+                                <Rectangle x:Name="Guion" Width="8" Height="2" RadiusX="1" RadiusY="1" Visibility="Collapsed"
+                                           Fill="{DynamicResource BrushAccentFG}"/>
+                            </Grid>
+                        </Border>
+                        <ContentPresenter x:Name="Contenido" Grid.Column="1" Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          RecognizesAccessKey="True"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="HasContent" Value="False">
+                            <Setter TargetName="Contenido" Property="Margin" Value="0"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Caja" Property="BorderBrush" Value="{DynamicResource BrushFG}"/>
+                            <Setter TargetName="Caja" Property="Background" Value="{DynamicResource BrushInputHoverBG}"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Caja" Property="Background" Value="{DynamicResource BrushAccent}"/>
+                            <Setter TargetName="Caja" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
+                            <Setter TargetName="Marca" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="{x:Null}">
+                            <Setter TargetName="Caja" Property="Background" Value="{DynamicResource BrushAccent}"/>
+                            <Setter TargetName="Caja" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
+                            <Setter TargetName="Guion" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="IsChecked" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Caja" Property="Opacity" Value="0.88"/>
+                        </MultiTrigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Caja" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
+                            <Setter TargetName="Caja" Property="BorderThickness" Value="2"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Raiz" Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- CheckBox dentro de las celdas de una grilla (DataGridCheckBoxColumn.ElementStyle): centrado y sin alto minimo -->
+    <Style x:Key="GridCheckBox" TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment"   Value="Center"/>
+        <Setter Property="MinHeight"           Value="0"/>
+    </Style>
+
+    <!-- Texto de las celdas de una grilla (DataGridTextColumn.ElementStyle): centrado verticalmente con el resto de la fila -->
+    <Style x:Key="GridTexto" TargetType="TextBlock">
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="TextTrimming"      Value="CharacterEllipsis"/>
+    </Style>
+
+    <!-- Tarjeta con titulo: reemplaza al GroupBox de ModernWpf (titulo grande y sin marco) -->
+    <Style TargetType="GroupBox">
+        <Setter Property="Foreground" Value="{DynamicResource BrushFG}"/>
+        <Setter Property="Padding"    Value="12,10"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="GroupBox">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <ContentPresenter ContentSource="Header" Margin="2,0,0,6" RecognizesAccessKey="True"
+                                          TextElement.FontSize="13" TextElement.FontWeight="SemiBold"
+                                          TextElement.Foreground="{DynamicResource BrushFG}"/>
+                        <Border Grid.Row="1" CornerRadius="8" BorderThickness="1"
+                                BorderBrush="{DynamicResource BrushBorder}"
+                                Background="{DynamicResource BrushPanelBG}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Listas: marco y fondo como los demas campos -->
+    <Style TargetType="ListBox" BasedOn="{StaticResource DefaultListBoxStyle}">
+        <Setter Property="Background"      Value="{DynamicResource BrushInputBG}"/>
+        <Setter Property="BorderBrush"     Value="{DynamicResource BrushControlBorder}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding"         Value="2"/>
+    </Style>
+
+    <!-- Items de lista compactos (ModernWpf los hace de 40 px) -->
+    <Style TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}">
+        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="Padding"   Value="8,2"/>
     </Style>
 
     <Style TargetType="GridSplitter">
@@ -132,6 +252,22 @@
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Foreground"      Value="{DynamicResource BrushFG}"/>
         <Setter Property="Padding"         Value="10,0"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <!-- Plantilla propia: la de WPF ignora el Padding y el texto quedaba pegado al borde izquierdo -->
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridCell">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}" SnapsToDevicePixels="True">
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
         <Style.Triggers>
             <Trigger Property="IsSelected" Value="True">
                 <Setter Property="Background"  Value="{DynamicResource BrushSelected}"/>
@@ -146,7 +282,7 @@
         <Setter Property="FontWeight"                 Value="SemiBold"/>
         <Setter Property="BorderBrush"                Value="{DynamicResource BrushSplitter}"/>
         <Setter Property="BorderThickness"            Value="0,0,1,1"/>
-        <Setter Property="Padding"                    Value="8,6"/>
+        <Setter Property="Padding"                    Value="10,6"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
     </Style>
     <Style TargetType="DataGridRowHeader">
@@ -156,8 +292,55 @@
 
     <Style TargetType="RadioButton" BasedOn="{StaticResource DefaultRadioButtonStyle}">
         <Setter Property="MinWidth"  Value="0"/>
-        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="MinHeight" Value="26"/>
         <Setter Property="Padding"   Value="8,0,0,0"/>
+        <Setter Property="VerticalContentAlignment"   Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Grid x:Name="Raiz" Background="Transparent" SnapsToDevicePixels="True">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid VerticalAlignment="Center" Width="18" Height="18">
+                            <Ellipse x:Name="Aro" StrokeThickness="1.2" Stroke="{DynamicResource BrushFGMuted}"
+                                     Fill="{DynamicResource BrushInputBG}"/>
+                            <Ellipse x:Name="Punto" Width="8" Height="8" Visibility="Collapsed"
+                                     Fill="{DynamicResource BrushAccentFG}"/>
+                        </Grid>
+                        <ContentPresenter x:Name="Contenido" Grid.Column="1" Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          RecognizesAccessKey="True"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="HasContent" Value="False">
+                            <Setter TargetName="Contenido" Property="Margin" Value="0"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Aro" Property="Stroke" Value="{DynamicResource BrushFG}"/>
+                            <Setter TargetName="Aro" Property="Fill" Value="{DynamicResource BrushInputHoverBG}"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Aro" Property="Fill" Value="{DynamicResource BrushAccent}"/>
+                            <Setter TargetName="Aro" Property="Stroke" Value="{DynamicResource BrushAccent}"/>
+                            <Setter TargetName="Punto" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Aro" Property="Stroke" Value="{DynamicResource BrushAccent}"/>
+                            <Setter TargetName="Aro" Property="StrokeThickness" Value="2"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Raiz" Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- Label no hereda el Foreground de la ventana: se lo damos desde la paleta -->

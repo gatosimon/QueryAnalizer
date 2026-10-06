@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.modernwpf.com/2019"
         Title="Limpiador de BD"
-        Width="1100" MinWidth="800" MinHeight="600"
+        Width="1440" Height="880" MinWidth="1000" MinHeight="680"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BrushWindowBG}"
         Foreground="{DynamicResource BrushFG}"
@@ -18,21 +18,7 @@
                 <ResourceDictionary Source="Controles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-            <Style TargetType="TextBlock">
-            </Style>
-            <Style TargetType="DataGrid">
-                <Setter Property="Background"            Value="{DynamicResource BrushControlBG}"/>
-                <Setter Property="Foreground"            Value="{DynamicResource BrushFG}"/>
-                <Setter Property="BorderBrush"           Value="{DynamicResource BrushBorder}"/>
-                <Setter Property="RowBackground"         Value="{DynamicResource BrushControlBG}"/>
-                <Setter Property="AlternatingRowBackground" Value="{DynamicResource BrushAltRowBG}"/>
-                <Setter Property="GridLinesVisibility"   Value="Horizontal"/>
-                <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource BrushBorder}"/>
-                <Setter Property="AutoGenerateColumns"   Value="False"/>
-                <Setter Property="CanUserAddRows"        Value="False"/>
-                <Setter Property="IsReadOnly"            Value="True"/>
-                <Setter Property="SelectionMode"         Value="Single"/>
-            </Style>
+            <Style TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}"/>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -45,13 +31,13 @@
         <!-- Contenido principal -->
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="380" MinWidth="260"/>
+                <ColumnDefinition Width="500" MinWidth="360"/>
                 <ColumnDefinition Width="5"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
             <!-- ═══════════════ PANEL IZQUIERDO ═══════════════ -->
-            <DockPanel Grid.Column="0" Margin="8,8,0,8">
+            <DockPanel Grid.Column="0" Margin="12,12,4,12">
 
                 <!-- Config global -->
                 <GroupBox DockPanel.Dock="Top" Header="Configuración global">
@@ -107,27 +93,24 @@
                                 <ColumnDefinition Width="70"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Campo" FontSize="10" Foreground="{DynamicResource BrushFGMuted}"/>
-                            <TextBlock Grid.Column="1" Text="Operador" FontSize="10" Foreground="{DynamicResource BrushFGMuted}"/>
-                            <TextBlock Grid.Column="2" Text="Valor" FontSize="10" Foreground="{DynamicResource BrushFGMuted}"/>
-                            <TextBlock Grid.Column="3" Text="Val.cascada" FontSize="10" Foreground="{DynamicResource BrushFGMuted}"/>
+                            <TextBlock Grid.Column="0" Text="Campo" FontSize="11" Foreground="{DynamicResource BrushFGMuted}"/>
+                            <TextBlock Grid.Column="1" Text="Operador" FontSize="11" Foreground="{DynamicResource BrushFGMuted}"/>
+                            <TextBlock Grid.Column="2" Text="Valor" FontSize="11" Foreground="{DynamicResource BrushFGMuted}"/>
+                            <TextBlock Grid.Column="3" Text="Val.cascada" FontSize="11" Foreground="{DynamicResource BrushFGMuted}"/>
                         </Grid>
                         <ScrollViewer MaxHeight="120" VerticalScrollBarVisibility="Auto">
                             <StackPanel x:Name="spCondicionesGlobal"/>
                         </ScrollViewer>
                         <Button Content="Agregar condición" HorizontalAlignment="Left"
-                                Margin="0,4,0,4" Height="24" Padding="8,0"
+                                Margin="0,6,0,6"
                                 Click="btnAgregarCondGlobal_Click"
                                 ToolTip="Agregar una condición de baja al grupo global"/>
                         <DockPanel Margin="0,0,0,0">
                             <TextBlock DockPanel.Dock="Left" Text="Unir con:" VerticalAlignment="Center"
-                                       FontSize="10" Margin="0,0,4,0"
+                                       FontSize="12" Margin="0,0,8,0"
                                        Foreground="{DynamicResource BrushFGMuted}"/>
-                            <ComboBox x:Name="cbCombinadorDetectar" DockPanel.Dock="Left" Width="60"
-                                      Margin="0,0,6,0" SelectedIndex="0"
-                                      Background="{DynamicResource BrushControlBG}"
-                                      Foreground="{DynamicResource BrushFG}"
-                                      BorderBrush="{DynamicResource BrushBorder}"
+                            <ComboBox x:Name="cbCombinadorDetectar" DockPanel.Dock="Left" Width="84"
+                                      Margin="0,0,8,0" SelectedIndex="0"
                                       ToolTip="Cómo se unen entre sí las condiciones detectadas cuando la tabla tiene más de un campo de baja (ej: BajaUsuario y BajaFecha)">
                                 <ComboBoxItem Content="AND"/>
                                 <ComboBoxItem Content="OR"/>
@@ -141,46 +124,46 @@
                 </GroupBox>
 
                 <!-- Filtro por esquema -->
-                <DockPanel DockPanel.Dock="Top" Margin="0,6,0,0">
+                <DockPanel DockPanel.Dock="Top" Margin="0,10,0,0">
                     <Label Content="Esquema:" DockPanel.Dock="Left" VerticalAlignment="Center"/>
-                    <ComboBox x:Name="cbEsquema" DockPanel.Dock="Left"
+                    <ComboBox x:Name="cbEsquema"
                               ToolTip="Define el alcance de TODA la operación: detección, aplicación de condiciones, análisis y script sólo tocan el esquema elegido"
                               SelectionChanged="cbEsquema_SelectionChanged"/>
                 </DockPanel>
-                <TextBlock x:Name="txtAlcance" DockPanel.Dock="Top" Margin="0,2,0,2"
-                           FontSize="10" Foreground="{DynamicResource BrushFGMuted}"
+                <TextBlock x:Name="txtAlcance" DockPanel.Dock="Top" Margin="0,4,0,4"
+                           FontSize="11" Foreground="{DynamicResource BrushFGMuted}"
                            Text="Alcance: (Todos) — 0 tabla(s), 0 incluida(s)"/>
 
                 <!-- Botones de tabla -->
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,2,0,2">
-                    <Button Content="Todas" Margin="0,0,4,0" Width="75" Click="btnSelTodas_Click"/>
-                    <Button Content="Ninguna" Margin="0,0,4,0" Width="75" Click="btnSelNinguna_Click"/>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,4,0,8">
+                    <Button Content="Todas" Margin="0,0,6,0" MinWidth="80" Click="btnSelTodas_Click"/>
+                    <Button Content="Ninguna" Margin="0,0,6,0" MinWidth="80" Click="btnSelNinguna_Click"/>
                     <Button Content="Aplicar a seleccionadas" Margin="0,0,0,0" Click="btnAplicarSeleccionadas_Click"
                             ToolTip="Aplica el campo/valor de baja global a las tablas seleccionadas en la lista"/>
                 </StackPanel>
 
                 <!-- Lista de tablas -->
-                <ListView x:Name="lvTablas" SelectionMode="Extended"
-                          Background="{DynamicResource BrushControlBG}"
-                          Foreground="{DynamicResource BrushFG}"
-                          BorderBrush="{DynamicResource BrushBorder}"
+                <DataGrid x:Name="lvTablas" SelectionMode="Extended" SelectionUnit="FullRow"
+                          AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                          IsReadOnly="True" HeadersVisibility="Column" RowHeaderWidth="0"
+                          CanUserResizeRows="False"
+                          BorderThickness="1" BorderBrush="{DynamicResource BrushBorder}"
                           MouseDoubleClick="lvTablas_MouseDoubleClick">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Width="28">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <CheckBox IsChecked="{Binding Incluir, Mode=TwoWay}"
-                                                  Checked="chkIncluir_Changed" Unchecked="chkIncluir_Changed"/>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="Tabla"    Width="120" DisplayMemberBinding="{Binding NombreCompleto}"/>
-                            <GridViewColumn Header="Condición" Width="160" DisplayMemberBinding="{Binding ResumenCondiciones}"/>
-                            <GridViewColumn Header="PK"       Width="110" DisplayMemberBinding="{Binding ResumenPK}"/>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="44" CanUserResize="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding Incluir, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center" MinHeight="0"
+                                              Checked="chkIncluir_Changed" Unchecked="chkIncluir_Changed"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Tabla"     Width="2*" MinWidth="120" Binding="{Binding NombreCompleto}"/>
+                        <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Condición" Width="2*" MinWidth="110" Binding="{Binding ResumenCondiciones}"/>
+                        <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="PK"        Width="*"  MinWidth="70"  Binding="{Binding ResumenPK}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
             </DockPanel>
 
             <GridSplitter Grid.Column="1" Width="5"
@@ -188,27 +171,27 @@
                           Background="{DynamicResource BrushSplitter}"/>
 
             <!-- ═══════════════ PANEL DERECHO ═══════════════ -->
-            <DockPanel Grid.Column="2" Margin="0,8,8,8">
-                <TabControl x:Name="tabResultado" DockPanel.Dock="Top" Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=DockPanel}}">
+            <DockPanel Grid.Column="2" Margin="4,12,12,12">
+                <TabControl x:Name="tabResultado" Style="{StaticResource BottomTabControl}" DockPanel.Dock="Top" Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=DockPanel}}">
 
                     <!-- Tab Análisis -->
-                    <TabItem x:Name="tabAnalisis" Header="Análisis">
+                    <TabItem x:Name="tabAnalisis" Style="{StaticResource BottomTab}" Header="Análisis">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <DataGrid x:Name="dgAnalisis" Grid.Row="0">
+                            <DataGrid x:Name="dgAnalisis" Grid.Row="0" IsReadOnly="True" AutoGenerateColumns="False" CanUserAddRows="False" HeadersVisibility="Column" RowHeaderWidth="0">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Tabla" Binding="{Binding NombreCompleto}" Width="180"/>
-                                    <DataGridTextColumn Header="En baja" Binding="{Binding RegistrosBaja}" Width="70"/>
-                                    <DataGridTextColumn Header="Activos" Binding="{Binding RegistrosActivos}" Width="70"/>
-                                    <DataGridTextColumn Header="Cascada (≥)" Binding="{Binding CascadaEstimada}" Width="80"/>
-                                    <DataGridTextColumn Header="Retenidas" Binding="{Binding RetenidasPorExterno}" Width="70"/>
-                                    <DataGridTextColumn Header="Huérfanos" Binding="{Binding Huerfanos}" Width="75"/>
-                                    <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="140"/>
-                                    <DataGridTextColumn Header="Detalle" Binding="{Binding ConflictosTexto}" Width="*"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Tabla" Binding="{Binding NombreCompleto}" Width="180"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="En baja" Binding="{Binding RegistrosBaja}" Width="85"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Activos" Binding="{Binding RegistrosActivos}" Width="85"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Cascada (≥)" Binding="{Binding CascadaEstimada}" Width="105"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Retenidas" Binding="{Binding RetenidasPorExterno}" Width="95"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Huérfanos" Binding="{Binding Huerfanos}" Width="100"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Estado" Binding="{Binding Estado}" Width="190"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Detalle" Binding="{Binding ConflictosTexto}" Width="*"/>
                                 </DataGrid.Columns>
                                 <DataGrid.RowStyle>
                                     <Style TargetType="DataGridRow">
@@ -233,7 +216,7 @@
 
                             <Border Grid.Row="1" Background="{DynamicResource BrushPanelBG}"
                                     BorderBrush="{DynamicResource BrushBorder}" BorderThickness="0,1,0,0"
-                                    Padding="6,4" MinHeight="40">
+                                    Padding="10,8" MinHeight="44">
                                 <TextBlock x:Name="txtAdvertencias" TextWrapping="Wrap"
                                            Foreground="{DynamicResource BrushFGMuted}" FontSize="11"/>
                             </Border>
@@ -241,7 +224,7 @@
                     </TabItem>
 
                     <!-- Tab Relaciones truncadas -->
-                    <TabItem x:Name="tabTruncadas" Header="Relaciones truncadas">
+                    <TabItem x:Name="tabTruncadas" Style="{StaticResource BottomTab}" Header="Relaciones truncadas">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*"/>
@@ -249,14 +232,14 @@
                             </Grid.RowDefinitions>
 
                             <DataGrid x:Name="dgTruncadas" Grid.Row="0" IsReadOnly="True"
-                                      AutoGenerateColumns="False">
+                                      AutoGenerateColumns="False" CanUserAddRows="False" HeadersVisibility="Column" RowHeaderWidth="0">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Tabla hija"  Binding="{Binding TablaHija}"  Width="170"/>
-                                    <DataGridTextColumn Header="Columnas"    Binding="{Binding Columnas}"   Width="160"/>
-                                    <DataGridTextColumn Header="Tabla padre" Binding="{Binding TablaPadre}" Width="170"/>
-                                    <DataGridTextColumn Header="Filas rotas" Binding="{Binding FilasRotas}" Width="80"/>
-                                    <DataGridTextColumn Header="Valores huérfanos" Binding="{Binding Ejemplos}" Width="150"/>
-                                    <DataGridTextColumn Header="Alcance"     Binding="{Binding Alcance}"    Width="*"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Tabla hija"  Binding="{Binding TablaHija}"  Width="170"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Columnas"    Binding="{Binding Columnas}"   Width="160"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Tabla padre" Binding="{Binding TablaPadre}" Width="170"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Filas rotas" Binding="{Binding FilasRotas}" Width="100"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Valores huérfanos" Binding="{Binding Ejemplos}" Width="150"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Alcance"     Binding="{Binding Alcance}"    Width="*"/>
                                 </DataGrid.Columns>
                                 <DataGrid.RowStyle>
                                     <Style TargetType="DataGridRow">
@@ -272,7 +255,7 @@
 
                             <Border Grid.Row="1" Background="{DynamicResource BrushPanelBG}"
                                     BorderBrush="{DynamicResource BrushBorder}" BorderThickness="0,1,0,0"
-                                    Padding="6,4" MinHeight="40">
+                                    Padding="10,8" MinHeight="44">
                                 <TextBlock x:Name="txtSinTruncadas" TextWrapping="Wrap"
                                            Foreground="{DynamicResource BrushFGMuted}" FontSize="11"
                                            Text="Sin relaciones truncadas. Tildá 'Depurar relaciones truncadas' en la configuración global y volvé a analizar para que este informe se llene."/>
@@ -280,7 +263,7 @@
                         </Grid>
                     </TabItem>
 
-                    <TabItem x:Name="tabRetenciones" Header="Retenciones">
+                    <TabItem x:Name="tabRetenciones" Style="{StaticResource BottomTab}" Header="Retenciones">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*"/>
@@ -288,15 +271,15 @@
                             </Grid.RowDefinitions>
 
                             <DataGrid x:Name="dgRetenciones" Grid.Row="0" IsReadOnly="True"
-                                      AutoGenerateColumns="False"
+                                      AutoGenerateColumns="False" CanUserAddRows="False" HeadersVisibility="Column" RowHeaderWidth="0"
                                       MouseDoubleClick="dgRetenciones_MouseDoubleClick">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="No se puede borrar de" Binding="{Binding TablaRetenida}"   Width="170"/>
-                                    <DataGridTextColumn Header="Filas"                 Binding="{Binding FilasRetenidas}"  Width="60"/>
-                                    <DataGridTextColumn Header="La retiene"            Binding="{Binding TablaQueRetiene}" Width="170"/>
-                                    <DataGridTextColumn Header="Columnas"              Binding="{Binding Columnas}"        Width="150"/>
-                                    <DataGridTextColumn Header="Motivo"                Binding="{Binding Motivo}"          Width="120"/>
-                                    <DataGridTextColumn Header="Qué hacer"             Binding="{Binding QueHacer}"        Width="*"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="No se puede borrar de" Binding="{Binding TablaRetenida}"   Width="170"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Filas"                 Binding="{Binding FilasRetenidas}"  Width="70"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="La retiene"            Binding="{Binding TablaQueRetiene}" Width="170"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Columnas"              Binding="{Binding Columnas}"        Width="150"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Motivo"                Binding="{Binding Motivo}"          Width="120"/>
+                                    <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Qué hacer"             Binding="{Binding QueHacer}"        Width="*"/>
                                 </DataGrid.Columns>
                                 <DataGrid.RowStyle>
                                     <Style TargetType="DataGridRow">
@@ -315,17 +298,17 @@
 
                             <Border Grid.Row="1" Background="{DynamicResource BrushPanelBG}"
                                     BorderBrush="{DynamicResource BrushBorder}" BorderThickness="0,1,0,0"
-                                    Padding="6,4" MinHeight="40">
+                                    Padding="10,8" MinHeight="44">
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                                         <!-- ShowOnDisabled: sin esto WPF oculta el tooltip justo cuando
                                              el botón está apagado, que es cuando hace falta explicar. -->
                                         <Button x:Name="btnIncluirRetenedoras" Content="Incluir las tablas que retienen"
-                                                Click="btnIncluirRetenedoras_Click" Padding="8,3" Margin="0,0,6,0"
+                                                Click="btnIncluirRetenedoras_Click" Margin="0,0,6,0"
                                                 ToolTipService.ShowOnDisabled="True"
                                                 ToolTip="Tilda las tablas de las filas 'Cadena incompleta' y les detecta los campos de baja. Cada tabla sigue borrando sólo sus propias bajas: no se arrastra nada. Después volvé a analizar."/>
                                         <Button x:Name="btnVerQueRetiene" Content="Ver qué la retiene"
-                                                Click="btnVerQueRetiene_Click" Padding="8,3"
+                                                Click="btnVerQueRetiene_Click"
                                                 ToolTip="Abre en la pestaña 'Script SQL' la consulta que devuelve las filas que están reteniendo, para poder mirarlas antes de decidir."/>
                                     </StackPanel>
                                     <TextBlock x:Name="txtSinRetenciones" TextWrapping="Wrap"
@@ -337,14 +320,14 @@
                     </TabItem>
 
                     <!-- Tab Script -->
-                    <TabItem x:Name="tabScript" Header="Script SQL">
+                    <TabItem x:Name="tabScript" Style="{StaticResource BottomTab}" Header="Script SQL">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
-                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,4,0,4">
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,8,0,8">
                                 <Button Content="Copiar al portapapeles" Margin="0,0,6,0"
                                         Click="btnCopiar_Click"/>
                                 <TextBlock x:Name="txtMensajeCopia" VerticalAlignment="Center"
@@ -364,7 +347,7 @@
                     </TabItem>
 
                     <!-- Tab Progreso -->
-                    <TabItem x:Name="tabProgreso" Header="Ejecución" Visibility="Collapsed">
+                    <TabItem x:Name="tabProgreso" Style="{StaticResource BottomTab}" Header="Ejecución" Visibility="Collapsed">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -392,7 +375,7 @@
 
         <!-- ═══════════════ BARRA INFERIOR ═══════════════ -->
         <Border Grid.Row="1" BorderBrush="{DynamicResource BrushBorder}" BorderThickness="0,1,0,0"
-                Background="{DynamicResource BrushPanelBG}" Padding="8,6">
+                Background="{DynamicResource BrushPanelBG}" Padding="12,8">
             <DockPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
                     <Button x:Name="btnAnalizar" Content="Analizar" Margin="0,0,6,0"

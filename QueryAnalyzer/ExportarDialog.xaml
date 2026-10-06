@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.modernwpf.com/2019"
         Title="Generar resultados"
-        Width="340" SizeToContent="Height"
+        Width="480" SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="{DynamicResource BrushWindowBG}"
@@ -24,7 +24,7 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <StackPanel Margin="20,16,20,16">
+    <StackPanel Margin="24,20,24,20">
 
         <!-- Título sección formato -->
         <TextBlock Text="Formato de exportación"
@@ -43,7 +43,7 @@
                     <StackPanel>
                         <TextBlock Text="Excel (.xlsx)"    FontWeight="SemiBold" FontSize="13"/>
                         <TextBlock Text="Una hoja por resultado, con formato y colores"
-                                   FontSize="10" Opacity="0.65"/>
+                                   FontSize="11" Foreground="{DynamicResource BrushFGMuted}"/>
                     </StackPanel>
                 </StackPanel>
             </RadioButton>
@@ -60,7 +60,7 @@
                     <StackPanel>
                         <TextBlock Text="CSV (.csv)"      FontWeight="SemiBold" FontSize="13"/>
                         <TextBlock Text="Separado por punto y coma, compatible con Excel"
-                                   FontSize="10" Opacity="0.65"/>
+                                   FontSize="11" Foreground="{DynamicResource BrushFGMuted}"/>
                     </StackPanel>
                 </StackPanel>
             </RadioButton>
@@ -73,11 +73,11 @@
                 Margin="0,0,0,6" Padding="10,8">
             <RadioButton x:Name="rbJson" GroupName="Formato" Checked="rbJson_Checked">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="{}{ }" FontSize="16" FontFamily="Consolas" FontWeight="Bold" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="{}{ }" Width="20" TextWrapping="NoWrap" TextAlignment="Center" FontSize="12" FontFamily="Consolas" FontWeight="Bold" Margin="0,0,10,0" VerticalAlignment="Center"/>
                     <StackPanel>
                         <TextBlock Text="JSON (.json)"     FontWeight="SemiBold" FontSize="13"/>
                         <TextBlock Text="Array de objetos, una entrada por fila del resultado activo"
-                                   FontSize="10" Opacity="0.65"/>
+                                   FontSize="11" Foreground="{DynamicResource BrushFGMuted}"/>
                     </StackPanel>
                 </StackPanel>
             </RadioButton>
@@ -94,7 +94,7 @@
                     <StackPanel>
                         <TextBlock Text="SQL Script (INSERT)"  FontWeight="SemiBold" FontSize="13"/>
                         <TextBlock Text="Una línea INSERT por fila del resultado activo"
-                                   FontSize="10" Opacity="0.65"/>
+                                   FontSize="11" Foreground="{DynamicResource BrushFGMuted}"/>
                     </StackPanel>
                 </StackPanel>
             </RadioButton>

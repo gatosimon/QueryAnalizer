@@ -667,7 +667,7 @@
                                   CanUserDeleteRows="True"
                                   HeadersVisibility="Column">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="NOMBRE"
+                                <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="NOMBRE"
                                                     Binding="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}"
                                                     Width="*"/>
                                 <DataGridComboBoxColumn Header="TIPO"
@@ -688,7 +688,7 @@
                                         </Style>
                                     </DataGridComboBoxColumn.EditingElementStyle>
                                 </DataGridComboBoxColumn>
-                                <DataGridTextColumn Header="VALOR"
+                                <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="VALOR"
                                                     Binding="{Binding Valor, UpdateSourceTrigger=PropertyChanged}"
                                                     Width="*"/>
                             </DataGrid.Columns>

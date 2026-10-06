@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.modernwpf.com/2019"
         Title="Comparador de Bases de Datos"
-        Width="1300" MinWidth="900" MinHeight="700"
+        Width="1320" Height="860" MinWidth="1000" MinHeight="720"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BrushWindowBG}"
         Foreground="{DynamicResource BrushFG}"
@@ -17,12 +17,10 @@
                 <ResourceDictionary Source="Controles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-            <Style TargetType="TextBlock">
-            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid Margin="8">
+    <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>  <!-- Selectores de conexión -->
             <RowDefinition Height="Auto"/>  <!-- Opciones -->
@@ -54,33 +52,33 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Label Grid.Row="0" Grid.Column="0" Content="Motor:"/>
+                    <Label Grid.Row="0" Grid.Column="0" Content="Motor:" VerticalAlignment="Center"/>
                     <ComboBox x:Name="cmbMotorA" Grid.Row="0" Grid.Column="1" Margin="0,2"
                               SelectionChanged="cmbMotorA_SelectionChanged"/>
 
-                    <Label Grid.Row="1" Grid.Column="0" Content="Conexión:"/>
+                    <Label Grid.Row="1" Grid.Column="0" Content="Conexión:" VerticalAlignment="Center"/>
                     <ComboBox x:Name="cmbConexionA" Grid.Row="1" Grid.Column="1" Margin="0,2"
                               SelectionChanged="cmbConexionA_SelectionChanged"/>
 
-                    <Label Grid.Row="2" Grid.Column="0" Content="Base:" Margin="0,4,0,0"/>
+                    <Label Grid.Row="2" Grid.Column="0" Content="Base:" VerticalAlignment="Center" Margin="0,4,0,0"/>
                     <ComboBox x:Name="cmbBaseA" Grid.Row="2" Grid.Column="1" Margin="0,4,0,2"
                               SelectionChanged="cmbBaseA_SelectionChanged"/>
 
-                    <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                    <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,10,0,0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <Grid Grid.Row="0">
+                        <Grid Grid.Row="0" Margin="0,0,0,6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <Label Grid.Column="0" Content="Esquemas:" Padding="0,0,0,2"/>
-                            <Button Grid.Column="1" Content="Todos" Padding="4,1" Margin="0,0,3,2" FontSize="10"
+                            <Label Grid.Column="0" Content="Esquemas:" VerticalAlignment="Center" Padding="0"/>
+                            <Button Grid.Column="1" Content="Todos" Margin="6,0,0,0"
                                     Click="btnTodosA_Click"/>
-                            <Button Grid.Column="2" Content="Ninguno" Padding="4,1" Margin="0,0,0,2" FontSize="10"
+                            <Button Grid.Column="2" Content="Ninguno" Margin="6,0,0,0"
                                     Click="btnNingunoA_Click"/>
                         </Grid>
                         <ListBox x:Name="lstSchemasA" Grid.Row="1" Height="110"
@@ -88,26 +86,24 @@
                                  ToolTip="Clic para seleccionar. Ctrl+Clic para múltiple. Shift+Clic para rango."/>
                     </Grid>
 
-                    <Grid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                    <Grid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,10,0,0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <Grid Grid.Row="0">
+                        <Grid Grid.Row="0" Margin="0,0,0,6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <Label Grid.Column="0" Content="Tablas/Vistas:" Padding="0,0,0,2"/>
-                            <Button Grid.Column="1" Content="Todos" Padding="4,1" Margin="0,0,3,2" FontSize="10"
+                            <Label Grid.Column="0" Content="Tablas/Vistas:" VerticalAlignment="Center" Padding="0"/>
+                            <Button Grid.Column="1" Content="Todos" Margin="6,0,0,0"
                                     Click="btnTodosObjetosA_Click"/>
-                            <Button Grid.Column="2" Content="Ninguno" Padding="4,1" Margin="0,0,3,2" FontSize="10"
+                            <Button Grid.Column="2" Content="Ninguno" Margin="6,0,0,0"
                                     Click="btnNingunoObjetosA_Click"/>
-                            <Button Grid.Column="3" Content="⟳" Padding="6,1" Margin="0,0,0,2" FontSize="10"
-                                    Click="btnCargarObjetosA_Click"
-                                    ToolTip="Cargar lista para los esquemas seleccionados"/>
+                            <Button Grid.Column="3" Margin="6,0,0,0" Padding="8,2" Click="btnCargarObjetosA_Click" ToolTip="Cargar lista para los esquemas seleccionados"><Path Style="{StaticResource Ic}" Data="{StaticResource IconRefresh}"/></Button>
                         </Grid>
                         <ListBox x:Name="lstObjetosA" Grid.Row="1" Height="160"
                                  SelectionMode="Extended"
@@ -117,13 +113,19 @@
             </GroupBox>
 
             <!-- Botones centrales -->
-            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0">
-                <Button x:Name="btnComparar" Content="&#x21FA; Comparar"
-                        FontSize="13" FontWeight="Bold" Margin="0,0,0,6"
-                        Click="btnComparar_Click"/>
-                <Button x:Name="btnExportar" Content="&#x1F4E4; Exportar"
-                        IsEnabled="False" Margin="0,0,0,0"
-                        Click="btnExportar_Click"/>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0" MinWidth="130">
+                <Button x:Name="btnComparar" Margin="0,0,0,8" HorizontalAlignment="Stretch" Click="btnComparar_Click">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Path Style="{StaticResource Ic}" Data="{StaticResource IconCompare}"/>
+                        <TextBlock Text="Comparar" FontWeight="SemiBold" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="btnExportar" IsEnabled="False" HorizontalAlignment="Stretch" Click="btnExportar_Click">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Path Style="{StaticResource Ic}" Data="{StaticResource IconDownload}"/>
+                        <TextBlock Text="Exportar" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
 
             <!-- BASE B -->
@@ -141,33 +143,33 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Label Grid.Row="0" Grid.Column="0" Content="Motor:"/>
+                    <Label Grid.Row="0" Grid.Column="0" Content="Motor:" VerticalAlignment="Center"/>
                     <ComboBox x:Name="cmbMotorB" Grid.Row="0" Grid.Column="1" Margin="0,2"
                               SelectionChanged="cmbMotorB_SelectionChanged"/>
 
-                    <Label Grid.Row="1" Grid.Column="0" Content="Conexión:"/>
+                    <Label Grid.Row="1" Grid.Column="0" Content="Conexión:" VerticalAlignment="Center"/>
                     <ComboBox x:Name="cmbConexionB" Grid.Row="1" Grid.Column="1" Margin="0,2"
                               SelectionChanged="cmbConexionB_SelectionChanged"/>
 
-                    <Label Grid.Row="2" Grid.Column="0" Content="Base:" Margin="0,4,0,0"/>
+                    <Label Grid.Row="2" Grid.Column="0" Content="Base:" VerticalAlignment="Center" Margin="0,4,0,0"/>
                     <ComboBox x:Name="cmbBaseB" Grid.Row="2" Grid.Column="1" Margin="0,4,0,2"
                               SelectionChanged="cmbBaseB_SelectionChanged"/>
 
-                    <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                    <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,10,0,0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <Grid Grid.Row="0">
+                        <Grid Grid.Row="0" Margin="0,0,0,6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <Label Grid.Column="0" Content="Esquemas:" Padding="0,0,0,2"/>
-                            <Button Grid.Column="1" Content="Todos" Padding="4,1" Margin="0,0,3,2" FontSize="10"
+                            <Label Grid.Column="0" Content="Esquemas:" VerticalAlignment="Center" Padding="0"/>
+                            <Button Grid.Column="1" Content="Todos" Margin="6,0,0,0"
                                     Click="btnTodosB_Click"/>
-                            <Button Grid.Column="2" Content="Ninguno" Padding="4,1" Margin="0,0,0,2" FontSize="10"
+                            <Button Grid.Column="2" Content="Ninguno" Margin="6,0,0,0"
                                     Click="btnNingunoB_Click"/>
                         </Grid>
                         <ListBox x:Name="lstSchemasB" Grid.Row="1" Height="110"
@@ -175,26 +177,24 @@
                                  ToolTip="Clic para seleccionar. Ctrl+Clic para múltiple. Shift+Clic para rango."/>
                     </Grid>
 
-                    <Grid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                    <Grid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,10,0,0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <Grid Grid.Row="0">
+                        <Grid Grid.Row="0" Margin="0,0,0,6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <Label Grid.Column="0" Content="Tablas/Vistas:" Padding="0,0,0,2"/>
-                            <Button Grid.Column="1" Content="Todos" Padding="4,1" Margin="0,0,3,2" FontSize="10"
+                            <Label Grid.Column="0" Content="Tablas/Vistas:" VerticalAlignment="Center" Padding="0"/>
+                            <Button Grid.Column="1" Content="Todos" Margin="6,0,0,0"
                                     Click="btnTodosObjetosB_Click"/>
-                            <Button Grid.Column="2" Content="Ninguno" Padding="4,1" Margin="0,0,3,2" FontSize="10"
+                            <Button Grid.Column="2" Content="Ninguno" Margin="6,0,0,0"
                                     Click="btnNingunoObjetosB_Click"/>
-                            <Button Grid.Column="3" Content="⟳" Padding="6,1" Margin="0,0,0,2" FontSize="10"
-                                    Click="btnCargarObjetosB_Click"
-                                    ToolTip="Cargar lista para los esquemas seleccionados"/>
+                            <Button Grid.Column="3" Margin="6,0,0,0" Padding="8,2" Click="btnCargarObjetosB_Click" ToolTip="Cargar lista para los esquemas seleccionados"><Path Style="{StaticResource Ic}" Data="{StaticResource IconRefresh}"/></Button>
                         </Grid>
                         <ListBox x:Name="lstObjetosB" Grid.Row="1" Height="160"
                                  SelectionMode="Extended"
@@ -206,9 +206,9 @@
 
         <!-- ══ ROW 1: Opciones ════════════════════════════════════════════════════ -->
         <Border Grid.Row="1" BorderBrush="{DynamicResource BrushBorder}" BorderThickness="1"
-                CornerRadius="6" Padding="8,6" Margin="0,0,0,6">
+                CornerRadius="8" Padding="12,8" Margin="0,4,0,8">
             <WrapPanel>
-                <TextBlock Text="Comparar:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBlock Text="Comparar:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0"/>
                 <CheckBox x:Name="chkTablas"  Content="Tablas"   IsChecked="True" Margin="0,0,12,0"
                           Checked="chkTipos_Changed" Unchecked="chkTipos_Changed"/>
                 <CheckBox x:Name="chkVistas"  Content="Vistas"   IsChecked="True" Margin="0,0,12,0"
@@ -217,16 +217,16 @@
                           Checked="chkTipos_Changed" Unchecked="chkTipos_Changed"/>
                 <CheckBox x:Name="chkDatos"   Content="Datos (conteo de filas)" Margin="0,0,24,0"
                           Checked="chkTipos_Changed" Unchecked="chkTipos_Changed"/>
-                <Separator Width="1" Height="20" Background="{DynamicResource BrushBorder}" Margin="0,0,24,0"/>
+                <Rectangle Width="1" Height="20" Fill="{DynamicResource BrushBorder}" Margin="0,0,24,0"/>
                 <CheckBox x:Name="chkIguales" Content="Mostrar iguales" Margin="0,0,12,0"
                           Checked="chkIguales_Changed" Unchecked="chkIguales_Changed"/>
-                <Separator Width="1" Height="20" Background="{DynamicResource BrushBorder}" Margin="4,0,16,0"/>
-                <TextBlock Text="Leyenda:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"
+                <Rectangle Width="1" Height="20" Fill="{DynamicResource BrushBorder}" Margin="4,0,16,0"/>
+                <TextBlock Text="Leyenda:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,0"
                            Foreground="{DynamicResource BrushFGMuted}"/>
                 <TextBlock Text="→ A" Foreground="{DynamicResource BrushAccent}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                 <TextBlock Text="← B" Foreground="{DynamicResource BrushDanger}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                 <TextBlock Text="Diferente" Foreground="{DynamicResource BrushWarning}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                <TextBlock Text="✓ Igual" VerticalAlignment="Center" Opacity="0.55"/>
+                <TextBlock Text="✓ Igual" VerticalAlignment="Center" Foreground="{DynamicResource BrushFGMuted}"/>
             </WrapPanel>
         </Border>
 
@@ -258,19 +258,19 @@
 
         <!-- ══ ROW 3: Resultados ══════════════════════════════════════════════════ -->
         <TreeView x:Name="tvResultados" Grid.Row="3"
-                  BorderThickness="1" Padding="4"
+                  BorderThickness="1" BorderBrush="{DynamicResource BrushBorder}" Padding="6"
                   VirtualizingStackPanel.IsVirtualizing="True"
                   VirtualizingStackPanel.VirtualizationMode="Recycling"/>
 
         <!-- ══ ROW 4: Status ══════════════════════════════════════════════════════ -->
-        <Grid Grid.Row="4" Margin="0,4,0,0">
+        <Grid Grid.Row="4" Margin="0,8,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="160"/>
             </Grid.ColumnDefinitions>
             <TextBlock x:Name="txtStatus" Grid.Column="0" VerticalAlignment="Center"
                        Text="Seleccioná las conexiones y hacé clic en Comparar."
-                       Foreground="{DynamicResource BrushFG}" Opacity="0.7"/>
+                       Foreground="{DynamicResource BrushFGMuted}"/>
             <ProgressBar x:Name="pbProgreso" Grid.Column="1" Height="6"
                          IsIndeterminate="False" Visibility="Collapsed"
                          Minimum="0" Maximum="100" Value="0"/>
