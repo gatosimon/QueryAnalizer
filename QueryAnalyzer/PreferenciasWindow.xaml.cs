@@ -316,7 +316,9 @@ namespace QueryAnalyzer
                 IntellisenseActivo      = chkIntellisense.IsChecked == true,
                 CargarUltimaConsulta    = chkCargarUltConsulta.IsChecked == true,
                 EjecutarSelectDirecto   = chkEjecutarSelectDirecto.IsChecked == true,
-                ResultadosEditables     = chkResultadosEditables.IsChecked == true,
+                SelectTopSinAuditoria   = _configOriginal.SelectTopSinAuditoria,
+                SelectTodasSinAuditoria = _configOriginal.SelectTodasSinAuditoria,
+                ResultadosEditables    = chkResultadosEditables.IsChecked == true,
                 MostrarNumeroFila       = chkMostrarNroFila.IsChecked == true,
                 MaxFilasResultado       = maxFilas,
             };

@@ -3345,11 +3345,79 @@ namespace QueryAnalyzer
 
                         bool esVista = capTipo == "VIEW";
 
-                        agregarSelect("SELECT TOP 10", () => GenerarSelectTop10(capSchema, capTabla));
-                        agregarSelect("SELECT (todas las cols)", () =>
+                        // SELECT TOP 10 / SELECT (todas las cols): cada uno con su propia casilla
+                        // "sin auditoría" (compartida entre las tablas y persistida en config.xml)
+                        var chksAuditoria = new List<Tuple<CheckBox, Func<bool>>>();
+                        Action<string, Func<bool>, Action<AppConfig, bool>, Func<bool, string>> agregarSelectAuditoria =
+                            (hdr, leer, escribir, gen) =>
+                        {
+                            var texto = new TextBlock { Text = hdr, VerticalAlignment = VerticalAlignment.Center };
+                            var chk = new CheckBox
+                            {
+                                Content = "sin auditoría",
+                                IsChecked = leer(),
+                                Margin = new Thickness(24, 0, 0, 0),
+                                VerticalAlignment = VerticalAlignment.Center,
+                            };
+                            chk.SetResourceReference(CheckBox.ForegroundProperty, "BrushFGMuted");
+                            RoutedEventHandler alCambiar = (s, ev) =>
+                            {
+                                bool valor = chk.IsChecked == true;
+                                if (leer() == valor) return;
+                                escribir(_configApp, valor);
+                                try
+                                {
+                                    var cfg = ConfigManager.ObtenerConfiguracion();
+                                    escribir(cfg, valor);
+                                    ConfigManager.GuardarConfiguracion(cfg);
+                                }
+                                catch { }
+                            };
+                            chk.Checked += alCambiar;
+                            chk.Unchecked += alCambiar;
+                            chksAuditoria.Add(Tuple.Create(chk, leer));
+
+                            var fila = new Grid();
+                            fila.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                            fila.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                            Grid.SetColumn(chk, 1);
+                            fila.Children.Add(texto);
+                            fila.Children.Add(chk);
+
+                            var mi = new MenuItem { Header = fila };
+                            AplicarEstiloMenuItem(mi);
+                            mi.Click += (s, ev) =>
+                            {
+                                try { InsertarEnQuery(gen(leer()), _configApp.EjecutarSelectDirecto); }
+                                catch (Exception ex) { AppendMessage("Error generando script: " + ex.Message); }
+                            };
+                            ctxMenu.Items.Add(mi);
+                        };
+                        // Las casillas pueden haber cambiado desde el menú de otra tabla
+                        ctxMenu.Opened += (s, ev) =>
+                        {
+                            foreach (var c in chksAuditoria) c.Item1.IsChecked = c.Item2();
+                        };
+
+                        agregarSelectAuditoria("SELECT TOP 10",
+                            () => _configApp.SelectTopSinAuditoria,
+                            (cfg, v) => cfg.SelectTopSinAuditoria = v,
+                            sinAuditoria =>
+                        {
+                            if (!sinAuditoria) return GenerarSelectTop10(capSchema, capTabla);
+                            DB = new DataBase(connStr);
+                            var colNames = ObtenerNombresColumnas(DB, capSchema, capTabla);
+                            return GenerarSelectTop10SinAuditoria(capSchema, capTabla, colNames);
+                        });
+                        agregarSelectAuditoria("SELECT (todas las cols)",
+                            () => _configApp.SelectTodasSinAuditoria,
+                            (cfg, v) => cfg.SelectTodasSinAuditoria = v,
+                            sinAuditoria =>
                         {
                             DB = new DataBase(connStr);
                             var colNames = ObtenerNombresColumnas(DB, capSchema, capTabla);
+                            if (sinAuditoria)
+                                colNames = colNames.Where(c => !EsColumnaAuditoria(c)).ToList();
                             return GenerarSelectAllColsDesdeNombres(capSchema, capTabla, colNames);
                         });
                         ctxMenu.Items.Add(new Separator());
@@ -4057,6 +4125,45 @@ namespace QueryAnalyzer
             return $"SELECT\r\n{cols}\r\nFROM {t};\r\n";
         }
 
+        /// <summary>
+        /// Nombres de columnas de auditoría que se omiten con las opciones "sin auditoría"
+        /// (convención F_/H_/U_ ALTA/MODI y variantes Fecha*/Usuario*).
+        /// </summary>
+        // Se compara sin guiones bajos ni mayúsculas: F_ALTA, FECHA_ALTA, FechaAlta, UsuModi, AltaUsuario, etc.
+        private static readonly Regex RegexColumnaAuditoria = new Regex(
+            @"^((f|h|u|fec|fecha|hs|hora|fechahora|usu|usr|usuario|user)(alta|modi|modif|modificacion|baja|creacion|actualizacion)" +
+            @"|(alta|modi|modif|modificacion|baja|creacion|actualizacion)(f|h|u|fec|fecha|hora|usu|usr|usuario|user))$",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static bool EsColumnaAuditoria(string columna)
+        {
+            if (string.IsNullOrWhiteSpace(columna)) return false;
+            string n = new string(columna.Where(char.IsLetterOrDigit).ToArray());
+            return RegexColumnaAuditoria.IsMatch(n);
+        }
+
+        /// <summary>
+        /// SELECT TOP 10 enumerando las columnas sin las de auditoría.
+        /// Si no se pudieron leer las columnas, vuelve a SELECT TOP 10 *.
+        /// </summary>
+        private string GenerarSelectTop10SinAuditoria(string schema, string tabla, List<string> colNames)
+        {
+            var cols = colNames.Where(c => !EsColumnaAuditoria(c)).ToList();
+            if (cols.Count == 0) return GenerarSelectTop10(schema, tabla);
+
+            TipoMotor motor = conexionActual?.Motor ?? TipoMotor.DB2;
+            string t = NombreCompleto(schema, tabla);
+            string lista = string.Join(",\r\n", cols.Select(c => "    " + Q(c)));
+            switch (motor)
+            {
+                case TipoMotor.MS_SQL: return $"SELECT TOP 10\r\n{lista}\r\nFROM {t};\r\n";
+                case TipoMotor.DB2: return $"SELECT\r\n{lista}\r\nFROM {t}\r\nFETCH FIRST 10 ROWS ONLY;\r\n";
+                case TipoMotor.POSTGRES: return $"SELECT\r\n{lista}\r\nFROM {t}\r\nLIMIT 10;\r\n";
+                case TipoMotor.SQLite: return $"SELECT\r\n{lista}\r\nFROM {tabla}\r\nLIMIT 10;\r\n";
+                default: return $"SELECT\r\n{lista}\r\nFROM {t};\r\n";
+            }
+        }
+
         private string GenerarCreateTable(string schema, string tabla, DataTable columnas)
         {
             TipoMotor motor = conexionActual?.Motor ?? TipoMotor.DB2;
@@ -4339,8 +4446,29 @@ namespace QueryAnalyzer
                 // Continuamos sin FKs: el join tendrá condiciones vacías
             }
 
-            // ── 3. Mostrar diálogo ────────────────────────────────────────
-            MostrarDialogoJoin(tablas, relaciones);
+            // ── 3. Columnas de cada tabla (el SELECT las enumera, sin usar *) ──
+            var columnas = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                columnas = await Task.Run(() =>
+                {
+                    var res = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var t in tablas)
+                    {
+                        var db = new DataBase(connStr);
+                        res[t.Nombre] = ObtenerNombresColumnas(db, t.Schema, t.Nombre);
+                    }
+                    return res;
+                });
+            }
+            catch (Exception ex)
+            {
+                AppendMessage("Advertencia al leer las columnas: " + ex.Message);
+                // Las tablas sin columnas leídas salen como alias.*
+            }
+
+            // ── 4. Mostrar diálogo ────────────────────────────────────────
+            MostrarDialogoJoin(tablas, relaciones, columnas);
         }
 
         /// <summary>
@@ -4530,6 +4658,8 @@ namespace QueryAnalyzer
         private string GenerarSqlJoin(
             List<(string Schema, string Nombre, string Tipo)> tablas,
             List<FKRelacion> relaciones,
+            Dictionary<string, List<string>> columnas,
+            bool excluirAuditoria,
             string nombreVista = null)
         {
             TipoMotor motor = conexionActual?.Motor ?? TipoMotor.MS_SQL;
@@ -4612,8 +4742,39 @@ namespace QueryAnalyzer
 
             sb.AppendLine("SELECT");
 
-            // Columnas: alias.*  para cada tabla
-            var colLines = ordenado.Select(n => $"    {aliasOf[n]}.*").ToList();
+            // Columnas: alias.columna para cada columna de cada tabla (alias.* solo si no se pudieron leer)
+            var colsDe = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var n in ordenado)
+            {
+                List<string> lista;
+                colsDe[n] = columnas != null && columnas.TryGetValue(n, out lista)
+                    ? lista.Where(c => !excluirAuditoria || !EsColumnaAuditoria(c)).ToList()
+                    : new List<string>();
+            }
+
+            // Un CREATE VIEW no admite dos columnas con el mismo nombre: las repetidas se renombran alias_columna
+            var repetidas = new HashSet<string>(
+                colsDe.Values.SelectMany(l => l).GroupBy(c => c, StringComparer.OrdinalIgnoreCase)
+                    .Where(g => g.Count() > 1).Select(g => g.Key),
+                StringComparer.OrdinalIgnoreCase);
+            bool esVista = !string.IsNullOrWhiteSpace(nombreVista);
+
+            var colLines = new List<string>();
+            foreach (var n in ordenado)
+            {
+                if (colsDe[n].Count == 0)
+                {
+                    colLines.Add($"    {aliasOf[n]}.*");
+                    continue;
+                }
+                foreach (var c in colsDe[n])
+                {
+                    string linea = $"    {aliasOf[n]}.{Q(c)}";
+                    if (esVista && repetidas.Contains(c))
+                        linea += $" AS {Q(aliasOf[n] + "_" + c)}";
+                    colLines.Add(linea);
+                }
+            }
             for (int i = 0; i < colLines.Count; i++)
                 sb.AppendLine(colLines[i] + (i < colLines.Count - 1 ? "," : ""));
 
@@ -4704,7 +4865,8 @@ namespace QueryAnalyzer
         /// </summary>
         private void MostrarDialogoJoin(
             List<(string Schema, string Nombre, string Tipo)> tablas,
-            List<FKRelacion> relaciones)
+            List<FKRelacion> relaciones,
+            Dictionary<string, List<string>> columnas)
         {
             TipoMotor motor = conexionActual?.Motor ?? TipoMotor.MS_SQL;
 
@@ -4881,6 +5043,15 @@ namespace QueryAnalyzer
             pnlNombreVista.Children.Add(txtNombreVista);
             panelIzq.Children.Add(pnlNombreVista);
 
+            // Columnas de auditoría (F_/H_/U_ ALTA/MODI, Fecha*/Usuario*)
+            var chkSinAuditoria = new CheckBox
+            {
+                Content = "No incluir columnas de auditoría",
+                Margin = new Thickness(0, 10, 0, 0),
+            };
+            chkSinAuditoria.SetResourceReference(CheckBox.ForegroundProperty, "BrushFG");
+            panelIzq.Children.Add(chkSinAuditoria);
+
             // ── Separador vertical ────────────────────────────────────────
             var sep = new GridSplitter
             {
@@ -4930,7 +5101,8 @@ namespace QueryAnalyzer
             Action regenerar = () =>
             {
                 string vista = rbView.IsChecked == true ? txtNombreVista.Text.Trim() : null;
-                txtPreview.Text = GenerarSqlJoin(tablas, relaciones, vista);
+                txtPreview.Text = GenerarSqlJoin(tablas, relaciones, columnas,
+                    chkSinAuditoria.IsChecked == true, vista);
             };
 
             // Preview inicial
@@ -4948,6 +5120,8 @@ namespace QueryAnalyzer
                 regenerar();
             };
             txtNombreVista.TextChanged += (s, ev) => { if (rbView.IsChecked == true) regenerar(); };
+            chkSinAuditoria.Checked += (s, ev) => regenerar();
+            chkSinAuditoria.Unchecked += (s, ev) => regenerar();
 
             // ── Botones ───────────────────────────────────────────────────
             var pnlBotones = new StackPanel

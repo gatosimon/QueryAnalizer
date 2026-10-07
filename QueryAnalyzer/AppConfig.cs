@@ -26,6 +26,12 @@ namespace QueryAnalyzer
         /// </summary>
         public bool EjecutarSelectDirecto { get; set; } = false;
 
+        /// <summary>Casilla "sin auditoría" de "SELECT TOP 10" en el menú contextual.</summary>
+        public bool SelectTopSinAuditoria { get; set; } = false;
+
+        /// <summary>Casilla "sin auditoría" de "SELECT (todas las cols)" en el menú contextual.</summary>
+        public bool SelectTodasSinAuditoria { get; set; } = false;
+
         /// <summary>
         /// Máximo de filas que se cargan en el grid de resultados por consulta.
         /// 0 = sin límite (puede causar OOM en tablas muy grandes).
