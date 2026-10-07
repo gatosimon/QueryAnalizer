@@ -112,6 +112,7 @@
     </Compile>
     <Compile Include="ServidorPresetManager.cs" />
     <Compile Include="Conexion.cs" />
+    <Compile Include="ConexionCompartida.cs" />
     <Compile Include="ComparadorModels.cs" />
     <Compile Include="ComparadorService.cs" />
     <Compile Include="ComparadorWindow.xaml.cs">

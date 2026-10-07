@@ -513,47 +513,121 @@ namespace QueryAnalyzer
         {
             try
             {
-                TipoMotor motor = cmbMotor.SelectedValue != null
-                    ? (TipoMotor)cmbMotor.SelectedValue
-                    : TipoMotor.MS_SQL;
-
-                var sb = new System.Text.StringBuilder();
-                sb.AppendLine($"Conexión: {txtNombre.Text.Trim()}");
-                sb.AppendLine($"Motor: {motor}");
-
-                if (chkUsarConnectionString.IsChecked == true)
+                bool usarCs = chkUsarConnectionString.IsChecked == true;
+                var c = new Conexion
                 {
-                    sb.AppendLine($"Connection String: {txtConnectionString.Text.Trim()}");
+                    Nombre = txtNombre.Text.Trim(),
+                    Motor = cmbMotor.SelectedValue != null ? (TipoMotor)cmbMotor.SelectedValue : TipoMotor.MS_SQL
+                };
+
+                if (usarCs)
+                {
+                    c.ConnectionStringCustom = txtConnectionString.Text.Trim();
                 }
                 else
                 {
-                    string baseDatos = cmbBaseDatos.Visibility == Visibility.Visible
+                    c.BaseDatos = cmbBaseDatos.Visibility == Visibility.Visible
                         ? cmbBaseDatos.Text.Trim()
                         : txtBaseDatos.Text.Trim();
-
-                    sb.AppendLine($"Servidor: {cmbServidor.Text.Trim()}");
-
-                    if (!string.IsNullOrWhiteSpace(txtPuerto.Text))
-                        sb.AppendLine($"Puerto: {txtPuerto.Text.Trim()}");
-
-                    if (chkEsWeb.IsChecked == true)
-                        sb.AppendLine("Es Web: Sí");
-
-                    sb.AppendLine($"Usuario: {txtUsuario.Text.Trim()}");
-                    sb.AppendLine($"Contraseña: {txtContrasena.Password}");
-
-                    if (!string.IsNullOrWhiteSpace(baseDatos))
-                        sb.AppendLine($"Base de datos: {baseDatos}");
+                    c.Servidor = cmbServidor.Text.Trim();
+                    c.Puerto = txtPuerto.Text.Trim();
+                    c.EsWeb = chkEsWeb.IsChecked == true;
+                    c.Usuario = txtUsuario.Text.Trim();
+                    c.Contrasena = txtContrasenaRevelada.Visibility == Visibility.Visible
+                        ? txtContrasenaRevelada.Text
+                        : txtContrasena.Password;
                 }
 
-                string texto = sb.ToString().Trim();
-                Clipboard.SetText(texto);
+                Clipboard.SetText(ConexionCompartida.Formatear(c));
                 MessageBox.Show("Datos de conexión copiados al portapapeles.", "Listo",
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"No se pudieron copiar los datos al portapapeles: {ex.Message}", "Error");
+            }
+        }
+
+        /// <summary>
+        /// Carga el formulario con los datos de una conexión compartida (texto del botón
+        /// Compartir). Solo completa los campos: no toca ConexionActual ni guarda nada.
+        /// </summary>
+        private void btnImportar_Click(object sender, RoutedEventArgs e)
+        {
+            string texto = null;
+            try { if (Clipboard.ContainsText()) texto = Clipboard.GetText(); }
+            catch { /* portapapeles ocupado por otro proceso */ }
+
+            Conexion c;
+            if (!ConexionCompartida.TryParsear(texto, out c))
+            {
+                MessageBox.Show(
+                    "El portapapeles no tiene datos de conexión reconocibles.\n\n" +
+                    "Copiá el texto completo que se genera con el botón Compartir (incluye al menos Motor y Servidor) y volvé a probar.",
+                    "Importar conexión", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            bool formularioConDatos = !string.IsNullOrWhiteSpace(txtNombre.Text)
+                                      || !string.IsNullOrWhiteSpace(cmbServidor.Text)
+                                      || !string.IsNullOrWhiteSpace(txtConnectionString.Text);
+            if (formularioConDatos)
+            {
+                var r = MessageBox.Show(
+                    "Se van a reemplazar los datos del formulario por los de la conexión \"" + c.Nombre + "\".\n\n¿Continuar?",
+                    "Importar conexión", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (r != MessageBoxResult.Yes) return;
+            }
+
+            CargarFormulario(c);
+        }
+
+        private void CargarFormulario(Conexion c)
+        {
+            bool usarCs = !string.IsNullOrWhiteSpace(c.ConnectionStringCustom);
+
+            // Cancelar cualquier carga de bases de datos de la conexión anterior
+            _ctsCargaBases?.Cancel();
+
+            _inicializando = true;
+            try
+            {
+                txtNombre.Text = c.Nombre ?? "";
+                cmbMotor.SelectedValue = c.Motor;
+                chkUsarConnectionString.IsChecked = usarCs;
+
+                txtConnectionString.Text = usarCs ? c.ConnectionStringCustom : "";
+
+                cmbServidor.SelectionChanged -= cmbServidor_SelectionChanged;
+                cmbServidor.SelectedIndex = -1;
+                cmbServidor.Text = usarCs ? "" : c.Servidor ?? "";
+                cmbServidor.SelectionChanged += cmbServidor_SelectionChanged;
+
+                txtPuerto.Text = usarCs ? "" : c.Puerto ?? "";
+                chkEsWeb.IsChecked = !usarCs && c.EsWeb;
+                txtUsuario.Text = usarCs ? "" : c.Usuario ?? "";
+                txtContrasena.Password = usarCs ? "" : c.Contrasena ?? "";
+
+                // La contraseña vuelve a modo oculto
+                txtContrasenaRevelada.Text = "";
+                txtContrasenaRevelada.Visibility = Visibility.Collapsed;
+                txtContrasena.Visibility = Visibility.Visible;
+                btnTogglePass.Content = Iconos.Crear("IconEye");
+
+                txtBaseDatos.Text = usarCs ? "" : c.BaseDatos ?? "";
+            }
+            finally
+            {
+                _inicializando = false;
+            }
+
+            // Mostrar/ocultar campos según el motor y traer la lista de bases (conserva la compartida)
+            if (!usarCs)
+            {
+                AjustarVisibilidadPorMotor(c.Motor);
+                CargarBasesDatosAsync(
+                    c.Motor, c.Servidor, c.Puerto, c.Usuario, c.Contrasena, c.EsWeb,
+                    c.BaseDatos ?? "");
             }
         }
 

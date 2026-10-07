@@ -1,0 +1,24 @@
+{
+  "name": "queryanalyzer-presentacion",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Presentación animada (motion graphics) de QueryAnalyzer hecha con Remotion",
+  "scripts": {
+    "start": "remotion studio",
+    "render": "remotion render src/index.ts Presentacion out/QueryAnalyzer-presentacion.mp4 --codec=h264",
+    "render:gif": "remotion render src/index.ts Presentacion out/QueryAnalyzer-presentacion.gif --codec=gif --every-nth-frame=2 --scale=0.5",
+    "still": "remotion still src/index.ts Presentacion out/portada.png --frame=75",
+    "musica": "node tools/generar-musica.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.533",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "remotion": "4.0.533"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "typescript": "7.0.2"
+  }
+}

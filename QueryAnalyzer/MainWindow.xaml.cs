@@ -7001,7 +7001,15 @@ namespace QueryAnalyzer
 
             if (tcConsultas.Items.Count == 1)
             {
-                // Siempre queda una consulta abierta: se reemplaza por una nueva y vacia
+                // Ya esta en blanco (sin texto ni resultados): no hay nada que cerrar
+                if (string.IsNullOrWhiteSpace(p.Documento.Text) && tcResults.Items.Count == 0
+                    && p.Titulo == "Consulta 1")
+                    return;
+
+                // Siempre queda una consulta abierta: se reemplaza por una nueva y vacia.
+                // El contador vuelve a 0 para que siga llamandose "Consulta 1" y no
+                // vaya sumando numeros cada vez que se cierra la unica pestana.
+                _contadorPestanas = 0;
                 var nueva = CrearPestana(null, null);
                 tcConsultas.Items.Add(nueva.Tab);
                 tcConsultas.SelectedItem = nueva.Tab;

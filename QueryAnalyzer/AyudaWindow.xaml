@@ -116,6 +116,7 @@
 
                 <TextBlock Style="{StaticResource Subtitulo}" Text="Compartir datos de conexión"/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Botón 'Compartir' en el formulario de conexión: copia al portapapeles los datos relevantes (motor, servidor, puerto, usuario, base de datos) en texto plano."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Botón 'Importar': lee del portapapeles el texto generado por 'Compartir' (por ejemplo, el que te pasaron por WhatsApp) y completa todo el formulario: nombre, motor, servidor, puerto, usuario, contraseña y base de datos, o el connection string."/>
                 <TextBlock Style="{StaticResource Nota}"   Text="La contraseña se incluye en el texto copiado. Tené cuidado al compartir por canales no seguros."/>
 
                 <!-- ══ EXPLORADOR DE ESQUEMA ═══════════════════════════════ -->
