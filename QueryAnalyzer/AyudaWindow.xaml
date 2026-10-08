@@ -145,6 +145,7 @@
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Arrastrar el separador vertical entre el panel lateral y el área de consulta para cambiar el ancho."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Para ocultar el panel: botón &lt; del encabezado, Ctrl+B, doble clic en el separador o pulsar de nuevo el icono activo del riel (la columna de iconos de la izquierda)."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Para mostrarlo otra vez: pulsar cualquier icono del riel o Ctrl+B (vuelve a la última vista que estaba abierta)."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Al iniciar sin ninguna conexión el panel lateral y el panel de resultados arrancan ocultos, y se despliegan solos (el lateral en el Explorador) al elegir una conexión. Mientras no haya conexión, 'Guardar consulta' queda deshabilitado."/>
 
                 <!-- ══ AREA DE CONSULTA ════════════════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="Área de consulta"/>
@@ -208,6 +209,10 @@
 
                 <!-- ══ RESULTADOS ══════════════════════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="Resultados"/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Redimensionar y ocultar el panel inferior"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Arrastrar el separador horizontal entre el editor y el panel inferior (Resultados, Parámetros, Mensajes) para cambiar el alto."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Para ocultarlo: botón de flecha en la esquina derecha de la tira de pestañas, o doble clic en el separador. Queda solo la tira de pestañas."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Para mostrarlo otra vez: el mismo botón, pulsar cualquier pestaña, o ejecutar una consulta (se abre solo para mostrar el resultado)."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Cada consulta genera un resultado independiente; se eligen con las etiquetas que hay sobre la grilla (por ejemplo 'Resultado 1 · 60 filas · 11 ms')."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• 'Limpiar resultados': cierra todos los resultados de la consulta activa."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• La pestaña 'Mensajes' del panel inferior registra tiempos de ejecución, errores y avisos; 'Limpiar mensajes' los borra."/>

@@ -749,6 +749,9 @@ namespace QueryAnalyzer
                 conexionActual = conexion;
                 ActualizarEstadoConexion();
                 BloquearUI(false);
+                // Arranca colapsado: el explorador y los resultados se despliegan al elegir conexion
+                if (!_lateralVisible) SeleccionarVistaLateral(tbRielExplorador);
+                MostrarPanelResultados(true);
                 AppendMessage($"Conexión seleccionada: {conexion.Motor}");
 
                 // NUEVO: al seleccionar conexión, filtramos historial para esa conexión
@@ -835,6 +838,7 @@ namespace QueryAnalyzer
             btnLimpiarLog.IsEnabled = !bloquear;
             btnExcel.IsEnabled = !bloquear;
             btnLimpiarConsulta.IsEnabled = !bloquear;
+            btnGuardarConsulta.IsEnabled = !bloquear;
         }
 
         private void btnLimpiarConsulta_Click(object sender, RoutedEventArgs e)
@@ -1498,6 +1502,7 @@ namespace QueryAnalyzer
                         ? "Ejecución cancelada por el usuario."
                         : $"Ejecución total finalizada. {validQueries.Count} consultas ejecutadas en {FormatoNumero(totalElapsedMicroseconds)} µs ({FormatoNumero(totalElapsedMicroseconds / 1000000)}) s";
                     AppendMessage(resumen);
+                    MostrarPanelResultados(true);   // si estaba oculto, mostrar lo que acaba de salir
                     if (!_ctsCancelar.IsCancellationRequested && tcResults.Items.Count > 0)
                         ActualizarEstadoConexion(true);
                     if (tcResults.Items.Count > 0)
@@ -6789,6 +6794,35 @@ namespace QueryAnalyzer
             ActualizarBadgeParametros();
             ActualizarEstadoConexion();
             InicializarPestanas();
+
+            // Sin conexion el explorador no tiene nada que mostrar: arranca colapsado (sin animar)
+            if (conexionActual == null)
+            {
+                ColapsarLateralSinAnimar();
+                ColapsarResultadosSinAnimar();
+            }
+        }
+
+        private void ColapsarResultadosSinAnimar()
+        {
+            _resultadosVisible = false;
+            icoColapsarResultados.Data = (Geometry)FindResource("IconChevronUp");
+            btnColapsarResultados.ToolTip = "Mostrar el panel de resultados";
+            splitResultados.Visibility = Visibility.Collapsed;
+            rowSplitResultados.Height = new GridLength(0);
+            rowResultados.MinHeight = 0;
+            rowResultados.Height = new GridLength(AltoTiraResultados, GridUnitType.Pixel);
+        }
+
+        private void ColapsarLateralSinAnimar()
+        {
+            foreach (var tb in new[] { tbRielExplorador, tbRielConsultas, tbRielHistorial }) tb.IsChecked = false;
+            _lateralVisible = false;
+            colLateral.MinWidth = 0;
+            colLateral.Width = new GridLength(0);
+            panelLateral.Visibility = Visibility.Collapsed;
+            splitLateral.Visibility = Visibility.Collapsed;
+            colSplitLateral.Width = new GridLength(0);
         }
 
         private void ActualizarBadgeParametros()
@@ -6971,6 +7005,83 @@ namespace QueryAnalyzer
             // Los SelectionChanged de tcResults y de las grillas suben hasta aca: solo interesa el propio
             if (!ReferenceEquals(e.OriginalSource, tcPanelInferior)) return;
             if (tcPanelInferior.SelectedIndex == 2) txtMessages.ScrollToEnd();
+        }
+
+        // Pulsar una pestana del panel inferior mientras esta oculto lo vuelve a mostrar
+        private void tcPanelInferior_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (_resultadosVisible) return;
+            DependencyObject d = e.OriginalSource as DependencyObject;
+            while (d != null && !ReferenceEquals(d, tcPanelInferior))
+            {
+                if (d is TabItem) { MostrarPanelResultados(true); return; }
+                d = d is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d);
+            }
+        }
+
+        // -- Colapsar / expandir el panel inferior (queda solo la tira de pestanas) --
+        private bool _resultadosVisible = true;
+        private int _versionAnimResultados;
+        private double _altoEditorGuardado = 2, _altoResultadosGuardado = 3;   // proporcion de las filas con el panel abierto
+        private const double AltoTiraResultados = 35;                          // pestanas (34) + borde inferior (1)
+
+        private void btnColapsarResultados_Click(object sender, RoutedEventArgs e) { MostrarPanelResultados(!_resultadosVisible); }
+
+        private void splitResultados_DoubleClick(object sender, MouseButtonEventArgs e) { MostrarPanelResultados(false); }
+
+        private void MostrarPanelResultados(bool mostrar)
+        {
+            if (mostrar == _resultadosVisible) return;
+            _resultadosVisible = mostrar;
+            int version = ++_versionAnimResultados;
+            icoColapsarResultados.Data = (Geometry)FindResource(mostrar ? "IconChevronDown" : "IconChevronUp");
+            btnColapsarResultados.ToolTip = mostrar ? "Ocultar el panel de resultados" : "Mostrar el panel de resultados";
+
+            if (!mostrar)
+            {
+                // MinHeight > 0 solo cuando el panel esta asentado abierto (no a mitad de una animacion)
+                if (rowResultados.MinHeight > 0 && rowEditor.ActualHeight > 0 && rowResultados.ActualHeight > 0)
+                {
+                    _altoEditorGuardado = rowEditor.ActualHeight;
+                    _altoResultadosGuardado = rowResultados.ActualHeight;
+                }
+                splitResultados.Visibility = Visibility.Collapsed;
+                rowSplitResultados.Height = new GridLength(0);
+                rowResultados.MinHeight = 0;
+                rowResultados.Height = new GridLength(rowResultados.ActualHeight, GridUnitType.Pixel);
+                AnimarAltoResultados(AltoTiraResultados, version, null);
+            }
+            else
+            {
+                splitResultados.Visibility = Visibility.Visible;
+                rowSplitResultados.Height = new GridLength(5);
+                double disponible = Math.Max(0, rowEditor.ActualHeight + rowResultados.ActualHeight - 5);
+                double proporcion = _altoResultadosGuardado / (_altoEditorGuardado + _altoResultadosGuardado);
+                AnimarAltoResultados(disponible * proporcion, version, () =>
+                {
+                    rowEditor.Height = new GridLength(_altoEditorGuardado, GridUnitType.Star);
+                    rowResultados.Height = new GridLength(_altoResultadosGuardado, GridUnitType.Star);
+                    rowResultados.MinHeight = 120;
+                });
+            }
+        }
+
+        private void AnimarAltoResultados(double hasta, int version, Action alTerminar)
+        {
+            var anim = new GridLengthAnimation
+            {
+                From = new GridLength(rowResultados.ActualHeight, GridUnitType.Pixel),
+                To = new GridLength(hasta, GridUnitType.Pixel),
+                Duration = new Duration(TimeSpan.FromMilliseconds(160)),
+                FillBehavior = FillBehavior.Stop
+            };
+            anim.Completed += (s, e) =>
+            {
+                if (version != _versionAnimResultados) return;   // otra animacion tomo el control
+                rowResultados.Height = new GridLength(hasta, GridUnitType.Pixel);
+                if (alTerminar != null) alTerminar();
+            };
+            rowResultados.BeginAnimation(RowDefinition.HeightProperty, anim);
         }
 
         // -- Pestanas de consulta ----------------------------------------------------

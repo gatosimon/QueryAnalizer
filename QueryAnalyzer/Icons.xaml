@@ -39,6 +39,7 @@
     <Geometry x:Key="IconSliders">M2.5,5 H4.6 M7.4,5 H13.5 M2.5,11 H8.6 M11.4,11 H13.5 M7.4,5 A1.4,1.4 0 1 0 4.6,5 A1.4,1.4 0 1 0 7.4,5 Z M11.4,11 A1.4,1.4 0 1 0 8.6,11 A1.4,1.4 0 1 0 11.4,11 Z</Geometry>
     <Geometry x:Key="IconHelp">M2,8 A6,6 0 1 0 14,8 A6,6 0 1 0 2,8 Z M6.2,6.3 A1.9,1.9 0 1 1 8.8,8.1 C8.2,8.4 8,8.8 8,9.5 M8,11.6 V11.7</Geometry>
     <Geometry x:Key="IconChevronDown">M4,6 L8,10 L12,6</Geometry>
+    <Geometry x:Key="IconChevronUp">M4,10 L8,6 L12,10</Geometry>
     <Geometry x:Key="IconChevronRight">M6,4 L10,8 L6,12</Geometry>
     <Geometry x:Key="IconChevronLeft">M10,4 L6,8 L10,12</Geometry>
     <Geometry x:Key="IconFolder">M2,4.5 H6 L7.5,6 H14 V12.5 H2 Z</Geometry>

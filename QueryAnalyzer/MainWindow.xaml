@@ -464,9 +464,9 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>               <!-- pestañas de consulta -->
                     <RowDefinition Height="Auto"/>               <!-- barra del editor -->
-                    <RowDefinition Height="2*" MinHeight="90"/>  <!-- editor -->
-                    <RowDefinition Height="5"/>                  <!-- splitter -->
-                    <RowDefinition Height="3*" MinHeight="120"/> <!-- panel inferior -->
+                    <RowDefinition x:Name="rowEditor" Height="2*" MinHeight="90"/>  <!-- editor -->
+                    <RowDefinition x:Name="rowSplitResultados" Height="5"/>         <!-- splitter -->
+                    <RowDefinition x:Name="rowResultados" Height="3*" MinHeight="120"/> <!-- panel inferior -->
                 </Grid.RowDefinitions>
 
                 <!-- Pestañas de consulta: cada una tiene su texto, sus parámetros y sus resultados -->
@@ -548,11 +548,14 @@
                                    HorizontalScrollBarVisibility="Auto"
                                    KeyUp="txtQuery_KeyUp"/>
 
-                <GridSplitter Grid.Row="3" Height="5" HorizontalAlignment="Stretch"
+                <GridSplitter x:Name="splitResultados" Grid.Row="3" Height="5" HorizontalAlignment="Stretch"
+                              MouseDoubleClick="splitResultados_DoubleClick"
+                              ToolTip="Arrastrar para cambiar el alto; doble clic para ocultar el panel"
                               ResizeDirection="Rows" ResizeBehavior="PreviousAndNext"/>
 
                 <!-- Panel inferior: Resultados | Parámetros | Mensajes -->
-                <TabControl x:Name="tcPanelInferior" Grid.Row="4" Style="{StaticResource BottomTabControl}"
+                <TabControl x:Name="tcPanelInferior" Grid.Row="4" Style="{StaticResource BottomTabControl}" ClipToBounds="True"
+                            PreviewMouseLeftButtonDown="tcPanelInferior_PreviewMouseLeftButtonDown"
                             SelectionChanged="tcPanelInferior_SelectionChanged">
 
                     <TabItem Style="{StaticResource BottomTab}">
@@ -730,6 +733,13 @@
                         </Grid>
                     </TabItem>
                 </TabControl>
+
+                <!-- Colapsar / expandir el panel inferior (queda solo la tira de pestañas) -->
+                <Button x:Name="btnColapsarResultados" Grid.Row="4" Style="{StaticResource IconButton}"
+                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,8,0"
+                        ToolTip="Ocultar el panel de resultados" Click="btnColapsarResultados_Click">
+                    <Path x:Name="icoColapsarResultados" Style="{StaticResource Ic}" Data="{StaticResource IconChevronDown}"/>
+                </Button>
             </Grid>
         </Grid>
 
