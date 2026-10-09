@@ -4136,8 +4136,8 @@ namespace QueryAnalyzer
         /// </summary>
         // Se compara sin guiones bajos ni mayúsculas: F_ALTA, FECHA_ALTA, FechaAlta, UsuModi, AltaUsuario, etc.
         private static readonly Regex RegexColumnaAuditoria = new Regex(
-            @"^((f|h|u|fec|fecha|hs|hora|fechahora|usu|usr|usuario|user)(alta|modi|modif|modificacion|baja|creacion|actualizacion)" +
-            @"|(alta|modi|modif|modificacion|baja|creacion|actualizacion)(f|h|u|fec|fecha|hora|usu|usr|usuario|user))$",
+            @"^((f|h|u|fec|fecha|hs|hora|fechahora|usu|usr|usuario|user|motivo)(alta|modi|modif|modificacion|baja|creacion|actualizacion|mod)" +
+            @"|(alta|modi|modif|modificacion|baja|creacion|actualizacion|mod)(f|h|u|fec|fecha|hora|usu|usr|usuario|user|motivo))$",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private static bool EsColumnaAuditoria(string columna)
