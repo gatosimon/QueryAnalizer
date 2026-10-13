@@ -44,8 +44,11 @@
                                 VerticalAlignment="Center"
                                 Background="{DynamicResource BrushInputBG}" BorderBrush="{DynamicResource BrushFGMuted}">
                             <Grid>
-                                <Path x:Name="Marca" Width="16" Height="16" Stretch="None" Visibility="Collapsed"
-                                      Data="M3.6,8.4 L6.9,11.7 L12.4,4.9"
+                                <!-- Stretch=Fill: la caja del tilde se ajusta a 9x7 y queda centrada en la casilla (con Stretch=None
+                                     el trazo dependia de coordenadas absolutas y salia corrido hacia abajo/derecha) -->
+                                <Path x:Name="Marca" Width="9" Height="7" Stretch="Fill" Visibility="Collapsed"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      Data="M0,3.6 L3.3,6.9 L8.8,0"
                                       Stroke="{DynamicResource BrushAccentFG}" StrokeThickness="1.9"
                                       StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
                                 <Rectangle x:Name="Guion" Width="8" Height="2" RadiusX="1" RadiusY="1" Visibility="Collapsed"

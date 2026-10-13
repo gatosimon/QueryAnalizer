@@ -2010,7 +2010,55 @@ namespace QueryAnalyzer
         /// Columnas binarias (rowversion/timestamp/varbinary) no se pueden representar como
         /// literal SQL de forma confiable: se excluyen de SET/WHERE/INSERT.
         /// </summary>
-        private static bool EsColumnaBinaria(Type type) => type == typeof(byte[]);
+        private static bool EsColumnaBinaria(DataColumn col) =>
+            col.DataType == typeof(byte[]) || col.ExtendedProperties.ContainsKey(MarcaBinarioComoTexto);
+
+        /// <summary>Marca (ExtendedProperties) de las columnas binarias cortas mostradas como texto.</summary>
+        private const string MarcaBinarioComoTexto = "BinarioComoTexto";
+
+        /// <summary>
+        /// Tamaño máximo (en bytes) de una columna binaria para mostrarla como texto. Cubre
+        /// CHAR/VARCHAR ... FOR BIT DATA de DB2 (que el ODBC entrega como byte[] aunque guarden
+        /// texto, p. ej. los campos Alpha de Magic) y deja como byte[] los BLOB/IMAGE/VARBINARY(MAX).
+        /// </summary>
+        private const int MaxBytesBinarioComoTexto = 4000;
+
+        /// <summary>
+        /// True si la columna binaria (byte[] de más de 1 byte, hasta MaxBytesBinarioComoTexto)
+        /// debe exponerse como string. El tamaño 1 se trata aparte como bool (BIT DATA [1]).
+        /// </summary>
+        private static bool EsBinarioComoTexto(DataTable esquema, int indice)
+        {
+            int tam = esquema != null && indice < esquema.Rows.Count
+                      && esquema.Rows[indice]["ColumnSize"] is int cs ? cs : -1;
+            return tam > 1 && tam <= MaxBytesBinarioComoTexto;
+        }
+
+        /// <summary>
+        /// Convierte el valor de una columna binaria corta a texto: si los bytes son caracteres
+        /// imprimibles se decodifican como ANSI (Windows-1252, el "Char Set Ansi" de Magic) sin
+        /// el relleno final de blancos/ceros; si no, se muestran en hexadecimal (0x...).
+        /// </summary>
+        private static string BytesATexto(byte[] bytes)
+        {
+            if (bytes == null) return null;
+            int largo = bytes.Length;
+            while (largo > 0 && (bytes[largo - 1] == 0x20 || bytes[largo - 1] == 0x00)) largo--;
+
+            bool esTexto = true;
+            for (int i = 0; i < largo && esTexto; i++)
+            {
+                byte b = bytes[i];
+                esTexto = (b >= 0x20 && b != 0x7F) || b == 0x09 || b == 0x0A || b == 0x0D;
+            }
+            if (!esTexto)
+                return "0x" + BitConverter.ToString(bytes).Replace("-", "");
+
+            System.Text.Encoding ansi;
+            try { ansi = System.Text.Encoding.GetEncoding(1252); }
+            catch { ansi = System.Text.Encoding.GetEncoding(28591); }
+            return ansi.GetString(bytes, 0, largo);
+        }
 
         /// <summary>
         /// Devuelve las columnas que forman la clave primaria de la tabla (o, si no tiene PK,
@@ -2138,7 +2186,7 @@ namespace QueryAnalyzer
             bool usarClave = columnasClave != null && columnasClave.Count > 0;
             foreach (DataColumn col in row.Table.Columns)
             {
-                if (EsColumnaBinaria(col.DataType)) continue;
+                if (EsColumnaBinaria(col)) continue;
                 var orig = row[col, DataRowVersion.Original];
                 var curr = row[col, DataRowVersion.Current];
                 if (!object.Equals(orig, curr))
@@ -2162,7 +2210,7 @@ namespace QueryAnalyzer
             var vals = new System.Collections.Generic.List<string>();
             foreach (DataColumn col in row.Table.Columns)
             {
-                if (EsColumnaBinaria(col.DataType)) continue;
+                if (EsColumnaBinaria(col)) continue;
                 var val = row[col, DataRowVersion.Current];
                 if (val == DBNull.Value) continue;
                 cols.Add(col.ColumnName);
@@ -2180,7 +2228,7 @@ namespace QueryAnalyzer
             bool usarClave = columnasClave != null && columnasClave.Count > 0;
             foreach (DataColumn col in row.Table.Columns)
             {
-                if (EsColumnaBinaria(col.DataType)) continue;
+                if (EsColumnaBinaria(col)) continue;
                 if (usarClave && !columnasClave.Contains(col.ColumnName, StringComparer.OrdinalIgnoreCase))
                     continue;
                 var orig = row[col, DataRowVersion.Original];
@@ -2298,19 +2346,28 @@ namespace QueryAnalyzer
                         // Detectar columnas BIT DATA [1] de DB2: el driver ODBC las entrega
                         // como byte[] de longitud 1. Las marcamos para tratarlas como bool.
                         var esBitData = new bool[DB.Reader.FieldCount];
+                        var esBinTexto = new bool[DB.Reader.FieldCount];
+                        var esquemaReader = DB.Reader.GetSchemaTable();
                         for (int i = 0; i < DB.Reader.FieldCount; i++)
                         {
                             string nombreReal = DB.GetName(i);
                             Type tipoCol = DB.GetFieldType(i) ?? typeof(string);
 
-                            // byte[] de 1 byte = BIT DATA [1] en DB2 → se expone como bool
                             if (tipoCol == typeof(byte[]))
                             {
-                                int colSize = DB.Reader.GetSchemaTable()?.Rows[i]?["ColumnSize"] is int cs ? cs : -1;
+                                int colSize = esquemaReader?.Rows[i]?["ColumnSize"] is int cs ? cs : -1;
                                 if (colSize == 1)
                                 {
+                                    // byte[] de 1 byte = BIT DATA [1] en DB2 → se expone como bool
                                     esBitData[i] = true;
                                     tipoCol = typeof(bool);
+                                }
+                                else if (EsBinarioComoTexto(esquemaReader, i))
+                                {
+                                    // CHAR/VARCHAR ... FOR BIT DATA (p. ej. campos Alpha de Magic):
+                                    // el ODBC los entrega como byte[] pero guardan texto → string
+                                    esBinTexto[i] = true;
+                                    tipoCol = typeof(string);
                                 }
                             }
 
@@ -2319,7 +2376,9 @@ namespace QueryAnalyzer
                             int sufijo = 1;
                             while (dt.Columns.Contains(nombreFinal))
                                 nombreFinal = nombreReal + "_" + sufijo++;
-                            dt.Columns.Add(nombreFinal, tipoCol);
+                            var colDt = dt.Columns.Add(nombreFinal, tipoCol);
+                            if (esBinTexto[i])
+                                colDt.ExtendedProperties[MarcaBinarioComoTexto] = true;
                         }
 
                         // Llenar filas con límite opcional para prevenir OOM
@@ -2345,6 +2404,10 @@ namespace QueryAnalyzer
                                     // BIT DATA [1]: convertir byte[] {0} -> false, {1} -> true
                                     var bytes = DB.GetValue(i) as byte[];
                                     row[i] = bytes != null && bytes.Length > 0 && bytes[0] != 0;
+                                }
+                                else if (esBinTexto[i])
+                                {
+                                    row[i] = (object)BytesATexto(DB.GetValue(i) as byte[]) ?? DBNull.Value;
                                 }
                                 else
                                 {
@@ -2374,15 +2437,20 @@ namespace QueryAnalyzer
                         try
                         {
                             int fc = DB.Reader?.FieldCount ?? 0;
+                            var esquemaVacio = fc > 0 ? DB.Reader.GetSchemaTable() : null;
                             for (int i = 0; i < fc; i++)
                             {
                                 string nombreReal  = DB.GetName(i);
                                 Type   tipoCol     = DB.GetFieldType(i) ?? typeof(string);
+                                bool   binTexto    = tipoCol == typeof(byte[]) && EsBinarioComoTexto(esquemaVacio, i);
+                                if (binTexto) tipoCol = typeof(string);
                                 string nombreFinal = nombreReal;
                                 int    sufijo      = 1;
                                 while (dt.Columns.Contains(nombreFinal))
                                     nombreFinal = nombreReal + "_" + sufijo++;
-                                dt.Columns.Add(nombreFinal, tipoCol);
+                                var colDt = dt.Columns.Add(nombreFinal, tipoCol);
+                                if (binTexto)
+                                    colDt.ExtendedProperties[MarcaBinarioComoTexto] = true;
                             }
                         }
                         catch { /* reader ya cerrado por el driver; DataGrid sin columnas */ }
@@ -3292,7 +3360,7 @@ namespace QueryAnalyzer
                         tablaHeader.Children.Add(chkNodo);
 
                         tablaHeader.Children.Add(CrearIconoNodo(capTipo == "VIEW" ? "IconEye" : "IconTable", "BrushAccent"));
-                        tablaHeader.Children.Add(new System.Windows.Controls.TextBlock { Text = headerText });
+                        tablaHeader.Children.Add(new System.Windows.Controls.TextBlock { Text = headerText, VerticalAlignment = VerticalAlignment.Center });
 
                         var tablaNode = new TreeViewItem { Header = tablaHeader, Tag = new NodoTablaTag(capTabla, capTipo) };
 
@@ -3632,7 +3700,8 @@ namespace QueryAnalyzer
                     colHeader.Children.Add(esClavePrimaria ? CrearIconoNodo("IconKey", "BrushWarning") : CrearIconoNodo("IconColumnField", "BrushFGMuted"));
                     colHeader.Children.Add(new System.Windows.Controls.TextBlock
                     {
-                        Text = $"{colName} ({tipoCompleto}{(string.IsNullOrEmpty(aceptaNulos) ? string.Empty : $", {aceptaNulos}")}{(string.IsNullOrEmpty(defecto) ? string.Empty : $", DEFAULT {defecto}")})"
+                        Text = $"{colName} ({tipoCompleto}{(string.IsNullOrEmpty(aceptaNulos) ? string.Empty : $", {aceptaNulos}")}{(string.IsNullOrEmpty(defecto) ? string.Empty : $", DEFAULT {defecto}")})",
+                        VerticalAlignment = VerticalAlignment.Center
                     });
 
                     var colNode = new TreeViewItem { Header = colHeader };
@@ -3920,7 +3989,8 @@ namespace QueryAnalyzer
                                 indiceHeader.Children.Add(esPK ? CrearIconoNodo("IconKey", "BrushWarning") : esUnique ? CrearIconoNodo("IconLock", "BrushSuccess") : CrearIconoNodo("IconIndex", "BrushFGMuted"));
                                 indiceHeader.Children.Add(new System.Windows.Controls.TextBlock
                                 {
-                                    Text = $"{nombreIndice}{etiq}"
+                                    Text = $"{nombreIndice}{etiq}",
+                                    VerticalAlignment = VerticalAlignment.Center
                                 });
                                 var nodoIndice = new TreeViewItem { Header = indiceHeader };
 
