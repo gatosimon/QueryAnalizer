@@ -975,7 +975,8 @@ namespace QueryAnalyzer
                         conexionLote.Open();
 
                         if (conexionActual?.Motor == TipoMotor.POSTGRES)
-                            using (var cmdSt = new System.Data.Odbc.OdbcCommand("SET statement_timeout = 0", conexionLote))
+                            using (var cmdSt = new System.Data.Odbc.OdbcCommand(
+                                $"SET statement_timeout = {_configApp.TimeoutConsultaSegundos * 1000}", conexionLote))
                                 cmdSt.ExecuteNonQuery();
 
                         AppendMessage($"Lote de {validQueries.Count} sentencias sobre una única conexión (las transacciones y las tablas temporales se mantienen).");
@@ -2294,6 +2295,7 @@ namespace QueryAnalyzer
         {
             // Capturar el motor antes de entrar al hilo de background (conexionActual es mutable).
             TipoMotor motorActual = conexionActual?.Motor ?? TipoMotor.MS_SQL;
+            int timeoutSeg = _configApp.TimeoutConsultaSegundos;
 
             return await Task.Run(() =>
             {
@@ -2307,21 +2309,21 @@ namespace QueryAnalyzer
                         ? new DataBase(conexionCompartida)
                         : new DataBase(connStr, false);
 
-                    // ── PostgreSQL: deshabilitar statement_timeout del servidor ──────
+                    // ── PostgreSQL: statement_timeout del servidor ───────────────────
                     // El servidor puede tener un statement_timeout corto (ej. 30 s) que
                     // cancela consultas en tablas grandes con el error 57014.
-                    // SET statement_timeout = 0 lo desactiva para esta sesión.
+                    // Se fija al valor de Preferencias (0 = sin límite) para esta sesión.
                     // Con conexión compartida ya se hizo una vez al abrirla.
                     if (motorActual == TipoMotor.POSTGRES && conexionCompartida == null)
                     {
-                        DB.CommandText = "SET statement_timeout = 0";
+                        DB.CommandText = $"SET statement_timeout = {timeoutSeg * 1000}";
                         DB.NonQuery();
                     }
 
                     DB.CommandText = sql;
-                    // Sin límite de tiempo en el driver ODBC (cliente).
-                    // El control del tiempo lo maneja el usuario con el botón Cancelar.
-                    DB.CommandTimeout = 0;
+                    // Timeout del driver ODBC (cliente) según Preferencias; 0 = sin límite,
+                    // y en ese caso el usuario controla el tiempo con el botón Cancelar.
+                    DB.CommandTimeout = timeoutSeg;
 
                     // Exponer el comando para que BtnCancelarQuery_Click pueda cancelarlo.
                     _cmdActivo = DB.Command;
@@ -2483,6 +2485,7 @@ namespace QueryAnalyzer
             string sql = txtQuery.Text;
 
             AppendMessage("Ejecutando escalar...");
+            int timeoutSeg = _configApp.TimeoutConsultaSegundos;
 
             try
             {
@@ -2490,6 +2493,7 @@ namespace QueryAnalyzer
                 {
                     DataBase DB = new DataBase(connStr, false);
                     DB.CommandText = sql;
+                    DB.CommandTimeout = timeoutSeg;
                     return DB.Scalar();
                 });
 

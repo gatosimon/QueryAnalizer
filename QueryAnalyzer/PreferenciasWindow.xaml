@@ -83,6 +83,18 @@
                                            Foreground="{DynamicResource BrushFGMuted}"
                                            FontSize="10" Margin="6,0,0,0"/>
                             </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,4"
+                                        ToolTip="Tiempo máximo de una consulta (ejecución y escalar). 0 = sin límite; se corta con Cancelar. En PostgreSQL también ajusta el statement_timeout del servidor.">
+                                <TextBlock Text="Timeout de consultas (segundos):"
+                                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBox x:Name="txtTimeoutSeg"
+                                         Width="90" MaxLength="6"
+                                         VerticalContentAlignment="Center"/>
+                                <TextBlock Text="(0 = sin límite)"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource BrushFGMuted}"
+                                           FontSize="10" Margin="6,0,0,0"/>
+                            </StackPanel>
                         </StackPanel>
                     </GroupBox>
 

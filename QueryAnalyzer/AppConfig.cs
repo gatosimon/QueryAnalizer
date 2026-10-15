@@ -40,6 +40,13 @@ namespace QueryAnalyzer
         public int MaxFilasResultado { get; set; } = 100000;
 
         /// <summary>
+        /// Tiempo máximo, en segundos, que puede tardar una consulta (ejecución y escalar).
+        /// 0 = sin límite (se corta con el botón Cancelar). En PostgreSQL también ajusta
+        /// el statement_timeout de la sesión. Default: 0.
+        /// </summary>
+        public int TimeoutConsultaSegundos { get; set; } = 0;
+
+        /// <summary>
         /// Cuando está activo, las celdas del grid de resultados son editables
         /// y se pueden guardar en la base de datos con el botón "Guardar cambios".
         /// </summary>

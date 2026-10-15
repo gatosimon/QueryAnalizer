@@ -146,6 +146,7 @@ namespace QueryAnalyzer
             chkResultadosEditables.IsChecked   = _configOriginal.ResultadosEditables;
             chkMostrarNroFila.IsChecked        = _configOriginal.MostrarNumeroFila;
             txtMaxFilas.Text                   = _configOriginal.MaxFilasResultado.ToString();
+            txtTimeoutSeg.Text                 = _configOriginal.TimeoutConsultaSegundos.ToString();
 
             txtRutaConfig.Text = "Ruta: " + Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -310,6 +311,10 @@ namespace QueryAnalyzer
             if (int.TryParse(txtMaxFilas.Text.Trim(), out int parsedMax) && parsedMax >= 0)
                 maxFilas = parsedMax;
 
+            int timeoutSeg = 0;
+            if (int.TryParse(txtTimeoutSeg.Text.Trim(), out int parsedTimeout) && parsedTimeout >= 0)
+                timeoutSeg = parsedTimeout;
+
             var nueva = new AppConfig
             {
                 TemaOscuro              = chkTemaOscuro.IsChecked == true,
@@ -321,6 +326,7 @@ namespace QueryAnalyzer
                 ResultadosEditables    = chkResultadosEditables.IsChecked == true,
                 MostrarNumeroFila       = chkMostrarNroFila.IsChecked == true,
                 MaxFilasResultado       = maxFilas,
+                TimeoutConsultaSegundos = timeoutSeg,
             };
 
             try

@@ -217,6 +217,11 @@
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• 'Limpiar resultados': cierra todos los resultados de la consulta activa."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• La pestaña 'Mensajes' del panel inferior registra tiempos de ejecución, errores y avisos; 'Limpiar mensajes' los borra."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Si una consulta devuelve 0 filas, la grilla igual muestra los encabezados de columna para confirmar que la consulta fue válida y ejecutada correctamente."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Timeout de consultas"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Se configura en Preferencias → General → 'Timeout de consultas (segundos)'. Es el tiempo máximo que puede tardar una consulta antes de cancelarse con error."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Vale para la ejecución de consultas y para 'Ejecutar escalar'. El valor por defecto es 0 = sin límite: la consulta corre hasta terminar o hasta que se pulse Cancelar."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• En PostgreSQL también ajusta el statement_timeout de la sesión, para que un límite corto del servidor no corte antes que el valor configurado."/>
+                <TextBlock Style="{StaticResource Nota}" Text="Tip: si una consulta larga falla por tiempo, aumentá este valor (o dejalo en 0). Un límite impuesto por el servidor o por la red, distinto del de la sesión, no lo controla esta opción."/>
 
                 <!-- ══ EXPORTAR ════════════════════════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="Exportar resultados"/>
