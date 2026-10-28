@@ -1975,11 +1975,16 @@ namespace QueryAnalyzer
             for (int i = 0; i < words.Length - 1; i++)
             {
                 if (!string.Equals(words[i], "FROM", StringComparison.OrdinalIgnoreCase)) continue;
-                string w = words[i + 1];
-                if (w.Length >= 2 &&
+                string w = words[i + 1].TrimEnd(';');
+                bool envuelta = w.Length >= 2 &&
                     ((w[0] == '"' && w[w.Length - 1] == '"') ||
                      (w[0] == '[' && w[w.Length - 1] == ']') ||
-                     (w[0] == '`' && w[w.Length - 1] == '`')))
+                     (w[0] == '`' && w[w.Length - 1] == '`'));
+                // Un nombre calificado entre delimitadores ([dbo].[Tabla], "dbo"."Tabla") también empieza y
+                // termina con ellos: quitar solo el primero y el último lo rompía ("dbo].[Tabla"), y el
+                // UPDATE fallaba con un identificador sin cerrar. Se deja tal cual, que es SQL válido.
+                bool calificada = w.Contains("].[") || w.Contains("\".\"") || w.Contains("`.`");
+                if (envuelta && !calificada)
                     return w.Substring(1, w.Length - 2);
                 return w;
             }
