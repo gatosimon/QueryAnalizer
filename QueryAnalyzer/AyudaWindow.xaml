@@ -513,6 +513,31 @@
                 <TextBlock Style="{StaticResource Nota}"      Text="Atención: las columnas binarias (VARBINARY, BLOB, imágenes) no se guardan en el backup — se escriben como NULL. Una restauración deja esas columnas vacías."/>
                 <TextBlock Style="{StaticResource Nota}"      Text="Tip: probá siempre la restauración contra una base de desarrollo antes de correrla en producción."/>
 
+                <!-- ══ REVISIÓN ORTOGRÁFICA ════════════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}"    Text="Revisión ortográfica de datos"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Menú 'Herramientas' → 'Revisión ortográfica'. Busca posibles errores de ortografía en los DATOS de las columnas de texto de la conexión activa. Solo lee: nunca modifica la base."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Funciona con un diccionario de español (es_AR) incluido en la aplicación: no necesita internet ni instalar nada."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Cómo se usa"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• 1) Tildá las tablas a revisar y tocá 'Cargar columnas de texto'. El selector de esquema y el filtro por nombre acotan lo que se ve; 'Todas' y 'Ninguna' actúan solo sobre las tablas visibles, y las ya tildadas se conservan aunque queden ocultas."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• 2) La lista muestra todas las columnas de tipo texto (char, varchar, nvarchar, text...). Se tildan solas las que parecen descriptivas (descripción, observaciones, motivo, etc.), pero podés tildar cualquiera: la columna 'Descriptiva' es solo una ayuda."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• 3) 'Analizar' revisa las columnas tildadas en segundo plano, con barra de progreso. 'Cancelar' corta también la consulta en curso."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Tip: las columnas de nombres y apellidos suelen dar muchos falsos positivos (apellidos que el diccionario no conoce). Si molestan, usá 'Ignorar esta palabra' o destildalas."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Qué informa"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Ortografía: palabra que el diccionario no reconoce, con hasta cinco sugerencias."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Falta tilde: la palabra está bien escrita salvo el acento (DESCRIPCION por DESCRIPCIÓN). Es muy común en datos viejos; se puede dejar de contar con la opción 'Contar la falta de tilde como error'."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Codificación: texto guardado con otra codificación, por ejemplo 'Ã³' en lugar de 'ó'."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• 'Valores' es la cantidad de valores distintos de la columna que contienen la palabra, no la cantidad de filas."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• No se juzgan las mayúsculas ('rafaela' o 'PEREZ' no son errores) ni se revisan palabras de menos de 3 letras, códigos pegados a números o guiones bajos, identificadores camelCase, correos y direcciones web. Las siglas de hasta 4 letras en mayúsculas se ignoran salvo que destildes esa opción."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Sobre los resultados"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Doble click en un hallazgo, o menú contextual → 'Ver filas en el editor': agrega al final del editor SQL una consulta con las filas que contienen la palabra (sin borrar lo que ya escribiste) y la deja seleccionada para ejecutarla."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• 'Ignorar esta palabra' la quita de los resultados y no se vuelve a informar en ningún análisis (nombres propios, jerga del organismo). 'Ignorar esta columna' hace lo mismo con una columna: queda destildada al cargar sus columnas; si la tildás a mano, vuelve a revisarse."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• 'Exportar' guarda el informe en Excel o CSV."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Las palabras y columnas ignoradas se guardan en %AppData%\QueryAnalyzer\ortografia.xml."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Para no demorar en tablas enormes, de cada columna se leen como máximo los 'Valores por columna' distintos (50.000 por defecto). Si se llega al tope, el estado de la columna lo indica con '(tope)'."/>
+
                 <!-- ══ COLUMNA DE NUMERACIÓN ═══════════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}"    Text="Columna de numeración (Nº)"/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• Los grids de resultado muestran una columna 'Nº' a la izquierda con la numeración correlativa de las filas."/>
@@ -531,7 +556,7 @@
 
                 <TextBlock Style="{StaticResource Subtitulo}" Text="Barra superior"/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• A la izquierda: driver, conexión y los botones para probar, crear, editar y eliminar conexiones."/>
-                <TextBlock Style="{StaticResource Cuerpo}"    Text="• A la derecha: el menú 'Herramientas' (Comparar BDs, Transferir datos, Limpiar BD), el botón de tema claro / oscuro, el menú de preferencias, la ayuda y la versión."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• A la derecha: el menú 'Herramientas' (Comparar BDs, Transferir datos, Limpiar BD, Revisión ortográfica), el botón de tema claro / oscuro, el menú de preferencias, la ayuda y la versión."/>
 
                 <TextBlock Style="{StaticResource Subtitulo}" Text="Riel y panel lateral"/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• La columna de iconos de la izquierda (el riel) cambia lo que muestra el panel lateral: Explorador, Mis consultas o Historial."/>

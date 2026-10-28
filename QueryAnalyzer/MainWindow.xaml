@@ -122,7 +122,7 @@
 
                 <!-- Menu de herramientas -->
                 <Button x:Name="btnHerramientas" DockPanel.Dock="Right" VerticalAlignment="Center"
-                        ToolTip="Comparar, transferir y limpiar bases de datos" Click="BtnHerramientas_Click">
+                        ToolTip="Comparar, transferir, limpiar y revisar la ortografía de bases de datos" Click="BtnHerramientas_Click">
                     <StackPanel Orientation="Horizontal">
                         <Path Style="{StaticResource Ic}" Data="{StaticResource IconTools}"/>
                         <TextBlock Text="Herramientas" Margin="8,0,6,0" VerticalAlignment="Center"/>
@@ -141,6 +141,10 @@
                             <MenuItem x:Name="btnLimpiadorBD" Header="Limpiar BD" Click="btnLimpiadorBD_Click"
                                       ToolTip="Eliminar registros dados de baja lógica y reordenar IDs manteniendo integridad referencial">
                                 <MenuItem.Icon><Path Style="{StaticResource Ic}" Data="{StaticResource IconBroom}"/></MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem x:Name="btnOrtografia" Header="Revisión ortográfica" Click="btnOrtografia_Click"
+                                      ToolTip="Buscar posibles errores de ortografía en los datos de las columnas de texto">
+                                <MenuItem.Icon><Path Style="{StaticResource Ic}" Data="{StaticResource IconSpell}"/></MenuItem.Icon>
                             </MenuItem>
                         </ContextMenu>
                     </Button.ContextMenu>

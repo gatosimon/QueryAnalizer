@@ -60,6 +60,7 @@ namespace QueryAnalyzer
             var dlg = new DialogoMensajeWindow(texto, titulo, botones, icono, porDefecto);
             if (owner != null) dlg.Owner = owner;
             else dlg.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            VentanasHelper.EngancharFoco(dlg);   // al cerrarlo, el foco vuelve a la app aunque haya otra aplicacion detras
             dlg.ShowDialog();
             return dlg.Resultado;
         }

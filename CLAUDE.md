@@ -5,6 +5,7 @@
 - Acceso a datos: `CapiDL.dll` (clase `DataBase`, ODBC 32-bit)
 - Conexiones: `ConexionesManager` + `ConfigManager` (persiste en `config.xml`)
 - UI: ModernWpfUI 0.9.6 (net45) + AvalonEdit. Las DLLs de terceros van **embebidas** como recursos `Embedded.<nombre>.dll` y se cargan con `AssemblyResolve` en `App()` (`App.xaml.cs`); por eso el ZIP de update lleva solo el `.exe`. Toda DLL nueva debe agregarse igual (`<Private>False</Private>` + `EmbeddedResource` con `LogicalName`), si no el update no la entrega.
+- Revisión ortográfica de datos (`OrtografiaDatosWindow`): `WeCantSpell.Hunspell` **2.1.0** (la última con target net45 y sin dependencias; de la 3.x en adelante exige `System.Memory` o ya no trae net45) + diccionario `es_AR` de LibreOffice en `Assets\Diccionarios\`, ambos embebidos (`Embedded.WeCantSpell.Hunspell.dll`, `QueryAnalyzer.Diccionarios.es_AR.dic/.aff`). Triple licencia GPLv3/LGPLv3/MPL 1.1 (se usa bajo MPL); no borrar `LICENSE.md` de esa carpeta. Palabras y columnas ignoradas: `%AppData%\QueryAnalyzer\ortografia.xml`.
 - Build: MSBuild `C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe`
   - `/p:Configuration=Release` (sin `/p:Platform` — la solución no tiene config x86 separada)
 

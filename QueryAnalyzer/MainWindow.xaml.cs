@@ -5951,6 +5951,39 @@ namespace QueryAnalyzer
             new LimpiadorBDWindow(conexionActual, GetConnectionString()).Mostrar(this);
         }
 
+        private void btnOrtografia_Click(object sender, RoutedEventArgs e)
+        {
+            if (conexionActual == null)
+            {
+                MessageBox.Show("Seleccioná una conexión activa antes de usar la revisión ortográfica.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            new OrtografiaDatosWindow(conexionActual, GetConnectionString(), AgregarConsultaAlEditor).Mostrar(this);
+        }
+
+        /// <summary>
+        /// Deja una consulta lista en el editor sin pisar lo que ya haya escrito: si hay texto, se agrega al final
+        /// y queda seleccionada, así Ejecutar corre solo esa consulta.
+        /// </summary>
+        private void AgregarConsultaAlEditor(string sql)
+        {
+            if (string.IsNullOrWhiteSpace(txtQuery.Text))
+            {
+                txtQuery.Text = sql;
+                txtQuery.Select(0, sql.Length);
+            }
+            else
+            {
+                int inicio = txtQuery.Document.TextLength;
+                string agregado = "\r\n\r\n" + sql;
+                txtQuery.Document.Insert(inicio, agregado);
+                txtQuery.Select(inicio + 4, sql.Length);   // 4 = los dos saltos de línea de "agregado"
+            }
+            txtQuery.ScrollToEnd();
+            Activate();
+            txtQuery.Focus();
+        }
+
         /// <summary>
         /// Se llama una vez al inicio (vía Dispatcher) para notificar drivers faltantes.
         /// Solo alerta si hay algún driver bundleado (con instalador incluido) que no está instalado.

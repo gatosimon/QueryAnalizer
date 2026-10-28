@@ -53,3 +53,5 @@ C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\Controles.
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\DialogoMensajeWindow.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\ScrollBars.baml
 C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\DialogoMensajeWindow.g.cs
+c:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\OrtografiaDatosWindow.baml
+c:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\OrtografiaDatosWindow.g.cs

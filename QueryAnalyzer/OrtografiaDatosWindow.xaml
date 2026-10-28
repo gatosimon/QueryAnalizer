@@ -1,0 +1,229 @@
+<Window x:Class="QueryAnalyzer.OrtografiaDatosWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.modernwpf.com/2019"
+        Title="Revisión ortográfica"
+        Width="1360" Height="840" MinWidth="980" MinHeight="620"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BrushWindowBG}"
+        Foreground="{DynamicResource BrushFG}"
+        Closing="Window_Closing"
+        ui:WindowHelper.UseModernWindowStyle="True">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ThemeLight.xaml"/>
+                <ResourceDictionary Source="Styles.xaml"/>
+                <ResourceDictionary Source="Controles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}"/>
+
+            <!-- Categoría del hallazgo: el color distingue qué tan seguro es el error -->
+            <Style x:Key="TextoCategoria" TargetType="TextBlock" BasedOn="{StaticResource GridTexto}">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Categoria}" Value="Ortografía">
+                        <Setter Property="Foreground" Value="{DynamicResource BrushDanger}"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Categoria}" Value="Falta tilde">
+                        <Setter Property="Foreground" Value="{DynamicResource BrushWarning}"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Categoria}" Value="Codificación">
+                        <Setter Property="Foreground" Value="{DynamicResource BrushAccent}"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="360" MinWidth="280"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ═══════════════ PANEL IZQUIERDO: TABLAS ═══════════════ -->
+            <DockPanel Grid.Column="0" Margin="12,12,4,12">
+                <TextBlock DockPanel.Dock="Top" Style="{StaticResource SectionHeader}" Text="TABLAS" Margin="0,0,0,6"/>
+                <!-- Se oculta solo si la base no tiene esquemas (SQLite) -->
+                <DockPanel x:Name="panelEsquema" DockPanel.Dock="Top" Margin="0,0,0,8">
+                    <Label Content="Esquema:" DockPanel.Dock="Left" VerticalAlignment="Center"/>
+                    <ComboBox x:Name="cbEsquema" HorizontalAlignment="Stretch"
+                              SelectionChanged="cbEsquema_SelectionChanged"
+                              ToolTip="Muestra solo las tablas de ese esquema. Las que ya tildaste siguen tildadas aunque no se vean."/>
+                </DockPanel>
+                <TextBox x:Name="txtFiltro" DockPanel.Dock="Top" TextChanged="txtFiltro_TextChanged"
+                         ui:ControlHelper.PlaceholderText="Filtrar tablas por nombre"/>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,8,0,8">
+                    <Button Content="Todas" MinWidth="80" Margin="0,0,6,0" Click="btnSelTodas_Click"
+                            ToolTip="Tilda las tablas que se ven con el filtro actual"/>
+                    <Button Content="Ninguna" MinWidth="80" Click="btnSelNinguna_Click"/>
+                </StackPanel>
+
+                <Button x:Name="btnCargarColumnas" DockPanel.Dock="Bottom" Margin="0,8,0,0"
+                        HorizontalAlignment="Stretch" Style="{StaticResource CompositeButton}"
+                        Click="btnCargarColumnas_Click"
+                        ToolTip="Busca las columnas de texto de las tablas tildadas">
+                    <TextBlock Text="Cargar columnas de texto"/>
+                </Button>
+
+                <DataGrid x:Name="dgTablas" SelectionMode="Single" SelectionUnit="FullRow"
+                          AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                          HeadersVisibility="Column" RowHeaderWidth="0" CanUserResizeRows="False"
+                          BorderThickness="1" BorderBrush="{DynamicResource BrushBorder}">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="44" CanUserResize="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding Incluir, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              Style="{StaticResource GridCheckBox}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Tabla" Width="*"
+                                            IsReadOnly="True" Binding="{Binding NombreCompleto}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"
+                          Background="{DynamicResource BrushSplitter}"/>
+
+            <!-- ═══════════════ PANEL DERECHO ═══════════════ -->
+            <Grid Grid.Column="2" Margin="4,12,12,12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" MinHeight="120"/>
+                    <RowDefinition Height="5"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="1.4*" MinHeight="160"/>
+                </Grid.RowDefinitions>
+
+                <!-- Columnas de texto -->
+                <DockPanel Grid.Row="0">
+                    <TextBlock DockPanel.Dock="Top" Style="{StaticResource SectionHeader}" Margin="0,0,0,6"
+                               Text="COLUMNAS DE TEXTO (se preseleccionan las que parecen descriptivas; podés tildar cualquiera)"/>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Content="Todas" MinWidth="80" Margin="0,0,6,0" Click="btnColTodas_Click"/>
+                        <Button Content="Ninguna" MinWidth="80" Margin="0,0,6,0" Click="btnColNinguna_Click"/>
+                        <Button Content="Solo probables" MinWidth="110" Click="btnColProbables_Click"
+                                ToolTip="Deja tildadas solo las de probabilidad Alta o Media"/>
+                    </StackPanel>
+                    <DataGrid x:Name="dgColumnas" SelectionMode="Single" SelectionUnit="FullRow"
+                              AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                              HeadersVisibility="Column" RowHeaderWidth="0" CanUserResizeRows="False"
+                              BorderThickness="1" BorderBrush="{DynamicResource BrushBorder}">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Width="44" CanUserResize="False">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding Revisar, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  Style="{StaticResource GridCheckBox}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Tabla" Width="2*" IsReadOnly="True" Binding="{Binding TablaCompleta}"/>
+                            <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Columna" Width="2*" IsReadOnly="True" Binding="{Binding Nombre}"/>
+                            <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Tipo" Width="*" IsReadOnly="True" Binding="{Binding TipoLargo}"/>
+                            <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Descriptiva" Width="90" IsReadOnly="True" Binding="{Binding Probabilidad}"/>
+                            <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Estado" Width="2*" IsReadOnly="True" Binding="{Binding Estado}"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+
+                <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                              ResizeDirection="Rows" Background="{DynamicResource BrushSplitter}"/>
+
+                <!-- Opciones y acciones -->
+                <StackPanel Grid.Row="2" Margin="0,8,0,8">
+                    <WrapPanel Margin="0,0,0,8">
+                        <TextBlock Text="Valores por columna:" VerticalAlignment="Center" Margin="0,0,6,0"
+                                   Foreground="{DynamicResource BrushFGMuted}"/>
+                        <TextBox x:Name="txtMaxValores" Width="90" Text="50000" Margin="0,0,16,0"
+                                 ToolTip="Tope de valores distintos que se leen de cada columna. En columnas enormes se revisa solo una parte."/>
+                        <CheckBox x:Name="chkTilde" Content="Contar la falta de tilde como error" IsChecked="True" Margin="0,0,16,0"
+                                  ToolTip="Muy común en datos viejos escritos sin acentos (DESCRIPCION). Destildado, esas palabras no se informan."/>
+                        <CheckBox x:Name="chkSiglas" Content="Ignorar siglas (hasta 4 letras en mayúsculas)" IsChecked="True"
+                                  ToolTip="Evita informar siglas y abreviaturas como SA, CUIT o UTN."/>
+                    </WrapPanel>
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                            <Button x:Name="btnAnalizar" Style="{StaticResource AccentCompositeButton}" Margin="0,0,6,0"
+                                    Click="btnAnalizar_Click" IsEnabled="False"
+                                    ToolTip="Revisa las columnas tildadas. Solo lee datos: no modifica nada.">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Style="{StaticResource Ic}" Data="{StaticResource IconSpell}"/>
+                                    <TextBlock Text="Analizar" Margin="8,0,0,0"/>
+                                </StackPanel>
+                            </Button>
+                            <Button x:Name="btnCancelar" Style="{StaticResource CompositeButton}" Margin="0,0,6,0"
+                                    Click="btnCancelar_Click" IsEnabled="False">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Style="{StaticResource Ic}" Data="{StaticResource IconClose}"/>
+                                    <TextBlock Text="Cancelar" Margin="8,0,0,0"/>
+                                </StackPanel>
+                            </Button>
+                            <Button x:Name="btnExportar" Style="{StaticResource CompositeButton}" Margin="0,0,6,0"
+                                    Click="btnExportar_Click" IsEnabled="False">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Style="{StaticResource Ic}" Data="{StaticResource IconDownload}"/>
+                                    <TextBlock Text="Exportar" Margin="8,0,0,0"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                        <ProgressBar x:Name="pbProgreso" Height="8" Margin="12,0,0,0" VerticalAlignment="Center"
+                                     Foreground="{DynamicResource BrushAccent}" Background="{DynamicResource BrushControlBG}"/>
+                    </DockPanel>
+                </StackPanel>
+
+                <!-- Hallazgos -->
+                <DockPanel Grid.Row="3">
+                    <TextBlock x:Name="txtResumen" DockPanel.Dock="Top" Style="{StaticResource SectionHeader}" Margin="0,0,0,6"
+                               Text="HALLAZGOS"/>
+                    <DataGrid x:Name="dgHallazgos" SelectionMode="Extended" SelectionUnit="FullRow"
+                              AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                              IsReadOnly="True" HeadersVisibility="Column" RowHeaderWidth="0" CanUserResizeRows="False"
+                              BorderThickness="1" BorderBrush="{DynamicResource BrushBorder}"
+                              MouseDoubleClick="dgHallazgos_MouseDoubleClick">
+                        <DataGrid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Ver filas en el editor" Click="menuVerEditor_Click"/>
+                                <MenuItem Header="Ignorar esta palabra" Click="menuIgnorarPalabra_Click"
+                                          ToolTip="No se vuelve a informar en ningún análisis"/>
+                                <MenuItem Header="Ignorar esta columna" Click="menuIgnorarColumna_Click"
+                                          ToolTip="No se vuelve a tildar al cargar las columnas de esta tabla"/>
+                                <Separator/>
+                                <MenuItem Header="Copiar palabra" Click="menuCopiar_Click"/>
+                            </ContextMenu>
+                        </DataGrid.ContextMenu>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn ElementStyle="{StaticResource TextoCategoria}" Header="Tipo" Width="105" Binding="{Binding Categoria}"/>
+                            <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Tabla" Width="*" MinWidth="110" Binding="{Binding TablaCompleta}"/>
+                            <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Columna" Width="*" MinWidth="100" Binding="{Binding Columna}"/>
+                            <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Palabra" Width="*" MinWidth="100" Binding="{Binding Palabra}"/>
+                            <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Sugerencias" Width="1.5*" MinWidth="120" Binding="{Binding Sugerencias}"/>
+                            <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Valores" Width="75" Binding="{Binding Valores}"/>
+                            <DataGridTextColumn ElementStyle="{StaticResource GridTexto}" Header="Ejemplo" Width="2.5*" MinWidth="160" Binding="{Binding Ejemplo}"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Grid>
+        </Grid>
+
+        <Border Grid.Row="1" BorderBrush="{DynamicResource BrushBorder}" BorderThickness="0,1,0,0"
+                Background="{DynamicResource BrushPanelBG}" Padding="12,8">
+            <DockPanel>
+                <Button Content="Cerrar" DockPanel.Dock="Right" MinWidth="80" Click="btnCerrar_Click"/>
+                <TextBlock x:Name="txtEstado" VerticalAlignment="Center" Foreground="{DynamicResource BrushFGMuted}"
+                           FontSize="11" TextTrimming="CharacterEllipsis"/>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

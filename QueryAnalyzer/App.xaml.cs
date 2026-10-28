@@ -27,6 +27,11 @@ namespace QueryAnalyzer
             // una pestana al click a traves del foco: sin esto no se podian elegir con el mouse.
             EventManager.RegisterClassHandler(typeof(System.Windows.Controls.TabItem),
                 UIElement.PreviewMouseLeftButtonDownEvent, new System.Windows.Input.MouseButtonEventHandler(SeleccionarPestanaConClick));
+
+            // Toda ventana de la app devuelve el foco a QueryAnalyzer al cerrarse (ver VentanasHelper),
+            // aunque no se haya abierto con Mostrar/MostrarModal.
+            EventManager.RegisterClassHandler(typeof(Window), FrameworkElement.LoadedEvent,
+                new RoutedEventHandler((s, e) => VentanasHelper.EngancharFoco(s as Window)));
         }
 
         private static void SeleccionarPestanaConClick(object sender, System.Windows.Input.MouseButtonEventArgs e)

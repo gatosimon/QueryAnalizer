@@ -50,6 +50,7 @@
     <Geometry x:Key="IconCompare">M3,5 H11 M9,2.5 L11.5,5 L9,7.5 M13,11 H5 M7,8.5 L4.5,11 L7,13.5</Geometry>
     <Geometry x:Key="IconTransfer">M2.5,8 H13.5 M10,4.5 L13.5,8 L10,11.5</Geometry>
     <Geometry x:Key="IconBroom">M9.5,2.5 L12.5,5.5 M11,4 L6,9 M3,13 L4.5,9 L7,11.5 L3,13 Z</Geometry>
+    <Geometry x:Key="IconSpell">M2.5,10.5 L5,3.5 L7.5,10.5 M3.4,8 H6.6 M9,9 L11,11.5 L14,6</Geometry>
     <Geometry x:Key="IconDesign">M2.5,13.5 H13.5 M4,11 L5,7.5 L11,1.8 L13.2,4 L7.5,10 Z</Geometry>
     <Geometry x:Key="IconClose">M4,4 L12,12 M12,4 L4,12</Geometry>
     <Geometry x:Key="IconDownload">M8,2.5 V10.5 M4.5,7.5 L8,11 L11.5,7.5 M3,13.5 H13</Geometry>

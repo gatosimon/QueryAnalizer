@@ -85,6 +85,10 @@
       <HintPath>..\packages\ModernWpfUI.0.9.6\lib\net45\ModernWpf.Controls.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="WeCantSpell.Hunspell, Version=2.1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\WeCantSpell.Hunspell.2.1.0\lib\net45\WeCantSpell.Hunspell.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
@@ -128,6 +132,13 @@
     </Compile>
     <Compile Include="LimpiadorTablaDialog.xaml.cs">
       <DependentUpon>LimpiadorTablaDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CorrectorOrtografico.cs" />
+    <Compile Include="OrtografiaManager.cs" />
+    <Compile Include="OrtografiaModels.cs" />
+    <Compile Include="OrtografiaService.cs" />
+    <Compile Include="OrtografiaDatosWindow.xaml.cs">
+      <DependentUpon>OrtografiaDatosWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="PasadorDatosModels.cs" />
     <Compile Include="PasadorDatosService.cs" />
@@ -187,6 +198,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="LimpiadorTablaDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="OrtografiaDatosWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -267,6 +282,16 @@
     </EmbeddedResource>
     <EmbeddedResource Include="..\packages\System.ValueTuple.4.5.0\lib\netstandard1.0\System.ValueTuple.dll">
       <LogicalName>Embedded.System.ValueTuple.dll</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\packages\WeCantSpell.Hunspell.2.1.0\lib\net45\WeCantSpell.Hunspell.dll">
+      <LogicalName>Embedded.WeCantSpell.Hunspell.dll</LogicalName>
+    </EmbeddedResource>
+    <!-- Diccionario español de LibreOffice (es_AR), triple licencia GPLv3 / LGPLv3 / MPL 1.1: ver Assets\Diccionarios\LICENSE.md -->
+    <EmbeddedResource Include="Assets\Diccionarios\es_AR.dic">
+      <LogicalName>QueryAnalyzer.Diccionarios.es_AR.dic</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\Diccionarios\es_AR.aff">
+      <LogicalName>QueryAnalyzer.Diccionarios.es_AR.aff</LogicalName>
     </EmbeddedResource>
     <Resource Include="Assets\Logo.ico" />
     <Resource Include="Assets\clave.png" />
