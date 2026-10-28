@@ -4219,7 +4219,7 @@ namespace QueryAnalyzer
             @"|(alta|modi|modif|modificacion|baja|creacion|actualizacion|mod)(f|h|u|fec|fecha|hora|usu|usr|usuario|user|motivo))$",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static bool EsColumnaAuditoria(string columna)
+        internal static bool EsColumnaAuditoria(string columna)
         {
             if (string.IsNullOrWhiteSpace(columna)) return false;
             string n = new string(columna.Where(char.IsLetterOrDigit).ToArray());

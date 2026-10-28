@@ -42,6 +42,9 @@ namespace QueryAnalyzer
         /// <summary>Los tipos LOB (text, ntext, clob...) no admiten DISTINCT.</summary>
         public bool SinDistinct { get; set; }
 
+        /// <summary>Columna de auditoría (F_ALTA, UsuarioModi, BajaMotivo...): se puede ocultar de la lista.</summary>
+        public bool EsAuditoria { get; set; }
+
         /// <summary>0 a 100: qué tan probable es que la columna tenga texto descriptivo. Solo sirve para preseleccionar.</summary>
         public int Puntaje { get; set; }
 

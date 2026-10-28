@@ -110,16 +110,29 @@
                 <DockPanel Grid.Row="0">
                     <TextBlock DockPanel.Dock="Top" Style="{StaticResource SectionHeader}" Margin="0,0,0,6"
                                Text="COLUMNAS DE TEXTO (se preseleccionan las que parecen descriptivas; podés tildar cualquiera)"/>
-                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-                        <Button Content="Todas" MinWidth="80" Margin="0,0,6,0" Click="btnColTodas_Click"/>
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <Button Content="Todas" MinWidth="80" Margin="0,0,6,0" Click="btnColTodas_Click"
+                                ToolTip="Tilda las columnas que se ven"/>
                         <Button Content="Ninguna" MinWidth="80" Margin="0,0,6,0" Click="btnColNinguna_Click"/>
-                        <Button Content="Solo probables" MinWidth="110" Click="btnColProbables_Click"
+                        <Button Content="Solo probables" MinWidth="110" Margin="0,0,6,0" Click="btnColProbables_Click"
                                 ToolTip="Deja tildadas solo las de probabilidad Alta o Media"/>
-                    </StackPanel>
-                    <DataGrid x:Name="dgColumnas" SelectionMode="Single" SelectionUnit="FullRow"
+                        <Button x:Name="btnQuitarColumnas" Content="Quitar de la lista" MinWidth="120" Margin="0,0,16,0"
+                                Click="btnQuitarColumnas_Click" IsEnabled="False"
+                                ToolTip="Saca de la lista las columnas seleccionadas (Supr). Vuelven al cargar las columnas de nuevo."/>
+                        <CheckBox x:Name="chkOcultarAuditoria" Content="Ocultar columnas de auditoría" IsChecked="True"
+                                  VerticalAlignment="Center" Checked="chkOcultarAuditoria_Changed" Unchecked="chkOcultarAuditoria_Changed"
+                                  ToolTip="Oculta F_ALTA, UsuarioModi, FechaBaja, BajaMotivo y similares. Las columnas ocultas no se analizan aunque estuvieran tildadas."/>
+                    </WrapPanel>
+                    <DataGrid x:Name="dgColumnas" SelectionMode="Extended" SelectionUnit="FullRow"
                               AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                               HeadersVisibility="Column" RowHeaderWidth="0" CanUserResizeRows="False"
-                              BorderThickness="1" BorderBrush="{DynamicResource BrushBorder}">
+                              BorderThickness="1" BorderBrush="{DynamicResource BrushBorder}"
+                              PreviewKeyDown="dgColumnas_PreviewKeyDown">
+                        <DataGrid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Quitar de la lista" Click="menuQuitarColumnas_Click"/>
+                            </ContextMenu>
+                        </DataGrid.ContextMenu>
                         <DataGrid.Columns>
                             <DataGridTemplateColumn Width="44" CanUserResize="False">
                                 <DataGridTemplateColumn.CellTemplate>

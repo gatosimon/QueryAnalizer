@@ -29,6 +29,7 @@ namespace QueryAnalyzer
         private readonly ObservableCollection<ColumnaOrtografia> _columnas = new ObservableCollection<ColumnaOrtografia>();
         private readonly ObservableCollection<HallazgoOrtografico> _hallazgos = new ObservableCollection<HallazgoOrtografico>();
         private readonly ICollectionView _vistaTablas;
+        private readonly ICollectionView _vistaColumnas;
 
         private CancellationTokenSource _cts;
         private bool _ocupado;
@@ -55,8 +56,10 @@ namespace QueryAnalyzer
 
             _vistaTablas = CollectionViewSource.GetDefaultView(_tablas);
             dgTablas.ItemsSource = _vistaTablas;
-            dgColumnas.ItemsSource = _columnas;
+            _vistaColumnas = CollectionViewSource.GetDefaultView(_columnas);
+            dgColumnas.ItemsSource = _vistaColumnas;
             dgHallazgos.ItemsSource = _hallazgos;
+            AplicarFiltroColumnas();
 
             Loaded += async (s, e) => await CargarTablasAsync();
         }
@@ -84,7 +87,8 @@ namespace QueryAnalyzer
         private void ActualizarBotones()
         {
             btnCargarColumnas.IsEnabled = !_ocupado;
-            btnAnalizar.IsEnabled = !_ocupado && _columnas.Count > 0;
+            btnAnalizar.IsEnabled = !_ocupado && ColumnasVisibles().Count > 0;
+            btnQuitarColumnas.IsEnabled = !_ocupado && _columnas.Count > 0;
             btnCancelar.IsEnabled = _analizando;
             btnExportar.IsEnabled = !_ocupado && _hallazgos.Count > 0;
             dgTablas.IsEnabled = !_ocupado;
@@ -201,13 +205,17 @@ namespace QueryAnalyzer
                 foreach (var c in resultado.Item1)
                 {
                     bool ignorada = OrtografiaManager.EsColumnaIgnorada(conexion, c.Clave);
-                    c.Revisar = !ignorada && c.Puntaje >= 50;
+                    c.EsAuditoria = MainWindow.EsColumnaAuditoria(c.Nombre);
+                    c.Revisar = !ignorada && !c.EsAuditoria && c.Puntaje >= 50;
                     if (ignorada) c.Estado = "Ignorada";
                     _columnas.Add(c);
                 }
 
-                int marcadas = _columnas.Count(c => c.Revisar);
-                txtEstado.Text = $"{_columnas.Count} columna(s) de texto, {marcadas} tildada(s). Ajustá la selección y tocá Analizar.";
+                var visibles = ColumnasVisibles();
+                int ocultas = _columnas.Count - visibles.Count;
+                txtEstado.Text = $"{visibles.Count} columna(s) de texto" +
+                    (ocultas > 0 ? $" ({ocultas} de auditoría oculta(s))" : "") +
+                    $", {visibles.Count(c => c.Revisar)} tildada(s). Ajustá la selección y tocá Analizar.";
                 if (resultado.Item2.Count > 0)
                     MessageBox.Show(this, "No se pudieron leer las columnas de:\n" + string.Join("\n", resultado.Item2),
                         "Revisión ortográfica", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -221,26 +229,86 @@ namespace QueryAnalyzer
             SetOcupado(false);
         }
 
+        /// <summary>Columnas que se ven en la grilla; las ocultas (auditoría) no se tildan ni se analizan.</summary>
+        private List<ColumnaOrtografia> ColumnasVisibles()
+        {
+            return _vistaColumnas.Cast<ColumnaOrtografia>().ToList();
+        }
+
+        private void chkOcultarAuditoria_Changed(object sender, RoutedEventArgs e)
+        {
+            AplicarFiltroColumnas();
+            if (_columnas.Count == 0) return;
+            int ocultas = _columnas.Count - ColumnasVisibles().Count;
+            txtEstado.Text = ocultas > 0
+                ? $"{ocultas} columna(s) de auditoría oculta(s): no se analizan."
+                : "Columnas de auditoría visibles.";
+        }
+
+        private void AplicarFiltroColumnas()
+        {
+            // El primer Checked llega durante InitializeComponent, antes de armar la vista
+            if (_vistaColumnas == null) return;
+            _vistaColumnas.Filter = chkOcultarAuditoria.IsChecked == true
+                ? (Predicate<object>)(o => !((ColumnaOrtografia)o).EsAuditoria)
+                : null;
+            ActualizarBotones();
+        }
+
         private void btnColTodas_Click(object sender, RoutedEventArgs e)
         {
-            foreach (var c in _columnas) c.Revisar = true;
+            foreach (var c in ColumnasVisibles()) c.Revisar = true;
         }
 
         private void btnColNinguna_Click(object sender, RoutedEventArgs e)
         {
-            foreach (var c in _columnas) c.Revisar = false;
+            foreach (var c in ColumnasVisibles()) c.Revisar = false;
         }
 
         private void btnColProbables_Click(object sender, RoutedEventArgs e)
         {
-            foreach (var c in _columnas) c.Revisar = c.Puntaje >= 35 && c.Estado != "Ignorada";
+            foreach (var c in ColumnasVisibles()) c.Revisar = c.Puntaje >= 35 && c.Estado != "Ignorada";
+        }
+
+        /// <summary>Saca de la lista las columnas seleccionadas. No toca la base ni lo que se ignoró: al volver a cargar las columnas reaparecen.</summary>
+        private void QuitarColumnasSeleccionadas()
+        {
+            if (_ocupado) return;
+            var elegidas = dgColumnas.SelectedItems.Cast<ColumnaOrtografia>().ToList();
+            if (elegidas.Count == 0)
+            {
+                txtEstado.Text = "Seleccioná en la lista las columnas que querés quitar.";
+                return;
+            }
+            foreach (var c in elegidas) _columnas.Remove(c);
+            txtEstado.Text = $"{elegidas.Count} columna(s) quitada(s) de la lista. Para recuperarlas, cargá las columnas de nuevo.";
+            ActualizarBotones();
+        }
+
+        private void btnQuitarColumnas_Click(object sender, RoutedEventArgs e)
+        {
+            QuitarColumnasSeleccionadas();
+        }
+
+        private void menuQuitarColumnas_Click(object sender, RoutedEventArgs e)
+        {
+            QuitarColumnasSeleccionadas();
+        }
+
+        private void dgColumnas_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            // Con el foco en el casillero de una fila, Supr también cuenta como quitar la selección
+            if (e.Key != Key.Delete) return;
+            QuitarColumnasSeleccionadas();
+            e.Handled = true;
         }
 
         // ── Análisis ──────────────────────────────────────────────────────
 
         private async void btnAnalizar_Click(object sender, RoutedEventArgs e)
         {
-            var columnas = _columnas.Where(c => c.Revisar).ToList();
+            // Solo las visibles: las de auditoría ocultas no se analizan aunque hubieran quedado tildadas
+            var columnas = ColumnasVisibles().Where(c => c.Revisar).ToList();
             if (columnas.Count == 0)
             {
                 MessageBox.Show(this, "Tildá al menos una columna.", "Revisión ortográfica",
