@@ -71,6 +71,8 @@
     <Geometry x:Key="IconRestore">M2.5,8 A5.5,5.5 0 1 1 4.3,12 M2.5,13 V10 H5.5 M8,5 V8.2 L10,9.5</Geometry>
     <Geometry x:Key="IconInfo">M2,8 A6,6 0 1 0 14,8 A6,6 0 1 0 2,8 Z M8,7.3 V11.2 M8,4.8 V4.9</Geometry>
     <Geometry x:Key="IconWarning">M8,2.5 L14.3,13.3 H1.7 Z M8,6.6 V9.6 M8,11.5 V11.6</Geometry>
+    <Geometry x:Key="IconHtml">M5.5,4 L2,8 L5.5,12 M10.5,4 L14,8 L10.5,12 M9,3 L7,13</Geometry>
+    <Geometry x:Key="IconMarkdown">M2,12 V4 L4.5,8 L7,4 V12 M11,4 V11 M8.8,9 L11,11.5 L13.2,9</Geometry>
     <Geometry x:Key="IconError">M2,8 A6,6 0 1 0 14,8 A6,6 0 1 0 2,8 Z M5.9,5.9 L10.1,10.1 M10.1,5.9 L5.9,10.1</Geometry>
 
 </ResourceDictionary>

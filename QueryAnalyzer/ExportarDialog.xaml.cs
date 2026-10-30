@@ -3,7 +3,7 @@ using System.Windows;
 
 namespace QueryAnalyzer
 {
-    public enum FormatoExportacion { Excel, Csv, Json, SqlInsert }
+    public enum FormatoExportacion { Excel, Csv, Json, SqlInsert, Html, Markdown }
 
     public partial class ExportarDialog : Window
     {
@@ -12,12 +12,28 @@ namespace QueryAnalyzer
         public string             NombreTabla         { get; private set; }
         public bool               IncluirDelete       { get; private set; }
 
-        public ExportarDialog(string nombreTablaDefecto = null)
+        /// <summary>El usuario eligió generar solo con el rango de celdas seleccionado.</summary>
+        public bool               SoloSeleccion       { get; private set; }
+
+        /// <param name="descripcionSeleccion">
+        /// Texto del alcance "solo la selección" (p. ej. "Solo la selección (3 filas x 2 columnas, Resultado 1)").
+        /// null = no hay rango seleccionado y la sección de alcance no se muestra.
+        /// </param>
+        /// <param name="forzarSeleccion">Deshabilita la opción de exportar todos los resultados.</param>
+        public ExportarDialog(string nombreTablaDefecto = null, string descripcionSeleccion = null, bool forzarSeleccion = false)
         {
             InitializeComponent();
             AplicarTemaActual();
             if (!string.IsNullOrWhiteSpace(nombreTablaDefecto))
                 txtNombreTabla.Text = nombreTablaDefecto;
+
+            if (descripcionSeleccion != null)
+            {
+                pnlAlcance.Visibility = Visibility.Visible;
+                rbSeleccion.Content   = descripcionSeleccion;
+                rbSeleccion.IsChecked = true;
+                if (forzarSeleccion) rbTodo.IsEnabled = false;
+            }
         }
 
         private void AplicarTemaActual()
@@ -76,11 +92,14 @@ namespace QueryAnalyzer
             }
             else
             {
-                FormatoSeleccionado = rbCsv.IsChecked == true
-                    ? FormatoExportacion.Csv
-                    : FormatoExportacion.Excel;
+                FormatoSeleccionado = rbCsv.IsChecked == true      ? FormatoExportacion.Csv
+                                    : rbHtml.IsChecked == true     ? FormatoExportacion.Html
+                                    : rbMarkdown.IsChecked == true ? FormatoExportacion.Markdown
+                                    : FormatoExportacion.Excel;
                 IncluirEncabezados = chkEncabezados.IsChecked == true;
             }
+
+            SoloSeleccion = pnlAlcance.Visibility == Visibility.Visible && rbSeleccion.IsChecked == true;
 
             DialogResult = true;
             Close();

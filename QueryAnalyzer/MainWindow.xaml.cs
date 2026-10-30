@@ -420,6 +420,16 @@ namespace QueryAnalyzer
         {
             var estilo = new Style(typeof(DataGridCell));
             estilo.Setters.Add(new Setter(TextBlock.TextAlignmentProperty, alineacion));
+
+            // Este estilo reemplaza al implícito de Controles.xaml (sin BasedOn, para no
+            // cambiar el aspecto de las celdas), así que el resaltado de las celdas
+            // seleccionadas va acá. Un trigger pesa más que los setters de arriba, así que
+            // la selección se ve también en una columna fijada.
+            var seleccionada = new Trigger { Property = DataGridCell.IsSelectedProperty, Value = true };
+            seleccionada.Setters.Add(new Setter(DataGridCell.BackgroundProperty, new DynamicResourceExtension("BrushSelected")));
+            seleccionada.Setters.Add(new Setter(DataGridCell.ForegroundProperty, new DynamicResourceExtension("BrushSelectedFG")));
+            seleccionada.Setters.Add(new Setter(DataGridCell.BorderBrushProperty, System.Windows.Media.Brushes.Transparent));
+            estilo.Triggers.Add(seleccionada);
             if (fijada)
             {
                 estilo.Setters.Add(new Setter(DataGridCell.BackgroundProperty, new DynamicResourceExtension("BrushSelected")));
@@ -1126,15 +1136,19 @@ namespace QueryAnalyzer
                             AlternationCount = 2,
                             RowStyle = (Style)this.FindResource("ResultGridRowStyle"),
                             ColumnHeaderStyle = headerStyle,
-                            SelectionMode = DataGridSelectionMode.Single,
-                            SelectionUnit = esEditable
-                                ? DataGridSelectionUnit.CellOrRowHeader
-                                : DataGridSelectionUnit.FullRow
+                            // Rango de celdas tipo planilla: arrastre, Shift+clic y Ctrl+clic.
+                            // La fila completa se selecciona desde la celda Nº y la columna
+                            // completa con Ctrl+clic en el encabezado (ver más abajo).
+                            SelectionMode = DataGridSelectionMode.Extended,
+                            SelectionUnit = DataGridSelectionUnit.CellOrRowHeader
                         };
 
-                        // Click simple: selecciona la fila (solo en modo solo lectura) y,
-                        // si es sobre la celda Nº, fija/desfija el resaltado de toda la fila
-                        // (funciona en ambos modos, lectura y edición).
+                        // Ancla de la selección de filas por la celda Nº (Shift+clic extiende desde acá).
+                        object anclaFilaNro = null;
+
+                        // Click simple sobre la celda Nº: fija/desfija el resaltado de toda la
+                        // fila (ambos modos) y selecciona la fila completa. Shift extiende hasta
+                        // la fila clickeada y Ctrl la agrega a la selección.
                         dataGrid.PreviewMouseLeftButtonDown += (s, mouseEvent) =>
                         {
                             var clickedElement = mouseEvent.OriginalSource as DependencyObject;
@@ -1146,7 +1160,27 @@ namespace QueryAnalyzer
                                 if (filaClick != null)
                                 {
                                     object item = filaClick.Item;
-                                    if (Equals(filaFijada, item))
+
+                                    var mods = Keyboard.Modifiers;
+                                    bool shift = (mods & ModifierKeys.Shift) == ModifierKeys.Shift;
+                                    bool ctrl = (mods & ModifierKeys.Control) == ModifierKeys.Control;
+                                    if (shift && anclaFilaNro != null)
+                                        SeleccionGrilla.SeleccionarFilas(dataGrid, anclaFilaNro, item, ctrl);
+                                    else
+                                    {
+                                        anclaFilaNro = item;
+                                        SeleccionGrilla.SeleccionarFilas(dataGrid, item, item, ctrl);
+                                    }
+                                    mouseEvent.Handled = true;   // que WPF no seleccione la propia celda Nº
+                                    dataGrid.Focus();
+
+                                    // El fijado de fila solo con clic simple: con Shift/Ctrl el clic es
+                                    // para armar la selección.
+                                    if (shift || ctrl)
+                                    {
+                                        // sin cambios en el resaltado fijado
+                                    }
+                                    else if (Equals(filaFijada, item))
                                     {
                                         QuitarPinFila(filaClick);
                                         filaFijada = null;
@@ -1163,24 +1197,22 @@ namespace QueryAnalyzer
                                     }
                                 }
                             }
-
-                            if (esEditable) return;
-                            if (cell != null && mouseEvent.ClickCount == 1)
-                            {
-                                var row = FindVisualParent<DataGridRow>(cell);
-                                if (row != null)
-                                {
-                                    dataGrid.SelectedItem = row.Item;
-                                    dataGrid.CurrentCell = new DataGridCellInfo(cell);
-                                }
-                            }
                         };
 
                         // Click en cabecera de columna: además de ordenar (comportamiento
                         // nativo, no se cancela), fija/desfija el resaltado de toda la columna.
+                        // Con Ctrl no ordena ni fija: selecciona la columna completa.
                         dataGrid.Sorting += (s, sortEvent) =>
                         {
                             var col = sortEvent.Column;
+                            if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+                            {
+                                sortEvent.Handled = true;
+                                SeleccionGrilla.SeleccionarColumna(dataGrid, col, agregar: false);
+                                dataGrid.Focus();
+                                return;
+                            }
+
                             if (columnaFijada == col)
                             {
                                 var al = alineacionPorColumna.TryGetValue(col, out var a1) ? a1 : TextAlignment.Left;
@@ -1225,6 +1257,14 @@ namespace QueryAnalyzer
                         {
                             if (keyEvent.Key == Key.C && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
                             {
+                                // Rango de celdas: se copia en el formato elegido en Preferencias.
+                                if (SeleccionGrilla.HaySeleccionMultiple(dataGrid))
+                                {
+                                    CopiarSeleccion(dataGrid, null);
+                                    keyEvent.Handled = true;
+                                    return;
+                                }
+
                                 if (dataGrid.CurrentCell.Item != null && dataGrid.CurrentCell.Column != null)
                                 {
                                     var cellContent = dataGrid.CurrentCell.Column.GetCellContent(dataGrid.CurrentCell.Item);
@@ -1258,13 +1298,49 @@ namespace QueryAnalyzer
                         };
                         cellContextMenu.Items.Add(menuCopiarCelda);
 
+                        // Rango de celdas: copiar en el formato por defecto, en uno a elección
+                        // o abrir el diálogo de generación con la selección. Solo habilitados
+                        // cuando hay más de una celda seleccionada (ver Opened).
+                        var menuCopiarSeleccion = new MenuItem { Header = "Copiar selección" };
+                        AplicarEstiloMenuItem(menuCopiarSeleccion);
+                        menuCopiarSeleccion.Click += (s, x) => CopiarSeleccion(dataGrid, null);
+                        cellContextMenu.Items.Add(menuCopiarSeleccion);
+
+                        var menuCopiarComo = new MenuItem { Header = "Copiar selección como" };
+                        AplicarEstiloMenuItem(menuCopiarComo);
+                        foreach (var fmt in new[] { FormatoCopia.Json, FormatoCopia.Tsv, FormatoCopia.Html, FormatoCopia.Markdown })
+                        {
+                            var formato = fmt;
+                            var itemFmt = new MenuItem { Header = SeleccionGrilla.NombreFormato(formato) };
+                            AplicarEstiloMenuItem(itemFmt);
+                            itemFmt.Click += (s, x) => CopiarSeleccion(dataGrid, formato);
+                            menuCopiarComo.Items.Add(itemFmt);
+                        }
+                        cellContextMenu.Items.Add(menuCopiarComo);
+
+                        var menuGenerarSeleccion = new MenuItem { Header = "Generar desde selección..." };
+                        AplicarEstiloMenuItem(menuGenerarSeleccion);
+                        menuGenerarSeleccion.Click += (s, x) => GenerarFormatos(forzarSeleccion: true);
+                        cellContextMenu.Items.Add(menuGenerarSeleccion);
+
+                        cellContextMenu.Opened += (s, x) =>
+                        {
+                            bool hayRango = SeleccionGrilla.HaySeleccionMultiple(dataGrid);
+                            menuCopiarSeleccion.IsEnabled = hayRango;
+                            menuCopiarComo.IsEnabled = hayRango;
+                            menuGenerarSeleccion.IsEnabled = hayRango;
+                        };
+
+                        cellContextMenu.Items.Add(new Separator());
+
                         var menuCopiarFila = new MenuItem { Header = "Copiar fila" };
                         AplicarEstiloMenuItem(menuCopiarFila);
                         menuCopiarFila.Click += (s, x) =>
                         {
-                            if (dataGrid.SelectedItem != null)
+                            // En modo celda no hay SelectedItem: la fila es la de la celda actual.
+                            if (dataGrid.CurrentCell.Item != null)
                             {
-                                var row = dataGrid.SelectedItem as DataRowView;
+                                var row = dataGrid.CurrentCell.Item as DataRowView;
                                 if (row != null)
                                 {
                                     var valores = new List<string>();
@@ -1351,6 +1427,9 @@ namespace QueryAnalyzer
                             string colName = ev.PropertyName;
                             if (!dt.Columns.Contains(colName))
                                 return;
+
+                            // Recordar a qué DataColumn corresponde, para recortar la selección de celdas.
+                            SeleccionGrilla.RegistrarColumna(ev.Column, colName);
 
                             // Forzar el header con el nombre real de la columna (preserva guiones bajos)
                             // Asignar como TextBlock para evitar que WPF interprete _ como mnemónico
@@ -1571,7 +1650,42 @@ namespace QueryAnalyzer
             return restantes;
         }
 
-        private async void BtnExcel_Click(object sender, RoutedEventArgs e)
+        private void BtnExcel_Click(object sender, RoutedEventArgs e)
+        {
+            GenerarFormatos(forzarSeleccion: false);
+        }
+
+        /// <summary>
+        /// Copia al portapapeles el rango de celdas seleccionado en la grilla.
+        /// formato = null usa el elegido en Preferencias.
+        /// </summary>
+        private void CopiarSeleccion(DataGrid grid, FormatoCopia? formato)
+        {
+            try
+            {
+                var tabla = SeleccionGrilla.ConstruirTabla(grid, out int filas, out int columnas);
+                if (tabla == null)
+                {
+                    AppendMessage("No hay celdas seleccionadas para copiar.");
+                    return;
+                }
+
+                var f = formato ?? SeleccionGrilla.FormatoPorDefecto(_configApp);
+                SeleccionGrilla.Copiar(tabla, f);
+                AppendMessage($"Selección copiada ({SeleccionGrilla.NombreFormato(f)}): {filas} filas x {columnas} columnas");
+            }
+            catch (Exception ex)
+            {
+                AppendMessage("No se pudo copiar la selección: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Abre el diálogo de formatos y genera el resultado. Si el resultado activo tiene un
+        /// rango de celdas seleccionado, el diálogo ofrece generar solo con ese rango;
+        /// forzarSeleccion lo exige (menú "Generar desde selección").
+        /// </summary>
+        private void GenerarFormatos(bool forzarSeleccion)
         {
             try
             {
@@ -1600,8 +1714,35 @@ namespace QueryAnalyzer
                         nombreTablaDefecto = ExtraerNombreTablaDesdeSQL(ti.Sql);
                 }
 
-                var dlg = new ExportarDialog(nombreTablaDefecto);
+                // Rango de celdas seleccionado en el resultado activo (si lo hay).
+                System.Data.DataTable tablaSel = null;
+                string nombrePestana = null;
+                string descripcionSel = null;
+                if (tcResults.SelectedItem is TabItem tabSel && tabSel.Content is DataGrid gridSel &&
+                    SeleccionGrilla.HaySeleccionMultiple(gridSel))
+                {
+                    tablaSel = SeleccionGrilla.ConstruirTabla(gridSel, out int filasSel, out int columnasSel);
+                    nombrePestana = (tabSel.Header?.ToString() ?? "Resultado").Split('·')[0].TrimStart('✎', ' ').Trim();
+                    if (tablaSel != null)
+                        descripcionSel = $"Solo la selección ({filasSel} filas x {columnasSel} columnas, {nombrePestana})";
+                }
+
+                if (forzarSeleccion && tablaSel == null)
+                {
+                    AppendMessage("No hay un rango de celdas seleccionado.");
+                    return;
+                }
+
+                var dlg = new ExportarDialog(nombreTablaDefecto, descripcionSel, forzarSeleccion);
                 if (dlg.MostrarModal(this) != true) return;
+
+                if (dlg.SoloSeleccion)
+                {
+                    hojas = new Dictionary<string, System.Data.DataTable>
+                    {
+                        ["Seleccion - " + nombrePestana] = tablaSel
+                    };
+                }
 
                 var svc = new ExcelService();
 
@@ -1686,6 +1827,44 @@ namespace QueryAnalyzer
                         ? $"JSON generado: {filasJson} filas."
                         : $"JSON generado: {documentos.Count} resultados, {filasJson} filas en total.");
                 }
+                else if (dlg.FormatoSeleccionado == FormatoExportacion.Html)
+                {
+                    // ── HTML ─────────────────────────────────────────────────
+                    string nombreBase = hojas.Count == 1 ? hojas.First().Key : "ResultadosConsultas";
+                    var sfd = new System.Windows.Forms.SaveFileDialog
+                    {
+                        Title            = "Guardar HTML",
+                        Filter           = "HTML (*.html)|*.html",
+                        FileName         = svc.SanitizarNombreArchivo(nombreBase) + ".html",
+                        InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+                    };
+                    if (sfd.ShowDialog(this.OwnerWin32()) != System.Windows.Forms.DialogResult.OK) return;
+
+                    string html = FormatosTexto.CrearHtml(hojas, dlg.IncluirEncabezados);
+                    System.IO.File.WriteAllText(sfd.FileName, html, new System.Text.UTF8Encoding(false));
+                    AppendMessage($"HTML generado en: {sfd.FileName}");
+                    System.Diagnostics.Process.Start(sfd.FileName);
+                }
+                else if (dlg.FormatoSeleccionado == FormatoExportacion.Markdown)
+                {
+                    // ── Markdown ─────────────────────────────────────────────
+                    // Igual que JSON: se muestra en un visor para copiar o guardar.
+                    var documentos = new Dictionary<string, string>();
+                    int filasMd = 0;
+                    foreach (var hoja in hojas)
+                    {
+                        documentos[hoja.Key] = FormatosTexto.CrearMarkdown(
+                            new Dictionary<string, System.Data.DataTable> { [hoja.Key] = hoja.Value },
+                            dlg.IncluirEncabezados);
+                        filasMd += hoja.Value.Rows.Count;
+                    }
+
+                    new JsonResultWindow(documentos, AppendMessage, "Markdown", ".md").Mostrar(this);
+
+                    AppendMessage(documentos.Count == 1
+                        ? $"Markdown generado: {filasMd} filas."
+                        : $"Markdown generado: {documentos.Count} resultados, {filasMd} filas en total.");
+                }
                 else
                 {
                     // ── SQL INSERT ───────────────────────────────────────────
@@ -1698,7 +1877,9 @@ namespace QueryAnalyzer
                         return;
                     }
 
-                    var dt = ((System.Data.DataView)gridActivo.ItemsSource).ToTable();
+                    var dt = dlg.SoloSeleccion
+                        ? tablaSel
+                        : ((System.Data.DataView)gridActivo.ItemsSource).ToTable();
 
                     if (dt.Columns.Count == 0)
                     {

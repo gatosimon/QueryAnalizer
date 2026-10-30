@@ -72,6 +72,15 @@
                                       Margin="0,0,0,4"
                                       ToolTip="Agrega una columna Nº al inicio del grid, con color propio para identificarla de inmediato. No forma parte de los datos: no se copia ni se exporta. Su color se configura en las pestañas Tema Claro / Tema Oscuro (BrushNroFilaBG y BrushNroFilaFG)."/>
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,4"
+                                        ToolTip="Formato con el que Ctrl+C y 'Copiar selección' copian un rango de celdas de los resultados. TSV se pega directo en Excel. Una sola celda se copia siempre como texto.">
+                                <TextBlock Text="Copiar un rango de celdas como:"
+                                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <ComboBox x:Name="cmbFormatoCopia" Width="160">
+                                    <ComboBoxItem Content="JSON" Tag="Json"/>
+                                    <ComboBoxItem Content="TSV (texto tabulado)" Tag="Tsv"/>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,4"
                                         ToolTip="Límite de filas que se cargan en el grid. 0 = sin límite (riesgo de OOM en tablas grandes).">
                                 <TextBlock Text="Límite de filas en resultados:"
                                            VerticalAlignment="Center" Margin="0,0,8,0"/>

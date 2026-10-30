@@ -26,6 +26,25 @@
 
     <StackPanel Margin="24,20,24,20">
 
+        <!-- Alcance (visible solo si hay un rango de celdas seleccionado) -->
+        <StackPanel x:Name="pnlAlcance" Visibility="Collapsed" Margin="0,0,0,14">
+            <TextBlock Text="Alcance"
+                       FontWeight="SemiBold"
+                       FontSize="13"
+                       Margin="0,0,0,8"/>
+            <Border Background="{DynamicResource BrushControlBG}"
+                    BorderBrush="{DynamicResource BrushBorder}"
+                    BorderThickness="1" CornerRadius="6"
+                    Padding="10,8">
+                <StackPanel>
+                    <RadioButton x:Name="rbSeleccion" GroupName="Alcance" IsChecked="True"
+                                 Margin="0,0,0,6"/>
+                    <RadioButton x:Name="rbTodo" GroupName="Alcance"
+                                 Content="Todos los resultados (todas las pestañas)"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
         <!-- Título sección formato -->
         <TextBlock Text="Formato de exportación"
                    FontWeight="SemiBold"
@@ -83,6 +102,40 @@
             </RadioButton>
         </Border>
 
+        <!-- HTML -->
+        <Border Background="{DynamicResource BrushControlBG}"
+                BorderBrush="{DynamicResource BrushBorder}"
+                BorderThickness="1" CornerRadius="6"
+                Margin="0,0,0,6" Padding="10,8">
+            <RadioButton x:Name="rbHtml" GroupName="Formato" Checked="rbArchivo_Checked">
+                <StackPanel Orientation="Horizontal">
+                    <Path Style="{StaticResource Ic}" Data="{StaticResource IconHtml}" Margin="0,0,10,0"/>
+                    <StackPanel>
+                        <TextBlock Text="HTML (.html)"     FontWeight="SemiBold" FontSize="13"/>
+                        <TextBlock Text="Página con una tabla por resultado, se abre en el navegador"
+                                   FontSize="11" Foreground="{DynamicResource BrushFGMuted}"/>
+                    </StackPanel>
+                </StackPanel>
+            </RadioButton>
+        </Border>
+
+        <!-- Markdown -->
+        <Border Background="{DynamicResource BrushControlBG}"
+                BorderBrush="{DynamicResource BrushBorder}"
+                BorderThickness="1" CornerRadius="6"
+                Margin="0,0,0,6" Padding="10,8">
+            <RadioButton x:Name="rbMarkdown" GroupName="Formato" Checked="rbArchivo_Checked">
+                <StackPanel Orientation="Horizontal">
+                    <Path Style="{StaticResource Ic}" Data="{StaticResource IconMarkdown}" Margin="0,0,10,0"/>
+                    <StackPanel>
+                        <TextBlock Text="Markdown (.md)"   FontWeight="SemiBold" FontSize="13"/>
+                        <TextBlock Text="Tablas Markdown, se muestran para copiar o guardar"
+                                   FontSize="11" Foreground="{DynamicResource BrushFGMuted}"/>
+                    </StackPanel>
+                </StackPanel>
+            </RadioButton>
+        </Border>
+
         <!-- SQL INSERT -->
         <Border Background="{DynamicResource BrushControlBG}"
                 BorderBrush="{DynamicResource BrushBorder}"
@@ -116,7 +169,7 @@
             </StackPanel>
         </Border>
 
-        <!-- Opciones de archivo (visible solo para Excel/CSV) -->
+        <!-- Opciones de archivo (visible solo para Excel/CSV/HTML/Markdown) -->
         <TextBlock x:Name="lblOpcionesArchivo"
                    Text="Opciones"
                    FontWeight="SemiBold" FontSize="13"

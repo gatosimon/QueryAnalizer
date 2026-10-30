@@ -58,6 +58,13 @@ namespace QueryAnalyzer
         /// DataTable, así que no se copia, no se exporta ni afecta al guardado.
         /// </summary>
         public bool MostrarNumeroFila { get; set; } = true;
+
+        /// <summary>
+        /// Formato con el que Ctrl+C y "Copiar selección" copian un rango de celdas
+        /// del grid de resultados: "Json" (por defecto) o "Tsv" (texto tabulado, se
+        /// pega directo en Excel).
+        /// </summary>
+        public string FormatoCopiaSeleccion { get; set; } = "Json";
     }
 
     /// <summary>

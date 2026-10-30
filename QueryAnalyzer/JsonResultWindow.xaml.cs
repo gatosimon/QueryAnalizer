@@ -7,16 +7,19 @@ using System.Windows.Controls;
 namespace QueryAnalyzer
 {
     /// <summary>
-    /// Visor del JSON generado por la exportación de resultados.
-    /// Muestra el contenido en un editor y deja al usuario decidir qué hacer con él:
-    /// copiarlo al portapapeles o guardarlo en disco (uno o todos los resultados).
+    /// Visor del texto generado por la exportación de resultados (JSON por defecto; también
+    /// se usa para Markdown). Muestra el contenido en un editor y deja al usuario decidir
+    /// qué hacer con él: copiarlo al portapapeles o guardarlo en disco (uno o todos los
+    /// resultados).
     /// </summary>
     public partial class JsonResultWindow : Window
     {
-        // nombre de la pestaña -> texto JSON (se actualiza con lo que el usuario edite)
+        // nombre de la pestaña -> texto generado (se actualiza con lo que el usuario edite)
         private readonly Dictionary<string, string> _documentos;
         private readonly Action<string> _log;
         private readonly ExcelService _svc = new ExcelService();
+        private readonly string _formato;     // "JSON", "Markdown"
+        private readonly string _extension;   // ".json", ".md"
 
         // Sin BOM: el JSON estándar no lo lleva.
         private static readonly System.Text.Encoding Utf8SinBom =
@@ -25,12 +28,18 @@ namespace QueryAnalyzer
         private string _actual;      // pestaña mostrada en el editor
         private bool _cargando;      // evita que el cambio de selección pise el texto
 
-        /// <param name="documentos">JSON generado por cada pestaña de resultados.</param>
+        /// <param name="documentos">Texto generado por cada pestaña de resultados.</param>
         /// <param name="log">Callback opcional para escribir en el panel de mensajes.</param>
-        public JsonResultWindow(IDictionary<string, string> documentos, Action<string> log = null)
+        /// <param name="formato">Nombre del formato, para títulos y mensajes.</param>
+        /// <param name="extension">Extensión de los archivos que se guardan, con punto.</param>
+        public JsonResultWindow(IDictionary<string, string> documentos, Action<string> log = null,
+                                string formato = "JSON", string extension = ".json")
         {
             InitializeComponent();
             AplicarTemaActual();
+
+            _formato   = formato;
+            _extension = extension;
 
             _documentos = documentos != null
                 ? documentos.ToDictionary(p => p.Key, p => p.Value)
@@ -89,8 +98,8 @@ namespace QueryAnalyzer
             txtJson.CaretIndex = 0;
 
             Title = _documentos.Count > 1
-                ? string.Format("JSON generado  [{0}]", nombre)
-                : "JSON generado";
+                ? string.Format("{0} generado  [{1}]", _formato, nombre)
+                : _formato + " generado";
 
             ActualizarEstado();
         }
@@ -126,7 +135,7 @@ namespace QueryAnalyzer
             }
 
             Clipboard.SetText(txtJson.Text);
-            MessageBox.Show("JSON copiado al portapapeles.", Title,
+            MessageBox.Show(_formato + " copiado al portapapeles.", Title,
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
@@ -136,9 +145,9 @@ namespace QueryAnalyzer
 
             var sfd = new System.Windows.Forms.SaveFileDialog
             {
-                Title            = "Guardar JSON",
-                Filter           = "JSON (*.json)|*.json|Todos los archivos (*.*)|*.*",
-                FileName         = _svc.SanitizarNombreArchivo(_actual ?? "resultado") + ".json",
+                Title            = "Guardar " + _formato,
+                Filter           = string.Format("{0} (*{1})|*{1}|Todos los archivos (*.*)|*.*", _formato, _extension),
+                FileName         = _svc.SanitizarNombreArchivo(_actual ?? "resultado") + _extension,
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
             };
             if (sfd.ShowDialog(this.OwnerWin32()) != System.Windows.Forms.DialogResult.OK) return;
@@ -146,7 +155,7 @@ namespace QueryAnalyzer
             try
             {
                 System.IO.File.WriteAllText(sfd.FileName, txtJson.Text, Utf8SinBom);
-                Notificar("JSON generado en: " + sfd.FileName);
+                Notificar(_formato + " generado en: " + sfd.FileName);
                 txtEstado.Text = "Guardado en: " + sfd.FileName;
             }
             catch (Exception ex)
@@ -162,7 +171,7 @@ namespace QueryAnalyzer
 
             var fbd = new System.Windows.Forms.FolderBrowserDialog
             {
-                Description         = "Seleccionar carpeta donde guardar los archivos JSON",
+                Description         = "Seleccionar carpeta donde guardar los archivos " + _formato,
                 ShowNewFolderButton = true
             };
             if (fbd.ShowDialog(this.OwnerWin32()) != System.Windows.Forms.DialogResult.OK) return;
@@ -171,13 +180,13 @@ namespace QueryAnalyzer
             {
                 foreach (var doc in _documentos)
                 {
-                    string nombre = _svc.SanitizarNombreArchivo(doc.Key) + ".json";
+                    string nombre = _svc.SanitizarNombreArchivo(doc.Key) + _extension;
                     string ruta   = System.IO.Path.Combine(fbd.SelectedPath, nombre);
                     System.IO.File.WriteAllText(ruta, doc.Value, Utf8SinBom);
                 }
 
-                Notificar(string.Format("{0} archivos JSON generados en: {1}",
-                    _documentos.Count, fbd.SelectedPath));
+                Notificar(string.Format("{0} archivos {1} generados en: {2}",
+                    _documentos.Count, _formato, fbd.SelectedPath));
                 txtEstado.Text = string.Format("{0} archivos guardados en: {1}",
                     _documentos.Count, fbd.SelectedPath);
             }

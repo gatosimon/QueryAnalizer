@@ -145,8 +145,10 @@ namespace QueryAnalyzer
             chkEjecutarSelectDirecto.IsChecked = _configOriginal.EjecutarSelectDirecto;
             chkResultadosEditables.IsChecked   = _configOriginal.ResultadosEditables;
             chkMostrarNroFila.IsChecked        = _configOriginal.MostrarNumeroFila;
+            cmbFormatoCopia.SelectedIndex      = string.Equals(_configOriginal.FormatoCopiaSeleccion, "Tsv",
+                                                     StringComparison.OrdinalIgnoreCase) ? 1 : 0;
             txtMaxFilas.Text                   = _configOriginal.MaxFilasResultado.ToString();
-            txtTimeoutSeg.Text                 = _configOriginal.TimeoutConsultaSegundos.ToString();
+            txtTimeoutSeg.Text                = _configOriginal.TimeoutConsultaSegundos.ToString();
 
             txtRutaConfig.Text = "Ruta: " + Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -325,7 +327,8 @@ namespace QueryAnalyzer
                 SelectTodasSinAuditoria = _configOriginal.SelectTodasSinAuditoria,
                 ResultadosEditables    = chkResultadosEditables.IsChecked == true,
                 MostrarNumeroFila       = chkMostrarNroFila.IsChecked == true,
-                MaxFilasResultado       = maxFilas,
+                FormatoCopiaSeleccion   = cmbFormatoCopia.SelectedIndex == 1 ? "Tsv" : "Json",
+                MaxFilasResultado      = maxFilas,
                 TimeoutConsultaSegundos = timeoutSeg,
             };
 

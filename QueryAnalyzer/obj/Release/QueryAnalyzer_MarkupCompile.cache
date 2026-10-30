@@ -4,16 +4,16 @@
 winexe
 C#
 .cs
-c:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\obj\Release\
 QueryAnalyzer
 none
 false
 TRACE
-c:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\App.xaml
+C:\Users\ssnunez\source\repos\QueryAnalyzer\QueryAnalyzer\App.xaml
 21-1172442127
 2-2088533729
-51-1480247758
-72-625354023
+531351613523
+72680364150
 AyudaWindow.xaml;ExportarDialog.xaml;GuardarConsultaDialog.xaml;ComparadorWindow.xaml;LimpiadorBDWindow.xaml;LimpiadorTablaDialog.xaml;OrtografiaDatosWindow.xaml;PasadorDatosWindow.xaml;DatosConexion.xaml;MainWindow.xaml;NombreConjuntoDialog.xaml;PreferenciasWindow.xaml;ScriptResultWindow.xaml;InstaladorDriversWindow.xaml;JsonResultWindow.xaml;TableDesignerWindow.xaml;Controles.xaml;Styles.xaml;DialogoMensajeWindow.xaml;ScrollBars.xaml;Icons.xaml;
 
 False

@@ -244,6 +244,20 @@
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Si hay varias pestañas de resultados, un selector arriba permite cambiar entre ellas y 'Guardar todos...' escribe un .json por pestaña en la carpeta elegida."/>
                 <TextBlock Style="{StaticResource Nota}"   Text="Útil para integrar datos con APIs o herramientas que consumen JSON directamente."/>
 
+                <TextBlock Style="{StaticResource Subtitulo}" Text="HTML (.html)"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Genera una página autocontenida con una tabla por resultado (con un título por cada pestaña). Se abre en el navegador al terminar."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Respeta el modo claro u oscuro del sistema del lector. Los valores se escapan, así que el texto con signos como &lt; o &amp; se ve tal cual."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Markdown (.md)"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Genera una tabla Markdown por resultado. Se muestra en una ventana (igual que JSON) para copiarla o guardarla."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• El carácter | de los valores se escapa y los saltos de línea pasan a &lt;br&gt;. Sin encabezados, la fila de títulos queda vacía, porque Markdown la exige."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Solo la selección"/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Si en el resultado activo hay un rango de celdas seleccionado, el diálogo muestra la sección 'Alcance': 'Solo la selección' (por defecto) o 'Todos los resultados'."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Con 'Solo la selección' se genera una única hoja con las filas y columnas seleccionadas, en el orden en que se ven en pantalla, en cualquiera de los formatos."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• En SQL INSERT, el script incluye solamente las columnas seleccionadas."/>
+                <TextBlock Style="{StaticResource Nota}"   Text="Ver 'Seleccionar rangos de celdas' para saber cómo armar la selección."/>
+
                 <TextBlock Style="{StaticResource Subtitulo}" Text="SQL Script (INSERT)"/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Genera un script SQL con una sentencia INSERT por cada fila del resultado activo (la pestaña seleccionada)."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Se solicita el nombre de la tabla destino, que se pre-completa automáticamente si se detecta en la consulta original."/>
@@ -252,7 +266,7 @@
                 <TextBlock Style="{StaticResource Nota}"   Text="Útil para copiar datos de producción a desarrollo: ejecutá SELECT * FROM tabla en producción, luego Generar → SQL Script (INSERT) y pegá el script en el entorno destino."/>
 
                 <TextBlock Style="{StaticResource Subtitulo}" Text="Incluir encabezados"/>
-                <TextBlock Style="{StaticResource Cuerpo}" Text="• Opción disponible en los formatos Excel y CSV. Si está marcada, la primera fila contiene los nombres de las columnas."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Opción disponible en los formatos Excel, CSV, HTML y Markdown. Si está marcada, la primera fila contiene los nombres de las columnas."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• En JSON esta opción no aplica: los nombres de columna siempre se incluyen como claves de cada objeto."/>
                 <TextBlock Style="{StaticResource Nota}"   Text="Los archivos generados de Excel y CSV se abren automáticamente con la aplicación predeterminada al terminar la exportación. El JSON, en cambio, se muestra en su propia ventana y sólo se guarda si se elige 'Guardar archivo...'."/>
 
@@ -574,6 +588,26 @@
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• El panel inferior tiene tres pestañas: Resultados, Parámetros y Mensajes. El número junto al nombre indica cuántos resultados, parámetros y mensajes hay. Se cambia de pestaña con un click."/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• En 'Parámetros' no hace falta cargar filas a mano: al escribir un '?' en la consulta aparece la fila correspondiente, en el mismo orden, para completar su valor."/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• La barra de estado, abajo, muestra la conexión elegida (el punto se pone verde tras una prueba o ejecución correcta y rojo si la prueba falla), las filas y el tiempo de la última ejecución, la posición del cursor y el modo claro u oscuro."/>
+
+                <!-- ══ SELECCIONAR RANGOS DE CELDAS ═════════════════════════ -->
+                <TextBlock Style="{StaticResource Titulo}"    Text="Seleccionar rangos de celdas"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• La grilla de resultados se selecciona como una planilla: se puede marcar un rango de celdas y generar con él los distintos formatos."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Cómo seleccionar"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Arrastrar con el mouse, o clic en una celda y Shift+clic en otra: selecciona el rectángulo entre ambas."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Ctrl+clic: suma o quita celdas sueltas. Si la selección no es contigua, las celdas que quedan dentro del rectángulo sin seleccionar salen vacías."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Clic en la celda Nº: selecciona la fila completa (además de fijar su resaltado). Shift+clic en otra celda Nº extiende hasta esa fila; Ctrl+clic la agrega."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Ctrl+clic en el encabezado de una columna: selecciona la columna completa (sin ordenar). El clic común sigue ordenando y fijando la columna."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Ctrl+A: selecciona todo el resultado."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Copiar la selección"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Ctrl+C con un rango seleccionado lo copia al portapapeles en el formato elegido en Preferencias → General → 'Copiar un rango de celdas como': JSON (por defecto) o TSV."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• TSV es texto tabulado con los encabezados en la primera fila: se pega directo en Excel."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Con una sola celda, Ctrl+C la copia como texto, igual que antes."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Clic derecho sobre la grilla: 'Copiar selección' (formato por defecto) y 'Copiar selección como' (JSON, TSV, HTML o Markdown). El HTML se pega con formato de tabla en Word o en un correo."/>
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Generar formatos con la selección"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Clic derecho → 'Generar desde selección...' abre el diálogo de formatos (Excel, CSV, JSON, HTML, Markdown, SQL INSERT) usando solo el rango."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• El botón 'Generar' también ofrece 'Solo la selección' cuando hay un rango marcado."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Las filas salen en el orden en que se ven en pantalla (respeta el orden aplicado) y las columnas en su orden visual. La columna Nº nunca se incluye."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Tip: seleccionar muchísimas celdas (por ejemplo una columna entera en decenas de miles de filas) puede tardar unos segundos."/>
 
                 <!-- ══ ACTUALIZACIONES ═════════════════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="Actualizaciones"/>
