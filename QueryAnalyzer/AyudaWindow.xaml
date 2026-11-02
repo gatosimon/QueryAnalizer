@@ -349,11 +349,20 @@
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• Seleccioná la conexión ORIGEN (A) y la conexión DESTINO (B)."/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• Usá 'Analizar dependencias FK' para ver el orden correcto de INSERT/DELETE y las advertencias de FK cruzadas."/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="• Opciones disponibles:"/>
-                <TextBlock Style="{StaticResource Cuerpo}"    Text="    – Backup de B: genera el script INSERT del estado actual de B antes de vaciarlo."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="    – Backup de B: guarda en disco el script INSERT del estado actual de B antes de vaciarlo (se escribe fila por fila, no se carga en memoria)."/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="    – Transaccional: si algún INSERT falla, se hace rollback completo y B queda intacto."/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="    – Solo generar script: produce el SQL sin ejecutarlo (útil para revisión manual)."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="    – Omitir filas con binarios muy grandes: si una fila trae un binario/BLOB mayor al umbral (128 MB; clave UmbralLobMB en config.xml), se omite y queda registrada en vez de abortar la transferencia."/>
                 <TextBlock Style="{StaticResource Nota}"      Text="Tip: si hay FK entre las tablas seleccionadas y tablas fuera del conjunto, el analizador lo advierte antes de ejecutar."/>
-                <TextBlock Style="{StaticResource Nota}"      Text="Tip: el botón 'Ver backup' queda activo tras la transferencia para recuperar el estado previo de B."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Tip: el botón 'Ver backup' muestra los primeros 512 KB del archivo (o abre la carpeta si el backup fue uno por tabla); el backup completo está en el archivo que elegiste."/>
+
+                <TextBlock Style="{StaticResource Subtitulo}" Text="Incidencias: qué hacer cuando algo falla"/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Nada se omite en silencio: toda falla o anomalía (tabla que no se puede leer, backup incompleto, fila rechazada por B, binario sobre el umbral, diferencia de filas entre A y B, FK que no se rehabilitaron) queda registrada como incidencia."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Antes de vaciar B, si el backup quedó incompleto o alguna tabla de A no se puede leer, se abre una ventana con el detalle para que elijas: Abortar (B no se toca) o Continuar bajo tu responsabilidad."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Al terminar, si hubo incidencias se muestran con la acción sugerida para cada una. El botón 'Incidencias' las vuelve a abrir y permite exportarlas a CSV."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• Cada corrida deja un archivo incidencias_AAAAMMDD_HHMMSS.csv junto al log, en %AppData%\QueryAnalyzer\logs."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Tip: con la opción Transaccional, un error durante la carga hace rollback y B queda intacta; la incidencia indica la tabla, la fila y la sentencia que falló."/>
+                <TextBlock Style="{StaticResource Nota}"      Text="Atención: los valores binarios de más de ~16 KB pueden no ejecutarse en DB2 desde un script (límite del motor para literales). La transferencia directa A→B los envía por parámetro y no tiene ese límite."/>
 
                 <!-- ══ LIMPIADOR DE BD ════════════════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}"    Text="Limpiador de BD"/>

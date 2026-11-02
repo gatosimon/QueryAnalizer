@@ -31,7 +31,15 @@ namespace QueryAnalyzer
     /// <summary>Resultado de parsear un script .sql de backup.</summary>
     public class PlanRestauracion
     {
+        /// <summary>Todas las sentencias (solo al parsear desde un string; vacío si se analizó un archivo).</summary>
         public List<SentenciaBackup> Sentencias     { get; set; } = new List<SentenciaBackup>();
+
+        /// <summary>Archivo analizado por flujo (<see cref="RestauradorBackupService.AnalizarArchivo"/>) o null.</summary>
+        public string                RutaArchivo    { get; set; }
+        /// <summary>Sentencias FK iniciales y finales del archivo (pocas); el DML se relee por flujo.</summary>
+        public List<SentenciaBackup> PreDml         { get; set; } = new List<SentenciaBackup>();
+        public List<SentenciaBackup> PostDml        { get; set; } = new List<SentenciaBackup>();
+        public int                   TotalSentencias { get; set; }
         /// <summary>Nombre de la conexión con la que se generó el backup.</summary>
         public string                ConexionOrigen { get; set; }
         /// <summary>Fecha de generación declarada en la cabecera.</summary>
@@ -100,15 +108,60 @@ namespace QueryAnalyzer
             };
             if (string.IsNullOrEmpty(contenido)) return plan;
 
+            string[] lineas = contenido.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
+            foreach (var s in ParsearLineas(lineas, plan))
+                plan.Sentencias.Add(s);
+
+            plan.TotalSentencias = plan.Sentencias.Count;
+            plan.TotalInserts = plan.Sentencias.Count(s => EmpiezaCon(s.Sql, "INSERT"));
+            plan.TotalDeletes = plan.Sentencias.Count(s => EmpiezaCon(s.Sql, "DELETE"));
+            return plan;
+        }
+
+        /// <summary>
+        /// Analiza un backup grande leyéndolo línea por línea, sin cargarlo en memoria.
+        /// Solo guarda las sentencias de las fases FK (pocas); el DML (los INSERT, que son los que
+        /// pesan) se vuelve a leer por flujo al restaurar.
+        /// </summary>
+        public static PlanRestauracion AnalizarArchivo(string ruta)
+        {
+            var plan = new PlanRestauracion { RutaArchivo = ruta };
+            foreach (var s in ParsearLineas(LeerLineas(ruta), plan))
+            {
+                plan.TotalSentencias++;
+                if (s.Fase == FaseBackup.PreDml)       plan.PreDml.Add(s);
+                else if (s.Fase == FaseBackup.PostDml) plan.PostDml.Add(s);
+
+                if (EmpiezaCon(s.Sql, "INSERT"))      plan.TotalInserts++;
+                else if (EmpiezaCon(s.Sql, "DELETE")) plan.TotalDeletes++;
+            }
+            return plan;
+        }
+
+        private static IEnumerable<string> LeerLineas(string ruta)
+        {
+            using (var sr = new System.IO.StreamReader(ruta, Encoding.UTF8, true, 1 << 16))
+            {
+                string linea;
+                while ((linea = sr.ReadLine()) != null)
+                    yield return linea;
+            }
+        }
+
+        /// <summary>
+        /// Recorre las líneas y entrega las sentencias de a una. Es un iterador: con un archivo
+        /// de cientos de MB solo hay una sentencia en memoria por vez.
+        /// </summary>
+        private static IEnumerable<SentenciaBackup> ParsearLineas(IEnumerable<string> lineas, PlanRestauracion plan)
+        {
             var fase             = FaseBackup.Dml;   // sin marcadores, todo es DML
             bool dentroDeLiteral = false;
             var bloque           = new StringBuilder();
+            int nl               = 0;
 
-            string[] lineas = contenido.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
-
-            for (int nl = 0; nl < lineas.Length; nl++)
+            foreach (string linea in lineas)
             {
-                string linea = lineas[nl];
+                nl++;
 
                 if (!dentroDeLiteral)
                 {
@@ -117,6 +170,7 @@ namespace QueryAnalyzer
                     // Línea de comentario completa: puede traer marcador de fase o cabecera.
                     if (t.StartsWith("--"))
                     {
+                        if (t.Contains(FirmaScriptBackup)) plan.FirmaValida = true;
                         InspeccionarComentario(t, plan, ref fase);
                         continue;
                     }
@@ -125,7 +179,8 @@ namespace QueryAnalyzer
                     // Separador de lote (los scripts del Limpiador lo usan).
                     if (t.Equals("GO", StringComparison.OrdinalIgnoreCase))
                     {
-                        VolcarSentencia(bloque, plan, fase, nl + 1);
+                        var porGo = VolcarSentencia(bloque, fase, nl);
+                        if (porGo != null) yield return porGo;
                         continue;
                     }
                 }
@@ -166,7 +221,8 @@ namespace QueryAnalyzer
 
                     if (c == ';')
                     {
-                        VolcarSentencia(bloque, plan, fase, nl + 1);
+                        var sentencia = VolcarSentencia(bloque, fase, nl);
+                        if (sentencia != null) yield return sentencia;
                         i++;
                         continue;
                     }
@@ -200,11 +256,8 @@ namespace QueryAnalyzer
                 }
             }
 
-            VolcarSentencia(bloque, plan, fase, lineas.Length);
-
-            plan.TotalInserts = plan.Sentencias.Count(s => EmpiezaCon(s.Sql, "INSERT"));
-            plan.TotalDeletes = plan.Sentencias.Count(s => EmpiezaCon(s.Sql, "DELETE"));
-            return plan;
+            var ultima = VolcarSentencia(bloque, fase, nl);
+            if (ultima != null) yield return ultima;
         }
 
         private static void InspeccionarComentario(string comentario, PlanRestauracion plan, ref FaseBackup fase)
@@ -229,13 +282,13 @@ namespace QueryAnalyzer
             if (mt.Success) plan.Tablas.Add(mt.Groups[1].Value);
         }
 
-        private static void VolcarSentencia(StringBuilder bloque, PlanRestauracion plan, FaseBackup fase, int linea)
+        private static SentenciaBackup VolcarSentencia(StringBuilder bloque, FaseBackup fase, int linea)
         {
             string sql = bloque.ToString().Trim();
             bloque.Clear();
-            if (sql.Length == 0) return;
-            if (RxControlTx.IsMatch(sql)) return;
-            plan.Sentencias.Add(new SentenciaBackup { Sql = sql, Fase = fase, Linea = linea });
+            if (sql.Length == 0) return null;
+            if (RxControlTx.IsMatch(sql)) return null;
+            return new SentenciaBackup { Sql = sql, Fase = fase, Linea = linea };
         }
 
         private static bool EmpiezaCon(string sql, string palabra)
@@ -264,11 +317,24 @@ namespace QueryAnalyzer
             Action<OdbcCommand> onComandoActivo,
             CancellationToken ct)
         {
-            var progreso = new ProgresoRestauracion { Total = plan.Sentencias.Count };
+            var progreso = new ProgresoRestauracion { Total = plan.TotalSentencias };
 
-            var preDml  = plan.Sentencias.Where(s => s.Fase == FaseBackup.PreDml).ToList();
-            var dml     = plan.Sentencias.Where(s => s.Fase == FaseBackup.Dml).ToList();
-            var postDml = plan.Sentencias.Where(s => s.Fase == FaseBackup.PostDml).ToList();
+            List<SentenciaBackup> preDml, postDml;
+            IEnumerable<SentenciaBackup> dml;
+            if (plan.RutaArchivo == null)
+            {
+                preDml  = plan.Sentencias.Where(s => s.Fase == FaseBackup.PreDml).ToList();
+                dml     = plan.Sentencias.Where(s => s.Fase == FaseBackup.Dml).ToList();
+                postDml = plan.Sentencias.Where(s => s.Fase == FaseBackup.PostDml).ToList();
+            }
+            else
+            {
+                // Backup grande: el DML se lee del archivo de a una sentencia
+                preDml  = plan.PreDml;
+                postDml = plan.PostDml;
+                dml     = ParsearLineas(LeerLineas(plan.RutaArchivo), new PlanRestauracion())
+                              .Where(s => s.Fase == FaseBackup.Dml);
+            }
 
             var db = new DataBase(connStr);
             OdbcTransaction tx = null;

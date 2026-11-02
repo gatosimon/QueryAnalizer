@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -63,6 +64,66 @@ namespace QueryAnalyzer
                 return LiteralBinario((byte[])valor, motor);
 
             return "'" + valor.ToString().Replace("'", "''") + "'";
+        }
+
+        // ── Escritura en streaming (sin armar strings gigantes en memoria) ────────────
+
+        private static readonly char[] HexChars = "0123456789ABCDEF".ToCharArray();
+
+        /// <summary>
+        /// Escribe una sentencia INSERT directamente en el <see cref="TextWriter"/>.
+        /// El formato es idéntico al de <see cref="GenerarScriptInsert"/> pero los valores
+        /// binarios se emiten por bloques, de modo que su tamaño no se duplica en memoria.
+        /// </summary>
+        /// <param name="columnas">Lista de columnas ya unida con ", ".</param>
+        public static void EscribirInsert(
+            TextWriter w, string nombreTabla, string columnas, object[] valores,
+            bool usarOverridingSystemValue, TipoMotor motor)
+        {
+            w.Write("INSERT INTO ");
+            w.Write(nombreTabla);
+            w.Write(" (");
+            w.Write(columnas);
+            w.Write(")");
+            if (usarOverridingSystemValue) w.Write(" OVERRIDING SYSTEM VALUE");
+            w.Write(" VALUES (");
+            for (int i = 0; i < valores.Length; i++)
+            {
+                if (i > 0) w.Write(", ");
+                EscribirValor(w, valores[i], motor);
+            }
+            w.WriteLine(");");
+        }
+
+        public static void EscribirValor(TextWriter w, object valor, TipoMotor motor)
+        {
+            var bytes = valor as byte[];
+            if (bytes == null) { w.Write(EscaparValorSql(valor, motor)); return; }
+
+            switch (motor)
+            {
+                case TipoMotor.POSTGRES: w.Write("decode('"); break;
+                case TipoMotor.DB2:
+                case TipoMotor.SQLite:   w.Write("X'");       break;
+                default:                 w.Write("0x");       break;
+            }
+
+            var buf = new char[8192];
+            int p = 0;
+            foreach (byte b in bytes)
+            {
+                buf[p++] = HexChars[b >> 4];
+                buf[p++] = HexChars[b & 0x0F];
+                if (p == buf.Length) { w.Write(buf, 0, p); p = 0; }
+            }
+            if (p > 0) w.Write(buf, 0, p);
+
+            switch (motor)
+            {
+                case TipoMotor.POSTGRES: w.Write("','hex')"); break;
+                case TipoMotor.DB2:
+                case TipoMotor.SQLite:   w.Write("'");        break;
+            }
         }
 
         /// <summary>

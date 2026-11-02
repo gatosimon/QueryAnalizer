@@ -140,6 +140,10 @@
     <Compile Include="OrtografiaDatosWindow.xaml.cs">
       <DependentUpon>OrtografiaDatosWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="IncidenciasWindow.xaml.cs">
+      <DependentUpon>IncidenciasWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="TransferenciaStreaming.cs" />
     <Compile Include="PasadorDatosModels.cs" />
     <Compile Include="PasadorDatosService.cs" />
     <Compile Include="PasadorDatosWindow.xaml.cs">
@@ -204,6 +208,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="OrtografiaDatosWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="IncidenciasWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

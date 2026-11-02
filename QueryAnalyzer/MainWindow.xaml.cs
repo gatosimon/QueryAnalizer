@@ -5572,6 +5572,13 @@ namespace QueryAnalyzer
                 string nombreConexion = conexionActual.Nombre;
                 int    total          = tablas.Count;
 
+                // Lo que falle o resulte anómalo se registra (no se traga) y se muestra al final
+                var incidencias = new RegistroIncidencias();
+                var opciones = new OpcionesPasado
+                {
+                    UmbralLobBytes = Math.Max(1, ConfigManager.ObtenerConfiguracion().UmbralLobMB) * 1024L * 1024L
+                };
+
                 var resultado = await System.Threading.Tasks.Task.Run(() =>
                 {
                     // 1. Resolver el orden de restauración a partir de las FK.
@@ -5591,128 +5598,40 @@ namespace QueryAnalyzer
                     var (ordenInsert, ciclicas) = PasadorDatosService.OrdenarPorDependencias(tablas, fks);
                     var ordenDelete = Enumerable.Reverse(ordenInsert).ToList();
 
-                    // 2. Metadata: columnas IDENTITY y columnas no insertables (computed / rowversion)
-                    var metadata = PasadorDatosService.ObtenerMetadataTablas(connStr, motor, tablas);
-
-                    // 3. Leer los datos de cada tabla
-                    var datos   = new Dictionary<string, DataTable>(StringComparer.OrdinalIgnoreCase);
-                    var detalle = new List<(string Nombre, int Filas, string MensajeError)>();
-
-                    foreach (var tabla in ordenInsert)
-                    {
-                        string nombreCompleto = tabla.NombreCompleto;
-                        try
-                        {
-                            var DB = new DataBase(connStr, false);
-                            DB.CommandText = $"SELECT * FROM {nombreCompleto}";
-                            var dt = new DataTable();
-                            DB.DataAdapter.Fill(dt);
-                            DB.CloseConnection();
-
-                            datos[nombreCompleto] = dt;
-                            detalle.Add((nombreCompleto, dt.Rows.Count, null));
-                        }
-                        catch (Exception ex)
-                        {
-                            detalle.Add((nombreCompleto, 0, ex.Message));
-                        }
-                    }
-
-                    // 4. Armar el script restaurable
-                    var sb = new System.Text.StringBuilder();
-
-                    int errores = detalle.Count(d => d.MensajeError != null);
-                    int totalFilas = detalle.Sum(d => d.Filas);
-
-                    sb.AppendLine("-- ══════════════════════════════════════════════════════════");
-                    sb.AppendLine("--  BACKUP DE ESQUEMA — script restaurable");
-                    sb.AppendLine("-- ══════════════════════════════════════════════════════════");
-                    sb.AppendLine($"--  Conexión : {nombreConexion}");
-                    sb.AppendLine($"--  Generado : {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-                    sb.AppendLine($"--  Tablas   : {total} ({errores} con error) — {totalFilas} filas");
-                    sb.AppendLine("--");
-                    sb.AppendLine("--  Ejecutar este script contra la MISMA base la deja tal como");
-                    sb.AppendLine("--  estaba: vacía las tablas y reinserta todo el contenido.");
-                    sb.AppendLine("-- ──────────────────────────────────────────────────────────");
-                    sb.AppendLine("--  Orden de restauración (padres primero):");
-                    for (int i = 0; i < detalle.Count; i++)
-                    {
-                        var (nom, filas, err) = detalle[i];
-                        string estado = err != null ? $"ERROR → {err}" : $"{filas} filas";
-                        sb.AppendLine($"--    {i + 1,3}. {nom}  ({estado})");
-                    }
-                    if (ciclicas.Count > 0)
-                    {
-                        sb.AppendLine("--");
-                        sb.AppendLine("--  Estas tablas forman un ciclo de FK entre sí, así que no existe un");
-                        sb.AppendLine("--  orden válido entre ellas y quedaron al final. NO afecta a este");
-                        sb.AppendLine("--  backup: el script deshabilita las FK antes de los DELETE/INSERT.");
-                        sb.AppendLine("--  Solo importa si ejecutás el script por partes o sin la FASE 1.");
-                        foreach (string c in ciclicas)
-                            sb.AppendLine($"--    • {c}");
-                    }
-                    sb.AppendLine("-- ══════════════════════════════════════════════════════════");
-                    sb.AppendLine();
-
-                    PasadorDatosService.AgregarScriptFaseDeshabilitarFKs(sb, motor, ordenDelete);
-
-                    sb.AppendLine();
-                    sb.AppendLine("-- ═══ FASE 2: DML ═══");
-                    sb.AppendLine("BEGIN TRAN");
-                    sb.AppendLine();
-                    sb.AppendLine("  -- DELETE en orden reverso FK (hijas primero)");
-                    foreach (var tabla in ordenDelete)
-                        sb.AppendLine($"  DELETE FROM {tabla.NombreCompleto};");
-
-                    sb.AppendLine();
-                    sb.AppendLine("  -- INSERT en orden FK (padres primero)");
-                    foreach (var tabla in ordenInsert)
-                    {
-                        string nombreCompleto = tabla.NombreCompleto;
-                        if (!datos.TryGetValue(nombreCompleto, out DataTable dt))
-                        {
-                            sb.AppendLine($"  -- {nombreCompleto}: no se pudo leer, sin INSERTs.");
-                            continue;
-                        }
-                        if (dt.Rows.Count == 0)
-                        {
-                            sb.AppendLine($"  -- {nombreCompleto}: sin filas.");
-                            continue;
-                        }
-
-                        var meta = metadata.ContainsKey(nombreCompleto) ? metadata[nombreCompleto] : null;
-                        bool overriding = (motor == TipoMotor.POSTGRES || motor == TipoMotor.DB2)
-                                          && meta?.TieneIdentityAlways == true;
-                        bool identityInsert = motor == TipoMotor.MS_SQL && meta?.TieneIdentity == true;
-
-                        sb.AppendLine();
-                        sb.AppendLine($"  -- {nombreCompleto} ({dt.Rows.Count} filas)");
-                        if (identityInsert)
-                            sb.AppendLine($"  SET IDENTITY_INSERT {nombreCompleto} ON;");
-
-                        sb.Append(ScriptHelper.GenerarScriptInsert(
-                            dt, nombreCompleto, conDelete: false,
-                            meta?.ColumnasExcluidas, overriding, motor));
-
-                        if (identityInsert)
-                            sb.AppendLine($"  SET IDENTITY_INSERT {nombreCompleto} OFF;");
-                    }
-
-                    sb.AppendLine();
-                    sb.AppendLine("COMMIT");
-                    sb.AppendLine();
-                    PasadorDatosService.AgregarScriptFaseRehabilitarFKs(sb, motor, ordenInsert);
-
-                    return new { Script = sb.ToString(), Errores = errores, Filas = totalFilas };
+                    // 2. Escribir el script directo a disco, tabla por tabla (sin cargar nada entero en memoria)
+                    return PasadorDatosService.GenerarBackupEsquema(
+                        connStr, motor, nombreConexion, rutaDestino,
+                        ordenInsert, ordenDelete, ciclicas, opciones, incidencias, null);
                 });
 
-                System.IO.File.WriteAllText(rutaDestino, resultado.Script, System.Text.Encoding.UTF8);
-
-                new ScriptResultWindow(resultado.Script, motor).Mostrar(this);
+                // Un script chico se muestra completo; uno grande solo se informa (el editor no aguanta cientos de MB)
+                if (new System.IO.FileInfo(rutaDestino).Length <= 2L * 1024 * 1024)
+                    new ScriptResultWindow(
+                        System.IO.File.ReadAllText(rutaDestino, System.Text.Encoding.UTF8), motor).Mostrar(this);
 
                 AppendMessage($"Backup generado: {total} tabla(s), {resultado.Filas} fila(s)" +
                               (resultado.Errores > 0 ? $", {resultado.Errores} con error" : "") +
                               $" → {rutaDestino}");
+
+                if (incidencias.Count > 0)
+                {
+                    string carpetaLogs = System.IO.Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "QueryAnalyzer", "logs");
+                    string csv = System.IO.Path.Combine(carpetaLogs, $"incidencias_backup_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+                    try
+                    {
+                        System.IO.Directory.CreateDirectory(carpetaLogs);
+                        incidencias.GuardarCsv(csv);
+                        AppendMessage($"{incidencias.Count} incidencia(s) en el backup. Detalle en: {csv}");
+                    }
+                    catch { }
+
+                    new IncidenciasWindow(incidencias.Todas(), "Incidencias del backup de esquema",
+                        resultado.Completo
+                            ? "El backup se generó, pero se registraron incidencias. Revisalas."
+                            : "El backup quedó INCOMPLETO. No lo restaures sin antes resolver estas incidencias.",
+                        false, null, carpetaLogs).Mostrar(this);
+                }
             }
             catch (Exception ex)
             {
@@ -5759,10 +5678,9 @@ namespace QueryAnalyzer
             {
                 // El .sql puede pesar cientos de MB: leer y parsear fuera del hilo de UI.
                 PlanRestauracion plan = await System.Threading.Tasks.Task.Run(() =>
-                    RestauradorBackupService.ParsearBackup(
-                        System.IO.File.ReadAllText(rutaBackup, System.Text.Encoding.UTF8)));
+                    RestauradorBackupService.AnalizarArchivo(rutaBackup));
 
-                if (plan.Sentencias.Count == 0)
+                if (plan.TotalSentencias == 0)
                 {
                     MessageBox.Show("El archivo no contiene ninguna sentencia ejecutable.",
                         "Restaurar Backup", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -5809,7 +5727,7 @@ namespace QueryAnalyzer
             }
 
             sb.AppendLine($"Tablas    : {plan.Tablas.Count}");
-            sb.AppendLine($"Sentencias: {plan.Sentencias.Count}  ({plan.TotalDeletes} DELETE, {plan.TotalInserts} INSERT)");
+            sb.AppendLine($"Sentencias: {plan.TotalSentencias}  ({plan.TotalDeletes} DELETE, {plan.TotalInserts} INSERT)");
             if (plan.Tablas.Count > 0)
             {
                 sb.AppendLine();
@@ -5843,10 +5761,10 @@ namespace QueryAnalyzer
             SetEstadoEjecutando(true);
             progEjecucion.IsIndeterminate = false;
             progEjecucion.Minimum         = 0;
-            progEjecucion.Maximum         = plan.Sentencias.Count;
+            progEjecucion.Maximum         = plan.TotalSentencias;
             progEjecucion.Value           = 0;
 
-            AppendMessage($"Restaurando backup: {plan.Sentencias.Count} sentencia(s) sobre '{conexionActual.Nombre}'...");
+            AppendMessage($"Restaurando backup: {plan.TotalSentencias} sentencia(s) sobre '{conexionActual.Nombre}'...");
 
             var reloj = System.Diagnostics.Stopwatch.StartNew();
 

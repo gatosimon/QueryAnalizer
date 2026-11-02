@@ -47,6 +47,14 @@ namespace QueryAnalyzer
         public int TimeoutConsultaSegundos { get; set; } = 0;
 
         /// <summary>
+        /// Transferencia de datos y backups: tamaño máximo, en MB, de un valor binario/LOB
+        /// por fila. Una fila que lo supere no se lee completa y se registra como incidencia
+        /// (la transferencia se aborta salvo que se active "Omitir filas con binarios grandes").
+        /// Default: 128.
+        /// </summary>
+        public int UmbralLobMB { get; set; } = 128;
+
+        /// <summary>
         /// Cuando está activo, las celdas del grid de resultados son editables
         /// y se pueden guardar en la base de datos con el botón "Guardar cambios".
         /// </summary>

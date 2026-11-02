@@ -325,6 +325,38 @@ namespace QueryAnalyzer
 
         // ── Ejecutar / Generar script ─────────────────────────────────────────
 
+        private RegistroIncidencias _incidencias;
+        private string _rutaBackup;
+        private string _carpetaBackup;
+        private string _carpetaScriptTemp;
+
+        private static string CarpetaLogs()
+        {
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "QueryAnalyzer", "logs");
+        }
+
+        /// <summary>Muestra las incidencias y espera la decisión del usuario (se llama desde el hilo de trabajo).</summary>
+        private bool Decidir(List<IncidenciaPasado> lista, string titulo, string resumen, string textoContinuar)
+        {
+            return (bool)Dispatcher.Invoke(new Func<bool>(() =>
+                IncidenciasWindow.PedirDecision(this, lista, titulo, resumen, textoContinuar, CarpetaLogs())));
+        }
+
+        private void BorrarScriptTemporal()
+        {
+            if (_carpetaScriptTemp == null) return;
+            try { if (Directory.Exists(_carpetaScriptTemp)) Directory.Delete(_carpetaScriptTemp, true); } catch { }
+            _carpetaScriptTemp = null;
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            BorrarScriptTemporal();
+            base.OnClosed(e);
+        }
+
         private async void btnEjecutar_Click(object sender, RoutedEventArgs e)
         {
             var conA = ObtenerConexion(cmbConexionA);
@@ -352,7 +384,6 @@ namespace QueryAnalyzer
             // Backup previo (en UI thread)
             string backupRutaArchivo = null;
             string backupRutaCarpeta = null;
-            bool backupPorTabla     = false;
 
             if (chkBackup.IsChecked == true && !soloScript)
             {
@@ -380,7 +411,6 @@ namespace QueryAnalyzer
                 }
                 else
                 {
-                    backupPorTabla = true;
                     var fbd = new System.Windows.Forms.FolderBrowserDialog
                     {
                         Description         = "Seleccioná la carpeta donde guardar los archivos de backup (uno por tabla)",
@@ -397,22 +427,40 @@ namespace QueryAnalyzer
             ActualizarProgreso(0, 0);
             ActualizarSentenciaActual("");
             _ultimoResultado = null;
+            _rutaBackup = null;
+            _carpetaBackup = null;
+            BorrarScriptTemporal();
             btnVerScript.IsEnabled        = false;
             btnVerBackup.IsEnabled        = false;
             btnGuardarUnArchivo.IsEnabled = false;
             btnGuardarPorTabla.IsEnabled  = false;
+            btnIncidencias.IsEnabled      = false;
+            btnIncidencias.Content        = "Incidencias";
 
             string connStrA = ConexionesManager.GetConnectionString(conA);
             string connStrB = conB != null ? ConexionesManager.GetConnectionString(conB) : null;
             TipoMotor motorA = conA.Motor;
             TipoMotor motorB = conB?.Motor ?? conA.Motor;
 
+            long umbralLob = Math.Max(1, ConfigManager.ObtenerConfiguracion().UmbralLobMB) * 1024L * 1024L;
+            if (soloScript)
+                _carpetaScriptTemp = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "QueryAnalyzer", "temp", $"script_{DateTime.Now:yyyyMMdd_HHmmss}");
+
             var opciones = new OpcionesPasado
             {
-                GenerarSoloScript = soloScript,
-                HacerBackupDeB    = false,   // lo manejamos aquí
-                Transaccional     = chkTransaccional.IsChecked == true,
+                GenerarSoloScript     = soloScript,
+                HacerBackupDeB        = false,   // lo manejamos aquí
+                Transaccional         = chkTransaccional.IsChecked == true,
+                UmbralLobBytes        = umbralLob,
+                OmitirFilasLobGrandes = chkOmitirLob.IsChecked == true,
+                CarpetaScript         = _carpetaScriptTemp,
             };
+
+            // Todo lo que falle o resulte anómalo queda acá, en el log y en un CSV
+            var incidencias = _incidencias = new RegistroIncidencias();
+            incidencias.Agregada += i => Log("INCIDENCIA " + i);
 
             var progressLog  = new Progress<string>(msg => Log(msg));
             var progressSql  = new Progress<string>(sql => ActualizarSentenciaActual(sql));
@@ -426,6 +474,12 @@ namespace QueryAnalyzer
                     void ReportSql(string s)  => ((IProgress<string>)progressSql).Report(s);
                     void ReportStep(int c, int t) => ((IProgress<(int, int)>)progressStep).Report((c, t));
 
+                    ResultadoPasado Cancelado(string motivo) => new ResultadoPasado
+                    {
+                        Exito = false, Error = motivo, Incidencias = incidencias,
+                        RutaBackup = backupRutaArchivo, CarpetaBackup = backupRutaCarpeta
+                    };
+
                     // FK ordering basado en B (más seguro para DELETE)
                     string connParaFKs  = connStrB ?? connStrA;
                     TipoMotor mParaFKs  = motorB;
@@ -435,41 +489,64 @@ namespace QueryAnalyzer
                     var ordenDelete = Enumerable.Reverse(ordenInsert).ToList();
                     ReportLog($"Orden FK resuelto: {ordenInsert.Count} tabla(s).");
 
-                    // Backup
-                    string backupScript = null;
-                    Dictionary<string, string> backupPorTablaDict = null;
+                    // Prevalidación: ¿se pueden leer todas las tablas de A? (antes de tocar nada de B)
+                    ReportLog("Verificando que las tablas de A se puedan leer...");
+                    int marca = incidencias.Count;
+                    var conteosA = PasadorDatosService.PrevalidarOrigen(connStrA, ordenInsert, incidencias, ReportLog);
+                    var ilegibles = ordenInsert.Where(t => !conteosA.ContainsKey(t.NombreCompleto)).ToList();
+                    if (ilegibles.Count > 0)
+                    {
+                        bool seguir = Decidir(incidencias.Desde(marca),
+                            "No se pueden leer tablas de A",
+                            $"{ilegibles.Count} tabla(s) de A no se pudieron leer. Si continuás, se omiten: no se vacían ni se cargan en B " +
+                            "(B conserva su contenido actual en esas tablas). Si abortás, no se toca nada.",
+                            "Omitir esas tablas y continuar");
+                        if (!seguir)
+                            return Cancelado("Cancelado por el usuario: hay tablas de A que no se pueden leer. No se modificó nada.");
 
-                    if (backupRutaArchivo != null)
-                    {
-                        ReportLog("Generando backup de B...");
-                        backupScript = PasadorDatosService.GenerarBackupScript(connStrB, ordenDelete, motorB, ReportLog);
-                        try
-                        {
-                            File.WriteAllText(backupRutaArchivo, backupScript, Encoding.UTF8);
-                            ReportLog($"✓ Backup guardado: {backupRutaArchivo}");
-                        }
-                        catch (Exception exB) { ReportLog($"No se pudo guardar backup: {exB.Message}"); }
+                        var omitidas = new HashSet<string>(ilegibles.Select(t => t.NombreCompleto), StringComparer.OrdinalIgnoreCase);
+                        ordenInsert = ordenInsert.Where(t => !omitidas.Contains(t.NombreCompleto)).ToList();
+                        ordenDelete = ordenDelete.Where(t => !omitidas.Contains(t.NombreCompleto)).ToList();
+                        incidencias.Agregar("Origen", null, SeveridadIncidencia.Aviso, "Tablas omitidas por decisión del usuario",
+                            string.Join(", ", omitidas.OrderBy(x => x)),
+                            "Esas tablas NO se transfirieron: B conserva su contenido anterior.");
+                        if (ordenInsert.Count == 0)
+                            return Cancelado("No quedaron tablas para transferir.");
                     }
-                    else if (backupRutaCarpeta != null)
+
+                    // Backup de B (streaming a disco)
+                    if (backupRutaArchivo != null || backupRutaCarpeta != null)
                     {
-                        ReportLog("Generando backup de B (por tabla)...");
-                        backupPorTablaDict = PasadorDatosService.GenerarBackupPorTabla(connStrB, ordenDelete, motorB, ReportLog);
-                        int guardados = 0;
-                        foreach (var kv in backupPorTablaDict)
+                        ReportLog(backupRutaArchivo != null ? "Generando backup de B..." : "Generando backup de B (por tabla)...");
+                        int marcaBackup = incidencias.Count;
+                        var rb = PasadorDatosService.GenerarBackup(
+                            connStrB, ordenDelete, motorB, backupRutaArchivo, backupRutaCarpeta,
+                            opciones, incidencias, ReportLog);
+
+                        if (!rb.Completo)
                         {
-                            try
-                            {
-                                string archivo = Path.Combine(backupRutaCarpeta,
-                                    kv.Key.Replace(".", "_").Replace(" ", "_") + "_backup.sql");
-                                File.WriteAllText(archivo, kv.Value, Encoding.UTF8);
-                                guardados++;
-                            }
-                            catch { }
+                            var lista = incidencias.Desde(marcaBackup).Where(i => i.Severidad >= SeveridadIncidencia.Aviso).ToList();
+                            bool seguir = Decidir(lista,
+                                "El backup de B está incompleto",
+                                "Hay tablas o filas de B que no se pudieron respaldar. Si continuás, la transferencia las vacía igual y " +
+                                "no vas a poder recuperarlas desde este backup. Si abortás, B no se modifica.",
+                                "Continuar sin backup completo");
+                            if (!seguir)
+                                return Cancelado("Cancelado por el usuario: el backup de B quedó incompleto. B no fue modificada.");
+
+                            incidencias.Agregar("Backup", null, SeveridadIncidencia.Aviso, "Se continuó con el backup incompleto",
+                                "El usuario decidió continuar a pesar de las incidencias del backup.", null);
                         }
-                        ReportLog($"✓ {guardados} archivo(s) de backup guardados en: {backupRutaCarpeta}");
+                        else
+                        {
+                            ReportLog(backupRutaArchivo != null
+                                ? $"✓ Backup guardado: {backupRutaArchivo}"
+                                : $"✓ Backup guardado en: {backupRutaCarpeta}");
+                        }
                     }
 
                     // Transferencia
+                    opciones.ConteosA = conteosA;
                     var res = PasadorDatosService.TransferirDatos(
                         connStrA,
                         connStrB ?? connStrA,
@@ -478,41 +555,77 @@ namespace QueryAnalyzer
                         ordenInsert,
                         ordenDelete,
                         opciones,
+                        incidencias,
                         ReportLog,
                         ReportSql,
                         ReportStep);
 
-                    if (backupScript != null) res.BackupScript = backupScript;
-
+                    res.RutaBackup    = backupRutaArchivo;
+                    res.CarpetaBackup = backupRutaCarpeta;
                     return res;
                 });
+
+                _rutaBackup    = _ultimoResultado.RutaBackup;
+                _carpetaBackup = _ultimoResultado.CarpetaBackup;
+
+                int nIncidencias = incidencias.Count;
+                bool hayAvisos   = incidencias.Hay(SeveridadIncidencia.Aviso);
 
                 if (_ultimoResultado.Exito)
                     Log(soloScript ? "✓ Script generado correctamente." : "✓ Transferencia completada con éxito.");
                 else
                     Log($"✗ Error: {_ultimoResultado.Error}");
 
-                foreach (var adv in _ultimoResultado.Advertencias)
-                    Log($"{adv}");
+                if (nIncidencias > 0)
+                {
+                    string csv = Path.Combine(CarpetaLogs(), $"incidencias_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+                    try
+                    {
+                        Directory.CreateDirectory(CarpetaLogs());
+                        incidencias.GuardarCsv(csv);
+                        Log($"{nIncidencias} incidencia(s) registrada(s). Detalle en: {csv}");
+                    }
+                    catch (Exception exCsv) { Log($"No se pudo guardar el CSV de incidencias: {exCsv.Message}"); }
+
+                    btnIncidencias.IsEnabled = true;
+                    btnIncidencias.Content   = $"Incidencias ({nIncidencias})";
+                }
 
                 ActualizarSentenciaActual("");
                 ActualizarProgreso(
                     _ultimoResultado.Exito ? 1 : 0,
                     1);
 
-                btnVerScript.IsEnabled        = !string.IsNullOrEmpty(_ultimoResultado?.ScriptTransferencia);
-                btnVerBackup.IsEnabled        = !string.IsNullOrEmpty(_ultimoResultado?.BackupScript);
-                btnGuardarUnArchivo.IsEnabled = !string.IsNullOrEmpty(_ultimoResultado?.ScriptTransferencia);
-                btnGuardarPorTabla.IsEnabled  = _ultimoResultado?.ScriptsPorTabla?.Count > 0;
+                btnVerScript.IsEnabled        = _ultimoResultado.TieneScript;
+                btnVerBackup.IsEnabled        = (_rutaBackup != null && File.Exists(_rutaBackup))
+                                                || (_carpetaBackup != null && Directory.Exists(_carpetaBackup));
+                btnGuardarUnArchivo.IsEnabled = _ultimoResultado.TieneScript;
+                btnGuardarPorTabla.IsEnabled  = _ultimoResultado.TieneScript;
 
-                if (backupRutaArchivo != null && File.Exists(backupRutaArchivo))
-                    Log($"Backup disponible en: {backupRutaArchivo}");
+                if (_rutaBackup != null && File.Exists(_rutaBackup))
+                    Log($"Backup disponible en: {_rutaBackup}");
                 if (_logFilePath != null)
                     Log($"Log físico guardado en: {_logFilePath}");
+
+                // Si algo requiere atención, se muestra apenas termina para decidir qué hacer
+                // (si el usuario ya decidió abortar, las incidencias se acaban de mostrar)
+                bool cancelado = !_ultimoResultado.Exito && _ultimoResultado.Error != null
+                                 && _ultimoResultado.Error.StartsWith("Cancelado");
+                if (hayAvisos && !cancelado)
+                    new IncidenciasWindow(incidencias.Todas(),
+                        _ultimoResultado.Exito ? "Incidencias de la operación" : "La operación terminó con errores",
+                        _ultimoResultado.Exito
+                            ? "La operación terminó, pero se registraron incidencias. Revisalas para decidir si hace falta algo más."
+                            : "La operación no se completó. Estas son las incidencias registradas y qué hacer con cada una.",
+                        false, null, CarpetaLogs()).Mostrar(this);
             }
             catch (Exception ex)
             {
                 Log($"Error inesperado: {ex.Message}");
+                incidencias.Agregar("General", null, SeveridadIncidencia.Error, "Error inesperado",
+                    ex.Message, TransferenciaStreaming.Sugerir(ex));
+                btnIncidencias.IsEnabled = true;
+                btnIncidencias.Content   = $"Incidencias ({incidencias.Count})";
             }
             finally
             {
@@ -520,30 +633,87 @@ namespace QueryAnalyzer
             }
         }
 
+        // ── Incidencias ───────────────────────────────────────────────────────
+
+        private void btnIncidencias_Click(object sender, RoutedEventArgs e)
+        {
+            if (_incidencias == null || _incidencias.Count == 0) return;
+            new IncidenciasWindow(_incidencias.Todas(), "Incidencias de la última operación",
+                "Todo lo que falló o resultó anómalo en la última operación, con la acción sugerida para cada caso.",
+                false, null, CarpetaLogs()).Mostrar(this);
+        }
+
         // ── Ver scripts ───────────────────────────────────────────────────────
+
+        private const int VistaPreviaMaxChars = 512 * 1024;
+
+        /// <summary>Lee como máximo <paramref name="maxChars"/> caracteres del archivo (para no cargar GBs en el editor).</summary>
+        private static string LeerInicio(string ruta, int maxChars, out bool recortado)
+        {
+            var sb = new StringBuilder();
+            using (var sr = new StreamReader(ruta, Encoding.UTF8, true))
+            {
+                var buf = new char[8192];
+                int n;
+                while (sb.Length < maxChars && (n = sr.Read(buf, 0, buf.Length)) > 0)
+                    sb.Append(buf, 0, n);
+                recortado = sr.Peek() >= 0;
+            }
+            return sb.ToString();
+        }
 
         private void btnVerScript_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(_ultimoResultado?.ScriptTransferencia)) return;
+            var r = _ultimoResultado;
+            if (r == null || !r.TieneScript) return;
             var conA = ObtenerConexion(cmbConexionA);
-            new ScriptResultWindow(_ultimoResultado.ScriptTransferencia, conA?.Motor ?? TipoMotor.MS_SQL)
-                .Mostrar(this);
+
+            var sb = new StringBuilder();
+            sb.Append(r.PrefijoScript);
+            bool recortado = false;
+            foreach (var p in r.PartesScript)
+            {
+                if (sb.Length >= VistaPreviaMaxChars) { recortado = true; break; }
+                if (!string.IsNullOrEmpty(p.Antes)) sb.AppendLine(p.Antes);
+                bool rec;
+                sb.Append(LeerInicio(p.Archivo, VistaPreviaMaxChars - sb.Length, out rec));
+                if (rec) { recortado = true; break; }
+                if (!string.IsNullOrEmpty(p.Despues)) sb.AppendLine(p.Despues);
+            }
+            if (recortado)
+                sb.AppendLine().AppendLine("-- ... VISTA PREVIA RECORTADA: usá \"Guardar un archivo\" o \"Guardar por tabla\" para obtener el script completo ...");
+            else
+                sb.Append(r.SufijoScript);
+
+            new ScriptResultWindow(sb.ToString(), conA?.Motor ?? TipoMotor.MS_SQL).Mostrar(this);
         }
 
         private void btnVerBackup_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(_ultimoResultado?.BackupScript)) return;
+            if (_carpetaBackup != null && Directory.Exists(_carpetaBackup))
+            {
+                System.Diagnostics.Process.Start(_carpetaBackup);
+                return;
+            }
+            if (_rutaBackup == null || !File.Exists(_rutaBackup)) return;
+
             var conB = ObtenerConexion(cmbConexionB);
-            var win = new ScriptResultWindow(_ultimoResultado.BackupScript, conB?.Motor ?? TipoMotor.MS_SQL);
-            win.Title = "Backup de Base B (estado previo)";
+            bool recortado;
+            string texto = LeerInicio(_rutaBackup, VistaPreviaMaxChars, out recortado);
+            if (recortado)
+                texto += Environment.NewLine + "-- ... VISTA PREVIA RECORTADA (primeros 512 KB). Archivo completo: " + _rutaBackup;
+
+            var win = new ScriptResultWindow(texto, conB?.Motor ?? TipoMotor.MS_SQL);
+            win.Title = "Backup de Base B (estado previo) — vista previa";
             win.Mostrar(this);
         }
 
         // ── Guardar a archivo ─────────────────────────────────────────────────
 
-        private void btnGuardarUnArchivo_Click(object sender, RoutedEventArgs e)
+        private async void btnGuardarUnArchivo_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(_ultimoResultado?.ScriptTransferencia)) return;
+            var r = _ultimoResultado;
+            if (r == null || !r.TieneScript) return;
             var dlg = new Microsoft.Win32.SaveFileDialog
             {
                 Title            = "Guardar script de transferencia",
@@ -553,14 +723,28 @@ namespace QueryAnalyzer
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
             };
             if (dlg.ShowDialog(this) != true) return;
-            File.WriteAllText(dlg.FileName, _ultimoResultado.ScriptTransferencia, Encoding.UTF8);
-            Log($"✓ Script guardado en: {dlg.FileName}");
-            System.Diagnostics.Process.Start(dlg.FileName);
+
+            string destino = dlg.FileName;
+            btnGuardarUnArchivo.IsEnabled = false;
+            try
+            {
+                await Task.Run(() => PasadorDatosService.EnsamblarScript(r, destino));
+                Log($"✓ Script guardado en: {destino}");
+                System.Diagnostics.Process.Start(destino);
+            }
+            catch (Exception ex)
+            {
+                Log($"No se pudo guardar el script: {ex.Message}");
+                _incidencias?.Agregar("Script", null, SeveridadIncidencia.Error, "No se pudo guardar el script",
+                    ex.Message, "Elegí otra ubicación o liberá espacio en disco.");
+            }
+            finally { btnGuardarUnArchivo.IsEnabled = true; }
         }
 
         private void btnGuardarPorTabla_Click(object sender, RoutedEventArgs e)
         {
-            if (_ultimoResultado?.ScriptsPorTabla == null || _ultimoResultado.ScriptsPorTabla.Count == 0) return;
+            var r = _ultimoResultado;
+            if (r == null || !r.TieneScript) return;
             var fbd = new System.Windows.Forms.FolderBrowserDialog
             {
                 Description         = "Seleccioná la carpeta donde guardar los archivos SQL (uno por tabla)",
@@ -569,11 +753,20 @@ namespace QueryAnalyzer
             if (fbd.ShowDialog(this.OwnerWin32()) != System.Windows.Forms.DialogResult.OK) return;
 
             int guardados = 0;
-            foreach (var kv in _ultimoResultado.ScriptsPorTabla)
+            foreach (var p in r.PartesScript)
             {
-                string nombreArchivo = kv.Key.Replace(".", "_").Replace(" ", "_") + ".sql";
-                File.WriteAllText(Path.Combine(fbd.SelectedPath, nombreArchivo), kv.Value, Encoding.UTF8);
-                guardados++;
+                try
+                {
+                    string nombreArchivo = PasadorDatosService.NombreArchivoTabla(p.Tabla) + ".sql";
+                    File.Copy(p.Archivo, Path.Combine(fbd.SelectedPath, nombreArchivo), true);
+                    guardados++;
+                }
+                catch (Exception ex)
+                {
+                    Log($"No se pudo guardar {p.Tabla}: {ex.Message}");
+                    _incidencias?.Agregar("Script", p.Tabla, SeveridadIncidencia.Error, "No se pudo guardar el archivo de la tabla",
+                        ex.Message, "Elegí otra carpeta o liberá espacio en disco.");
+                }
             }
             Log($"✓ {guardados} archivo(s) guardado(s) en: {fbd.SelectedPath}");
             System.Diagnostics.Process.Start(fbd.SelectedPath);

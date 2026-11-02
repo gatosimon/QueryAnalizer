@@ -155,6 +155,10 @@
                                   IsChecked="False"
                                   Checked="chkSoloScript_Changed"
                                   Unchecked="chkSoloScript_Changed"/>
+                        <CheckBox x:Name="chkOmitirLob"
+                                  Content="Omitir filas con binarios muy grandes"
+                                  IsChecked="False"
+                                  ToolTip="Si una fila tiene un binario/LOB sobre el umbral (UmbralLobMB en config.xml; 128 MB por defecto), se omite y queda registrada como incidencia en vez de abortar la transferencia. La tabla queda incompleta en B."/>
                         <Rectangle Height="1" Margin="0,8" Fill="{DynamicResource BrushBorder}"/>
                         <Button x:Name="btnAnalizarFKs"
                                 Content="Analizar dependencias FK"
@@ -272,6 +276,14 @@
                     IsEnabled="False"
                     Click="btnVerBackup_Click"
                     ToolTip="Ver el script de backup del estado previo de B"/>
+            <Button x:Name="btnIncidencias"
+                    DockPanel.Dock="Left"
+                    Content="Incidencias"
+                    MinWidth="130"
+                    Margin="8,0,0,0"
+                    IsEnabled="False"
+                    Click="btnIncidencias_Click"
+                    ToolTip="Fallas y anomalías de la última operación, con la acción sugerida para cada una"/>
             <Button DockPanel.Dock="Right"
                     Content="Cerrar"
                     MinWidth="90"
