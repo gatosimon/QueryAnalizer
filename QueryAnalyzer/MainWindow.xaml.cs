@@ -6315,9 +6315,38 @@ namespace QueryAnalyzer
                 var posiciones = servicioEsquema.CalcularLayoutER(tablasMeta);
                 string xmlDrawio = servicioEsquema.GenerarXmlDrawio(tablasMeta, posiciones);
                 string encoded = servicioEsquema.ComprimirDrawio(xmlDrawio);
-                string url = "https://app.diagrams.net/?src=about#R" + Uri.EscapeDataString(encoded);
-                Dispatcher.Invoke(() => System.Diagnostics.Process.Start(url));
-                Dispatcher.Invoke(() => AppendMessage("Diagrama generado y abierto en Draw.io."));
+
+                // El diagrama viaja en la URL: Uri.EscapeDataString falla por encima de ~65 000 caracteres y
+                // los navegadores/ShellExecute cortan mucho antes. Si es grande, se guarda como archivo .drawio.
+                const int MaxUrlDrawio = 30000;
+                string urlBase = "https://app.diagrams.net/?src=about#R";
+                if (encoded.Length * 3 <= MaxUrlDrawio) // peor caso: cada carácter base64 (+ / =) se expande a 3
+                {
+                    string url = urlBase + Uri.EscapeDataString(encoded);
+                    Dispatcher.Invoke(() => System.Diagnostics.Process.Start(url));
+                    Dispatcher.Invoke(() => AppendMessage("Diagrama generado y abierto en Draw.io."));
+                }
+                else
+                {
+                    var sfd = new Microsoft.Win32.SaveFileDialog
+                    {
+                        Title = "Guardar diagrama Draw.io",
+                        Filter = "Diagrama Draw.io (*.drawio)|*.drawio",
+                        FileName = "esquema.drawio"
+                    };
+                    if (sfd.ShowDialog(this) == true)
+                    {
+                        File.WriteAllText(sfd.FileName, xmlDrawio, new System.Text.UTF8Encoding(false));
+                        AppendMessage("Diagrama demasiado grande para abrirlo por URL; guardado en: " + sfd.FileName);
+                        try { System.Diagnostics.Process.Start(sfd.FileName); }
+                        catch
+                        {
+                            System.Diagnostics.Process.Start("https://app.diagrams.net/");
+                            AppendMessage("Abrí el archivo en Draw.io con Archivo > Abrir desde > Dispositivo.");
+                        }
+                    }
+                    else AppendMessage("Esquematizar cancelado: no se eligió dónde guardar el diagrama.");
+                }
             }
             catch (Exception ex)
             {

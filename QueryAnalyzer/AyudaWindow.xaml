@@ -283,7 +283,7 @@
                 <!-- ══ DOCUMENTAR / ESQUEMATIZAR ══════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="Documentar / Esquematizar"/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Documentar: genera un archivo .docx con la estructura completa de las tablas y vistas visibles en el explorador."/>
-                <TextBlock Style="{StaticResource Cuerpo}" Text="• Esquematizar: genera un diagrama de relaciones en formato Draw.io (.xml) con las tablas/vistas visibles."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Esquematizar: genera un diagrama de relaciones en formato Draw.io (.xml) con las tablas/vistas visibles. Si son pocas se abre directo en el navegador; con muchas tablas (el diagrama no entra en una URL) pide dónde guardar un archivo .drawio y lo abre con el programa asociado, o bien se abre con Archivo > Abrir desde > Dispositivo en app.diagrams.net."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Selección múltiple: con los checkboxes del explorador se pueden elegir tablas específicas para documentar o esquematizar."/>
 
                 <!-- ══ TEMAS ═══════════════════════════════════════════════ -->
