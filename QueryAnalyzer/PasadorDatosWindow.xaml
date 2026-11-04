@@ -23,9 +23,9 @@
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>  <!-- Selectores A / B -->
-            <RowDefinition Height="*"/>     <!-- Tablas + Opciones -->
-            <RowDefinition Height="Auto"/>  <!-- SQL actual + Progreso -->
-            <RowDefinition Height="120"/>   <!-- Log de progreso -->
+            <RowDefinition Height="*" MinHeight="200"/>   <!-- Tablas + Opciones -->
+            <RowDefinition Height="Auto"/>  <!-- Splitter (alto del log) -->
+            <RowDefinition Height="190" MinHeight="110"/> <!-- SQL actual + Progreso + Log -->
             <RowDefinition Height="Auto"/>  <!-- Botones -->
         </Grid.RowDefinitions>
 
@@ -183,8 +183,20 @@
             </Grid>
         </Grid>
 
-        <!-- ══ ROW 2: SQL actual + Barra de progreso ═══════════════════════════════ -->
-        <Grid Grid.Row="2" Margin="0,0,0,4">
+        <!-- ══ ROW 2: Splitter para agrandar/achicar el log ═══════════════════════ -->
+        <GridSplitter Grid.Row="2" Height="6" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                      ResizeDirection="Rows" ResizeBehavior="PreviousAndNext"
+                      Background="{DynamicResource BrushSplitter}"
+                      ToolTip="Arrastrar para cambiar el alto del log de progreso"/>
+
+        <!-- ══ ROW 3: SQL actual + Barra de progreso + Log ═════════════════════════ -->
+        <Grid Grid.Row="3">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,4,0,4">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -221,8 +233,8 @@
                        Text=""/>
         </Grid>
 
-        <!-- ══ ROW 3: Log ══════════════════════════════════════════════════════════ -->
-        <GroupBox Grid.Row="3" Header="Log de progreso" Margin="0,0,0,4">
+        <!-- Log -->
+        <GroupBox Grid.Row="1" Header="Log de progreso" Margin="0,0,0,4">
             <ScrollViewer x:Name="scrollLog" VerticalScrollBarVisibility="Auto">
                 <TextBox x:Name="txtLog"
                          IsReadOnly="True"
@@ -235,6 +247,7 @@
                          Text=""/>
             </ScrollViewer>
         </GroupBox>
+        </Grid>
 
         <!-- ══ ROW 4: Botones ══════════════════════════════════════════════════════ -->
         <DockPanel Grid.Row="4" LastChildFill="False" Margin="0,4,0,0">

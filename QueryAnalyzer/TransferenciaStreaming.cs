@@ -270,6 +270,17 @@ namespace QueryAnalyzer
             string m = (ex?.Message ?? "").ToUpperInvariant();
             if (m.Contains("SQL0964") || m.Contains("LOG FULL") || m.Contains("TRANSACTION LOG"))
                 return "El log de transacciones del motor se llenó. Pedir que se amplíe el log o transferir menos tablas por corrida.";
+            if (m.Contains("SESSION_REPLICATION_ROLE") || (m.Contains("42501") && m.Contains("PARAMETER")))
+                return "PostgreSQL solo deja desactivar las FK de la sesión (session_replication_role) a un superusuario: " +
+                       "usá una conexión con ese rol o incluí en la selección todas las tablas relacionadas. B no fue modificada.";
+            if (m.Contains("REFERENCE CONSTRAINT") || m.Contains("SQL0532") || m.Contains("DELETE STATEMENT CONFLICTED"))
+                return "Una tabla fuera de la selección referencia a la que se está vaciando: agregala a la lista, o revisá que el " +
+                       "usuario tenga permiso ALTER para que se pueda desactivar esa FK durante la carga.";
+            if (m.Contains("SQL0668") || m.Contains("CHECK PENDING") || m.Contains("SQL3600"))
+                return "Una tabla de DB2 quedó en estado 'check pending' (por un SET INTEGRITY previo): ejecutá " +
+                       "SET INTEGRITY FOR <tabla> IMMEDIATE CHECKED y repetí.";
+            if (m.Contains("ALTER FOREIGN KEY") || (m.Contains("SQL0104") && m.Contains("ENFORCED")))
+                return "Esta versión de DB2 no admite ALTER FOREIGN KEY ... NOT ENFORCED: desactivá las FK a mano antes de transferir.";
             if (m.Contains("SQL0803") || m.Contains("DUPLICATE") || m.Contains("UNIQUE") || m.Contains("23505"))
                 return "Clave duplicada: revisá si la tabla de B tiene constraints/índices únicos distintos a A.";
             if (m.Contains("SQL0530") || m.Contains("FOREIGN KEY") || m.Contains("23503"))

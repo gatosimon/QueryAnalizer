@@ -354,6 +354,8 @@
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="    – Solo generar script: produce el SQL sin ejecutarlo (útil para revisión manual)."/>
                 <TextBlock Style="{StaticResource Cuerpo}"    Text="    – Omitir filas con binarios muy grandes: si una fila trae un binario/BLOB mayor al umbral (128 MB; clave UmbralLobMB en config.xml), se omite y queda registrada en vez de abortar la transferencia."/>
                 <TextBlock Style="{StaticResource Nota}"      Text="Tip: si hay FK entre las tablas seleccionadas y tablas fuera del conjunto, el analizador lo advierte antes de ejecutar."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• FK de tablas fuera de la selección: en SQL Server y DB2 la transferencia las desactiva sola durante la carga (se ve en el log) y las reactiva al final, aunque haya error. Si quedan filas huérfanas en esas tablas, la FK se reactiva sin validar y queda una incidencia de aviso."/>
+                <TextBlock Style="{StaticResource Cuerpo}"    Text="• En PostgreSQL desactivar las FK de la sesión exige un usuario superusuario; sin él la transferencia se corta antes de tocar B y lo informa. En SQLite no hace falta nada."/>
                 <TextBlock Style="{StaticResource Nota}"      Text="Tip: el botón 'Ver backup' muestra los primeros 512 KB del archivo (o abre la carpeta si el backup fue uno por tabla); el backup completo está en el archivo que elegiste."/>
 
                 <TextBlock Style="{StaticResource Subtitulo}" Text="Incidencias: qué hacer cuando algo falla"/>

@@ -462,6 +462,21 @@ namespace QueryAnalyzer
             var incidencias = _incidencias = new RegistroIncidencias();
             incidencias.Agregada += i => Log("INCIDENCIA " + i);
 
+            // Encabezado de diagnóstico: todo lo necesario para entender la corrida desde el log
+            Log("── DIAGNÓSTICO ──");
+            Log($"QueryAnalyzer {System.Reflection.Assembly.GetExecutingAssembly().GetName().Version} · " +
+                $"proceso {(Environment.Is64BitProcess ? "64" : "32")} bits · {Environment.OSVersion.VersionString} · .NET {Environment.Version}");
+            Log($"Origen (A):  {conA.Nombre} · motor {motorA} · {TransferenciaStreaming.EnmascararConexion(connStrA)}");
+            Log(conB != null
+                ? $"Destino (B): {conB.Nombre} · motor {motorB} · {TransferenciaStreaming.EnmascararConexion(connStrB)}"
+                : "Destino (B): (ninguno, solo script)");
+            Log($"Opciones: backup={(chkBackup.IsChecked == true)} (formato: {(backupRutaArchivo != null ? "archivo único" : backupRutaCarpeta != null ? "por tabla" : "sin backup")}), " +
+                $"transaccional={opciones.Transaccional}, soloScript={soloScript}, omitirLOB={opciones.OmitirFilasLobGrandes}, " +
+                $"umbralLOB={TransferenciaStreaming.Mb(umbralLob)}, timeout={TransferenciaStreaming.TimeoutSegundos()}s");
+            Log($"Tablas marcadas ({marcadas.Count}): {TransferenciaStreaming.Truncar(string.Join(", ", marcadas.Select(t => t.NombreCompleto)), 1500)}");
+            if (string.Equals(connStrA, connStrB, StringComparison.OrdinalIgnoreCase))
+                Log("AVISO: A y B usan exactamente la misma cadena de conexión (origen = destino).");
+
             var progressLog  = new Progress<string>(msg => Log(msg));
             var progressSql  = new Progress<string>(sql => ActualizarSentenciaActual(sql));
             var progressStep = new Progress<(int c, int t)>(p => ActualizarProgreso(p.c, p.t));
@@ -494,6 +509,13 @@ namespace QueryAnalyzer
                     int marca = incidencias.Count;
                     var conteosA = PasadorDatosService.PrevalidarOrigen(connStrA, ordenInsert, incidencias, ReportLog);
                     var ilegibles = ordenInsert.Where(t => !conteosA.ContainsKey(t.NombreCompleto)).ToList();
+                    ReportLog($"Origen A: {conteosA.Count(kv => kv.Value > 0)} tabla(s) con datos, " +
+                              $"{conteosA.Count(kv => kv.Value == 0)} vacía(s), {ilegibles.Count} ilegible(s); " +
+                              $"total {conteosA.Values.Sum()} fila(s).");
+                    foreach (var kv in conteosA.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Take(15))
+                        ReportLog($"  A · {kv.Key}: {kv.Value} fila(s)");
+                    if (ordenInsert.Count != marcadas.Count)
+                        ReportLog($"AVISO: se marcaron {marcadas.Count} tabla(s) pero el orden de carga tiene {ordenInsert.Count}.");
                     if (ilegibles.Count > 0)
                     {
                         bool seguir = Decidir(incidencias.Desde(marca),
@@ -621,7 +643,7 @@ namespace QueryAnalyzer
             }
             catch (Exception ex)
             {
-                Log($"Error inesperado: {ex.Message}");
+                Log($"Error inesperado: {ex}");
                 incidencias.Agregar("General", null, SeveridadIncidencia.Error, "Error inesperado",
                     ex.Message, TransferenciaStreaming.Sugerir(ex));
                 btnIncidencias.IsEnabled = true;

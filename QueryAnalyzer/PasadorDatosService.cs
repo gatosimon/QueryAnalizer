@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Odbc;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -156,19 +157,32 @@ namespace QueryAnalyzer
         private static void CargarMetadataMsSql(DataBase db, TablaTransfer tabla, TablaMetadata meta)
         {
             db.CommandText =
-                $"SELECT c.name, c.is_identity, c.is_computed, " +
+                // CAST a int: el tipo bit llega como Boolean ("True") por ODBC y no coincidía con "1"
+                $"SELECT c.name, CAST(c.is_identity AS int) AS is_identity, CAST(c.is_computed AS int) AS is_computed, " +
                 $"CASE WHEN tp.name IN ('timestamp','rowversion') THEN 1 ELSE 0 END AS es_ts " +
                 $"FROM sys.columns c JOIN sys.types tp ON c.user_type_id = tp.user_type_id " +
                 $"WHERE c.object_id = OBJECT_ID('{tabla.NombreCompleto}')";
             var dt = new DataTable();
             db.DataAdapter.Fill(dt);
+            // Sin columnas: la tabla no existe en B o el usuario no la ve. Callar acá escondía el problema hasta el INSERT.
+            if (dt.Rows.Count == 0)
+                throw new InvalidOperationException($"B no devolvió columnas para {tabla.NombreCompleto} (¿no existe o falta permiso?).");
             foreach (DataRow r in dt.Rows)
             {
                 string col = r["name"].ToString();
-                if ("1".Equals(r["is_identity"].ToString())) meta.ColumnasIdentity.Add(col);
-                if ("1".Equals(r["is_computed"].ToString()) || "1".Equals(r["es_ts"].ToString()))
+                if (EsVerdadero(r["is_identity"])) meta.ColumnasIdentity.Add(col);
+                if (EsVerdadero(r["is_computed"]) || EsVerdadero(r["es_ts"]))
                     meta.ColumnasExcluidas.Add(col);
             }
+        }
+
+        /// <summary>1, "1", true y "True" son verdaderos; el driver ODBC puede entregar cualquiera según el tipo.</summary>
+        private static bool EsVerdadero(object valor)
+        {
+            if (valor == null || valor is DBNull) return false;
+            if (valor is bool) return (bool)valor;
+            string s = valor.ToString().Trim();
+            return s == "1" || s.Equals("true", StringComparison.OrdinalIgnoreCase);
         }
 
         private static void CargarMetadataPostgres(DataBase db, TablaTransfer tabla, TablaMetadata meta)
@@ -667,6 +681,19 @@ namespace QueryAnalyzer
             bool modificoDatos = false;
             string tablaActual = null;
             string faseActual = "Transferencia";
+            int tablasCargadas = 0;
+            // FKs de tablas fuera de la selección que apuntan a las que se vacían (MS_SQL): se apagan y se vuelven a prender
+            var fkExternas = new List<FkExterna>();
+
+            // Metadata de B que cambia el INSERT: sirve para entender por qué una tabla se comporta distinto
+            foreach (var kv in metadata)
+            {
+                var m = kv.Value;
+                if (!m.TieneIdentity && m.ColumnasExcluidas.Count == 0) continue;
+                onProgress?.Invoke($"[Metadata B] {kv.Key}: identity=[{string.Join(", ", m.ColumnasIdentity)}] " +
+                                   $"identityAlways=[{string.Join(", ", m.ColumnasIdentityAlways)}] " +
+                                   $"excluidas=[{string.Join(", ", m.ColumnasExcluidas)}]");
+            }
 
             try
             {
@@ -675,7 +702,7 @@ namespace QueryAnalyzer
                 // FASE 1: Deshabilitar FKs (fuera de tx)
                 faseActual = "FK";
                 onProgress?.Invoke("Deshabilitando FK constraints en B...");
-                EjecutarFaseDeshabilitarFKs(dbB.Connection, motorB, ordenDelete, onProgress, avance.Sql);
+                EjecutarFaseDeshabilitarFKs(dbB.Connection, motorB, ordenDelete, onProgress, avance.Sql, fkExternas);
 
                 // FASE 2: Transacción única (si está activada)
                 faseActual = "Transferencia";
@@ -725,8 +752,13 @@ namespace QueryAnalyzer
                         : $"[INSERT] {tabla.NombreCompleto}...");
 
                     resultado.FilasTransferidas += InsertarTabla(
-                        dbB.Connection, tx, connStrA, tabla, meta, motorB, opciones, incidencias, avance);
+                        dbB.Connection, tx, connStrA, tabla, meta, motorB, opciones, incidencias, avance,
+                        conteo, onProgress);
+                    tablasCargadas++;
                 }
+
+                onProgress?.Invoke($"Resumen de la carga: {tablasCargadas} tabla(s) cargada(s) de {ordenInsert.Count}, " +
+                                   $"{resultado.FilasTransferidas} fila(s) insertada(s) en B.");
 
                 tx?.Commit();
                 commitOk = true;
@@ -738,6 +770,8 @@ namespace QueryAnalyzer
             catch (Exception ex)
             {
                 RegistrarFalla(incidencias, ex, tablaActual, faseActual);
+                // Excepción completa (tipo, pila y causas internas) para diagnosticar sin reproducir
+                onProgress?.Invoke($"DETALLE TÉCNICO (fase {faseActual}, tabla {tablaActual ?? "-"}): {ex}");
                 resultado.Error = (ex is ErrorTransferencia && ex.InnerException != null) ? ex.InnerException.Message : ex.Message;
 
                 if (tx != null)
@@ -769,7 +803,7 @@ namespace QueryAnalyzer
                     try
                     {
                         onProgress?.Invoke("Rehabilitando FK constraints en B...");
-                        EjecutarFaseRehabilitarFKs(dbB.Connection, motorB, ordenInsert, onProgress, null);
+                        EjecutarFaseRehabilitarFKs(dbB.Connection, motorB, ordenInsert, onProgress, null, fkExternas, incidencias);
                     }
                     catch (Exception exFk)
                     {
@@ -797,7 +831,7 @@ namespace QueryAnalyzer
         private static long InsertarTabla(
             OdbcConnection connB, OdbcTransaction tx, string connStrA, TablaTransfer tabla,
             TablaMetadata meta, TipoMotor motorB, OpcionesPasado op, RegistroIncidencias inc,
-            TransferenciaStreaming.Avance avance)
+            TransferenciaStreaming.Avance avance, long conteoEsperado, Action<string> onProgress)
         {
             bool overriding = (motorB == TipoMotor.POSTGRES || motorB == TipoMotor.DB2)
                               && meta?.TieneIdentityAlways == true;
@@ -806,10 +840,12 @@ namespace QueryAnalyzer
             if (identityInsert)
                 EjecutarDml(connB, tx, $"SET IDENTITY_INSERT {tabla.NombreCompleto} ON");
 
-            long insertadas = 0;
+            long insertadas = 0, leidas = 0, sinFilasAfectadas = 0, omitidasLob = 0;
+            var reloj = Stopwatch.StartNew();
             using (var lector = LectorTabla.Abrir(connStrA, tabla, meta?.ColumnasExcluidas, op.UmbralLobBytes))
             {
                 string cols = string.Join(", ", lector.Columnas);
+                onProgress?.Invoke($"[INSERT]   {tabla.NombreCompleto}: {lector.Columnas.Length} columna(s) a copiar: {TransferenciaStreaming.Truncar(cols, 400)}");
                 var vals = new object[lector.Columnas.Length];
                 var sb = new StringBuilder(1024);
 
@@ -827,6 +863,7 @@ namespace QueryAnalyzer
                             "La tabla quedó incompleta en B. Transferí esa fila por otro medio.",
                             lx.Columna, lx.Clave);
                         avance.Sumar(1);
+                        omitidasLob++;
                         continue;
                     }
                     if (!hay) break;
@@ -835,7 +872,11 @@ namespace QueryAnalyzer
                     string sql = ConstruirInsert(sb, tabla.NombreCompleto, cols, vals, overriding, motorB, pars);
                     avance.Sql(sql);
 
-                    try { EjecutarDml(connB, tx, sql, null, pars); }
+                    try
+                    {
+                        // 0 = el motor no insertó nada; -1 = el driver no informa (no cuenta como falla)
+                        if (EjecutarDml(connB, tx, sql, null, pars) == 0) sinFilasAfectadas++;
+                    }
                     catch (Exception ex)
                     {
                         throw new ErrorTransferencia(ex.Message, ex)
@@ -849,10 +890,29 @@ namespace QueryAnalyzer
                     insertadas++;
                     avance.Sumar(1);
                 }
+                leidas = lector.NumFila;
             }
 
             if (identityInsert)
                 EjecutarDml(connB, tx, $"SET IDENTITY_INSERT {tabla.NombreCompleto} OFF");
+
+            onProgress?.Invoke($"[INSERT]   {tabla.NombreCompleto}: leídas de A={leidas} (esperadas={(conteoEsperado >= 0 ? conteoEsperado.ToString() : "?")}), " +
+                               $"insertadas en B={insertadas}, omitidas por binario grande={omitidasLob}, " +
+                               $"insert que afectó 0 filas={sinFilasAfectadas}, {reloj.ElapsedMilliseconds} ms.");
+
+            if (conteoEsperado > 0 && leidas == 0)
+                inc.Agregar("Transferencia", tabla.NombreCompleto, SeveridadIncidencia.Error, "No se leyó ninguna fila de A",
+                    $"El conteo previo decía {conteoEsperado} fila(s) pero el SELECT * no devolvió ninguna.",
+                    "Revisá permisos de lectura / filtros de seguridad de fila en A, o que el usuario de la conexión A sea el mismo que contó las filas.");
+            else if (conteoEsperado >= 0 && leidas != conteoEsperado)
+                inc.Agregar("Transferencia", tabla.NombreCompleto, SeveridadIncidencia.Aviso, "Filas leídas distinto del conteo previo",
+                    $"Esperadas {conteoEsperado}, leídas {leidas}.",
+                    "A cambió durante la transferencia o el driver cortó la lectura: repetir y comparar.");
+
+            if (sinFilasAfectadas > 0)
+                inc.Agregar("Transferencia", tabla.NombreCompleto, SeveridadIncidencia.Aviso, "INSERT sin filas afectadas",
+                    $"{sinFilasAfectadas} INSERT(s) terminaron sin error pero el motor informó 0 filas afectadas.",
+                    "Revisar triggers INSTEAD OF / reglas en B que descarten la fila.");
 
             return insertadas;
         }
@@ -1110,9 +1170,172 @@ namespace QueryAnalyzer
             }
         }
 
+        /// <summary>
+        /// Una FK que hay que apagar durante la carga y volver a encender al final. Lleva sus propias sentencias
+        /// para que cada motor use el mecanismo que le corresponde y la reactivación sea común.
+        /// </summary>
+        internal sealed class FkExterna
+        {
+            public string Tabla;                  // tabla hija (para el log), con comillas del motor
+            public string Fk;                     // nombre de la constraint
+            public string Referencia;             // tabla padre (para el log)
+            public string SqlReactivarValidando;  // reactiva y revisa las filas existentes (puede fallar si hay huérfanas)
+            public string SqlReactivarSinValidar; // reactiva sin revisar lo existente (null = el motor no distingue)
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Cómo se evita que una FK frene el DELETE/INSERT, motor por motor
+        //
+        //  MS_SQL    NOCHECK CONSTRAINT actúa sobre UNA tabla. Las FK de tablas fuera de la selección que apuntan a
+        //            las que se vacían siguen activas (error 547) → se buscan en sys.foreign_keys y se apagan una por una.
+        //  DB2 LUW   SET INTEGRITY ... OFF deja la tabla en "check pending" y en ese estado NO admite INSERT/DELETE
+        //            (SQL0668N): sirve para LOAD, no para DML. Lo correcto es ALTER FOREIGN KEY ... NOT ENFORCED sobre
+        //            cada FK que toque las tablas (como padre o como hija), buscadas en SYSCAT.REFERENCES.
+        //  Postgres  session_replication_role = replica apaga los triggers de FK de TODA la sesión (también las de
+        //            tablas externas), pero exige superusuario: sin él falla antes de tocar B y se avisa cómo seguir.
+        //  SQLite    PRAGMA foreign_keys = OFF vale para toda la conexión, pero es un no-op dentro de una transacción:
+        //            por eso se ejecuta ANTES de BeginTransaction.
+        // Si apagar las FK falla, ocurre antes del primer DELETE: B queda intacta.
+        // ─────────────────────────────────────────────────────────────────────
+
+        private static void DeshabilitarFKsExternasMsSql(
+            OdbcConnection conn, List<TablaTransfer> tablas, List<FkExterna> externas,
+            Action<string> onProgress, Action<string> onSql)
+        {
+            if (tablas.Count == 0) return;
+
+            // Se consulta después del NOCHECK de la selección: lo que sigue habilitado es lo que bloquea el DELETE
+            var ids = string.Join(", ", tablas.Select(t => "OBJECT_ID('" + t.NombreCompleto.Replace("'", "''") + "')"));
+            string consulta =
+                "SELECT QUOTENAME(SCHEMA_NAME(h.schema_id)) + '.' + QUOTENAME(h.name), QUOTENAME(fk.name), " +
+                "       QUOTENAME(SCHEMA_NAME(p.schema_id)) + '.' + QUOTENAME(p.name) " +
+                "FROM sys.foreign_keys fk " +
+                "JOIN sys.tables h ON h.object_id = fk.parent_object_id " +
+                "JOIN sys.tables p ON p.object_id = fk.referenced_object_id " +
+                "WHERE fk.is_disabled = 0 AND fk.referenced_object_id IN (" + ids + ")";
+
+            var halladas = new List<FkExterna>();
+            using (var cmd = new OdbcCommand(consulta, conn))
+            using (var rd = cmd.ExecuteReader())
+                while (rd.Read())
+                {
+                    string tabla = rd.GetString(0), fk = rd.GetString(1);
+                    halladas.Add(new FkExterna
+                    {
+                        Tabla = tabla, Fk = fk, Referencia = rd.GetString(2),
+                        SqlReactivarValidando  = $"ALTER TABLE {tabla} WITH CHECK CHECK CONSTRAINT {fk}",
+                        SqlReactivarSinValidar = $"ALTER TABLE {tabla} WITH NOCHECK CHECK CONSTRAINT {fk}"
+                    });
+                }
+
+            if (halladas.Count == 0) return;
+
+            onProgress?.Invoke($"Hay {halladas.Count} FK de tablas fuera de la selección que apuntan a las que se vacían: se desactivan durante la carga y se reactivan al final.");
+            foreach (var f in halladas)
+            {
+                string sql = $"ALTER TABLE {f.Tabla} NOCHECK CONSTRAINT {f.Fk}";
+                onSql?.Invoke(sql);
+                EjecutarDml(conn, null, sql);
+                externas.Add(f);   // recién ahora: solo se reactiva lo que realmente se apagó
+                onProgress?.Invoke($"  FK externa desactivada: {f.Fk} ({f.Tabla} → {f.Referencia})");
+            }
+        }
+
+        private static string ComillasDb2(string s) { return "\"" + s.Replace("\"", "\"\"") + "\""; }
+
+        /// <summary>DB2 LUW: todas las FK que tocan las tablas (como padre o como hija) pasan a NOT ENFORCED.</summary>
+        private static void DeshabilitarFKsDb2(
+            OdbcConnection conn, List<TablaTransfer> tablas, List<FkExterna> externas,
+            Action<string> onProgress, Action<string> onSql)
+        {
+            if (tablas.Count == 0) return;
+
+            var cond = new StringBuilder();
+            foreach (var t in tablas)
+            {
+                string nom = t.Nombre.ToUpperInvariant().Replace("'", "''");
+                string sch = string.IsNullOrEmpty(t.Schema) ? null : t.Schema.ToUpperInvariant().Replace("'", "''");
+                Func<string, string> esquema = col => sch == null ? col + " = CURRENT SCHEMA" : col + " = '" + sch + "'";
+                if (cond.Length > 0) cond.Append(" OR ");
+                cond.Append($"({esquema("TABSCHEMA")} AND TABNAME = '{nom}') OR ({esquema("REFTABSCHEMA")} AND REFTABNAME = '{nom}')");
+            }
+
+            const string cols = "SELECT TABSCHEMA, TABNAME, CONSTNAME, REFTABSCHEMA, REFTABNAME FROM SYSCAT.REFERENCES WHERE ";
+            var halladas = new List<FkExterna>();
+            Action<string> leer = consulta =>
+            {
+                halladas.Clear();
+                using (var cmd = new OdbcCommand(consulta, conn))
+                using (var rd = cmd.ExecuteReader())
+                    while (rd.Read())
+                    {
+                        string tabla = ComillasDb2(rd.GetString(0).Trim()) + "." + ComillasDb2(rd.GetString(1).Trim());
+                        string fk    = ComillasDb2(rd.GetString(2).Trim());
+                        halladas.Add(new FkExterna
+                        {
+                            Tabla = tabla, Fk = fk,
+                            Referencia = rd.GetString(3).Trim() + "." + rd.GetString(4).Trim(),
+                            SqlReactivarValidando = $"ALTER TABLE {tabla} ALTER FOREIGN KEY {fk} ENFORCED"
+                        });
+                    }
+            };
+
+            // Solo las que hoy se hacen cumplir: así la reactivación no vuelve "obligatoria" una FK que era informativa
+            try { leer(cols + "ENFORCED = 'Y' AND (" + cond + ")"); }
+            catch (OdbcException) { leer(cols + "(" + cond + ")"); }   // versiones sin la columna ENFORCED
+
+            if (halladas.Count == 0) return;
+
+            onProgress?.Invoke($"DB2: {halladas.Count} FK relacionadas con las tablas; se pasan a NOT ENFORCED durante la carga y vuelven a ENFORCED al final.");
+            foreach (var f in halladas)
+            {
+                string sql = $"ALTER TABLE {f.Tabla} ALTER FOREIGN KEY {f.Fk} NOT ENFORCED";
+                onSql?.Invoke(sql);
+                EjecutarDml(conn, null, sql);
+                externas.Add(f);
+            }
+        }
+
+        /// <summary>Reactiva las FK que se apagaron. Nunca lanza: cada falla queda como incidencia.</summary>
+        private static void RehabilitarFKsExternas(
+            OdbcConnection conn, List<FkExterna> externas, Action<string> onProgress, RegistroIncidencias incidencias)
+        {
+            foreach (var f in externas)
+            {
+                try
+                {
+                    EjecutarDml(conn, null, f.SqlReactivarValidando);
+                    onProgress?.Invoke($"  FK reactivada: {f.Fk} ({f.Tabla})");
+                }
+                catch (Exception exCheck)
+                {
+                    if (f.SqlReactivarSinValidar == null)
+                    {
+                        incidencias?.Agregar("FK", f.Tabla, SeveridadIncidencia.Error, "No se pudo reactivar una FK",
+                            $"{f.Fk}: {exCheck.Message}", $"Reactivala a mano: {f.SqlReactivarValidando}");
+                        continue;
+                    }
+
+                    // Quedaron filas de esa tabla apuntando a filas que ya no existen en el padre: se reactiva sin validar
+                    try
+                    {
+                        EjecutarDml(conn, null, f.SqlReactivarSinValidar);
+                        incidencias?.Agregar("FK", f.Tabla, SeveridadIncidencia.Aviso, "FK reactivada sin validar",
+                            $"{f.Fk} ({f.Tabla} → {f.Referencia}): hay filas huérfanas. {exCheck.Message}",
+                            "Esa tabla no estaba en la selección y conserva filas que apuntan a datos que se reemplazaron. Incluila en la transferencia o limpiá esas filas.");
+                    }
+                    catch (Exception exNo)
+                    {
+                        incidencias?.Agregar("FK", f.Tabla, SeveridadIncidencia.Error, "No se pudo reactivar una FK",
+                            $"{f.Fk}: {exNo.Message}", $"Reactivala a mano: {f.SqlReactivarSinValidar}");
+                    }
+                }
+            }
+        }
+
         private static void EjecutarFaseDeshabilitarFKs(
             OdbcConnection conn, TipoMotor motor, List<TablaTransfer> tablas,
-            Action<string> onProgress, Action<string> onSql)
+            Action<string> onProgress, Action<string> onSql, List<FkExterna> externas = null)
         {
             switch (motor)
             {
@@ -1122,6 +1345,8 @@ namespace QueryAnalyzer
                         string sql = $"ALTER TABLE {t.NombreCompleto} NOCHECK CONSTRAINT ALL";
                         onSql?.Invoke(sql); EjecutarDml(conn, null, sql);
                     }
+                    if (externas != null)
+                        DeshabilitarFKsExternasMsSql(conn, tablas, externas, onProgress, onSql);
                     break;
                 case TipoMotor.POSTGRES:
                 {
@@ -1130,11 +1355,8 @@ namespace QueryAnalyzer
                     break;
                 }
                 case TipoMotor.DB2:
-                    foreach (var t in tablas)
-                    {
-                        string sql = $"SET INTEGRITY FOR {t.NombreCompleto} OFF CASCADE DEFERRED";
-                        onSql?.Invoke(sql); EjecutarDml(conn, null, sql);
-                    }
+                    if (externas != null)
+                        DeshabilitarFKsDb2(conn, tablas, externas, onProgress, onSql);
                     break;
                 case TipoMotor.SQLite:
                 {
@@ -1147,17 +1369,30 @@ namespace QueryAnalyzer
 
         private static void EjecutarFaseRehabilitarFKs(
             OdbcConnection conn, TipoMotor motor, List<TablaTransfer> tablas,
-            Action<string> onProgress, Action<string> onSql)
+            Action<string> onProgress, Action<string> onSql,
+            List<FkExterna> externas = null, RegistroIncidencias incidencias = null)
         {
+            // Primero las FK apagadas una por una: nunca lanza, así no quedan apagadas si falla algo más abajo
+            if (externas != null && externas.Count > 0)
+                RehabilitarFKsExternas(conn, externas, onProgress, incidencias);
+
             switch (motor)
             {
                 case TipoMotor.MS_SQL:
+                {
+                    // Se intenta con TODAS aunque alguna falle, y recién al final se informa
+                    var errores = new List<string>();
                     foreach (var t in tablas)
                     {
                         string sql = $"ALTER TABLE {t.NombreCompleto} WITH CHECK CHECK CONSTRAINT ALL";
-                        onSql?.Invoke(sql); EjecutarDml(conn, null, sql);
+                        try { onSql?.Invoke(sql); EjecutarDml(conn, null, sql); }
+                        catch (Exception ex) { errores.Add(t.NombreCompleto + ": " + ex.Message); }
                     }
+                    if (errores.Count > 0)
+                        throw new InvalidOperationException(
+                            $"{errores.Count} tabla(s) no pudieron revalidar sus FK:\n" + string.Join("\n", errores));
                     break;
+                }
                 case TipoMotor.POSTGRES:
                 {
                     string sql = "SET session_replication_role = DEFAULT";
@@ -1165,11 +1400,7 @@ namespace QueryAnalyzer
                     break;
                 }
                 case TipoMotor.DB2:
-                    foreach (var t in tablas)
-                    {
-                        string sql = $"SET INTEGRITY FOR {t.NombreCompleto} IMMEDIATE CHECKED";
-                        onSql?.Invoke(sql); EjecutarDml(conn, null, sql);
-                    }
+                    // Ya reactivadas arriba (ALTER FOREIGN KEY ... ENFORCED)
                     break;
                 case TipoMotor.SQLite:
                 {
@@ -1189,9 +1420,9 @@ namespace QueryAnalyzer
         /// quedarse con el OdbcCommand en curso para poder cancelarlo desde otro hilo.
         /// <paramref name="parametros"/> son los valores de los '?' de la sentencia (binarios grandes).
         /// </summary>
-        internal static void EjecutarDml(OdbcConnection conn, OdbcTransaction tx, string sql,
-                                         Action<OdbcCommand> onComando = null,
-                                         IList<OdbcParameter> parametros = null)
+        internal static int EjecutarDml(OdbcConnection conn, OdbcTransaction tx, string sql,
+                                        Action<OdbcCommand> onComando = null,
+                                        IList<OdbcParameter> parametros = null)
         {
             using (var cmd = new OdbcCommand(sql, conn))
             {
@@ -1200,7 +1431,7 @@ namespace QueryAnalyzer
                 if (parametros != null)
                     foreach (var p in parametros) cmd.Parameters.Add(p);
                 onComando?.Invoke(cmd);
-                try { cmd.ExecuteNonQuery(); }
+                try { return cmd.ExecuteNonQuery(); }
                 finally { onComando?.Invoke(null); }
             }
         }
