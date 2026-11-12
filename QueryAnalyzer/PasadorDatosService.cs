@@ -19,8 +19,9 @@ namespace QueryAnalyzer
         public static List<FkEdge> ObtenerFKsEntreTablas(
             string connStr, TipoMotor motor, List<TablaTransfer> tablas)
         {
+            // Las FK se consultan en B: se usa el nombre que la tabla tiene en B
             var nombres = new HashSet<string>(
-                tablas.Select(t => t.Nombre),
+                tablas.Select(t => t.B.Nombre),
                 StringComparer.OrdinalIgnoreCase);
 
             return ObtenerTodasLasFKs(connStr, motor, tablas)
@@ -33,7 +34,7 @@ namespace QueryAnalyzer
             string connStr, TipoMotor motor, List<TablaTransfer> tablas)
         {
             var nombres = new HashSet<string>(
-                tablas.Select(t => t.Nombre),
+                tablas.Select(t => t.B.Nombre),
                 StringComparer.OrdinalIgnoreCase);
 
             var avisos = new List<string>();
@@ -60,9 +61,10 @@ namespace QueryAnalyzer
         public static (List<TablaTransfer> OrdenInsert, List<string> Ciclicas) OrdenarPorDependencias(
             List<TablaTransfer> tablas, List<FkEdge> edges)
         {
-            var inDegree  = tablas.ToDictionary(t => t.Nombre, _ => 0, StringComparer.OrdinalIgnoreCase);
-            var dependeDe = tablas.ToDictionary(t => t.Nombre, _ => new HashSet<string>(StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
-            var requiereMe= tablas.ToDictionary(t => t.Nombre, _ => new List<string>(), StringComparer.OrdinalIgnoreCase);
+            // Las FK vienen de B: las tablas se identifican por el nombre que tienen en B (igual al de A si no hay destino resuelto)
+            var inDegree  = tablas.ToDictionary(t => t.B.Nombre, _ => 0, StringComparer.OrdinalIgnoreCase);
+            var dependeDe = tablas.ToDictionary(t => t.B.Nombre, _ => new HashSet<string>(StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
+            var requiereMe= tablas.ToDictionary(t => t.B.Nombre, _ => new List<string>(), StringComparer.OrdinalIgnoreCase);
 
             foreach (var e in edges)
             {
@@ -89,7 +91,7 @@ namespace QueryAnalyzer
             var ciclicas = inDegree.Where(kv => kv.Value > 0).Select(kv => kv.Key).ToList();
             ordenNombres.AddRange(ciclicas);
 
-            var mapa = tablas.ToDictionary(t => t.Nombre, t => t, StringComparer.OrdinalIgnoreCase);
+            var mapa = tablas.ToDictionary(t => t.B.Nombre, t => t, StringComparer.OrdinalIgnoreCase);
             return (ordenNombres.Where(n => mapa.ContainsKey(n)).Select(n => mapa[n]).ToList(), ciclicas);
         }
 
@@ -103,7 +105,11 @@ namespace QueryAnalyzer
         {
             var resultado = new Dictionary<string, TablaMetadata>(StringComparer.OrdinalIgnoreCase);
             foreach (var t in tablas)
-                resultado[t.NombreCompleto] = new TablaMetadata();
+                resultado[t.NombreCompleto] = t.Meta ?? new TablaMetadata();
+
+            // Las tablas con metadata ya resuelta (transferencia entre motores) no se vuelven a consultar
+            tablas = tablas.Where(t => t.Meta == null).ToList();
+            if (tablas.Count == 0) return resultado;
 
             if (string.IsNullOrEmpty(connStrB)) return resultado;
 
@@ -194,6 +200,8 @@ namespace QueryAnalyzer
                 $"WHERE table_schema = '{schema}' AND table_name = '{tabla.Nombre}'";
             var dt = new DataTable();
             db.DataAdapter.Fill(dt);
+            if (dt.Rows.Count == 0)
+                throw new InvalidOperationException($"B no devolvió columnas para {schema}.{tabla.Nombre} (¿no existe, otro esquema, otras mayúsculas o falta permiso?).");
             foreach (DataRow r in dt.Rows)
             {
                 string col = r["column_name"].ToString();
@@ -217,6 +225,8 @@ namespace QueryAnalyzer
                 $"WHERE TABSCHEMA = '{schema}' AND TABNAME = '{nombre}'";
             var dt = new DataTable();
             db.DataAdapter.Fill(dt);
+            if (dt.Rows.Count == 0)
+                throw new InvalidOperationException($"B no devolvió columnas para {tabla.NombreCompleto} (¿no existe, otro esquema o falta permiso?).");
             foreach (DataRow r in dt.Rows)
             {
                 string col  = r["COLNAME"].ToString();
@@ -244,6 +254,428 @@ namespace QueryAnalyzer
                 if (hidden == "2" || hidden == "3")
                     meta.ColumnasExcluidas.Add(r["name"].ToString());
             }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Transferencia entre motores distintos: resolver la tabla y las columnas en B
+        //
+        // Con el mismo motor, A y B comparten nombres y la tabla se escribe tal cual. Con motores distintos
+        // (p. ej. DB2 -> SQL Server) los nombres cambian (esquema dbo / public / el de DB2, mayúsculas) y los
+        // tipos no se llaman igual, así que antes de tocar B se lee el catálogo de B: nombre exacto de la tabla
+        // y de cada columna, su tipo, si admite NULL, si es identity. Con eso se entrecomillan los
+        // identificadores y se convierte cada valor al tipo de la columna destino (ver ScriptHelper).
+        // Todo lo que no coincida queda como incidencia ANTES del primer DELETE.
+        // ─────────────────────────────────────────────────────────────────────
+
+        private sealed class TablaCatalogo
+        {
+            public string Schema;
+            public string Nombre;
+            public List<ColumnaDestino> Columnas = new List<ColumnaDestino>();
+        }
+
+        private sealed class ColumnaOrigen
+        {
+            public string Nombre;
+            public Type   Clr;
+            public string TipoNombre;
+        }
+
+        /// <summary>Familia de un tipo de dato según el catálogo del motor.</summary>
+        internal static CategoriaTipo ClasificarTipo(TipoMotor motor, string tipo)
+        {
+            string t = (tipo ?? "").Trim().ToLowerInvariant();
+            int p = t.IndexOf('(');
+            if (p >= 0) t = t.Substring(0, p).Trim();
+
+            switch (t)
+            {
+                case "boolean": case "bool":
+                    return (motor == TipoMotor.POSTGRES || motor == TipoMotor.DB2) ? CategoriaTipo.Bool : CategoriaTipo.Entero;
+                case "bit":
+                    return motor == TipoMotor.MS_SQL ? CategoriaTipo.Entero : CategoriaTipo.Otro;
+                case "tinyint": case "smallint": case "int": case "integer": case "bigint": case "mediumint":
+                case "int2": case "int4": case "int8": case "serial": case "bigserial": case "smallserial":
+                    return CategoriaTipo.Entero;
+                case "decimal": case "numeric": case "money": case "smallmoney": case "number": case "dec": case "decfloat":
+                    return CategoriaTipo.Decimal;
+                case "float": case "real": case "double": case "double precision": case "float4": case "float8":
+                    return CategoriaTipo.Real;
+                case "char": case "varchar": case "text": case "character": case "character varying": case "bpchar":
+                case "clob": case "long varchar": case "longvarchar": case "tinytext": case "mediumtext": case "longtext":
+                case "name": case "citext": case "varchar2":
+                    return CategoriaTipo.Texto;
+                case "nchar": case "nvarchar": case "ntext": case "graphic": case "vargraphic": case "dbclob":
+                case "nvarchar2": case "nclob":
+                    return CategoriaTipo.TextoUnicode;
+                case "date":
+                    return CategoriaTipo.Fecha;
+                case "timestamp":
+                    return motor == TipoMotor.MS_SQL ? CategoriaTipo.Binario : CategoriaTipo.FechaHora;   // en SQL Server es rowversion
+                case "datetime": case "datetime2": case "smalldatetime": case "timestamp without time zone":
+                    return CategoriaTipo.FechaHora;
+                case "datetimeoffset": case "timestamp with time zone": case "timestamptz":
+                    return CategoriaTipo.FechaHoraTz;
+                case "time": case "time without time zone": case "timetz": case "time with time zone":
+                    return CategoriaTipo.Hora;
+                case "binary": case "varbinary": case "image": case "bytea": case "blob": case "long varbinary":
+                case "longblob": case "mediumblob": case "tinyblob": case "raw": case "long raw":
+                    return CategoriaTipo.Binario;
+                case "uniqueidentifier": case "uuid":
+                    return CategoriaTipo.Guid;
+                case "xml":
+                    return CategoriaTipo.Xml;
+                default:
+                    return CategoriaTipo.Otro;
+            }
+        }
+
+        private static string ConsultaCatalogo(TipoMotor motor, string nombreEscapado)
+        {
+            switch (motor)
+            {
+                case TipoMotor.MS_SQL:
+                    return
+                        "SELECT s.name AS sch, t.name AS tbl, c.name AS col, TYPE_NAME(c.system_type_id) AS tipo, " +
+                        "  CAST(c.is_nullable AS int) AS nulo, " +
+                        "  CAST(CASE WHEN c.default_object_id <> 0 THEN 1 ELSE 0 END AS int) AS tdef, " +
+                        "  CAST(c.is_identity AS int) AS ident, CAST(0 AS int) AS alw, " +
+                        "  CAST(CASE WHEN c.is_computed = 1 OR TYPE_NAME(c.system_type_id) = 'timestamp' THEN 1 ELSE 0 END AS int) AS excl " +
+                        "FROM sys.columns c " +
+                        "JOIN sys.tables t ON t.object_id = c.object_id " +
+                        "JOIN sys.schemas s ON s.schema_id = t.schema_id " +
+                        $"WHERE LOWER(t.name) = LOWER('{nombreEscapado}') ORDER BY s.name, t.name, c.column_id";
+
+                case TipoMotor.POSTGRES:
+                    return
+                        "SELECT table_schema AS sch, table_name AS tbl, column_name AS col, data_type AS tipo, " +
+                        "  CASE WHEN is_nullable = 'YES' THEN 1 ELSE 0 END AS nulo, " +
+                        "  CASE WHEN column_default IS NOT NULL THEN 1 ELSE 0 END AS tdef, " +
+                        "  CASE WHEN is_identity = 'YES' THEN 1 ELSE 0 END AS ident, " +
+                        "  CASE WHEN is_identity = 'YES' AND identity_generation = 'ALWAYS' THEN 1 ELSE 0 END AS alw, " +
+                        "  CASE WHEN is_generated = 'ALWAYS' THEN 1 ELSE 0 END AS excl " +
+                        "FROM information_schema.columns " +
+                        $"WHERE LOWER(table_name) = LOWER('{nombreEscapado}') " +
+                        "  AND table_schema NOT IN ('pg_catalog', 'information_schema') " +
+                        "ORDER BY table_schema, table_name, ordinal_position";
+
+                case TipoMotor.DB2:
+                    return
+                        "SELECT TRIM(TABSCHEMA) AS sch, TRIM(TABNAME) AS tbl, COLNAME AS col, TYPENAME AS tipo, " +
+                        "  CASE WHEN NULLS = 'Y' THEN 1 ELSE 0 END AS nulo, " +
+                        "  CASE WHEN \"DEFAULT\" IS NOT NULL THEN 1 ELSE 0 END AS tdef, " +
+                        "  CASE WHEN IDENTITY = 'Y' THEN 1 ELSE 0 END AS ident, " +
+                        "  CASE WHEN IDENTITY = 'Y' AND GENERATED = 'A' THEN 1 ELSE 0 END AS alw, " +
+                        "  CASE WHEN IDENTITY <> 'Y' AND GENERATED = 'A' THEN 1 ELSE 0 END AS excl " +
+                        "FROM SYSCAT.COLUMNS " +
+                        $"WHERE UPPER(TABNAME) = UPPER('{nombreEscapado}') AND TABSCHEMA NOT LIKE 'SYS%' " +
+                        "ORDER BY TABSCHEMA, TABNAME, COLNO";
+
+                default:
+                    return null;
+            }
+        }
+
+        private static ColumnaDestino NuevaColumnaDestino(TipoMotor motor, DataRow r)
+        {
+            string tipo = Convert.ToString(r["tipo"]).Trim().ToLowerInvariant();
+            return new ColumnaDestino
+            {
+                Nombre           = Convert.ToString(r["col"]),
+                Tipo             = tipo,
+                Categoria        = ClasificarTipo(motor, tipo),
+                Nulable          = EsVerdadero(r["nulo"]),
+                TieneDefault     = EsVerdadero(r["tdef"]),
+                EsIdentity       = EsVerdadero(r["ident"]),
+                EsIdentityAlways = EsVerdadero(r["alw"]),
+                Excluida         = EsVerdadero(r["excl"])
+            };
+        }
+
+        /// <summary>Todas las tablas de B que se llamen <paramref name="nombre"/> (sin distinguir mayúsculas), con sus columnas.</summary>
+        private static List<TablaCatalogo> LeerCatalogoTabla(DataBase db, TipoMotor motor, string nombre)
+        {
+            string n = nombre.Replace("'", "''");
+            var res = new List<TablaCatalogo>();
+
+            if (motor == TipoMotor.SQLite)
+            {
+                db.CommandText = $"SELECT name FROM sqlite_master WHERE type IN ('table', 'view') AND LOWER(name) = LOWER('{n}')";
+                var dtT = new DataTable();
+                db.DataAdapter.Fill(dtT);
+                foreach (DataRow rt in dtT.Rows)
+                {
+                    string real = Convert.ToString(rt[0]);
+                    var tc = new TablaCatalogo { Schema = "", Nombre = real };
+                    db.CommandText = $"PRAGMA table_xinfo('{real.Replace("'", "''")}')";
+                    var dtC = new DataTable();
+                    db.DataAdapter.Fill(dtC);
+                    foreach (DataRow rc in dtC.Rows)
+                    {
+                        string tipo = Convert.ToString(rc["type"]).Trim().ToLowerInvariant();
+                        string hidden = Convert.ToString(rc["hidden"]);
+                        bool pk = Convert.ToString(rc["pk"]) != "0" && !string.IsNullOrEmpty(Convert.ToString(rc["pk"]));
+                        var col = new ColumnaDestino
+                        {
+                            Nombre       = Convert.ToString(rc["name"]),
+                            Tipo         = tipo,
+                            Categoria    = ClasificarTipo(motor, tipo),
+                            Nulable      = !EsVerdadero(rc["notnull"]),
+                            // INTEGER PRIMARY KEY es alias del rowid: SQLite lo genera si no se informa
+                            TieneDefault = !(rc["dflt_value"] is DBNull) || (pk && tipo.StartsWith("int")),
+                            Excluida     = hidden == "2" || hidden == "3"
+                        };
+                        tc.Columnas.Add(col);
+                    }
+                    res.Add(tc);
+                }
+                return res;
+            }
+
+            db.CommandText = ConsultaCatalogo(motor, n);
+            var dt = new DataTable();
+            db.DataAdapter.Fill(dt);
+            foreach (DataRow r in dt.Rows)
+            {
+                string sch = Convert.ToString(r["sch"]).Trim();
+                string tbl = Convert.ToString(r["tbl"]).Trim();
+                TablaCatalogo tc = null;
+                foreach (var x in res)
+                    if (x.Schema == sch && x.Nombre == tbl) { tc = x; break; }
+                if (tc == null) { tc = new TablaCatalogo { Schema = sch, Nombre = tbl }; res.Add(tc); }
+                tc.Columnas.Add(NuevaColumnaDestino(motor, r));
+            }
+            return res;
+        }
+
+        /// <summary>Elige en qué esquema de B está la tabla. Devuelve null y el motivo si no se puede decidir.</summary>
+        private static TablaCatalogo ElegirTablaB(
+            List<TablaCatalogo> cands, string nombreA, string esquemaA, string esquemaForzado,
+            TipoMotor motorB, out string motivo)
+        {
+            motivo = null;
+            if (cands.Count == 0) { motivo = "no existe en B"; return null; }
+
+            // Si hay dos que difieren solo en mayúsculas, gana la que se llama igual que en A
+            cands = cands.OrderByDescending(c => c.Nombre == nombreA).ToList();
+            Func<TablaCatalogo, string, bool> mismoEsquema =
+                (c, e) => string.Equals(c.Schema ?? "", (e ?? "").Trim(), StringComparison.OrdinalIgnoreCase);
+            string donde = string.Join(", ", cands.Select(c => string.IsNullOrEmpty(c.Schema) ? "(sin esquema)" : c.Schema).Distinct());
+
+            if (!string.IsNullOrWhiteSpace(esquemaForzado))
+            {
+                var f = cands.FirstOrDefault(c => mismoEsquema(c, esquemaForzado));
+                if (f == null) motivo = $"no existe en el esquema '{esquemaForzado.Trim()}' de B (está en: {donde})";
+                return f;
+            }
+
+            if (cands.Count == 1) return cands[0];
+
+            var porA = string.IsNullOrEmpty(esquemaA) ? null : cands.FirstOrDefault(c => mismoEsquema(c, esquemaA));
+            if (porA != null) return porA;
+
+            string def = motorB == TipoMotor.MS_SQL ? "dbo" : motorB == TipoMotor.POSTGRES ? "public" : null;
+            var porDef = def == null ? null : cands.FirstOrDefault(c => mismoEsquema(c, def));
+            if (porDef != null) return porDef;
+
+            motivo = $"está en varios esquemas de B ({donde}) y no se puede elegir solo";
+            return null;
+        }
+
+        private static List<ColumnaOrigen> LeerColumnasOrigen(DataBase dbA, string nombreCompleto)
+        {
+            var res = new List<ColumnaOrigen>();
+            using (var cmd = new OdbcCommand("SELECT * FROM " + nombreCompleto + " WHERE 1 = 0", dbA.Connection))
+            {
+                cmd.CommandTimeout = TransferenciaStreaming.TimeoutSegundos();
+                using (var rd = cmd.ExecuteReader())
+                    for (int i = 0; i < rd.FieldCount; i++)
+                    {
+                        Type ty = null; string tn = "";
+                        try { ty = rd.GetFieldType(i); } catch { }
+                        try { tn = rd.GetDataTypeName(i) ?? ""; } catch { }
+                        res.Add(new ColumnaOrigen { Nombre = rd.GetName(i), Clr = ty, TipoNombre = tn });
+                    }
+            }
+            return res;
+        }
+
+        private static CategoriaTipo CategoriaDeOrigen(ColumnaOrigen a)
+        {
+            Type t = a.Clr;
+            if (t == null) return CategoriaTipo.Otro;
+            if (t == typeof(byte[])) return CategoriaTipo.Binario;
+            // Algunos drivers (SQLite) informan los BLOB como texto: el nombre del tipo lo delata
+            string tn = (a.TipoNombre ?? "").Trim().ToUpperInvariant();
+            if (tn == "BLOB" || tn.Contains("BINARY") || tn == "BYTEA" || tn == "IMAGE") return CategoriaTipo.Binario;
+            if (t == typeof(string)) return CategoriaTipo.Texto;
+            if (t == typeof(bool)) return CategoriaTipo.Bool;
+            if (t == typeof(decimal)) return CategoriaTipo.Decimal;
+            if (t == typeof(float) || t == typeof(double)) return CategoriaTipo.Real;
+            if (t == typeof(byte) || t == typeof(sbyte) || t == typeof(short) || t == typeof(ushort) ||
+                t == typeof(int) || t == typeof(uint) || t == typeof(long) || t == typeof(ulong)) return CategoriaTipo.Entero;
+            if (t == typeof(DateTime))
+                return string.Equals((a.TipoNombre ?? "").Trim(), "date", StringComparison.OrdinalIgnoreCase)
+                    ? CategoriaTipo.Fecha : CategoriaTipo.FechaHora;
+            if (t == typeof(DateTimeOffset)) return CategoriaTipo.FechaHoraTz;
+            if (t == typeof(TimeSpan)) return CategoriaTipo.Hora;
+            if (t == typeof(Guid)) return CategoriaTipo.Guid;
+            return CategoriaTipo.Otro;
+        }
+
+        private static string GrupoTipo(CategoriaTipo c)
+        {
+            switch (c)
+            {
+                case CategoriaTipo.Entero: case CategoriaTipo.Decimal: case CategoriaTipo.Real: case CategoriaTipo.Bool: return "numérico";
+                case CategoriaTipo.Fecha: case CategoriaTipo.FechaHora: case CategoriaTipo.FechaHoraTz: return "fecha";
+                case CategoriaTipo.Texto: case CategoriaTipo.TextoUnicode: return "texto";
+                default: return c.ToString();
+            }
+        }
+
+        /// <summary>Null si el valor de A suele poder escribirse en la columna de B; si no, una descripción del choque.</summary>
+        private static string TipoDudoso(CategoriaTipo a, CategoriaTipo b)
+        {
+            if (a == CategoriaTipo.Otro || b == CategoriaTipo.Otro) return null;
+            string ga = GrupoTipo(a), gb = GrupoTipo(b);
+            if (ga == gb) return null;
+            if (ga == "texto" && b != CategoriaTipo.Binario) return null;   // el motor convierte el texto
+            if (gb == "texto" && a != CategoriaTipo.Binario) return null;   // todo se puede escribir como texto
+            return $"un valor de tipo {ga} hacia una columna de tipo {gb}";
+        }
+
+        private static void ValidarColumnas(
+            List<ColumnaOrigen> colsA, TablaTransfer t, TablaMetadata meta, RegistroIncidencias inc)
+        {
+            string tabla = t.NombreCompleto;
+            string destino = t.Destino.NombreCompleto;
+            var nombresA = new HashSet<string>(colsA.Select(c => c.Nombre), StringComparer.OrdinalIgnoreCase);
+
+            foreach (var a in colsA)
+            {
+                var b = meta.Buscar(a.Nombre);
+                if (b == null)
+                {
+                    inc.Agregar("Estructura", tabla, SeveridadIncidencia.Error, "Columna de A sin equivalente en B",
+                        $"La columna {a.Nombre} existe en A pero no en {destino}.",
+                        "Si continuás, esa columna NO se copia y sus datos se pierden en B. Agregala en B o abortá.",
+                        a.Nombre);
+                    continue;
+                }
+                if (b.Excluida) continue;
+
+                string dudoso = TipoDudoso(CategoriaDeOrigen(a), b.Categoria);
+                if (dudoso != null)
+                    inc.Agregar("Estructura", tabla, SeveridadIncidencia.Aviso, "Tipos posiblemente incompatibles",
+                        $"{a.Nombre}: A es {a.TipoNombre}, B es {b.Tipo}: {dudoso}.",
+                        "Si B rechaza los valores, el INSERT falla con la fila afectada en el detalle.",
+                        a.Nombre);
+            }
+
+            foreach (var b in meta.Columnas)
+            {
+                if (b.Excluida || b.EsIdentity || b.Nulable || b.TieneDefault) continue;
+                if (nombresA.Contains(b.Nombre)) continue;
+                inc.Agregar("Estructura", tabla, SeveridadIncidencia.Error, "Columna obligatoria de B sin dato en A",
+                    $"{b.Nombre} ({b.Tipo}) de {destino} no admite NULL ni tiene valor por defecto, y A no tiene esa columna.",
+                    "El INSERT va a fallar en la primera fila. Agregá la columna en A, o dale un valor por defecto en B.",
+                    b.Nombre);
+            }
+        }
+
+        /// <summary>
+        /// Resuelve para cada tabla de A cuál es su equivalente en B (nombre exacto, columnas, tipos) y la valida.
+        /// Completa <see cref="TablaTransfer.Destino"/>. Devuelve las tablas que no existen en B (o no se pudieron
+        /// leer): quedan registradas como incidencia y no se pueden transferir.
+        /// </summary>
+        public static List<TablaTransfer> PrepararDestinos(
+            string connStrA, string connStrB, TipoMotor motorB, List<TablaTransfer> tablas,
+            string esquemaB, RegistroIncidencias inc, Action<string> onProgress)
+        {
+            var sinDestino = new List<TablaTransfer>();
+
+            DataBase dbB;
+            try { dbB = new DataBase(connStrB, false); }
+            catch (Exception ex)
+            {
+                inc.Agregar("Estructura", null, SeveridadIncidencia.Error, "No se pudo leer la estructura de B",
+                    "No se pudo conectar a B: " + ex.Message, "Revisá la conexión de destino.");
+                sinDestino.AddRange(tablas);
+                return sinDestino;
+            }
+
+            DataBase dbA = null;
+            bool origenLegible = true;
+            try
+            {
+                try { dbA = new DataBase(connStrA); }
+                catch (Exception exA)
+                {
+                    origenLegible = false;
+                    inc.Agregar("Estructura", null, SeveridadIncidencia.Aviso, "No se pudieron comparar las columnas de A",
+                        "No se pudo conectar a A para leer sus columnas: " + exA.Message,
+                        "Se resolvieron las tablas de B pero no se validó que las columnas coincidan.");
+                }
+
+                int n = 0;
+                foreach (var t in tablas)
+                {
+                    n++;
+                    onProgress?.Invoke($"[B] ({n}/{tablas.Count}) Resolviendo {t.NombreCompleto} en B...");
+                    try
+                    {
+                        var cands = LeerCatalogoTabla(dbB, motorB, t.Nombre);
+                        string motivo;
+                        var tc = ElegirTablaB(cands, t.Nombre, t.Schema, esquemaB, motorB, out motivo);
+                        if (tc == null)
+                        {
+                            inc.Agregar("Estructura", t.NombreCompleto, SeveridadIncidencia.Error, "Tabla sin equivalente en B",
+                                $"{t.NombreCompleto} {motivo}.",
+                                "Creá la tabla en B (esta versión no la crea), indicá el esquema de destino, o seguí sin ella: se omite y B conserva su contenido.");
+                            sinDestino.Add(t);
+                            continue;
+                        }
+
+                        var meta = new TablaMetadata();
+                        meta.Columnas.AddRange(tc.Columnas);
+                        meta.DerivarConjuntos();
+
+                        t.Destino = new TablaTransfer
+                        {
+                            Schema        = motorB == TipoMotor.SQLite ? "" : tc.Schema,
+                            Nombre        = tc.Nombre,
+                            ComillasMotor = motorB,
+                            Meta          = meta
+                        };
+                        onProgress?.Invoke($"  A {t.NombreCompleto}  ->  B {t.Destino.NombreCompleto} ({tc.Columnas.Count} columna(s))");
+
+                        if (origenLegible)
+                        {
+                            try { ValidarColumnas(LeerColumnasOrigen(dbA, t.NombreCompleto), t, meta, inc); }
+                            catch (Exception exCols)
+                            {
+                                inc.Agregar("Estructura", t.NombreCompleto, SeveridadIncidencia.Aviso,
+                                    "No se pudieron comparar las columnas de A", exCols.Message,
+                                    "Se leerá de A igual; si la tabla no se puede leer, la prevalidación del origen lo informa.");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        inc.Agregar("Estructura", t.NombreCompleto, SeveridadIncidencia.Error,
+                            "No se pudo leer la estructura de la tabla en B", ex.Message,
+                            "Revisá permisos de lectura del catálogo en B. Si seguís, la tabla se omite.");
+                        sinDestino.Add(t);
+                    }
+                }
+            }
+            finally
+            {
+                try { dbB.CloseConnection(); } catch { }
+                try { dbA?.CloseConnection(); } catch { }
+            }
+            return sinDestino;
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -426,9 +858,11 @@ namespace QueryAnalyzer
         /// </summary>
         private static long EscribirFilasScript(
             TextWriter w, LectorTabla lector, string nombreTabla, TipoMotor motor, bool overriding,
-            OpcionesPasado op, RegistroIncidencias inc, string fase, Action<long> onFilas)
+            OpcionesPasado op, RegistroIncidencias inc, string fase, Action<long> onFilas,
+            MapaInsert mapa = null)
         {
-            string cols = string.Join(", ", lector.Columnas);
+            string cols = mapa != null ? mapa.ColsSql : string.Join(", ", lector.Columnas);
+            string[] nombresCols = mapa != null ? mapa.Nombres : lector.Columnas;
             var vals = new object[lector.Columnas.Length];
             long filas = 0;
             var grandes = new Dictionary<string, long[]>(StringComparer.OrdinalIgnoreCase); // col → [cantidad, máximo]
@@ -447,16 +881,22 @@ namespace QueryAnalyzer
                 }
                 if (!hay) break;
 
-                ScriptHelper.EscribirInsert(w, nombreTabla, cols, vals, overriding, motor);
+                object[] fila = vals;
+                if (mapa != null)
+                {
+                    fila = mapa.Filtrar(vals);
+                    ScriptHelper.EscribirInsert(w, nombreTabla, cols, fila, overriding, motor, mapa.Destino, mapa.TiposA);
+                }
+                else ScriptHelper.EscribirInsert(w, nombreTabla, cols, vals, overriding, motor);
                 filas++;
 
                 if (motor == TipoMotor.DB2)
-                    for (int k = 0; k < vals.Length; k++)
+                    for (int k = 0; k < fila.Length; k++)
                     {
-                        var b = vals[k] as byte[];
+                        var b = fila[k] as byte[];
                         if (b == null || b.Length <= TransferenciaStreaming.LimiteLiteralDb2) continue;
                         long[] acc;
-                        if (!grandes.TryGetValue(lector.Columnas[k], out acc)) grandes[lector.Columnas[k]] = acc = new long[2];
+                        if (!grandes.TryGetValue(nombresCols[k], out acc)) grandes[nombresCols[k]] = acc = new long[2];
                         acc[0]++;
                         if (b.Length > acc[1]) acc[1] = b.Length;
                     }
@@ -649,9 +1089,14 @@ namespace QueryAnalyzer
         {
             var resultado = new ResultadoPasado { Incidencias = incidencias };
 
+            // Con motores distintos cada tabla de A tiene su equivalente en B (Destino); con el mismo motor B == A.
+            // Todo lo que se ejecuta en B (DELETE, INSERT, FK, metadata) usa estas listas con los nombres de B.
+            var ordenInsertB = ordenInsert.Select(t => t.B).ToList();
+            var ordenDeleteB = ordenDelete.Select(t => t.B).ToList();
+
             // 1. Metadata de B (identity / columnas no insertables)
             onProgress?.Invoke("Obteniendo metadata de columnas de B...");
-            var metadata = ObtenerMetadataTablas(connStrB, motorB, ordenInsert, incidencias);
+            var metadata = ObtenerMetadataTablas(connStrB, motorB, ordenInsertB, incidencias);
 
             // 2. Modo "solo script": se escribe a disco, tabla por tabla
             if (opciones.GenerarSoloScript)
@@ -702,7 +1147,7 @@ namespace QueryAnalyzer
                 // FASE 1: Deshabilitar FKs (fuera de tx)
                 faseActual = "FK";
                 onProgress?.Invoke("Deshabilitando FK constraints en B...");
-                EjecutarFaseDeshabilitarFKs(dbB.Connection, motorB, ordenDelete, onProgress, avance.Sql, fkExternas);
+                EjecutarFaseDeshabilitarFKs(dbB.Connection, motorB, ordenDeleteB, onProgress, avance.Sql, fkExternas);
 
                 // FASE 2: Transacción única (si está activada)
                 faseActual = "Transferencia";
@@ -723,9 +1168,9 @@ namespace QueryAnalyzer
                 foreach (var tabla in ordenDelete)
                 {
                     tablaActual = tabla.NombreCompleto;
-                    string sql = $"DELETE FROM {tabla.NombreCompleto}";
+                    string sql = $"DELETE FROM {tabla.B.NombreCompleto}";
                     avance.Sql(sql);
-                    onProgress?.Invoke($"[DELETE] {tabla.NombreCompleto}");
+                    onProgress?.Invoke($"[DELETE] {tabla.B.NombreCompleto}");
                     modificoDatos = true;
                     EjecutarDml(dbB.Connection, tx, sql);
                     avance.Sumar(1);
@@ -746,7 +1191,7 @@ namespace QueryAnalyzer
                         continue;
                     }
 
-                    metadata.TryGetValue(tabla.NombreCompleto, out TablaMetadata meta);
+                    metadata.TryGetValue(tabla.B.NombreCompleto, out TablaMetadata meta);
                     onProgress?.Invoke(conteo >= 0
                         ? $"[INSERT] {tabla.NombreCompleto} ({conteo} filas)..."
                         : $"[INSERT] {tabla.NombreCompleto}...");
@@ -803,7 +1248,7 @@ namespace QueryAnalyzer
                     try
                     {
                         onProgress?.Invoke("Rehabilitando FK constraints en B...");
-                        EjecutarFaseRehabilitarFKs(dbB.Connection, motorB, ordenInsert, onProgress, null, fkExternas, incidencias);
+                        EjecutarFaseRehabilitarFKs(dbB.Connection, motorB, ordenInsertB, onProgress, null, fkExternas, incidencias);
                     }
                     catch (Exception exFk)
                     {
@@ -833,19 +1278,31 @@ namespace QueryAnalyzer
             TablaMetadata meta, TipoMotor motorB, OpcionesPasado op, RegistroIncidencias inc,
             TransferenciaStreaming.Avance avance, long conteoEsperado, Action<string> onProgress)
         {
+            string nombreB = tabla.B.NombreCompleto;
+
+            // Mismo motor: lo que dice la metadata de B. Con motores distintos se recalcula al conocer las columnas que se copian.
             bool overriding = (motorB == TipoMotor.POSTGRES || motorB == TipoMotor.DB2)
                               && meta?.TieneIdentityAlways == true;
             bool identityInsert = motorB == TipoMotor.MS_SQL && meta?.TieneIdentity == true;
-
-            if (identityInsert)
-                EjecutarDml(connB, tx, $"SET IDENTITY_INSERT {tabla.NombreCompleto} ON");
+            if (tabla.Destino != null) { overriding = false; identityInsert = false; }
 
             long insertadas = 0, leidas = 0, sinFilasAfectadas = 0, omitidasLob = 0;
             var reloj = Stopwatch.StartNew();
             using (var lector = LectorTabla.Abrir(connStrA, tabla, meta?.ColumnasExcluidas, op.UmbralLobBytes))
             {
-                string cols = string.Join(", ", lector.Columnas);
-                onProgress?.Invoke($"[INSERT]   {tabla.NombreCompleto}: {lector.Columnas.Length} columna(s) a copiar: {TransferenciaStreaming.Truncar(cols, 400)}");
+                // Motores distintos: solo se copian las columnas que existen en B, con su nombre exacto y su tipo
+                MapaInsert mapa = (tabla.Destino != null && meta != null && meta.Columnas.Count > 0)
+                    ? MapaInsert.Crear(lector, meta, motorB) : null;
+                if (mapa != null)
+                {
+                    overriding     = (motorB == TipoMotor.POSTGRES || motorB == TipoMotor.DB2) && mapa.CopiaIdentityAlways;
+                    identityInsert = motorB == TipoMotor.MS_SQL && mapa.CopiaIdentity;
+                }
+                if (identityInsert)
+                    EjecutarDml(connB, tx, $"SET IDENTITY_INSERT {nombreB} ON");
+
+                string cols = mapa != null ? mapa.ColsSql : string.Join(", ", lector.Columnas);
+                onProgress?.Invoke($"[INSERT]   {tabla.NombreCompleto}: {(mapa != null ? mapa.Indices.Length : lector.Columnas.Length)} columna(s) a copiar: {TransferenciaStreaming.Truncar(cols, 400)}");
                 var vals = new object[lector.Columnas.Length];
                 var sb = new StringBuilder(1024);
 
@@ -869,11 +1326,16 @@ namespace QueryAnalyzer
                     if (!hay) break;
 
                     var pars = new List<OdbcParameter>();
-                    string sql = ConstruirInsert(sb, tabla.NombreCompleto, cols, vals, overriding, motorB, pars);
-                    avance.Sql(sql);
+                    string sql = null;
 
                     try
                     {
+                        // Armar el literal también puede fallar (p. ej. un NaN hacia un motor sin ese valor): se informa con la fila
+                        sql = mapa != null
+                            ? ConstruirInsert(sb, nombreB, cols, mapa.Filtrar(vals), overriding, motorB, pars, mapa.Destino, mapa.TiposA)
+                            : ConstruirInsert(sb, nombreB, cols, vals, overriding, motorB, pars);
+                        avance.Sql(sql);
+
                         // 0 = el motor no insertó nada; -1 = el driver no informa (no cuenta como falla)
                         if (EjecutarDml(connB, tx, sql, null, pars) == 0) sinFilasAfectadas++;
                     }
@@ -894,7 +1356,7 @@ namespace QueryAnalyzer
             }
 
             if (identityInsert)
-                EjecutarDml(connB, tx, $"SET IDENTITY_INSERT {tabla.NombreCompleto} OFF");
+                EjecutarDml(connB, tx, $"SET IDENTITY_INSERT {nombreB} OFF");
 
             onProgress?.Invoke($"[INSERT]   {tabla.NombreCompleto}: leídas de A={leidas} (esperadas={(conteoEsperado >= 0 ? conteoEsperado.ToString() : "?")}), " +
                                $"insertadas en B={insertadas}, omitidas por binario grande={omitidasLob}, " +
@@ -919,7 +1381,8 @@ namespace QueryAnalyzer
 
         private static string ConstruirInsert(
             StringBuilder sb, string nombreTabla, string cols, object[] vals,
-            bool overriding, TipoMotor motor, List<OdbcParameter> pars)
+            bool overriding, TipoMotor motor, List<OdbcParameter> pars,
+            ColumnaDestino[] destino = null, string[] tiposA = null)
         {
             sb.Clear();
             sb.Append("INSERT INTO ").Append(nombreTabla).Append(" (").Append(cols).Append(')');
@@ -941,6 +1404,7 @@ namespace QueryAnalyzer
                         Size = b.Length
                     });
                 }
+                else if (destino != null) sb.Append(ScriptHelper.EscaparValorSql(vals[i], motor, destino[i], tiposA != null ? tiposA[i] : null));
                 else sb.Append(ScriptHelper.EscaparValorSql(vals[i], motor));
             }
             sb.Append(')');
@@ -989,14 +1453,15 @@ namespace QueryAnalyzer
             pre.AppendLine($"-- Origen: {TransferenciaStreaming.EnmascararConexion(connStrA)}");
             pre.AppendLine($"-- Destino: {TransferenciaStreaming.EnmascararConexion(connStrB)}");
             pre.AppendLine();
-            AgregarScriptFaseDeshabilitarFKs(pre, motorB, ordenDelete);
+            // El script se escribe en el dialecto de B: nombres de B, FK de B, transacción de B
+            AgregarScriptFaseDeshabilitarFKs(pre, motorB, ordenDelete.Select(t => t.B).ToList());
             pre.AppendLine();
             pre.AppendLine("-- ═══ FASE 2: DML ═══");
-            pre.AppendLine("BEGIN TRAN");
+            pre.AppendLine(SqlIniciarTransaccion(motorB));
             pre.AppendLine();
             pre.AppendLine("  -- DELETE en orden reverso FK");
             foreach (var tabla in ordenDelete)
-                pre.AppendLine($"  DELETE FROM {tabla.NombreCompleto};");
+                pre.AppendLine($"  DELETE FROM {tabla.B.NombreCompleto};");
             pre.AppendLine();
             pre.AppendLine("  -- INSERT en orden FK");
             resultado.PrefijoScript = pre.ToString();
@@ -1004,7 +1469,7 @@ namespace QueryAnalyzer
             var suf = new StringBuilder();
             suf.AppendLine("COMMIT");
             suf.AppendLine();
-            AgregarScriptFaseRehabilitarFKs(suf, motorB, ordenInsert);
+            AgregarScriptFaseRehabilitarFKs(suf, motorB, ordenInsert.Select(t => t.B).ToList());
             resultado.SufijoScript = suf.ToString();
 
             int n = 0;
@@ -1014,10 +1479,12 @@ namespace QueryAnalyzer
                 onProgress?.Invoke($"[Script] ({n}/{ordenInsert.Count}) {tabla.NombreCompleto}...");
                 onStep?.Invoke(n, ordenInsert.Count);
 
-                metadata.TryGetValue(tabla.NombreCompleto, out TablaMetadata meta);
+                string nombreB = tabla.B.NombreCompleto;
+                metadata.TryGetValue(nombreB, out TablaMetadata meta);
                 bool overriding = (motorB == TipoMotor.POSTGRES || motorB == TipoMotor.DB2)
                                   && meta?.TieneIdentityAlways == true;
                 bool identity = motorB == TipoMotor.MS_SQL && meta?.TieneIdentity == true;
+                if (tabla.Destino != null) { overriding = false; identity = false; }   // se recalcula con las columnas que se copian
 
                 string archivo = Path.Combine(carpeta, n.ToString("000") + "_" + NombreArchivoTabla(tabla.NombreCompleto) + ".sql");
                 long filas = 0;
@@ -1026,8 +1493,17 @@ namespace QueryAnalyzer
                 {
                     using (var w = NuevoWriter(archivo, false))
                     using (var lector = LectorTabla.Abrir(connStrA, tabla, meta?.ColumnasExcluidas, op.UmbralLobBytes))
-                        filas = EscribirFilasScript(w, lector, tabla.NombreCompleto, motorB, overriding, op, inc, "Script",
-                            c => onProgress?.Invoke($"[Script]   {tabla.NombreCompleto}: {c} filas..."));
+                    {
+                        MapaInsert mapa = (tabla.Destino != null && meta != null && meta.Columnas.Count > 0)
+                            ? MapaInsert.Crear(lector, meta, motorB) : null;
+                        if (mapa != null)
+                        {
+                            overriding = (motorB == TipoMotor.POSTGRES || motorB == TipoMotor.DB2) && mapa.CopiaIdentityAlways;
+                            identity   = motorB == TipoMotor.MS_SQL && mapa.CopiaIdentity;
+                        }
+                        filas = EscribirFilasScript(w, lector, nombreB, motorB, overriding, op, inc, "Script",
+                            c => onProgress?.Invoke($"[Script]   {tabla.NombreCompleto}: {c} filas..."), mapa);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -1048,9 +1524,21 @@ namespace QueryAnalyzer
                     Tabla   = tabla.NombreCompleto,
                     Archivo = archivo,
                     Filas   = filas,
-                    Antes   = identity ? $"  SET IDENTITY_INSERT {tabla.NombreCompleto} ON;" : null,
-                    Despues = identity ? $"  SET IDENTITY_INSERT {tabla.NombreCompleto} OFF;" : null
+                    Antes   = identity ? $"  SET IDENTITY_INSERT {nombreB} ON;" : null,
+                    Despues = identity ? $"  SET IDENTITY_INSERT {nombreB} OFF;" : null
                 });
+            }
+        }
+
+        /// <summary>Sentencia que abre la transacción en el script de transferencia, según el motor de B.</summary>
+        private static string SqlIniciarTransaccion(TipoMotor motor)
+        {
+            switch (motor)
+            {
+                case TipoMotor.POSTGRES: return "BEGIN";
+                case TipoMotor.SQLite:   return "BEGIN TRANSACTION";
+                case TipoMotor.DB2:      return "-- DB2: no hay BEGIN; la transacción empieza con la primera sentencia (ejecutar con autocommit desactivado)";
+                default:                 return "BEGIN TRAN";
             }
         }
 
@@ -1087,7 +1575,7 @@ namespace QueryAnalyzer
                 try
                 {
                     long cntA = ContarFilas(connStrA, tabla.NombreCompleto);
-                    long cntB = ContarFilas(connStrB, tabla.NombreCompleto);
+                    long cntB = ContarFilas(connStrB, tabla.B.NombreCompleto);
                     if (cntA == cntB)
                         onProgress?.Invoke($"  ✓ {tabla.NombreCompleto}: {cntA} filas (A = B)");
                     else
@@ -1445,7 +1933,7 @@ namespace QueryAnalyzer
                 var conn = new Conexion { Motor = motor };
                 var svc  = new EsquematizadorService(conn);
                 var db   = new DataBase(connStr);
-                var rels = svc.ObtenerRelacionesFK(db, tablas.Select(t => t.Nombre).ToList());
+                var rels = svc.ObtenerRelacionesFK(db, tablas.Select(t => t.B.Nombre).ToList());
                 db.CloseConnection();
                 foreach (var r in rels)
                     resultado.Add(new FkEdge

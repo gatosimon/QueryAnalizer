@@ -29,5 +29,5 @@ using System.Runtime.InteropServices;
 //      Número de compilación
 //      Revisión
 //
-[assembly: AssemblyVersion("26.11.4.0")]
-[assembly: AssemblyFileVersion("26.11.4.0")]
+[assembly: AssemblyVersion("26.11.12.0")]
+[assembly: AssemblyFileVersion("26.11.12.0")]

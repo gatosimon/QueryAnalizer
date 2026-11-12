@@ -53,6 +53,9 @@ namespace QueryAnalyzer
         public string[] Columnas { get; }
         public string   Tabla    { get; }
 
+        /// <summary>Nombre de tipo de cada columna según el driver de A (p. ej. CHAR, VARCHAR, BLOB).</summary>
+        public string[] TiposA   { get; }
+
         /// <summary>Filas leídas del cursor (incluye las omitidas por LOB sobre el umbral).</summary>
         public long NumFila { get; private set; }
 
@@ -64,18 +67,23 @@ namespace QueryAnalyzer
             var idx = new List<int>();
             var nom = new List<string>();
             var bin = new List<bool>();
+            var tip = new List<string>();
             for (int i = 0; i < rd.FieldCount; i++)
             {
                 string n = rd.GetName(i);
                 if (excluidas != null && excluidas.Contains(n)) continue;
                 idx.Add(i);
                 nom.Add(n);
+                string tn = null;
+                try { tn = rd.GetDataTypeName(i); } catch { }
+                tip.Add(tn ?? "");
                 // Algunos drivers (p. ej. SQLite) informan los BLOB como texto: el nombre del tipo lo delata
                 bin.Add(rd.GetFieldType(i) == typeof(byte[])
                         || string.Equals(rd.GetDataTypeName(i), "BLOB", StringComparison.OrdinalIgnoreCase));
             }
             _indices = idx.ToArray();
             Columnas = nom.ToArray();
+            TiposA = tip.ToArray();
             _esBinaria = bin.ToArray();
         }
 

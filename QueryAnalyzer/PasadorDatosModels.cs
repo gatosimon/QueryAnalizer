@@ -11,10 +11,59 @@ namespace QueryAnalyzer
         public string Schema { get; set; }
         public string Nombre { get; set; }
 
-        public string NombreCompleto =>
-            string.IsNullOrEmpty(Schema) ? Nombre : $"{Schema}.{Nombre}";
+        /// <summary>
+        /// Si no es null, los identificadores se escriben entre comillas del motor (corchetes en SQL Server,
+        /// comillas dobles en el resto). Solo lo usan los nombres de destino resueltos desde el catálogo de B
+        /// (transferencia entre motores), donde se conoce el nombre exacto.
+        /// </summary>
+        public TipoMotor? ComillasMotor { get; set; }
+
+        /// <summary>
+        /// Tabla equivalente en B cuando los motores de A y B difieren (nombre/esquema reales de B).
+        /// Null = B usa el mismo nombre que A (transferencia entre bases del mismo motor).
+        /// </summary>
+        public TablaTransfer Destino { get; set; }
+
+        /// <summary>Columnas y metadata de la tabla en B, ya leídas del catálogo (solo en el objeto de destino).</summary>
+        public TablaMetadata Meta { get; set; }
+
+        /// <summary>La tabla tal como se llama en B.</summary>
+        public TablaTransfer B => Destino ?? this;
+
+        public string NombreCompleto
+        {
+            get
+            {
+                if (ComillasMotor.HasValue)
+                {
+                    string n = ScriptHelper.QuoteId(Nombre, ComillasMotor.Value);
+                    return string.IsNullOrEmpty(Schema) ? n : ScriptHelper.QuoteId(Schema, ComillasMotor.Value) + "." + n;
+                }
+                return string.IsNullOrEmpty(Schema) ? Nombre : $"{Schema}.{Nombre}";
+            }
+        }
 
         public override string ToString() => NombreCompleto;
+    }
+
+    /// <summary>Familia de un tipo de dato, independiente del motor (para convertir valores entre motores).</summary>
+    public enum CategoriaTipo
+    {
+        Otro, Texto, TextoUnicode, Entero, Decimal, Real, Bool,
+        Fecha, FechaHora, FechaHoraTz, Hora, Binario, Guid, Xml
+    }
+
+    /// <summary>Una columna de la tabla destino (B), leída del catálogo del motor de B.</summary>
+    public class ColumnaDestino
+    {
+        public string        Nombre           { get; set; }
+        public string        Tipo             { get; set; }   // en minúsculas, tal como lo informa el catálogo
+        public CategoriaTipo Categoria        { get; set; }
+        public bool          Nulable          { get; set; }
+        public bool          TieneDefault     { get; set; }
+        public bool          EsIdentity       { get; set; }
+        public bool          EsIdentityAlways { get; set; }
+        public bool          Excluida         { get; set; }   // calculada / rowversion / generada: no se inserta
     }
 
     // Arista del grafo de FK: Origen tiene FK → Destino (Destino debe insertarse primero)
@@ -103,6 +152,82 @@ namespace QueryAnalyzer
 
         public bool TieneIdentity       => ColumnasIdentity.Count > 0;
         public bool TieneIdentityAlways => ColumnasIdentityAlways.Count > 0;
+
+        /// <summary>Columnas de la tabla en B con su tipo (solo se completa en transferencias entre motores distintos).</summary>
+        public List<ColumnaDestino> Columnas { get; } = new List<ColumnaDestino>();
+
+        private Dictionary<string, ColumnaDestino> _porNombre;
+
+        /// <summary>Busca una columna de B por nombre sin distinguir mayúsculas. Null si no existe.</summary>
+        public ColumnaDestino Buscar(string nombre)
+        {
+            if (_porNombre == null || _porNombre.Count != Columnas.Count)
+            {
+                _porNombre = new Dictionary<string, ColumnaDestino>(StringComparer.OrdinalIgnoreCase);
+                foreach (var c in Columnas) _porNombre[c.Nombre] = c;
+            }
+            ColumnaDestino r;
+            return nombre != null && _porNombre.TryGetValue(nombre, out r) ? r : null;
+        }
+
+        /// <summary>Completa los conjuntos identity / excluidas a partir de <see cref="Columnas"/>.</summary>
+        public void DerivarConjuntos()
+        {
+            foreach (var c in Columnas)
+            {
+                if (c.EsIdentity) ColumnasIdentity.Add(c.Nombre);
+                if (c.EsIdentityAlways) ColumnasIdentityAlways.Add(c.Nombre);
+                if (c.Excluida) ColumnasExcluidas.Add(c.Nombre);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Cómo se copian las columnas de una tabla de A a B cuando los motores difieren: qué columnas de A se
+    /// escriben, con qué nombre exacto (entre comillas) y con qué tipo de destino.
+    /// </summary>
+    internal sealed class MapaInsert
+    {
+        public int[]             Indices;      // posición de cada columna copiada en la fila leída de A
+        public string[]          Nombres;      // nombre en A
+        public string[]          TiposA;       // nombre de tipo informado por el driver de A
+        public ColumnaDestino[]  Destino;
+        public string            ColsSql;      // lista de columnas de B, entre comillas
+        public object[]          Buf;          // valores de la fila ya filtrados, alineados con Destino
+        public bool              CopiaIdentity;
+        public bool              CopiaIdentityAlways;
+
+        public static MapaInsert Crear(LectorTabla lector, TablaMetadata meta, TipoMotor motorB)
+        {
+            var idx = new List<int>(); var nom = new List<string>(); var tip = new List<string>();
+            var dst = new List<ColumnaDestino>();
+            for (int k = 0; k < lector.Columnas.Length; k++)
+            {
+                var cd = meta.Buscar(lector.Columnas[k]);
+                if (cd == null || cd.Excluida) continue;   // sin equivalente en B: se omite (ya quedó como incidencia)
+                idx.Add(k); nom.Add(lector.Columnas[k]); tip.Add(lector.TiposA[k]); dst.Add(cd);
+            }
+            if (idx.Count == 0)
+                throw new InvalidOperationException(
+                    "Ninguna columna de A tiene equivalente en B (los nombres no coinciden). Revisá que sean las mismas tablas.");
+
+            var m = new MapaInsert
+            {
+                Indices = idx.ToArray(), Nombres = nom.ToArray(), TiposA = tip.ToArray(), Destino = dst.ToArray(),
+                ColsSql = string.Join(", ", dst.Select(c => ScriptHelper.QuoteId(c.Nombre, motorB))),
+                Buf = new object[idx.Count]
+            };
+            m.CopiaIdentity       = dst.Any(c => c.EsIdentity);
+            m.CopiaIdentityAlways = dst.Any(c => c.EsIdentityAlways);
+            return m;
+        }
+
+        /// <summary>Copia a <see cref="Buf"/> solo los valores de las columnas que se escriben en B.</summary>
+        public object[] Filtrar(object[] fila)
+        {
+            for (int j = 0; j < Indices.Length; j++) Buf[j] = fila[Indices[j]];
+            return Buf;
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────

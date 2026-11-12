@@ -34,7 +34,7 @@ namespace QueryAnalyzer
     public partial class PasadorDatosWindow : Window
     {
         private readonly Dictionary<string, Conexion> _conexiones;
-        private bool _sincronizandoMotor;
+        private int _indiceMotorAPrevio;
         private ResultadoPasado _ultimoResultado;
         private string _logFilePath;
 
@@ -223,15 +223,36 @@ namespace QueryAnalyzer
         private void cmbMotorA_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             FiltrarConexiones(cmbMotorA, cmbConexionA);
-            if (!_sincronizandoMotor)
-            { _sincronizandoMotor = true; cmbMotorB.SelectedIndex = cmbMotorA.SelectedIndex; _sincronizandoMotor = false; }
+            // Comodidad para el caso común (mismo motor): si B seguía al motor que tenía A, lo acompaña.
+            // Si el usuario eligió para B otro motor (transferencia entre motores), se respeta.
+            if (cmbMotorB.SelectedIndex == _indiceMotorAPrevio)
+                cmbMotorB.SelectedIndex = cmbMotorA.SelectedIndex;
+            _indiceMotorAPrevio = cmbMotorA.SelectedIndex;
+            ActualizarAvisoMotores();
         }
 
         private void cmbMotorB_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             FiltrarConexiones(cmbMotorB, cmbConexionB);
-            if (!_sincronizandoMotor)
-            { _sincronizandoMotor = true; cmbMotorA.SelectedIndex = cmbMotorB.SelectedIndex; _sincronizandoMotor = false; }
+            ActualizarAvisoMotores();
+        }
+
+        private void cmbConexion_SelectionChanged(object sender, SelectionChangedEventArgs e)
+            => ActualizarAvisoMotores();
+
+        /// <summary>Muestra el aviso (y el campo de esquema de B) cuando origen y destino son de motores distintos.</summary>
+        private void ActualizarAvisoMotores()
+        {
+            if (txtAvisoMotores == null || pnlEsquemaB == null) return;
+            var conA = ObtenerConexion(cmbConexionA);
+            var conB = ObtenerConexion(cmbConexionB);
+            bool distintos = conA != null && conB != null && conA.Motor != conB.Motor;
+            txtAvisoMotores.Visibility = distintos ? Visibility.Visible : Visibility.Collapsed;
+            pnlEsquemaB.Visibility     = distintos ? Visibility.Visible : Visibility.Collapsed;
+            if (distintos)
+                txtAvisoMotores.Text =
+                    $"Motores distintos: {conA.Motor} → {conB.Motor}. Las tablas tienen que existir en B (no se crean). " +
+                    "Antes de vaciar nada se compara la estructura y se convierten los valores al tipo de cada columna de B.";
         }
 
         private void chkSoloScript_Changed(object sender, RoutedEventArgs e)
@@ -372,11 +393,18 @@ namespace QueryAnalyzer
             if (marcadas.Count == 0)
             { MessageBox.Show("No hay tablas marcadas.", Title, MessageBoxButton.OK, MessageBoxImage.Warning); return; }
 
+            bool cruzado = conB != null && conA.Motor != conB.Motor;
+
             // Confirmar ejecución
             if (!soloScript)
             {
+                string avisoMotores = cruzado
+                    ? $"\n\nATENCIÓN: A es {conA.Motor} y B es {conB.Motor} (motores distintos). Las tablas tienen que existir en B; " +
+                      "antes de vaciar nada se compara la estructura y se te muestra lo que no coincida. Los valores se convierten " +
+                      "al tipo de cada columna de B, pero conviene probar primero con pocas tablas."
+                    : "";
                 var conf = MessageBox.Show(
-                    $"Se vaciarán y reemplazarán {marcadas.Count} tabla(s) en la base B.\n¿Confirmás la transferencia?",
+                    $"Se vaciarán y reemplazarán {marcadas.Count} tabla(s) en la base B.{avisoMotores}\n¿Confirmás la transferencia?",
                     Title, MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (conf != MessageBoxResult.Yes) return;
             }
@@ -441,6 +469,7 @@ namespace QueryAnalyzer
             string connStrB = conB != null ? ConexionesManager.GetConnectionString(conB) : null;
             TipoMotor motorA = conA.Motor;
             TipoMotor motorB = conB?.Motor ?? conA.Motor;
+            string esquemaB = txtEsquemaB.Text?.Trim();
 
             long umbralLob = Math.Max(1, ConfigManager.ObtenerConfiguracion().UmbralLobMB) * 1024L * 1024L;
             if (soloScript)
@@ -476,6 +505,9 @@ namespace QueryAnalyzer
             Log($"Tablas marcadas ({marcadas.Count}): {TransferenciaStreaming.Truncar(string.Join(", ", marcadas.Select(t => t.NombreCompleto)), 1500)}");
             if (string.Equals(connStrA, connStrB, StringComparison.OrdinalIgnoreCase))
                 Log("AVISO: A y B usan exactamente la misma cadena de conexión (origen = destino).");
+            if (cruzado)
+                Log($"TRANSFERENCIA ENTRE MOTORES DISTINTOS: {motorA} → {motorB}" +
+                    (string.IsNullOrEmpty(esquemaB) ? "" : $" · esquema de B forzado a '{esquemaB}'") + ".");
 
             var progressLog  = new Progress<string>(msg => Log(msg));
             var progressSql  = new Progress<string>(sql => ActualizarSentenciaActual(sql));
@@ -495,12 +527,46 @@ namespace QueryAnalyzer
                         RutaBackup = backupRutaArchivo, CarpetaBackup = backupRutaCarpeta
                     };
 
+                    // Motores distintos: se resuelve cada tabla en B (nombre exacto, columnas, tipos) y se compara con A
+                    // ANTES de tocar nada. Lo que no coincide se informa y el usuario decide.
+                    var aTransferir = marcadas.ToList();
+                    if (cruzado)
+                    {
+                        ReportLog($"Motores distintos ({motorA} → {motorB}): leyendo la estructura de las tablas en B...");
+                        int marcaEst = incidencias.Count;
+                        var sinDestino = PasadorDatosService.PrepararDestinos(
+                            connStrA, connStrB, motorB, aTransferir, esquemaB, incidencias, ReportLog);
+
+                        var estructura = incidencias.Desde(marcaEst).Where(i => i.Severidad >= SeveridadIncidencia.Aviso).ToList();
+                        int graves = estructura.Count(i => i.Severidad >= SeveridadIncidencia.Error);
+                        if (graves > 0)
+                        {
+                            bool seguir = Decidir(estructura,
+                                "La estructura de B no coincide con la de A",
+                                $"{graves} problema(s) entre las tablas de A y las de B. Si continuás: las tablas que no existen en B se omiten " +
+                                "(B conserva su contenido) y las columnas de A que B no tiene no se copian. Si abortás, no se toca nada.",
+                                "Continuar omitiendo lo que no coincide");
+                            if (!seguir)
+                                return Cancelado("Cancelado por el usuario: la estructura de B no coincide con la de A. No se modificó nada.");
+                        }
+
+                        if (sinDestino.Count > 0)
+                        {
+                            aTransferir = aTransferir.Where(t => !sinDestino.Contains(t)).ToList();
+                            incidencias.Agregar("Estructura", null, SeveridadIncidencia.Aviso, "Tablas omitidas por no existir en B",
+                                string.Join(", ", sinDestino.Select(t => t.NombreCompleto)),
+                                "Esas tablas NO se transfirieron: B conserva su contenido anterior.");
+                            if (aTransferir.Count == 0)
+                                return Cancelado("No quedaron tablas para transferir.");
+                        }
+                    }
+
                     // FK ordering basado en B (más seguro para DELETE)
                     string connParaFKs  = connStrB ?? connStrA;
                     TipoMotor mParaFKs  = motorB;
                     ReportLog("Resolviendo dependencias FK...");
-                    var fks = PasadorDatosService.ObtenerFKsEntreTablas(connParaFKs, mParaFKs, marcadas);
-                    var (ordenInsert, _) = PasadorDatosService.OrdenarPorDependencias(marcadas, fks);
+                    var fks = PasadorDatosService.ObtenerFKsEntreTablas(connParaFKs, mParaFKs, aTransferir);
+                    var (ordenInsert, _) = PasadorDatosService.OrdenarPorDependencias(aTransferir, fks);
                     var ordenDelete = Enumerable.Reverse(ordenInsert).ToList();
                     ReportLog($"Orden FK resuelto: {ordenInsert.Count} tabla(s).");
 
@@ -514,8 +580,8 @@ namespace QueryAnalyzer
                               $"total {conteosA.Values.Sum()} fila(s).");
                     foreach (var kv in conteosA.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Take(15))
                         ReportLog($"  A · {kv.Key}: {kv.Value} fila(s)");
-                    if (ordenInsert.Count != marcadas.Count)
-                        ReportLog($"AVISO: se marcaron {marcadas.Count} tabla(s) pero el orden de carga tiene {ordenInsert.Count}.");
+                    if (ordenInsert.Count != aTransferir.Count)
+                        ReportLog($"AVISO: se marcaron {aTransferir.Count} tabla(s) pero el orden de carga tiene {ordenInsert.Count}.");
                     if (ilegibles.Count > 0)
                     {
                         bool seguir = Decidir(incidencias.Desde(marca),
@@ -542,7 +608,7 @@ namespace QueryAnalyzer
                         ReportLog(backupRutaArchivo != null ? "Generando backup de B..." : "Generando backup de B (por tabla)...");
                         int marcaBackup = incidencias.Count;
                         var rb = PasadorDatosService.GenerarBackup(
-                            connStrB, ordenDelete, motorB, backupRutaArchivo, backupRutaCarpeta,
+                            connStrB, ordenDelete.Select(t => t.B).ToList(), motorB, backupRutaArchivo, backupRutaCarpeta,
                             opciones, incidencias, ReportLog);
 
                         if (!rb.Completo)
@@ -688,7 +754,8 @@ namespace QueryAnalyzer
         {
             var r = _ultimoResultado;
             if (r == null || !r.TieneScript) return;
-            var conA = ObtenerConexion(cmbConexionA);
+            // El script está escrito en el dialecto de B (si no hay B, el de A)
+            var conA = ObtenerConexion(cmbConexionB) ?? ObtenerConexion(cmbConexionA);
 
             var sb = new StringBuilder();
             sb.Append(r.PrefijoScript);

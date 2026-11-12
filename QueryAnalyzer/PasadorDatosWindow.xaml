@@ -54,7 +54,8 @@
                               SelectionChanged="cmbMotorA_SelectionChanged"/>
 
                     <Label Grid.Row="1" Grid.Column="0" Content="Conexión:" VerticalAlignment="Center"/>
-                    <ComboBox x:Name="cmbConexionA" Grid.Row="1" Grid.Column="1" Margin="0,2"/>
+                    <ComboBox x:Name="cmbConexionA" Grid.Row="1" Grid.Column="1" Margin="0,2"
+                              SelectionChanged="cmbConexion_SelectionChanged"/>
                 </Grid>
             </GroupBox>
 
@@ -80,7 +81,8 @@
                               SelectionChanged="cmbMotorB_SelectionChanged"/>
 
                     <Label Grid.Row="1" Grid.Column="0" Content="Conexión:" VerticalAlignment="Center"/>
-                    <ComboBox x:Name="cmbConexionB" Grid.Row="1" Grid.Column="1" Margin="0,2"/>
+                    <ComboBox x:Name="cmbConexionB" Grid.Row="1" Grid.Column="1" Margin="0,2"
+                              SelectionChanged="cmbConexion_SelectionChanged"/>
                 </Grid>
             </GroupBox>
         </Grid>
@@ -144,6 +146,9 @@
             <Grid Grid.Column="1"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                 <GroupBox Header="Opciones" Margin="4,0,0,8">
                     <StackPanel>
+                        <TextBlock x:Name="txtAvisoMotores" Visibility="Collapsed" TextWrapping="Wrap"
+                                   Margin="0,0,0,8" FontSize="12"
+                                   Foreground="{DynamicResource BrushWarning}"/>
                         <CheckBox x:Name="chkBackup"
                                   Content="Generar backup de B antes de vaciar"
                                   IsChecked="True"/>
@@ -159,6 +164,11 @@
                                   Content="Omitir filas con binarios muy grandes"
                                   IsChecked="False"
                                   ToolTip="Si una fila tiene un binario/LOB sobre el umbral (UmbralLobMB en config.xml; 128 MB por defecto), se omite y queda registrada como incidencia en vez de abortar la transferencia. La tabla queda incompleta en B."/>
+                        <DockPanel x:Name="pnlEsquemaB" Margin="0,6,0,0" Visibility="Collapsed">
+                            <TextBlock DockPanel.Dock="Left" Text="Esquema en B:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBox x:Name="txtEsquemaB"
+                                     ToolTip="Solo cuando A y B son de motores distintos. Vacío = se busca la tabla en B por nombre (si está en varios esquemas se usa el mismo que en A, dbo en SQL Server o public en PostgreSQL). Completalo si la tabla de B está en otro esquema."/>
+                        </DockPanel>
                         <Rectangle Height="1" Margin="0,8" Fill="{DynamicResource BrushBorder}"/>
                         <Button x:Name="btnAnalizarFKs"
                                 Content="Analizar dependencias FK"
