@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Data.Odbc;
+using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -692,17 +694,28 @@ namespace QueryAnalyzer
             Action<string> onProgress)
         {
             var conteos = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
-            int n = 0;
-            foreach (var t in tablas)
+
+            using (AlcanceConexiones.Iniciar())
             {
-                n++;
-                onProgress?.Invoke($"[A] ({n}/{tablas.Count}) Verificando {t.NombreCompleto}...");
-                try { conteos[t.NombreCompleto] = ContarFilas(connStrA, t.NombreCompleto); }
-                catch (Exception ex)
+                // Una consulta por bloque de tablas; las que no respondan en bloque se cuentan de a una (y dejan su incidencia)
+                onProgress?.Invoke($"[A] Contando {tablas.Count} tabla(s) en bloques...");
+                var enLote = ContarFilasLote(connStrA, tablas.Select(t => t.NombreCompleto).ToList());
+
+                int n = 0;
+                foreach (var t in tablas)
                 {
-                    incidencias.Agregar("Origen", t.NombreCompleto, SeveridadIncidencia.Error,
-                        "Tabla ilegible en A", ex.Message,
-                        "Omitir la tabla (no se vaciará ni se cargará en B) o abortar y revisar que exista y que haya permisos en A.");
+                    n++;
+                    long c;
+                    if (enLote.TryGetValue(t.NombreCompleto, out c)) { conteos[t.NombreCompleto] = c; continue; }
+
+                    onProgress?.Invoke($"[A] ({n}/{tablas.Count}) Verificando {t.NombreCompleto}...");
+                    try { conteos[t.NombreCompleto] = ContarFilas(connStrA, t.NombreCompleto); }
+                    catch (Exception ex)
+                    {
+                        incidencias.Agregar("Origen", t.NombreCompleto, SeveridadIncidencia.Error,
+                            "Tabla ilegible en A", ex.Message,
+                            "Omitir la tabla (no se vaciará ni se cargará en B) o abortar y revisar que exista y que haya permisos en A.");
+                    }
                 }
             }
             return conteos;
@@ -744,6 +757,7 @@ namespace QueryAnalyzer
             var res = new ResultadoBackup();
             int inicio = incidencias.Count;
             StreamWriter unico = null;
+            var alcance = AlcanceConexiones.Iniciar();   // una sola conexión a B para contar y leer todas las tablas
             try
             {
                 if (!string.IsNullOrEmpty(rutaArchivo))
@@ -813,7 +827,11 @@ namespace QueryAnalyzer
                     catch { }
                 }
             }
-            finally { try { unico?.Dispose(); } catch { } }
+            finally
+            {
+                try { unico?.Dispose(); } catch { }
+                alcance.Dispose();
+            }
 
             return res;
         }
@@ -932,6 +950,17 @@ namespace QueryAnalyzer
         /// DELETE</b>, para que restaurar nunca vacíe una tabla que el backup no puede devolver.
         /// </summary>
         public static ResultadoBackupEsquema GenerarBackupEsquema(
+            string connStr, TipoMotor motor, string nombreConexion, string rutaDestino,
+            List<TablaTransfer> ordenInsert, List<TablaTransfer> ordenDelete, List<string> ciclicas,
+            OpcionesPasado op, RegistroIncidencias inc, Action<string> onProgress)
+        {
+            // Una sola conexión para contar y leer todas las tablas
+            using (AlcanceConexiones.Iniciar())
+                return GenerarBackupEsquemaInterno(connStr, motor, nombreConexion, rutaDestino,
+                    ordenInsert, ordenDelete, ciclicas, op, inc, onProgress);
+        }
+
+        private static ResultadoBackupEsquema GenerarBackupEsquemaInterno(
             string connStr, TipoMotor motor, string nombreConexion, string rutaDestino,
             List<TablaTransfer> ordenInsert, List<TablaTransfer> ordenDelete, List<string> ciclicas,
             OpcionesPasado op, RegistroIncidencias inc, Action<string> onProgress)
@@ -1087,6 +1116,25 @@ namespace QueryAnalyzer
             Action<string> onSql = null,
             Action<int, int> onStep = null)
         {
+            // Una sola conexión a A para leer todas las tablas (y para la verificación final)
+            using (AlcanceConexiones.Iniciar())
+                return TransferirDatosInterno(connStrA, connStrB, motorA, motorB, ordenInsert, ordenDelete,
+                    opciones, incidencias, onProgress, onSql, onStep);
+        }
+
+        private static ResultadoPasado TransferirDatosInterno(
+            string connStrA,
+            string connStrB,
+            TipoMotor motorA,
+            TipoMotor motorB,
+            List<TablaTransfer> ordenInsert,
+            List<TablaTransfer> ordenDelete,
+            OpcionesPasado opciones,
+            RegistroIncidencias incidencias,
+            Action<string> onProgress,
+            Action<string> onSql,
+            Action<int, int> onStep)
+        {
             var resultado = new ResultadoPasado { Incidencias = incidencias };
 
             // Con motores distintos cada tabla de A tiene su equivalente en B (Destino); con el mismo motor B == A.
@@ -1120,8 +1168,37 @@ namespace QueryAnalyzer
 
             // 4. Ejecutar en B
             onProgress?.Invoke("Conectando a la base B...");
+
+            // Tiempo de cada fase en el log: muestra dónde se va el tiempo de la corrida
+            var relojFase = Stopwatch.StartNew();
+            Action<string> tiempo = nombre =>
+            {
+                onProgress?.Invoke($"[TIEMPO] {nombre}: {relojFase.ElapsedMilliseconds} ms");
+                relojFase.Restart();
+            };
+
+            // Carga masiva (SqlBulkCopy): solo si B es SQL Server. Necesita una conexión SqlClient propia, y esa misma
+            // conexión (con su transacción) hace TODO lo de B: FK, DELETE y carga. Si no se puede abrir, se sigue
+            // con el INSERT fila por fila (ODBC) y queda avisado.
+            SqlConnection sqlB = null;
+            bool usarBulk = opciones.UsarCargaMasiva && motorB == TipoMotor.MS_SQL;
+            if (usarBulk)
+            {
+                string motivoBulk;
+                sqlB = TransferenciaBulk.AbrirConexion(connStrB, out motivoBulk);
+                if (sqlB == null)
+                {
+                    usarBulk = false;
+                    incidencias.Agregar("Transferencia", null, SeveridadIncidencia.Aviso, "Carga masiva no disponible",
+                        "No se pudo abrir la conexión directa a SQL Server: " + motivoBulk,
+                        "Se usa el INSERT fila por fila (más lento). Revisá la cadena de conexión de B o desmarcá la carga masiva.");
+                }
+                else onProgress?.Invoke("Carga masiva (SqlBulkCopy) activada para B.");
+            }
+
             DataBase dbB = null;
-            OdbcTransaction tx = null;
+            DbConnection connB = null;
+            DbTransaction tx = null;
             bool commitOk = false;
             bool modificoDatos = false;
             string tablaActual = null;
@@ -1142,19 +1219,24 @@ namespace QueryAnalyzer
 
             try
             {
-                dbB = new DataBase(connStrB);
+                if (usarBulk) connB = sqlB;
+                else
+                {
+                    dbB = new DataBase(connStrB);
+                    connB = dbB.Connection;
+                }
 
                 // FASE 1: Deshabilitar FKs (fuera de tx)
                 faseActual = "FK";
                 onProgress?.Invoke("Deshabilitando FK constraints en B...");
-                EjecutarFaseDeshabilitarFKs(dbB.Connection, motorB, ordenDeleteB, onProgress, avance.Sql, fkExternas);
+                EjecutarFaseDeshabilitarFKs(connB, motorB, ordenDeleteB, onProgress, avance.Sql, fkExternas);
 
                 // FASE 2: Transacción única (si está activada)
                 faseActual = "Transferencia";
                 if (opciones.Transaccional)
                 {
                     onProgress?.Invoke("Iniciando transacción...");
-                    tx = dbB.Connection.BeginTransaction();
+                    tx = connB.BeginTransaction();
                 }
                 else
                 {
@@ -1163,18 +1245,39 @@ namespace QueryAnalyzer
                         "Si algo falla, B queda con una parte de los datos. Usá el backup para volver atrás.");
                 }
 
+                tiempo("Conexión a B + FK desactivadas + inicio de transacción");
+
                 // DELETEs
                 onProgress?.Invoke("Ejecutando DELETEs en B...");
-                foreach (var tabla in ordenDelete)
+                if (usarBulk)
                 {
-                    tablaActual = tabla.NombreCompleto;
-                    string sql = $"DELETE FROM {tabla.B.NombreCompleto}";
-                    avance.Sql(sql);
-                    onProgress?.Invoke($"[DELETE] {tabla.B.NombreCompleto}");
-                    modificoDatos = true;
-                    EjecutarDml(dbB.Connection, tx, sql);
-                    avance.Sumar(1);
+                    // Conexión directa a SQL Server: los DELETE viajan en bloques (un viaje por bloque, no por tabla).
+                    // Si uno falla el bloque se aborta y la transacción se revierte entera; el mensaje del servidor nombra la tabla.
+                    const int BloqueDelete = 25;
+                    for (int i = 0; i < ordenDelete.Count; i += BloqueDelete)
+                    {
+                        var bloque = ordenDelete.Skip(i).Take(BloqueDelete).ToList();
+                        tablaActual = bloque[0].NombreCompleto;
+                        foreach (var tabla in bloque) onProgress?.Invoke($"[DELETE] {tabla.B.NombreCompleto}");
+                        string sql = string.Join("; ", bloque.Select(t => $"DELETE FROM {t.B.NombreCompleto}"));
+                        avance.Sql(sql);
+                        modificoDatos = true;
+                        EjecutarSql(connB, tx, sql);
+                        avance.Sumar(bloque.Count);
+                    }
                 }
+                else
+                    foreach (var tabla in ordenDelete)
+                    {
+                        tablaActual = tabla.NombreCompleto;
+                        string sql = $"DELETE FROM {tabla.B.NombreCompleto}";
+                        avance.Sql(sql);
+                        onProgress?.Invoke($"[DELETE] {tabla.B.NombreCompleto}");
+                        modificoDatos = true;
+                        EjecutarSql(connB, tx, sql);
+                        avance.Sumar(1);
+                    }
+                tiempo("DELETEs");
 
                 // INSERTs, en streaming desde A
                 onProgress?.Invoke("Ejecutando INSERTs en B...");
@@ -1196,17 +1299,23 @@ namespace QueryAnalyzer
                         ? $"[INSERT] {tabla.NombreCompleto} ({conteo} filas)..."
                         : $"[INSERT] {tabla.NombreCompleto}...");
 
-                    resultado.FilasTransferidas += InsertarTabla(
-                        dbB.Connection, tx, connStrA, tabla, meta, motorB, opciones, incidencias, avance,
-                        conteo, onProgress);
+                    resultado.FilasTransferidas += usarBulk
+                        ? TransferenciaBulk.CopiarTabla(
+                            sqlB, (SqlTransaction)tx, connStrA, tabla, meta, opciones, incidencias, avance,
+                            conteo, onProgress)
+                        : InsertarTabla(
+                            (OdbcConnection)connB, (OdbcTransaction)tx, connStrA, tabla, meta, motorB, opciones, incidencias, avance,
+                            conteo, onProgress);
                     tablasCargadas++;
                 }
 
                 onProgress?.Invoke($"Resumen de la carga: {tablasCargadas} tabla(s) cargada(s) de {ordenInsert.Count}, " +
                                    $"{resultado.FilasTransferidas} fila(s) insertada(s) en B.");
+                tiempo("INSERTs");
 
                 tx?.Commit();
                 commitOk = true;
+                tiempo("COMMIT");
                 avance.Forzar();
                 onProgress?.Invoke(opciones.Transaccional
                     ? "✓ Transacción completada (COMMIT)."
@@ -1223,8 +1332,14 @@ namespace QueryAnalyzer
                 {
                     try
                     {
-                        tx.Rollback();
-                        onProgress?.Invoke("✗ Se realizó ROLLBACK. B queda intacta.");
+                        // Un error grave del servidor durante la carga masiva puede haber revertido ya la transacción
+                        if (tx.Connection == null)
+                            onProgress?.Invoke("✗ El servidor ya había revertido la transacción. B queda intacta.");
+                        else
+                        {
+                            tx.Rollback();
+                            onProgress?.Invoke("✗ Se realizó ROLLBACK. B queda intacta.");
+                        }
                     }
                     catch (Exception exRb)
                     {
@@ -1243,12 +1358,12 @@ namespace QueryAnalyzer
             finally
             {
                 // FASE 3: Rehabilitar FKs — siempre, haya commit o rollback
-                if (dbB != null)
+                if (connB != null)
                 {
                     try
                     {
                         onProgress?.Invoke("Rehabilitando FK constraints en B...");
-                        EjecutarFaseRehabilitarFKs(dbB.Connection, motorB, ordenInsertB, onProgress, null, fkExternas, incidencias);
+                        EjecutarFaseRehabilitarFKs(connB, motorB, ordenInsertB, onProgress, null, fkExternas, incidencias);
                     }
                     catch (Exception exFk)
                     {
@@ -1256,8 +1371,10 @@ namespace QueryAnalyzer
                             exFk.Message,
                             "Las FK de B pueden haber quedado deshabilitadas: ejecutá la FASE 3 manualmente (SET INTEGRITY ... IMMEDIATE CHECKED / WITH CHECK CHECK CONSTRAINT).");
                     }
-                    try { dbB.CloseConnection(); } catch { }
                 }
+                try { dbB?.CloseConnection(); } catch { }
+                try { sqlB?.Dispose(); } catch { }
+                tiempo("Rehabilitar FK + cierre de B");
             }
 
             resultado.Exito = commitOk;
@@ -1267,6 +1384,7 @@ namespace QueryAnalyzer
             {
                 onProgress?.Invoke("Verificando consistencia entre A y B...");
                 VerificarConsistencia(connStrA, connStrB, ordenInsert, incidencias, onProgress);
+                tiempo("Verificación");
             }
 
             return resultado;
@@ -1431,7 +1549,7 @@ namespace QueryAnalyzer
                 : TransferenciaStreaming.Sugerir(raiz);
 
             inc.Agregar(fase, et?.Tabla ?? tablaActual, SeveridadIncidencia.Error, tipo, mensaje, accion,
-                lx?.Columna, et?.Clave ?? lx?.Clave);
+                lx?.Columna ?? et?.Columna, et?.Clave ?? lx?.Clave);
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -1570,12 +1688,18 @@ namespace QueryAnalyzer
             Action<string> onProgress)
         {
             bool todoOk = true;
+            using (AlcanceConexiones.Iniciar())
+            {
+            // Conteos de A y de B en bloques; las tablas que no respondan en bloque se cuentan de a una dentro del try
+            var enLoteA = ContarFilasLote(connStrA, tablas.Select(t => t.NombreCompleto).ToList());
+            var enLoteB = ContarFilasLote(connStrB, tablas.Select(t => t.B.NombreCompleto).ToList());
             foreach (var tabla in tablas)
             {
                 try
                 {
-                    long cntA = ContarFilas(connStrA, tabla.NombreCompleto);
-                    long cntB = ContarFilas(connStrB, tabla.B.NombreCompleto);
+                    long cntA, cntB;
+                    if (!enLoteA.TryGetValue(tabla.NombreCompleto, out cntA)) cntA = ContarFilas(connStrA, tabla.NombreCompleto);
+                    if (!enLoteB.TryGetValue(tabla.B.NombreCompleto, out cntB)) cntB = ContarFilas(connStrB, tabla.B.NombreCompleto);
                     if (cntA == cntB)
                         onProgress?.Invoke($"  ✓ {tabla.NombreCompleto}: {cntA} filas (A = B)");
                     else
@@ -1594,6 +1718,7 @@ namespace QueryAnalyzer
                         "No se pudo verificar", ex.Message, "Comparar el conteo de filas de A y B manualmente.");
                 }
             }
+            }
             onProgress?.Invoke(todoOk
                 ? "✓ Verificación completada: A y B están consistentes."
                 : "Verificación completada con diferencias. Revisar incidencias.");
@@ -1601,15 +1726,71 @@ namespace QueryAnalyzer
 
         private static long ContarFilas(string connStr, string nombreCompleto)
         {
-            var DB = new DataBase(connStr, false);
+            // Dentro de un AlcanceConexiones usa la conexión compartida; si no, abre y cierra una propia
+            bool compartida;
+            var db = AlcanceConexiones.Obtener(connStr, out compartida);
             try
             {
-                DB.CommandText = $"SELECT COUNT(*) FROM {nombreCompleto}";
-                var dt = new DataTable();
-                DB.DataAdapter.Fill(dt);
-                return Convert.ToInt64(dt.Rows[0][0]);
+                using (var cmd = new OdbcCommand($"SELECT COUNT(*) FROM {nombreCompleto}", db.Connection))
+                {
+                    cmd.CommandTimeout = TransferenciaStreaming.TimeoutSegundos();
+                    return Convert.ToInt64(cmd.ExecuteScalar());
+                }
             }
-            finally { try { DB.CloseConnection(); } catch { } }
+            catch
+            {
+                if (compartida) AlcanceConexiones.Invalidar(connStr);
+                throw;
+            }
+            finally
+            {
+                if (!compartida) { try { db.CloseConnection(); } catch { } }
+            }
+        }
+
+        /// <summary>
+        /// Cuenta varias tablas con UNA consulta por bloque (<c>SELECT i, COUNT(*) FROM t1 UNION ALL ...</c>) en vez de
+        /// un viaje por tabla. Los conteos son exactos. Las tablas de un bloque que falla (p. ej. una ilegible) NO
+        /// quedan en el resultado: quien llama las cuenta de a una con <see cref="ContarFilas"/> para informar el error.
+        /// </summary>
+        private static Dictionary<string, long> ContarFilasLote(string connStr, IList<string> nombres)
+        {
+            const int Bloque = 50;
+            var r = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+
+            for (int i = 0; i < nombres.Count; i += Bloque)
+            {
+                var chunk = nombres.Skip(i).Take(Bloque).ToList();
+                var sql = string.Join(" UNION ALL ",
+                    chunk.Select((n, k) => $"SELECT {k} AS idx, COUNT(*) AS n FROM {n}"));
+
+                bool compartida = false;
+                DataBase db = null;
+                try
+                {
+                    db = AlcanceConexiones.Obtener(connStr, out compartida);
+                    var parcial = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+                    using (var cmd = new OdbcCommand(sql, db.Connection))
+                    {
+                        cmd.CommandTimeout = TransferenciaStreaming.TimeoutSegundos();
+                        using (var rd = cmd.ExecuteReader())
+                            while (rd.Read())
+                                parcial[chunk[Convert.ToInt32(rd.GetValue(0))]] = Convert.ToInt64(rd.GetValue(1));
+                    }
+                    // Solo si el bloque entero respondió completo
+                    if (parcial.Count == chunk.Count)
+                        foreach (var kv in parcial) r[kv.Key] = kv.Value;
+                }
+                catch
+                {
+                    if (compartida) AlcanceConexiones.Invalidar(connStr);
+                }
+                finally
+                {
+                    if (db != null && !compartida) { try { db.CloseConnection(); } catch { } }
+                }
+            }
+            return r;
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -1687,7 +1868,7 @@ namespace QueryAnalyzer
         // ─────────────────────────────────────────────────────────────────────
 
         private static void DeshabilitarFKsExternasMsSql(
-            OdbcConnection conn, List<TablaTransfer> tablas, List<FkExterna> externas,
+            DbConnection conn, List<TablaTransfer> tablas, List<FkExterna> externas,
             Action<string> onProgress, Action<string> onSql)
         {
             if (tablas.Count == 0) return;
@@ -1703,18 +1884,21 @@ namespace QueryAnalyzer
                 "WHERE fk.is_disabled = 0 AND fk.referenced_object_id IN (" + ids + ")";
 
             var halladas = new List<FkExterna>();
-            using (var cmd = new OdbcCommand(consulta, conn))
-            using (var rd = cmd.ExecuteReader())
-                while (rd.Read())
-                {
-                    string tabla = rd.GetString(0), fk = rd.GetString(1);
-                    halladas.Add(new FkExterna
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = consulta;
+                using (var rd = cmd.ExecuteReader())
+                    while (rd.Read())
                     {
-                        Tabla = tabla, Fk = fk, Referencia = rd.GetString(2),
-                        SqlReactivarValidando  = $"ALTER TABLE {tabla} WITH CHECK CHECK CONSTRAINT {fk}",
-                        SqlReactivarSinValidar = $"ALTER TABLE {tabla} WITH NOCHECK CHECK CONSTRAINT {fk}"
-                    });
-                }
+                        string tabla = rd.GetString(0), fk = rd.GetString(1);
+                        halladas.Add(new FkExterna
+                        {
+                            Tabla = tabla, Fk = fk, Referencia = rd.GetString(2),
+                            SqlReactivarValidando  = $"ALTER TABLE {tabla} WITH CHECK CHECK CONSTRAINT {fk}",
+                            SqlReactivarSinValidar = $"ALTER TABLE {tabla} WITH NOCHECK CHECK CONSTRAINT {fk}"
+                        });
+                    }
+            }
 
             if (halladas.Count == 0) return;
 
@@ -1723,7 +1907,7 @@ namespace QueryAnalyzer
             {
                 string sql = $"ALTER TABLE {f.Tabla} NOCHECK CONSTRAINT {f.Fk}";
                 onSql?.Invoke(sql);
-                EjecutarDml(conn, null, sql);
+                EjecutarSql(conn, null, sql);
                 externas.Add(f);   // recién ahora: solo se reactiva lo que realmente se apagó
                 onProgress?.Invoke($"  FK externa desactivada: {f.Fk} ({f.Tabla} → {f.Referencia})");
             }
@@ -1779,20 +1963,20 @@ namespace QueryAnalyzer
             {
                 string sql = $"ALTER TABLE {f.Tabla} ALTER FOREIGN KEY {f.Fk} NOT ENFORCED";
                 onSql?.Invoke(sql);
-                EjecutarDml(conn, null, sql);
+                EjecutarSql(conn, null, sql);
                 externas.Add(f);
             }
         }
 
         /// <summary>Reactiva las FK que se apagaron. Nunca lanza: cada falla queda como incidencia.</summary>
         private static void RehabilitarFKsExternas(
-            OdbcConnection conn, List<FkExterna> externas, Action<string> onProgress, RegistroIncidencias incidencias)
+            DbConnection conn, List<FkExterna> externas, Action<string> onProgress, RegistroIncidencias incidencias)
         {
             foreach (var f in externas)
             {
                 try
                 {
-                    EjecutarDml(conn, null, f.SqlReactivarValidando);
+                    EjecutarSql(conn, null, f.SqlReactivarValidando);
                     onProgress?.Invoke($"  FK reactivada: {f.Fk} ({f.Tabla})");
                 }
                 catch (Exception exCheck)
@@ -1807,7 +1991,7 @@ namespace QueryAnalyzer
                     // Quedaron filas de esa tabla apuntando a filas que ya no existen en el padre: se reactiva sin validar
                     try
                     {
-                        EjecutarDml(conn, null, f.SqlReactivarSinValidar);
+                        EjecutarSql(conn, null, f.SqlReactivarSinValidar);
                         incidencias?.Agregar("FK", f.Tabla, SeveridadIncidencia.Aviso, "FK reactivada sin validar",
                             $"{f.Fk} ({f.Tabla} → {f.Referencia}): hay filas huérfanas. {exCheck.Message}",
                             "Esa tabla no estaba en la selección y conserva filas que apuntan a datos que se reemplazaron. Incluila en la transferencia o limpiá esas filas.");
@@ -1822,16 +2006,18 @@ namespace QueryAnalyzer
         }
 
         private static void EjecutarFaseDeshabilitarFKs(
-            OdbcConnection conn, TipoMotor motor, List<TablaTransfer> tablas,
+            DbConnection conn, TipoMotor motor, List<TablaTransfer> tablas,
             Action<string> onProgress, Action<string> onSql, List<FkExterna> externas = null)
         {
             switch (motor)
             {
                 case TipoMotor.MS_SQL:
-                    foreach (var t in tablas)
+                    // En bloques: un viaje por ~25 tablas en vez de uno por tabla
+                    for (int i = 0; i < tablas.Count; i += 25)
                     {
-                        string sql = $"ALTER TABLE {t.NombreCompleto} NOCHECK CONSTRAINT ALL";
-                        onSql?.Invoke(sql); EjecutarDml(conn, null, sql);
+                        string sql = string.Join("; ", tablas.Skip(i).Take(25)
+                            .Select(t => $"ALTER TABLE {t.NombreCompleto} NOCHECK CONSTRAINT ALL"));
+                        onSql?.Invoke(sql); EjecutarSql(conn, null, sql);
                     }
                     if (externas != null)
                         DeshabilitarFKsExternasMsSql(conn, tablas, externas, onProgress, onSql);
@@ -1839,24 +2025,24 @@ namespace QueryAnalyzer
                 case TipoMotor.POSTGRES:
                 {
                     string sql = "SET session_replication_role = replica";
-                    onSql?.Invoke(sql); EjecutarDml(conn, null, sql);
+                    onSql?.Invoke(sql); EjecutarSql(conn, null, sql);
                     break;
                 }
                 case TipoMotor.DB2:
                     if (externas != null)
-                        DeshabilitarFKsDb2(conn, tablas, externas, onProgress, onSql);
+                        DeshabilitarFKsDb2((OdbcConnection)conn, tablas, externas, onProgress, onSql);
                     break;
                 case TipoMotor.SQLite:
                 {
                     string sql = "PRAGMA foreign_keys = OFF";
-                    onSql?.Invoke(sql); EjecutarDml(conn, null, sql);
+                    onSql?.Invoke(sql); EjecutarSql(conn, null, sql);
                     break;
                 }
             }
         }
 
         private static void EjecutarFaseRehabilitarFKs(
-            OdbcConnection conn, TipoMotor motor, List<TablaTransfer> tablas,
+            DbConnection conn, TipoMotor motor, List<TablaTransfer> tablas,
             Action<string> onProgress, Action<string> onSql,
             List<FkExterna> externas = null, RegistroIncidencias incidencias = null)
         {
@@ -1873,7 +2059,7 @@ namespace QueryAnalyzer
                     foreach (var t in tablas)
                     {
                         string sql = $"ALTER TABLE {t.NombreCompleto} WITH CHECK CHECK CONSTRAINT ALL";
-                        try { onSql?.Invoke(sql); EjecutarDml(conn, null, sql); }
+                        try { onSql?.Invoke(sql); EjecutarSql(conn, null, sql); }
                         catch (Exception ex) { errores.Add(t.NombreCompleto + ": " + ex.Message); }
                     }
                     if (errores.Count > 0)
@@ -1884,7 +2070,7 @@ namespace QueryAnalyzer
                 case TipoMotor.POSTGRES:
                 {
                     string sql = "SET session_replication_role = DEFAULT";
-                    onSql?.Invoke(sql); EjecutarDml(conn, null, sql);
+                    onSql?.Invoke(sql); EjecutarSql(conn, null, sql);
                     break;
                 }
                 case TipoMotor.DB2:
@@ -1893,7 +2079,7 @@ namespace QueryAnalyzer
                 case TipoMotor.SQLite:
                 {
                     string sql = "PRAGMA foreign_keys = ON";
-                    onSql?.Invoke(sql); EjecutarDml(conn, null, sql);
+                    onSql?.Invoke(sql); EjecutarSql(conn, null, sql);
                     break;
                 }
             }
@@ -1921,6 +2107,21 @@ namespace QueryAnalyzer
                 onComando?.Invoke(cmd);
                 try { return cmd.ExecuteNonQuery(); }
                 finally { onComando?.Invoke(null); }
+            }
+        }
+
+        /// <summary>
+        /// Ejecuta una sentencia sin parámetros sobre cualquier conexión (ODBC o SqlClient). Con SqlClient el comando
+        /// necesita la transacción en curso asignada explícitamente.
+        /// </summary>
+        internal static int EjecutarSql(DbConnection conn, DbTransaction tx, string sql)
+        {
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = sql;
+                if (tx != null) cmd.Transaction = tx;
+                cmd.CommandTimeout = TransferenciaStreaming.TimeoutSegundos();
+                return cmd.ExecuteNonQuery();
             }
         }
 

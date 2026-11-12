@@ -75,19 +75,19 @@ namespace QueryAnalyzer
             return "\"" + id.Replace("\"", "\"\"") + "\"";
         }
 
-        private static bool EsNumericoClr(Type t)
+        internal static bool EsNumericoClr(Type t)
         {
             return t == typeof(byte) || t == typeof(sbyte) || t == typeof(short) || t == typeof(ushort) ||
                    t == typeof(int)  || t == typeof(uint)  || t == typeof(long)  || t == typeof(ulong) ||
                    t == typeof(float) || t == typeof(double) || t == typeof(decimal);
         }
 
-        private static bool EsTexto(CategoriaTipo c) { return c == CategoriaTipo.Texto || c == CategoriaTipo.TextoUnicode; }
+        internal static bool EsTexto(CategoriaTipo c) { return c == CategoriaTipo.Texto || c == CategoriaTipo.TextoUnicode; }
 
         private static string Quote(string s) { return "'" + s.Replace("'", "''") + "'"; }
 
         /// <summary>Cantidad de decimales de fracción de segundo que admite la columna de B.</summary>
-        private static int FraccionesDeSegundo(TipoMotor motor, ColumnaDestino col)
+        internal static int FraccionesDeSegundo(TipoMotor motor, ColumnaDestino col)
         {
             if (col.Categoria != CategoriaTipo.FechaHora && col.Categoria != CategoriaTipo.FechaHoraTz) return 3;
             switch (motor)
@@ -134,7 +134,7 @@ namespace QueryAnalyzer
             return f.ToString("R", CultureInfo.InvariantCulture);
         }
 
-        private static bool? InterpretarBool(string s)
+        internal static bool? InterpretarBool(string s)
         {
             switch (s.Trim().ToLowerInvariant())
             {
@@ -144,14 +144,14 @@ namespace QueryAnalyzer
             }
         }
 
-        private static bool TipoOrigenEsChar(string tipoA)
+        internal static bool TipoOrigenEsChar(string tipoA)
         {
             if (string.IsNullOrEmpty(tipoA)) return false;
             string t = tipoA.Trim().ToUpperInvariant();
             return t == "CHAR" || t == "CHARACTER" || t == "NCHAR" || t == "BPCHAR" || t == "GRAPHIC";
         }
 
-        private static bool ColumnaEsChar(ColumnaDestino col)
+        internal static bool ColumnaEsChar(ColumnaDestino col)
         {
             string t = col.Tipo ?? "";
             return t == "char" || t == "character" || t == "nchar" || t == "bpchar" || t == "graphic";

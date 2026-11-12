@@ -30,6 +30,7 @@ namespace QueryAnalyzer
     internal sealed class ErrorTransferencia : Exception
     {
         public string Tabla   { get; set; }
+        public string Columna { get; set; }
         public string Clave   { get; set; }
         public string Sql     { get; set; }
 
@@ -44,6 +45,7 @@ namespace QueryAnalyzer
     internal sealed class LectorTabla : IDisposable
     {
         private readonly DataBase       _db;
+        private readonly bool           _poseeConexion;   // false = conexión compartida (AlcanceConexiones): no se cierra
         private readonly OdbcCommand    _cmd;
         private readonly OdbcDataReader _rd;
         private readonly int[]          _indices;
@@ -59,10 +61,10 @@ namespace QueryAnalyzer
         /// <summary>Filas leídas del cursor (incluye las omitidas por LOB sobre el umbral).</summary>
         public long NumFila { get; private set; }
 
-        private LectorTabla(DataBase db, OdbcCommand cmd, OdbcDataReader rd, string tabla,
+        private LectorTabla(DataBase db, bool poseeConexion, OdbcCommand cmd, OdbcDataReader rd, string tabla,
                             HashSet<string> excluidas, long umbral)
         {
-            _db = db; _cmd = cmd; _rd = rd; _umbral = umbral; Tabla = tabla;
+            _db = db; _poseeConexion = poseeConexion; _cmd = cmd; _rd = rd; _umbral = umbral; Tabla = tabla;
 
             var idx = new List<int>();
             var nom = new List<string>();
@@ -89,17 +91,20 @@ namespace QueryAnalyzer
 
         public static LectorTabla Abrir(string connStr, TablaTransfer tabla, HashSet<string> excluidas, long umbralLob)
         {
-            var db = new DataBase(connStr);
+            // Dentro de un AlcanceConexiones la conexión se reutiliza entre tablas (abrirla cuesta login + red por tabla)
+            bool compartida;
+            var db = AlcanceConexiones.Obtener(connStr, out compartida);
             try
             {
                 var cmd = new OdbcCommand("SELECT * FROM " + tabla.NombreCompleto, db.Connection);
                 cmd.CommandTimeout = TransferenciaStreaming.TimeoutSegundos();
                 var rd = cmd.ExecuteReader();
-                return new LectorTabla(db, cmd, rd, tabla.NombreCompleto, excluidas, umbralLob);
+                return new LectorTabla(db, !compartida, cmd, rd, tabla.NombreCompleto, excluidas, umbralLob);
             }
             catch
             {
-                try { db.CloseConnection(); } catch { }
+                if (compartida) AlcanceConexiones.Invalidar(connStr);
+                else { try { db.CloseConnection(); } catch { } }
                 throw;
             }
         }
@@ -212,7 +217,70 @@ namespace QueryAnalyzer
         {
             try { _rd.Close(); } catch { }
             try { _cmd.Dispose(); } catch { }
-            try { _db.CloseConnection(); } catch { }
+            if (_poseeConexion) { try { _db.CloseConnection(); } catch { } }
+        }
+    }
+
+    /// <summary>
+    /// Alcance (por hilo) dentro del cual la conexión ODBC de cada cadena se abre una sola vez y se reutiliza para
+    /// todas las lecturas y conteos. Sin esto cada tabla abría una conexión nueva (login + red): en una corrida
+    /// de 100 tablas eran unas 500 aperturas. Fuera de un alcance todo se comporta como antes (una conexión por uso).
+    /// Es de un solo hilo: usar siempre con <c>using</c> para que no quede registrado en un hilo del ThreadPool.
+    /// </summary>
+    internal sealed class AlcanceConexiones : IDisposable
+    {
+        [ThreadStatic] private static AlcanceConexiones _actual;
+
+        // null = alcance anidado dentro de otro: usa el de afuera y no cierra nada
+        private readonly Dictionary<string, DataBase> _conexiones;
+
+        private AlcanceConexiones(Dictionary<string, DataBase> conexiones) { _conexiones = conexiones; }
+
+        public static AlcanceConexiones Iniciar()
+        {
+            if (_actual != null) return new AlcanceConexiones(null);
+            var a = new AlcanceConexiones(new Dictionary<string, DataBase>(StringComparer.Ordinal));
+            _actual = a;
+            return a;
+        }
+
+        /// <summary>
+        /// La conexión de <paramref name="connStr"/>: la compartida del alcance (<paramref name="compartida"/> = true,
+        /// quien la usa NO la cierra) o una nueva propia si no hay alcance.
+        /// </summary>
+        public static DataBase Obtener(string connStr, out bool compartida)
+        {
+            var a = _actual;
+            if (a == null) { compartida = false; return new DataBase(connStr); }
+
+            DataBase db;
+            if (!a._conexiones.TryGetValue(connStr, out db))
+            {
+                db = new DataBase(connStr);
+                a._conexiones[connStr] = db;
+            }
+            compartida = true;
+            return db;
+        }
+
+        /// <summary>Descarta la conexión compartida (p. ej. tras una falla): el próximo uso abre una nueva.</summary>
+        public static void Invalidar(string connStr)
+        {
+            var a = _actual;
+            DataBase db;
+            if (a != null && a._conexiones.TryGetValue(connStr, out db))
+            {
+                try { db.CloseConnection(); } catch { }
+                a._conexiones.Remove(connStr);
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_conexiones == null) return;
+            foreach (var db in _conexiones.Values) { try { db.CloseConnection(); } catch { } }
+            _conexiones.Clear();
+            if (_actual == this) _actual = null;
         }
     }
 
@@ -295,8 +363,12 @@ namespace QueryAnalyzer
                 return "Violación de FK: la tabla referencia filas que no existen. Revisá el orden o las tablas relacionadas que quedaron fuera.";
             if (m.Contains("SQL0407") || m.Contains("NOT NULL") || m.Contains("23502"))
                 return "Valor nulo en columna NOT NULL de B: la estructura de B difiere de la de A.";
-            if (m.Contains("SQL0302") || m.Contains("TRUNCAT") || m.Contains("22001") || m.Contains("TOO LONG"))
+            if (m.Contains("SQL0302") || m.Contains("TRUNCAT") || m.Contains("22001") || m.Contains("TOO LONG")
+                || m.Contains("INVALID COLUMN LENGTH"))
                 return "El valor no entra en la columna de B: la estructura de B difiere de la de A.";
+            if (m.Contains("CANNOT BE CONVERTED TO TYPE") || m.Contains("FROM THE DATA SOURCE"))
+                return "La carga masiva no pudo convertir un valor al tipo de la columna de B: revisá la estructura de B o desmarcá " +
+                       "'Carga masiva' para usar el INSERT fila por fila (el mensaje del motor indica el valor).";
             if (m.Contains("SQL0204") || m.Contains("SQL0206") || m.Contains("DOES NOT EXIST") || m.Contains("NO SUCH")
                 || m.Contains("HAS NO COLUMN") || m.Contains("42S02") || m.Contains("42S22") || m.Contains("42703") || m.Contains("42704"))
                 return "La tabla o columna no existe en ese lado: B no tiene la misma estructura que A.";

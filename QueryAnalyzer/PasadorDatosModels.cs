@@ -82,6 +82,12 @@ namespace QueryAnalyzer
         public bool Transaccional     { get; set; } = true;
 
         /// <summary>
+        /// Con B en SQL Server, carga con SqlBulkCopy en vez de un INSERT por fila (mucho más rápido). Si no se puede
+        /// abrir la conexión directa a SQL Server, se usa el INSERT fila por fila y queda una incidencia de aviso.
+        /// </summary>
+        public bool UsarCargaMasiva   { get; set; } = true;
+
+        /// <summary>
         /// Tamaño máximo (en bytes) de un valor binario/LOB por fila. Si una fila lo supera la
         /// transferencia se aborta (B queda intacta) salvo que <see cref="OmitirFilasLobGrandes"/> esté activo.
         /// </summary>

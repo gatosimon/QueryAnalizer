@@ -155,6 +155,10 @@
                         <CheckBox x:Name="chkTransaccional"
                                   Content="Transaccional (rollback si hay error)"
                                   IsChecked="True"/>
+                        <CheckBox x:Name="chkCargaMasiva"
+                                  Content="Carga masiva (SqlBulkCopy) si B es SQL Server"
+                                  IsChecked="True"
+                                  ToolTip="Envía las filas en un flujo de carga masiva en vez de un INSERT por fila: mucho más rápido. Solo aplica cuando B es SQL Server; usa una conexión directa a SQL Server con la misma transacción para todo. Si no se puede abrir, se usa el INSERT fila por fila."/>
                         <CheckBox x:Name="chkSoloScript"
                                   Content="Solo generar script (no ejecutar)"
                                   IsChecked="False"

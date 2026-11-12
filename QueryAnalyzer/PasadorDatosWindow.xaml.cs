@@ -243,6 +243,7 @@ namespace QueryAnalyzer
         /// <summary>Muestra el aviso (y el campo de esquema de B) cuando origen y destino son de motores distintos.</summary>
         private void ActualizarAvisoMotores()
         {
+            ActualizarCargaMasiva();
             if (txtAvisoMotores == null || pnlEsquemaB == null) return;
             var conA = ObtenerConexion(cmbConexionA);
             var conB = ObtenerConexion(cmbConexionB);
@@ -255,8 +256,19 @@ namespace QueryAnalyzer
                     "Antes de vaciar nada se compara la estructura y se convierten los valores al tipo de cada columna de B.";
         }
 
+        /// <summary>La carga masiva solo aplica cuando B es SQL Server y se va a ejecutar (no en "solo script").</summary>
+        private void ActualizarCargaMasiva()
+        {
+            if (chkCargaMasiva == null || cmbConexionA == null || cmbConexionB == null) return;
+            var conA = ObtenerConexion(cmbConexionA);
+            var conB = ObtenerConexion(cmbConexionB);
+            var motorB = (conB ?? conA)?.Motor;
+            chkCargaMasiva.IsEnabled = motorB == TipoMotor.MS_SQL && chkSoloScript?.IsChecked != true;
+        }
+
         private void chkSoloScript_Changed(object sender, RoutedEventArgs e)
         {
+            ActualizarCargaMasiva();
             if (btnEjecutar == null) return;
             btnEjecutar.Content = chkSoloScript.IsChecked == true ? "Generar script" : "Ejecutar transferencia";
         }
@@ -482,6 +494,7 @@ namespace QueryAnalyzer
                 GenerarSoloScript     = soloScript,
                 HacerBackupDeB        = false,   // lo manejamos aquí
                 Transaccional         = chkTransaccional.IsChecked == true,
+                UsarCargaMasiva       = chkCargaMasiva.IsChecked == true && chkCargaMasiva.IsEnabled,
                 UmbralLobBytes        = umbralLob,
                 OmitirFilasLobGrandes = chkOmitirLob.IsChecked == true,
                 CarpetaScript         = _carpetaScriptTemp,
@@ -500,7 +513,7 @@ namespace QueryAnalyzer
                 ? $"Destino (B): {conB.Nombre} · motor {motorB} · {TransferenciaStreaming.EnmascararConexion(connStrB)}"
                 : "Destino (B): (ninguno, solo script)");
             Log($"Opciones: backup={(chkBackup.IsChecked == true)} (formato: {(backupRutaArchivo != null ? "archivo único" : backupRutaCarpeta != null ? "por tabla" : "sin backup")}), " +
-                $"transaccional={opciones.Transaccional}, soloScript={soloScript}, omitirLOB={opciones.OmitirFilasLobGrandes}, " +
+                $"transaccional={opciones.Transaccional}, cargaMasiva={opciones.UsarCargaMasiva}, soloScript={soloScript}, omitirLOB={opciones.OmitirFilasLobGrandes}, " +
                 $"umbralLOB={TransferenciaStreaming.Mb(umbralLob)}, timeout={TransferenciaStreaming.TimeoutSegundos()}s");
             Log($"Tablas marcadas ({marcadas.Count}): {TransferenciaStreaming.Truncar(string.Join(", ", marcadas.Select(t => t.NombreCompleto)), 1500)}");
             if (string.Equals(connStrA, connStrB, StringComparison.OrdinalIgnoreCase))
@@ -520,6 +533,10 @@ namespace QueryAnalyzer
                     void ReportLog(string m)  => ((IProgress<string>)progressLog).Report(m);
                     void ReportSql(string s)  => ((IProgress<string>)progressSql).Report(s);
                     void ReportStep(int c, int t) => ((IProgress<(int, int)>)progressStep).Report((c, t));
+
+                    // Tiempo de cada fase previa a la carga (la carga informa los suyos): para ver dónde se va el tiempo
+                    var relojFase = System.Diagnostics.Stopwatch.StartNew();
+                    void Tiempo(string fase) { ReportLog($"[TIEMPO] {fase}: {relojFase.ElapsedMilliseconds} ms"); relojFase.Restart(); }
 
                     ResultadoPasado Cancelado(string motivo) => new ResultadoPasado
                     {
@@ -569,6 +586,7 @@ namespace QueryAnalyzer
                     var (ordenInsert, _) = PasadorDatosService.OrdenarPorDependencias(aTransferir, fks);
                     var ordenDelete = Enumerable.Reverse(ordenInsert).ToList();
                     ReportLog($"Orden FK resuelto: {ordenInsert.Count} tabla(s).");
+                    Tiempo("Estructura de B + dependencias FK");
 
                     // Prevalidación: ¿se pueden leer todas las tablas de A? (antes de tocar nada de B)
                     ReportLog("Verificando que las tablas de A se puedan leer...");
@@ -580,6 +598,7 @@ namespace QueryAnalyzer
                               $"total {conteosA.Values.Sum()} fila(s).");
                     foreach (var kv in conteosA.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Take(15))
                         ReportLog($"  A · {kv.Key}: {kv.Value} fila(s)");
+                    Tiempo("Prevalidación de A (conteos)");
                     if (ordenInsert.Count != aTransferir.Count)
                         ReportLog($"AVISO: se marcaron {aTransferir.Count} tabla(s) pero el orden de carga tiene {ordenInsert.Count}.");
                     if (ilegibles.Count > 0)
@@ -634,6 +653,7 @@ namespace QueryAnalyzer
                     }
 
                     // Transferencia
+                    if (backupRutaArchivo != null || backupRutaCarpeta != null) Tiempo("Backup de B");
                     opciones.ConteosA = conteosA;
                     var res = PasadorDatosService.TransferirDatos(
                         connStrA,

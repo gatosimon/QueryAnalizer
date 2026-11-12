@@ -144,6 +144,7 @@
       <DependentUpon>IncidenciasWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="TransferenciaStreaming.cs" />
+    <Compile Include="TransferenciaBulk.cs" />
     <Compile Include="PasadorDatosModels.cs" />
     <Compile Include="PasadorDatosService.cs" />
     <Compile Include="PasadorDatosWindow.xaml.cs">
