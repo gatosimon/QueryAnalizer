@@ -77,6 +77,14 @@ namespace QueryAnalyzer
         private volatile System.Data.Odbc.OdbcCommand _cmdActivo;
         /// <summary>CTS para señalizar a Ejecutar() que no continúe con más sub-consultas.</summary>
         private System.Threading.CancellationTokenSource _ctsCancelar;
+        /// <summary>
+        /// Se completa cuando pasó el tiempo de gracia desde que se pidió cancelar y el driver
+        /// todavía no devolvió el control (p. ej. DB2 sin INTERRUPT habilitado ignora SQLCancel).
+        /// Ejecutar() deja de esperar a la consulta y libera la UI.
+        /// </summary>
+        private volatile System.Threading.Tasks.TaskCompletionSource<bool> _abandonoTcs;
+        /// <summary>Segundos que se espera la respuesta del driver a SQLCancel antes de abandonar la consulta.</summary>
+        private const int SegundosGraciaCancelacion = 5;
 
         public MainWindow()
         {
@@ -876,8 +884,19 @@ namespace QueryAnalyzer
             // 1. Señalizar a Ejecutar() para que no procese más sub-consultas.
             _ctsCancelar?.Cancel();
             // 2. Cancelar el comando ODBC activo (corta el ExecuteReader en el hilo de fondo).
-            _cmdActivo?.Cancel();
+            //    Se hace fuera del hilo UI: si el driver bloquea dentro de SQLCancel no debe
+            //    congelar la ventana.
+            var cmd = _cmdActivo;
+            if (cmd != null)
+                System.Threading.Tasks.Task.Run(() => { try { cmd.Cancel(); } catch { } });
             AppendMessage("Cancelación solicitada...");
+
+            // 3. Si el driver no responde (DB2 ignora SQLCancel según la configuración del
+            //    servidor), pasado el tiempo de gracia Ejecutar() deja de esperarlo.
+            var tcs = _abandonoTcs;
+            if (tcs != null)
+                System.Threading.Tasks.Task.Delay(SegundosGraciaCancelacion * 1000)
+                    .ContinueWith(_ => tcs.TrySetResult(true));
         }
 
         private void TxtQuery_KeyDown(object sender, KeyEventArgs e)
@@ -964,6 +983,9 @@ namespace QueryAnalyzer
 
             // ── Activar indicador de progreso y cancelación ───────────────
             _ctsCancelar = new System.Threading.CancellationTokenSource();
+            _abandonoTcs = new System.Threading.Tasks.TaskCompletionSource<bool>();
+            var abandonoTcs = _abandonoTcs;
+            bool consultaAbandonada = false;
             int maxFilas = _configApp.MaxFilasResultado;
             SetEstadoEjecutando(true);
 
@@ -1065,7 +1087,27 @@ namespace QueryAnalyzer
                     // 🔹 Extraemos los parámetros de esta consulta según la pila
                     var parametrosConsulta = ExtraerParametrosParaConsulta(sqlIndividual, parametrosTotales, ref posicionParametro);
 
-                    var (dt, queryEx, truncado, esNoQuery) = await ExecuteQueryAsync(connStr, sqlIndividual, parametrosConsulta, maxFilas, conexionLote);
+                    // No se espera la tarea "a ciegas": si el usuario cancela y el driver no
+                    // devuelve el control a tiempo, se abandona la consulta para no dejar la UI colgada.
+                    var tareaQuery = ExecuteQueryAsync(connStr, sqlIndividual, parametrosConsulta, maxFilas, conexionLote);
+                    if (await System.Threading.Tasks.Task.WhenAny(tareaQuery, abandonoTcs.Task) != tareaQuery)
+                    {
+                        consultaAbandonada = true;
+                        swQuery.Stop();
+                        // La tarea huérfana sigue viva hasta que el driver devuelva: observar su
+                        // excepción y, si hay conexión de lote, cerrarla recién cuando termine.
+                        var conexionHuerfana = conexionLote;
+                        conexionLote = null;
+                        var contLimpieza = tareaQuery.ContinueWith(t =>
+                        {
+                            var excepcion = t.Exception;
+                            try { conexionHuerfana?.Dispose(); } catch { }
+                        });
+                        AppendMessage("El servidor no respondió a la cancelación; se abandona la consulta. " +
+                                      "La conexión se cierra en segundo plano y la consulta puede seguir corriendo en el servidor hasta que la libere.");
+                        break;
+                    }
+                    var (dt, queryEx, truncado, esNoQuery) = await tareaQuery;
 
                     if (queryEx != null)
                     {
@@ -1578,7 +1620,9 @@ namespace QueryAnalyzer
 
                 await Dispatcher.InvokeAsync(() =>
                 {
-                    string resumen = _ctsCancelar.IsCancellationRequested
+                    string resumen = consultaAbandonada
+                        ? "Ejecución cancelada: la consulta fue abandonada porque el servidor no respondió a la cancelación."
+                        : _ctsCancelar.IsCancellationRequested
                         ? "Ejecución cancelada por el usuario."
                         : $"Ejecución total finalizada. {validQueries.Count} consultas ejecutadas en {FormatoNumero(totalElapsedMicroseconds)} µs ({FormatoNumero(totalElapsedMicroseconds / 1000000)}) s";
                     AppendMessage(resumen);
@@ -2482,6 +2526,9 @@ namespace QueryAnalyzer
             // Capturar el motor antes de entrar al hilo de background (conexionActual es mutable).
             TipoMotor motorActual = conexionActual?.Motor ?? TipoMotor.MS_SQL;
             int timeoutSeg = _configApp.TimeoutConsultaSegundos;
+            // SQLCancel solo actúa mientras el driver está dentro de una llamada; si llega entre
+            // dos fetch se pierde. Por eso el bucle de lectura consulta además esta señal.
+            var ctsCancelar = _ctsCancelar;
 
             return await Task.Run(() =>
             {
@@ -2579,6 +2626,10 @@ namespace QueryAnalyzer
                                 truncado = true;
                                 break;
                             }
+
+                            // Cancelación pedida por el usuario: dejar de leer y devolver lo leído.
+                            if (ctsCancelar != null && ctsCancelar.IsCancellationRequested)
+                                break;
 
                             var row = dt.NewRow();
                             for (int i = 0; i < DB.Reader.FieldCount; i++)

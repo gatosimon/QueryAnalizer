@@ -151,7 +151,7 @@
                 <TextBlock Style="{StaticResource Titulo}" Text="Área de consulta"/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• F5 o botón 'Ejecutar': ejecuta la consulta completa, o el texto seleccionado si hay selección activa."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Ejecutar Escalar: ejecuta y devuelve un único valor (útil para COUNT, MAX, etc.)."/>
-                <TextBlock Style="{StaticResource Cuerpo}" Text="• Cancelar: interrumpe la consulta en curso."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Cancelar: interrumpe la consulta en curso. Si el servidor no responde a la cancelación (puede pasar con DB2), a los 5 segundos la consulta se abandona: la ventana queda libre y la conexión se cierra en segundo plano, aunque el servidor puede seguir procesándola un rato más."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Limpiar: borra el contenido del editor."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Múltiples consultas: se pueden separar con punto y coma (;) o en líneas distintas; cada una genera una pestaña de resultados."/>
 
