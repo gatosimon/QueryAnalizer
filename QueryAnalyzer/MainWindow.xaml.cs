@@ -1175,6 +1175,10 @@ namespace QueryAnalyzer
                             CanUserDeleteRows = esEditable,
                             AutoGenerateColumns = true,
                             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                            // Alto de fila automatico (el estilo global fija 26): un campo con saltos de
+                            // linea se ve completo. MinRowHeight conserva los 26 px de las filas comunes.
+                            RowHeight = double.NaN,
+                            MinRowHeight = 26,
                             AlternationCount = 2,
                             RowStyle = (Style)this.FindResource("ResultGridRowStyle"),
                             ColumnHeaderStyle = headerStyle,
@@ -1487,6 +1491,18 @@ namespace QueryAnalyzer
                             ev.Column.Header = tbHeader;
 
                             Type tipo = dt.Columns[colName].DataType;
+
+                            // Texto con saltos de linea: la celda crece para mostrarlo entero, con un
+                            // tope de alto para que un campo enorme no deje una fila gigante.
+                            var colTexto = ev.Column as DataGridTextColumn;
+                            if (colTexto != null)
+                            {
+                                var estiloTexto = new Style(typeof(TextBlock), colTexto.ElementStyle);
+                                estiloTexto.Setters.Add(new Setter(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center));
+                                estiloTexto.Setters.Add(new Setter(FrameworkElement.MaxHeightProperty, 300.0));
+                                estiloTexto.Setters.Add(new Setter(UIElement.ClipToBoundsProperty, true));
+                                colTexto.ElementStyle = estiloTexto;
+                            }
 
                             // Formato para DateTime
                             if (tipo == typeof(DateTime) || tipo == typeof(DateTime?) || tipo == typeof(DateTimeOffset))
