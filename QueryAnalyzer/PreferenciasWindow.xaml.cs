@@ -324,6 +324,7 @@ namespace QueryAnalyzer
                 CargarUltimaConsulta    = chkCargarUltConsulta.IsChecked == true,
                 EjecutarSelectDirecto   = chkEjecutarSelectDirecto.IsChecked == true,
                 SelectTopSinAuditoria   = _configOriginal.SelectTopSinAuditoria,
+                SelectTopColsSinAuditoria = _configOriginal.SelectTopColsSinAuditoria,
                 SelectTodasSinAuditoria = _configOriginal.SelectTodasSinAuditoria,
                 ResultadosEditables    = chkResultadosEditables.IsChecked == true,
                 MostrarNumeroFila       = chkMostrarNroFila.IsChecked == true,

@@ -3740,6 +3740,19 @@ namespace QueryAnalyzer
                             var colNames = ObtenerNombresColumnas(DB, capSchema, capTabla);
                             return GenerarSelectTop10SinAuditoria(capSchema, capTabla, colNames);
                         });
+                        // TOP 10 con las columnas enumeradas: sirve para tablas enormes, donde un
+                        // SELECT (todas las cols) sin limite traeria demasiado.
+                        agregarSelectAuditoria("SELECT TOP 10 (todas las cols)",
+                            () => _configApp.SelectTopColsSinAuditoria,
+                            (cfg, v) => cfg.SelectTopColsSinAuditoria = v,
+                            sinAuditoria =>
+                        {
+                            DB = new DataBase(connStr);
+                            var colNames = ObtenerNombresColumnas(DB, capSchema, capTabla);
+                            if (sinAuditoria)
+                                colNames = colNames.Where(c => !EsColumnaAuditoria(c)).ToList();
+                            return GenerarSelectTop10ConColumnas(capSchema, capTabla, colNames);
+                        });
                         agregarSelectAuditoria("SELECT (todas las cols)",
                             () => _configApp.SelectTodasSinAuditoria,
                             (cfg, v) => cfg.SelectTodasSinAuditoria = v,
@@ -4481,7 +4494,16 @@ namespace QueryAnalyzer
         /// </summary>
         private string GenerarSelectTop10SinAuditoria(string schema, string tabla, List<string> colNames)
         {
-            var cols = colNames.Where(c => !EsColumnaAuditoria(c)).ToList();
+            return GenerarSelectTop10ConColumnas(schema, tabla,
+                colNames.Where(c => !EsColumnaAuditoria(c)).ToList());
+        }
+
+        /// <summary>
+        /// SELECT TOP 10 enumerando exactamente las columnas dadas (sin filtrar nada).
+        /// Si la lista está vacía, vuelve a SELECT TOP 10 *.
+        /// </summary>
+        private string GenerarSelectTop10ConColumnas(string schema, string tabla, List<string> cols)
+        {
             if (cols.Count == 0) return GenerarSelectTop10(schema, tabla);
 
             TipoMotor motor = conexionActual?.Motor ?? TipoMotor.DB2;

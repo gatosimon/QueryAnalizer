@@ -29,6 +29,9 @@ namespace QueryAnalyzer
         /// <summary>Casilla "sin auditoría" de "SELECT TOP 10" en el menú contextual.</summary>
         public bool SelectTopSinAuditoria { get; set; } = false;
 
+        /// <summary>Casilla "sin auditoría" de "SELECT TOP 10 (todas las cols)" en el menú contextual.</summary>
+        public bool SelectTopColsSinAuditoria { get; set; } = false;
+
         /// <summary>Casilla "sin auditoría" de "SELECT (todas las cols)" en el menú contextual.</summary>
         public bool SelectTodasSinAuditoria { get; set; } = false;
 
