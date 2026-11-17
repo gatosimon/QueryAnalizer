@@ -1499,8 +1499,9 @@ namespace QueryAnalyzer
                             {
                                 var estiloTexto = new Style(typeof(TextBlock), colTexto.ElementStyle);
                                 estiloTexto.Setters.Add(new Setter(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center));
+                                // Sin ClipToBounds: el MaxHeight ya recorta el texto por el clip de layout
+                                // de WPF, y el clip por celda encarece el repintado al hacer scroll.
                                 estiloTexto.Setters.Add(new Setter(FrameworkElement.MaxHeightProperty, 300.0));
-                                estiloTexto.Setters.Add(new Setter(UIElement.ClipToBoundsProperty, true));
                                 colTexto.ElementStyle = estiloTexto;
                             }
 
