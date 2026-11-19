@@ -22,38 +22,13 @@ namespace QueryAnalyzer
         }
 
         /// <summary>
-        /// Devuelve la versión instalada actualmente según update_marker.xml.
-        /// Si el archivo no existe (primera ejecución antes de la primera actualización),
-        /// devuelve la versión del assembly como fallback.
+        /// Devuelve la versión que realmente está corriendo (la del ensamblado).
+        /// No se usa update_marker.xml: si una actualización no llega a reemplazar el
+        /// .exe, el marcador puede decir una versión que no es la que se ejecuta.
         /// </summary>
         public static string GetInstalledVersion()
         {
-            try
-            {
-                string appDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                string markerPath = Path.Combine(appDir, MarkerFileName);
-
-                if (!File.Exists(markerPath))
-                {
-                    // Todavía no se actualizó nunca: usar la versión del assembly
-                    return $"No actualizada aún.\nVersión del ensamblado: {Assembly.GetExecutingAssembly().GetName().Version}";
-                }
-
-                var doc = new XmlDocument();
-                doc.Load(markerPath);
-
-                XmlNode node = doc.SelectSingleNode("/VersionMarker/InstalledVersion");
-                if (node != null && !string.IsNullOrEmpty(node.InnerText))
-                    return node.InnerText.Trim();
-
-                // Nodo no encontrado: fallback al assembly
-                return Assembly.GetExecutingAssembly().GetName().Version.ToString();
-            }
-            catch (Exception ex)
-            {
-                LogToFile("Error al leer version instalada: " + ex.Message);
-                return Assembly.GetExecutingAssembly().GetName().Version.ToString();
-            }
+            return Assembly.GetExecutingAssembly().GetName().Version.ToString();
         }
 
         /// <summary>
@@ -134,9 +109,12 @@ namespace QueryAnalyzer
                 bool needsExtract = true;
                 if (File.Exists(updaterPath))
                 {
+                    // Se compara el contenido, no solo el tamaño: los .exe se alinean a
+                    // 512 bytes y una versión corregida puede pesar exactamente lo mismo.
                     long diskSize = new FileInfo(updaterPath).Length;
                     long resourceSize = resourceStream.Length;
-                    needsExtract = diskSize != resourceSize;
+                    needsExtract = diskSize != resourceSize ||
+                                   !MismoContenido(updaterPath, resourceStream);
                     LogToFile("AutoUpdater.exe en disco: " + diskSize + " bytes | " +
                               "Recurso embebido: " + resourceSize + " bytes | " +
                               "Necesita extraccion: " + needsExtract);
@@ -169,6 +147,29 @@ namespace QueryAnalyzer
             }
 
             return File.Exists(updaterPath);
+        }
+
+        private static bool MismoContenido(string ruta, Stream recurso)
+        {
+            try
+            {
+                byte[] enDisco = File.ReadAllBytes(ruta);
+                if (enDisco.Length != recurso.Length) return false;
+                recurso.Seek(0, SeekOrigin.Begin);
+                byte[] buffer = new byte[81920];
+                int pos = 0, leidos;
+                while ((leidos = recurso.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    for (int i = 0; i < leidos; i++)
+                        if (buffer[i] != enDisco[pos + i]) return false;
+                    pos += leidos;
+                }
+                return pos == enDisco.Length;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>

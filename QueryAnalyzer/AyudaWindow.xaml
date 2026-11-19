@@ -286,6 +286,7 @@
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Documentar: genera un archivo .docx con la estructura completa de las tablas y vistas visibles en el explorador."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Esquematizar: genera un diagrama de relaciones en formato Draw.io (.xml) con las tablas/vistas visibles. Si son pocas se abre directo en el navegador; con muchas tablas (el diagrama no entra en una URL) pide dónde guardar un archivo .drawio y lo abre con el programa asociado, o bien se abre con Archivo > Abrir desde > Dispositivo en app.diagrams.net."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Selección múltiple: con los checkboxes del explorador se pueden elegir tablas específicas para documentar o esquematizar."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Progreso: mientras corren Backup de esquema, Restaurar backup, Documentar y Esquematizar, la barra de estado (abajo) muestra un indicador girando con el paso actual (qué tabla está leyendo, cuántas van) y el cursor indica que la aplicación está trabajando. Al terminar aparece un mensaje que dice si salió bien (con el archivo generado) o si falló y por qué."/>
 
                 <!-- ══ TEMAS ═══════════════════════════════════════════════ -->
                 <TextBlock Style="{StaticResource Titulo}" Text="Temas (claro / oscuro)"/>
@@ -637,6 +638,8 @@
                 <TextBlock Style="{StaticResource Titulo}" Text="Actualizaciones"/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• La versión instalada se muestra en la barra superior (esquina derecha)."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Las actualizaciones se verifican y aplican automáticamente al iniciar (si hay nueva versión disponible)."/>
+                <TextBlock Style="{StaticResource Cuerpo}" Text="• Si la actualización no puede reemplazar el programa (por ejemplo, porque quedó otra ventana de QueryAnalyzer abierta), lo avisa y la vuelve a ofrecer la próxima vez que se abre. En ese caso, cerrar todas las ventanas de QueryAnalyzer y abrirlo de nuevo."/>
+                <TextBlock Style="{StaticResource Nota}" Text="La versión de la barra superior es la del programa que está corriendo: si no cambió después de actualizar, la actualización no se aplicó."/>
                 <TextBlock Style="{StaticResource Cuerpo}" Text="• Los números de versión indican la fecha de publicación: año.mes.día.número del día. Por ejemplo, 26.10.6.0 es la primera versión publicada el 6 de octubre de 2026 y 26.10.6.1 la segunda de ese mismo día."/>
 
                 <!-- Espaciado final -->

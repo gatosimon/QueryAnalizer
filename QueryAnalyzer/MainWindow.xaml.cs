@@ -879,6 +879,59 @@ namespace QueryAnalyzer
             lblEjecutando.Visibility = ejecutando ? Visibility.Visible : Visibility.Collapsed;
         }
 
+        // ── Progreso de acciones largas (barra de estado) ──────────────────────
+        // Backup de esquema, Restaurar backup, Documentar y Esquematizar muestran un
+        // indicador girando con el paso actual, el cursor de "trabajando" y, al final,
+        // un mensaje que dice si terminó bien o no.
+
+        private int _accionesEnCurso;
+        private DateTime _ultimoTextoProgreso = DateTime.MinValue;
+
+        /// <summary>Muestra el indicador. total > 0: barra con avance; si no, indeterminada.</summary>
+        private void IniciarProgresoAccion(string texto, int total = 0)
+        {
+            _accionesEnCurso++;
+            txtProgresoAccion.Text = texto;
+            barProgresoAccion.IsIndeterminate = total <= 0;
+            barProgresoAccion.Minimum = 0;
+            barProgresoAccion.Maximum = Math.Max(1, total);
+            barProgresoAccion.Value = 0;
+            panelProgresoAccion.Visibility = Visibility.Visible;
+            Mouse.OverrideCursor = Cursors.AppStarting;
+        }
+
+        /// <summary>Actualiza el texto y, si se indica, el avance. Llamar desde el hilo UI.</summary>
+        private void ActualizarProgresoAccion(string texto, int hechas = -1)
+        {
+            if (texto != null) txtProgresoAccion.Text = texto;
+            if (hechas >= 0 && !barProgresoAccion.IsIndeterminate)
+                barProgresoAccion.Value = Math.Min(hechas, barProgresoAccion.Maximum);
+        }
+
+        /// <summary>
+        /// Para callbacks de hilos de fondo que avisan muy seguido (p. ej. cada N filas):
+        /// pasa al hilo UI como mucho cada 150 ms.
+        /// </summary>
+        private void ReportarProgresoAccionDesdeFondo(string texto)
+        {
+            var ahora = DateTime.UtcNow;
+            if ((ahora - _ultimoTextoProgreso).TotalMilliseconds < 150) return;
+            _ultimoTextoProgreso = ahora;
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (_accionesEnCurso > 0) ActualizarProgresoAccion(texto);
+            }));
+        }
+
+        private void TerminarProgresoAccion()
+        {
+            if (_accionesEnCurso > 0) _accionesEnCurso--;
+            if (_accionesEnCurso > 0) return;
+            panelProgresoAccion.Visibility = Visibility.Collapsed;
+            txtProgresoAccion.Text = string.Empty;
+            Mouse.OverrideCursor = null;
+        }
+
         private void BtnCancelarQuery_Click(object sender, RoutedEventArgs e)
         {
             // 1. Señalizar a Ejecutar() para que no procese más sub-consultas.
@@ -5654,6 +5707,8 @@ namespace QueryAnalyzer
 
             btnGenerarInserts.IsEnabled = false;
             btnGenerarInserts.Header = "Generando...";
+            IniciarProgresoAccion($"Backup de esquema: preparando {tablas.Count} tabla(s)...");
+            bool progresoActivo = true;
 
             try
             {
@@ -5691,17 +5746,33 @@ namespace QueryAnalyzer
                     // 2. Escribir el script directo a disco, tabla por tabla (sin cargar nada entero en memoria)
                     return PasadorDatosService.GenerarBackupEsquema(
                         connStr, motor, nombreConexion, rutaDestino,
-                        ordenInsert, ordenDelete, ciclicas, opciones, incidencias, null);
+                        ordenInsert, ordenDelete, ciclicas, opciones, incidencias,
+                        msg => ReportarProgresoAccionDesdeFondo(
+                            "Backup de esquema: " + msg.Replace("[Backup]", "").Trim()));
                 });
+
+                TerminarProgresoAccion();
+                progresoActivo = false;
+
+                AppendMessage($"Backup generado: {total} tabla(s), {resultado.Filas} fila(s)" +
+                              (resultado.Errores > 0 ? $", {resultado.Errores} con error" : "") +
+                              $" → {rutaDestino}");
+
+                // Mensaje de cierre: si hubo incidencias, lo dice la ventana de incidencias (más abajo)
+                if (incidencias.Count == 0)
+                {
+                    if (resultado.Completo && resultado.Errores == 0)
+                        MessageBox.Show($"El backup terminó correctamente.\n\n{total} tabla(s), {resultado.Filas} fila(s).\n\nArchivo:\n{rutaDestino}",
+                            "Backup de esquema", MessageBoxButton.OK, MessageBoxImage.Information);
+                    else
+                        MessageBox.Show($"El backup terminó, pero quedó INCOMPLETO ({resultado.Errores} tabla(s) con error).\nNo lo restaures sin revisarlo.\n\nArchivo:\n{rutaDestino}",
+                            "Backup de esquema", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
 
                 // Un script chico se muestra completo; uno grande solo se informa (el editor no aguanta cientos de MB)
                 if (new System.IO.FileInfo(rutaDestino).Length <= 2L * 1024 * 1024)
                     new ScriptResultWindow(
                         System.IO.File.ReadAllText(rutaDestino, System.Text.Encoding.UTF8), motor).Mostrar(this);
-
-                AppendMessage($"Backup generado: {total} tabla(s), {resultado.Filas} fila(s)" +
-                              (resultado.Errores > 0 ? $", {resultado.Errores} con error" : "") +
-                              $" → {rutaDestino}");
 
                 if (incidencias.Count > 0)
                 {
@@ -5725,11 +5796,13 @@ namespace QueryAnalyzer
             }
             catch (Exception ex)
             {
+                if (progresoActivo) { TerminarProgresoAccion(); progresoActivo = false; }
                 MessageBox.Show("Error al generar el backup: " + ex.Message, "Backup Esquema",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
+                if (progresoActivo) TerminarProgresoAccion();
                 btnGenerarInserts.Header = "Backup de esquema";
                 ActualizarContadorSeleccion();
             }
@@ -5763,12 +5836,17 @@ namespace QueryAnalyzer
 
             btnRestaurarBackup.IsEnabled = false;
             btnRestaurarBackup.Header   = "Leyendo...";
+            IniciarProgresoAccion("Restaurar backup: leyendo " + System.IO.Path.GetFileName(rutaBackup) + "...");
+            bool progresoActivo = true;
 
             try
             {
                 // El .sql puede pesar cientos de MB: leer y parsear fuera del hilo de UI.
                 PlanRestauracion plan = await System.Threading.Tasks.Task.Run(() =>
                     RestauradorBackupService.AnalizarArchivo(rutaBackup));
+
+                TerminarProgresoAccion();
+                progresoActivo = false;
 
                 if (plan.TotalSentencias == 0)
                 {
@@ -5783,11 +5861,13 @@ namespace QueryAnalyzer
             }
             catch (Exception ex)
             {
+                if (progresoActivo) { TerminarProgresoAccion(); progresoActivo = false; }
                 MessageBox.Show("Error al leer el script de backup:\n" + ex.Message,
                     "Restaurar Backup", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
+                if (progresoActivo) TerminarProgresoAccion();
                 btnRestaurarBackup.Header   = "Restaurar backup...";
                 btnRestaurarBackup.IsEnabled = true;
             }
@@ -5855,12 +5935,16 @@ namespace QueryAnalyzer
             progEjecucion.Value           = 0;
 
             AppendMessage($"Restaurando backup: {plan.TotalSentencias} sentencia(s) sobre '{conexionActual.Nombre}'...");
+            IniciarProgresoAccion($"Restaurando backup: 0/{plan.TotalSentencias} sentencias", plan.TotalSentencias);
+            bool progresoActivo = true;
 
             var reloj = System.Diagnostics.Stopwatch.StartNew();
 
             var progreso = new Progress<ProgresoRestauracion>(p =>
             {
                 progEjecucion.Value = p.Completadas;
+                if (progresoActivo)
+                    ActualizarProgresoAccion($"Restaurando backup: {p.Completadas}/{p.Total} sentencias", p.Completadas);
                 if (!string.IsNullOrEmpty(p.UltimaSentencia))
                     AppendMessage($"[{p.Completadas}/{p.Total}] {p.UltimaSentencia}");
             });
@@ -5875,6 +5959,8 @@ namespace QueryAnalyzer
                         token));
 
                 reloj.Stop();
+                TerminarProgresoAccion();
+                progresoActivo = false;
 
                 foreach (string adv in resultado.Advertencias)
                     AppendMessage("" + adv);
@@ -5887,7 +5973,14 @@ namespace QueryAnalyzer
                 else
                     AppendMessage($"✗ ROLLBACK — la base quedó intacta.\n{resultado.Error}");
 
-                if (!resultado.Exitoso)
+                if (resultado.Exitoso)
+                    MessageBox.Show(
+                        $"La restauración terminó correctamente.\n\n{resultado.Completadas} sentencia(s) en {reloj.Elapsed.TotalSeconds:N1} s." +
+                        (resultado.Advertencias.Count > 0
+                            ? $"\n\nHubo {resultado.Advertencias.Count} advertencia(s): están en el panel de mensajes."
+                            : ""),
+                        "Restaurar Backup", MessageBoxButton.OK, MessageBoxImage.Information);
+                else
                     MessageBox.Show(
                         resultado.Cancelado
                             ? "Restauración cancelada. Se hizo ROLLBACK: la base quedó intacta."
@@ -5897,12 +5990,14 @@ namespace QueryAnalyzer
             }
             catch (Exception ex)
             {
+                if (progresoActivo) { TerminarProgresoAccion(); progresoActivo = false; }
                 AppendMessage("✗ Error inesperado durante la restauración: " + ex.Message);
                 MessageBox.Show("Error inesperado durante la restauración:\n" + ex.Message,
                     "Restaurar Backup", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
+                if (progresoActivo) TerminarProgresoAccion();
                 _cmdActivo = null;
                 progEjecucion.Value           = 0;
                 progEjecucion.IsIndeterminate = true;   // el resto de la app la usa así
@@ -6247,6 +6342,8 @@ namespace QueryAnalyzer
             btnEsquematizar.IsEnabled = false;
             AppendMessage($"Esquematizando {nodosVisibles.Count} tabla(s)/vista(s)" +
                           (seleccionadosEsq.Count > 0 ? " (seleccionadas)" : "") + "...");
+            IniciarProgresoAccion($"Esquematizar: leyendo {nodosVisibles.Count} tabla(s)/vista(s)...", nodosVisibles.Count);
+            bool progresoActivo = true;
 
             try
             {
@@ -6281,11 +6378,16 @@ namespace QueryAnalyzer
                     DataBase DB = new DataBase(connStr);
 
                     // ── Columnas de cada tabla ──────────────────────────────────
+                    int leidas = 0;
                     foreach (var t in nodosInfo)
                     {
                         string schema = t.Item1;
                         string nombre = t.Item2;
                         string tipoObj = t.Item3;
+
+                        int n = ++leidas;
+                        Dispatcher.BeginInvoke(new Action(() =>
+                            ActualizarProgresoAccion($"Esquematizar: columnas de {nombre} ({n}/{nodosInfo.Count})", n - 1)));
 
                         var info = new EsquematizadorService.EsquemaTablaInfo { Nombre = nombre, Schema = schema, Tipo = tipoObj };
 
@@ -6306,6 +6408,8 @@ namespace QueryAnalyzer
                     }
 
                     // ── Relaciones FK según motor ───────────────────────────────
+                    Dispatcher.BeginInvoke(new Action(() =>
+                        ActualizarProgresoAccion("Esquematizar: buscando relaciones (FK)...", nodosInfo.Count)));
                     try
                     {
                         var relaciones = servicioEsquema.ObtenerRelacionesFK(DB, tablasMeta.Keys.ToList());
@@ -6319,10 +6423,15 @@ namespace QueryAnalyzer
                 });
 
                 // ── 2. Generar y abrir ──────────────────────────
+                ActualizarProgresoAccion("Esquematizar: armando el diagrama...");
                 // Layout jerárquico solo para Draw.io (Mermaid lo hace automáticamente)
                 var posiciones = servicioEsquema.CalcularLayoutER(tablasMeta);
                 string xmlDrawio = servicioEsquema.GenerarXmlDrawio(tablasMeta, posiciones);
                 string encoded = servicioEsquema.ComprimirDrawio(xmlDrawio);
+
+                TerminarProgresoAccion();
+                progresoActivo = false;
+                int nRelaciones = tablasMeta.Values.Sum(t => t.Relaciones.Count);
 
                 // El diagrama viaja en la URL: Uri.EscapeDataString falla por encima de ~65 000 caracteres y
                 // los navegadores/ShellExecute cortan mucho antes. Si es grande, se guarda como archivo .drawio.
@@ -6331,8 +6440,10 @@ namespace QueryAnalyzer
                 if (encoded.Length * 3 <= MaxUrlDrawio) // peor caso: cada carácter base64 (+ / =) se expande a 3
                 {
                     string url = urlBase + Uri.EscapeDataString(encoded);
-                    Dispatcher.Invoke(() => System.Diagnostics.Process.Start(url));
-                    Dispatcher.Invoke(() => AppendMessage("Diagrama generado y abierto en Draw.io."));
+                    System.Diagnostics.Process.Start(url);
+                    AppendMessage("Diagrama generado y abierto en Draw.io.");
+                    MessageBox.Show($"El diagrama terminó correctamente: {tablasMeta.Count} tabla(s)/vista(s), {nRelaciones} relación(es).\n\nSe abrió en Draw.io, en el navegador.",
+                        "Esquematizar", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 else
                 {
@@ -6346,22 +6457,31 @@ namespace QueryAnalyzer
                     {
                         File.WriteAllText(sfd.FileName, xmlDrawio, new System.Text.UTF8Encoding(false));
                         AppendMessage("Diagrama demasiado grande para abrirlo por URL; guardado en: " + sfd.FileName);
+                        bool abierto = true;
                         try { System.Diagnostics.Process.Start(sfd.FileName); }
                         catch
                         {
+                            abierto = false;
                             System.Diagnostics.Process.Start("https://app.diagrams.net/");
                             AppendMessage("Abrí el archivo en Draw.io con Archivo > Abrir desde > Dispositivo.");
                         }
+                        MessageBox.Show($"El diagrama terminó correctamente: {tablasMeta.Count} tabla(s)/vista(s), {nRelaciones} relación(es).\n\nArchivo:\n{sfd.FileName}" +
+                                        (abierto ? "" : "\n\nAbrilo en Draw.io con Archivo > Abrir desde > Dispositivo."),
+                            "Esquematizar", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                     else AppendMessage("Esquematizar cancelado: no se eligió dónde guardar el diagrama.");
                 }
             }
             catch (Exception ex)
             {
+                if (progresoActivo) { TerminarProgresoAccion(); progresoActivo = false; }
                 AppendMessage("Error generando esquema: " + ex.Message);
+                MessageBox.Show("No se pudo generar el diagrama:\n" + ex.Message,
+                    "Esquematizar", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
+                if (progresoActivo) TerminarProgresoAccion();
                 btnEsquematizar.IsEnabled = true;
             }
         }
@@ -6411,6 +6531,8 @@ namespace QueryAnalyzer
             btnDocumentar.IsEnabled = false;
             AppendMessage($"Documentando {nodosVisibles.Count} tabla(s)/vista(s)" +
                           (seleccionadosDoc.Count > 0 ? " (seleccionadas)" : "") + "...");
+            IniciarProgresoAccion($"Documentar: leyendo {nodosVisibles.Count} tabla(s)/vista(s)...", nodosVisibles.Count);
+            bool progresoActivo = true;
 
             try
             {
@@ -6436,6 +6558,7 @@ namespace QueryAnalyzer
                     // Determinar tipo (tabla o vista) desde el Tag del nodo
                     string tipo = nodoTag?.Tipo ?? "TABLE";
 
+                    ActualizarProgresoAccion($"Documentar: {nombre} ({procesadas + 1}/{nodosVisibles.Count})", procesadas);
                     var info = await DocumentadorService.GetInfoTablaAsync(
                         conexionActual, schema, nombre, tipo);
                     tablas.Add(info);
@@ -6448,16 +6571,28 @@ namespace QueryAnalyzer
                 string titulo = $"Documentación: {conexionActual.Nombre}" +
                                 (string.IsNullOrEmpty(_filtroSchema) ? string.Empty : $" — Esquema: {_filtroSchema}");
 
-                DocumentadorService.GenerarDocumento(sfd.FileName, tablas, titulo);
-                AppendMessage($"Documentación generada: {sfd.FileName}");
-                System.Diagnostics.Process.Start(sfd.FileName);
+                ActualizarProgresoAccion("Documentar: generando el .docx...", nodosVisibles.Count);
+                string rutaDoc = sfd.FileName;
+                await Task.Run(() => DocumentadorService.GenerarDocumento(rutaDoc, tablas, titulo));
+                TerminarProgresoAccion();
+                progresoActivo = false;
+
+                AppendMessage($"Documentación generada: {rutaDoc}");
+                MessageBox.Show($"La documentación terminó correctamente: {tablas.Count} tabla(s)/vista(s).\n\nArchivo:\n{rutaDoc}\n\nSe abre a continuación.",
+                    "Documentar", MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Diagnostics.Process.Start(rutaDoc);
             }
             catch (Exception ex)
             {
+                if (progresoActivo) { TerminarProgresoAccion(); progresoActivo = false; }
                 AppendMessage("Error generando documentación: " + ex.Message);
+                MessageBox.Show("No se pudo generar la documentación:\n" + ex.Message +
+                                "\n\nSi el archivo está abierto en Word, cerralo y volvé a intentar.",
+                    "Documentar", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
+                if (progresoActivo) TerminarProgresoAccion();
                 btnDocumentar.IsEnabled = true;
             }
         }
@@ -6484,6 +6619,8 @@ namespace QueryAnalyzer
             if (sfd.ShowDialog(this) != true) return;
 
             AppendMessage($"Documentando {etiqueta.ToLower()} {tabla}...");
+            IniciarProgresoAccion($"Documentar: {tabla}...");
+            bool progresoActivo = true;
 
             try
             {
@@ -6491,13 +6628,23 @@ namespace QueryAnalyzer
                     conexionActual, schema, tabla, tipo);
 
                 string titulo = $"Documentación: {tabla}";
-                DocumentadorService.GenerarDocumento(sfd.FileName, new List<InfoTablaDoc> { info }, titulo);
-                AppendMessage($"Documentación generada: {sfd.FileName}");
-                System.Diagnostics.Process.Start(sfd.FileName);
+                string rutaDoc = sfd.FileName;
+                await Task.Run(() => DocumentadorService.GenerarDocumento(rutaDoc, new List<InfoTablaDoc> { info }, titulo));
+                TerminarProgresoAccion();
+                progresoActivo = false;
+
+                AppendMessage($"Documentación generada: {rutaDoc}");
+                MessageBox.Show($"La documentación de {tabla} terminó correctamente.\n\nArchivo:\n{rutaDoc}\n\nSe abre a continuación.",
+                    "Documentar", MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Diagnostics.Process.Start(rutaDoc);
             }
             catch (Exception ex)
             {
+                if (progresoActivo) { TerminarProgresoAccion(); progresoActivo = false; }
                 AppendMessage("Error generando documentación: " + ex.Message);
+                MessageBox.Show("No se pudo generar la documentación:\n" + ex.Message +
+                                "\n\nSi el archivo está abierto en Word, cerralo y volvé a intentar.",
+                    "Documentar", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
